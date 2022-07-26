@@ -7,6 +7,7 @@ from .tools import print_cartesians
 import subprocess
 import json
 import math
+from .constants import Constants
 
 
 def write_xyz_from_np(atom_numbers, carts, outfile="dat.xyz") -> None:
@@ -360,6 +361,50 @@ def print_C6s_C8s(
         print(l)
 
 
+def compute_bj_pairs(
+    params: [],
+    pos: np.array,
+    carts: np.array,
+    Ma: int,  # number of atoms in monomer A
+    Mb: int,  # number of atoms in monomer B
+    C6s: np.array,
+) -> float:
+    """
+    compute_bj_self computes energy from C6s, cartesian coordinates, and dimer sizes.
+    """
+    s6, s8, a1, a2 = params
+    C8s = np.zeros(np.shape(C6s))
+    N_tot = len(carts)
+
+    aatoau = Constants().g_aatoau()
+    energy = 0
+    cs = aatoau * np.array(carts, copy=True)
+    for i in range(N_tot):
+        el1 = int(pos[i])
+        el1_r4r2 = r4r2_vals(el1)
+        Q_A = np.sqrt(el1) * el1_r4r2
+
+        for j in range(i):
+
+            el2 = int(pos[j])
+            el2_r4r2 = r4r2_vals(el2)
+            Q_B = np.sqrt(el2) * el2_r4r2
+            C8s[i, j] = 3 * C6s[i, j] * np.sqrt(Q_A * Q_B)
+            C6 = C6s[i, j]
+            C8 = C8s[i, j]
+
+            r1, r2 = cs[i, :], cs[j, :]
+            R = np.linalg.norm(r1 - r2)
+            R0 = np.sqrt(C8 / C6)
+
+            energy += C6 / (R**6.0 + (a1 * R0 + a2) ** 6.0)
+            energy += s8 * C8 / (R**8.0 + (a1 * R0 + a2) ** 8.0)
+
+    energy *= -1
+    return energy
+
+
+
 # /theoryfs2/ds/amwalla3/projects/dftd4/src/dftd4/damping/rational.f90
 
 def compute_bj_self(
@@ -403,13 +448,6 @@ do iat = 1, mol%nat
    end do
 end do
     """
-    electron_mass = 9.1093837015e-31
-    c = 299792458
-    fine_structure_constant = 7.2973525693e-3
-    hbar = 6.62607015e-34 / (2 * math.pi)
-    bohr = hbar / (electron_mass * c * fine_structure_constant)
-    autoaa = bohr * 1e10
-    aatoau = 1 / autoaa
 
     energy = 0
     s6, s8, a1, a2 = params
@@ -419,6 +457,7 @@ end do
     M_tot = len(carts)
     lattice_points = 1
 
+    aatoau = Constants().g_aatoau()
     cs = aatoau * np.array(carts, copy=True)
     for i in range(M_tot):
         el1 = int(pos[i])
@@ -460,47 +499,11 @@ end do
                 energies[i] += de
                 if i != j:
                     energies[j] += de
-        print(i)
-        print(energies)
 
     energy = np.sum(energies)
 
     return energy
 
-    # print(np.sum(C6s), np.sum(C8s))
-    # a = np.reshape(pos, (len(pos), 1))
-    # arr = np.hstack((a, carts))
-    # # r0ij = self%a1 * sqrt(rrij) + self%a2
-    # rrij = 3 * Q_A * Q_B
-    # r0ij = a1 * np.sqrt(rrij) + a2
-
-    # s6, s8, a1, a2 = params
-    # C8s = np.zeros(np.shape(C6s))
-    # N_tot = len(carts)
-    # for i in range(Ma + Mb):
-    #     el1 = int(pos[i])
-    #     el1_r4r2 = r4r2_vals(el1)
-    #     Q_A = np.sqrt(el1) * el1_r4r2
-    #
-    #     for j in range(Ma + Mb):
-    #
-    #         el2 = int(pos[j])
-    #         el2_r4r2 = r4r2_vals(el2)
-    #         Q_B = np.sqrt(el2) * el2_r4r2
-    #         C8s[i, j] = 3 * C6s[i, j] * np.sqrt(Q_A * Q_B)
-    #         C6 = C6s[i, j]
-    #         C8 = C8s[i, j]
-    #
-    #         r1, r2 = carts[i, :], carts[j, :]
-    #         R = np.linalg.norm(r1 - r2)
-    #         R0 = np.sqrt(C8 / C6)
-    #
-    #         if i < Ma and j >= Ma:
-    #             energy += C6 / (R**6.0 + (a1 * R0 + a2) ** 6.0)
-    #             energy += s8 * C8 / (R**8.0 + (a1 * R0 + a2) ** 8.0)
-    #
-    # energy *= -1
-    # return energy
 
 def compute_bj_dftd4(
     params,
@@ -566,7 +569,7 @@ def gather_data2(
     el_dc = create_pt_dict()
     df = pd.read_pickle(condensed_path)
     xyzs = df[["xyz1", "xyz2", "xyz_d"]].to_numpy()
-    for sys in xyzs[:2]:
+    for sys in xyzs[:1]:
         g1, g2, g3 = sys[0], sys[1], sys[2]
         g1 = read_xyz(g1, el_dc)
         g2 = read_xyz(g2, el_dc)
@@ -579,6 +582,8 @@ def gather_data2(
         carts = g3[:, 1:]
         C6s = calc_dftd4_props(pos, carts)
         Ma, Mb = len(g1), len(g2)
+        energy = compute_bj_pairs(params, pos, carts, Ma, Mb, C6s)
+        print("self :", energy)
         energy = compute_bj_self(params, pos, carts, Ma, Mb, C6s)
         print("self :", energy)
         energy = compute_bj_dftd4(params, pos, carts)
