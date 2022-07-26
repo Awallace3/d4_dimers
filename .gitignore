@@ -127,3 +127,21 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+data
+tmp.png
+tmp.xyz
+timer.dat
+d4/
+identify/
+jz6b00780_si_002.zip
+psi4_tests/
+SAPT-D3-Refit-Data.csv
+.EDISP
+condensed.pkl
+data.pkl
+e.json
+t.dat
+t.json
+tmp.dat
+tmp.txt
+truncated.csv

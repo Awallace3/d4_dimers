@@ -1,0 +1,588 @@
+import numpy as np
+import pandas as pd
+from periodictable import elements
+from dftd4.interface import DispersionModel, DampingParam
+from .r4r2 import get_Q, r4r2_from_elements_call, r4r2_vals
+from .tools import print_cartesians
+import subprocess
+import json
+import math
+
+
+def write_xyz_from_np(atom_numbers, carts, outfile="dat.xyz") -> None:
+    """
+    write_xyz_from_np
+    """
+    with open(outfile, "w") as f:
+        f.write(str(len(carts)) + "\n\n")
+        for n, i in enumerate(carts):
+            el = str(int(atom_numbers[n]))
+            v = "    ".join(["%.16f" % k for k in i])
+            line = "%s    %s\n" % (el, v)
+            f.write(line)
+    return
+
+
+def calc_dftd4_props(
+    atom_numbers: np.array,
+    carts: np.array,
+):
+    disp = DispersionModel(
+        numbers=atom_numbers,
+        positions=carts,
+    )
+    # res = disp.get_pairwise_dispersion(DampingParam(method='tpss'))
+    # param = DampingParam(s6=s6, s8=s8, a1=a1, a2=a2)
+    props = disp.get_properties()
+    C6s = props.get("c6 coefficients")
+    # print("P:", props.get("polarizibilities"))
+
+    write_xyz_from_np(atom_numbers, carts)
+    # print(atom_numbers, carts)
+    subprocess.call(
+        "dftd4 dat.xyz --json t.json > setup.txt",
+        shell=True,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.STDOUT,
+    )
+    with open("t.json") as f:
+        C6s_json = json.load(f)["c6 coefficients"]
+    C6s_json = np.array(C6s_json).reshape((len(C6s), len(C6s)))
+    # print(C6s[0])
+    # print(C6s_json[0])
+    # print(props)
+    return C6s_json
+
+
+def read_master_regen(
+    pkl_path: str = "master-regen.pkl",
+    csv_path: str = "SAPT-D3-Refit-Data.csv",
+    out_pkl: str = "data.pkl",
+):
+    ms = pd.read_pickle(pkl_path)
+    ms = ms[ms["DB"] != "PCONF"]
+    ms = ms[ms["DB"] != "SCONF"]
+    ms = ms[ms["DB"] != "ACONF"]
+    ms = ms[ms["DB"] != "CYCONF"]
+    print(ms["Name"])
+    for i in ms.columns.values:
+        print(i)
+        # print(ms[i])
+    return
+
+
+def databases_dimers():
+    names = [
+        "ACHC",
+        "C2H4_NT",
+        "CH4_PAH",
+        "CO2_NPHAC",
+        "CO2_PAH",
+        "HBC6",
+        "NBC10ext",
+        "S22by7",
+        "S66by10",
+        "Water2510",
+        "X31by10",
+    ]
+    return names
+
+
+def databases():
+    names = [
+        "ACHC",
+        "ACONF",
+        "C2H4_NT",
+        "CH4_PAH",
+        "CO2_NPHAC",
+        "CO2_PAH",
+        "CYCONF",
+        "HBC6",
+        "NBC10ext",
+        "PCONF",
+        "S22by7",
+        "S66by10",
+        "SCONF",
+        "Water2510",
+        "X31by10",
+    ]
+    return names
+
+
+def combine_dimer_csvs():
+    path_db = "data/Databases/"
+    dbs = databases_dimers()
+    frames = []
+    for i in dbs:
+        p = "%s%s/data.csv" % (path_db, i)
+        df = pd.read_csv(p)
+        frames.append(df)
+    df = pd.concat(frames)
+    print(df.head())
+    print(len(df["DB"]))
+    df.to_pickle("condensed.pkl")
+    return
+
+
+def create_data_csv():
+    path_db = "data/Databases/"
+    dbs = databases()
+    for i in dbs:
+        db_start = path_db + i + "/"
+        csv = db_start + "benchmark_data.csv"
+        condensed_csv = db_start + "data.csv"
+        fp = db_start + "Geometries/*dimer*"
+        df = pd.read_csv(csv)
+        df = df[["DB", "System #", "z", "Benchmark", "System"]]
+        df[["sapt0_N"]] = np.nan
+        xyz = db_start + "Geometries/" + i + "_"
+        df = generate_xyz_lists(df, xyz)
+
+        df.to_csv(condensed_csv)
+        print("\n", i)
+        print(df.loc[0]["xyz1"])
+        print(df.loc[0]["xyz2"])
+        print(df.loc[0]["xyz_d"])
+    combine_dimer_csvs()
+    return
+
+
+def generate_xyz_lists(df: pd.DataFrame, xyz: str):
+    """
+    generates the xyz lists for a given db from the pandas dataframe
+    """
+    if (
+        df["DB"].iat[0] == "SCONF"
+        or df["DB"].iat[0] == "PCONF"
+        or df["DB"].iat[0] == "CYCONF"
+        or df["DB"].iat[0] == "ACONF"
+    ):
+        df["xyz_d"] = ""
+        df["xyz1"] = df.apply(
+            lambda x: xyz + str(x["System #"]) + "_reagentA.xyz", axis=1
+        )
+        df["xyz2"] = df.apply(
+            lambda x: xyz + str(x["System #"]) + "_reagentB.xyz", axis=1
+        )
+    elif df["DB"].iat[0] == "NBC10ext":
+        df["xyz_d"] = df.apply(
+            lambda x: xyz
+            + str(x["System #"])
+            + "_"
+            + str("%.2f" % x["z"])
+            + "_dimer.xyz",
+            axis=1,
+        )
+        df["xyz1"] = df.apply(
+            lambda x: xyz
+            + str(x["System #"])
+            + "_"
+            + str("%.2f" % x["z"])
+            + "_monomerA.xyz",
+            axis=1,
+        )
+        df["xyz2"] = df.apply(
+            lambda x: xyz
+            + str(x["System #"])
+            + "_"
+            + str("%.2f" % x["z"])
+            + "_monomerB.xyz",
+            axis=1,
+        )
+        # df["xyz2"] = ""
+    elif df["z"].isna().sum() > 1 or df["DB"].iat[0] == "Water2510":
+        df["xyz_d"] = df.apply(
+            lambda x: xyz + str(x["System #"]) + "_dimer.xyz", axis=1
+        )
+        df["xyz1"] = df.apply(
+            lambda x: xyz + str(x["System #"]) + "_monomerA.xyz", axis=1
+        )
+        df["xyz2"] = df.apply(
+            lambda x: xyz + str(x["System #"]) + "_monomerB.xyz", axis=1
+        )
+    else:
+        df["xyz_d"] = df.apply(
+            lambda x: xyz + str(x["System #"]) + "_" + str(x["z"]) + "_dimer.xyz",
+            axis=1,
+        )
+        df["xyz1"] = df.apply(
+            lambda x: xyz + str(x["System #"]) + "_" + str(x["z"]) + "_monomerA.xyz",
+            axis=1,
+        )
+        df["xyz2"] = df.apply(
+            lambda x: xyz + str(x["System #"]) + "_" + str(x["z"]) + "_monomerB.xyz",
+            axis=1,
+        )
+    return df
+
+
+def construct_xyz_lookup(
+    pkl_path: str = "master-regen.pkl",
+    csv_path: str = "SAPT-D3-Refit-Data.csv",
+    out_pkl: str = "data.pkl",
+):
+    ms = pd.read_pickle(pkl_path)
+    ms = ms[ms["DB"] != "PCONF"]
+    ms = ms[ms["DB"] != "SCONF"]
+    ms = ms[ms["DB"] != "ACONF"]
+    ms = ms[ms["DB"] != "CYCONF"]
+
+    df = pd.read_csv("SAPT-D3-Refit-Data.csv")
+    out_df = ms[
+        [
+            "DB",
+            "System",
+            "System #",
+            "Benchmark",
+            "HF INTERACTION ENERGY",
+            "Geometry",
+        ]
+    ]
+    create_data_csv()
+
+    # energies = ms[["Benchmark", "HF INTERACTION ENERGY"]].to_numpy()
+    # carts = ms["Geometry"].to_list()
+    return
+
+
+def remove_extra_wb(line: str):
+    """
+    Removes extra whitespace in a string for better splitting.
+    """
+    line = (
+        line.replace("    ", " ")
+        .replace("   ", " ")
+        .replace("  ", " ")
+        .replace("  ", " ")
+        .replace("\n ", "\n")
+    )
+    return line
+
+
+def create_pt_dict():
+    """
+    create_pt_dict creates dictionary for string elements to atomic number.
+    """
+    el_dc = {}
+    for el in elements:
+        el_dc[el.symbol] = el.number
+    return el_dc
+
+
+def convert_str_carts_np_carts(carts: str, el_dc: dict = create_pt_dict()):
+    """
+    This will take Cartesian coordinates as a string and convert it to a numpy
+    array.
+    """
+    carts = remove_extra_wb(carts)
+    carts = carts.split("\n")
+    if carts[0] == "":
+        carts = carts[1:]
+    if carts[-1] == "":
+        carts = carts[:-1]
+    ca = []
+    for n, line in enumerate(carts):
+        a = line.split()
+        for j in range(len(a)):
+            if a[j].isalpha():
+                a[j] = el_dc[a[j]]
+            else:
+                a[j] = float(a[j])
+        ca.append(a)
+    ca = np.array(ca)
+    return ca
+
+
+def read_xyz(xyz_path: str, el_dc: dict) -> np.array:
+    """
+    read_xyz takes a path to xyz and returns np.array
+    """
+    with open(xyz_path, "r") as f:
+        dat = "".join(f.readlines()[2:])
+    elems = np.array(["C", "H", "O", "N"], dtype="|S6")
+    geom = convert_str_carts_np_carts(dat, el_dc)
+    return geom
+
+
+def distance_3d(r1, r2):
+    return np.linalg.norm(r1 - r2)
+
+
+def target_C8_AA() -> None:
+    """
+    target_C8_AA
+    """
+    return [
+        666.6492,
+        726.1834,
+        683.1565,
+        680.7375,
+        721.4485,
+        680.8078,
+        671.4554,
+        734.7153,
+        670.8260,
+        17.2193,
+        760.6473,
+        8.7298,
+        8.6837,
+        19.0139,
+        10.5469,
+        655.3271,
+        607.8381,
+        643.4876,
+        681.1332,
+        897.9817,
+        834.4209,
+        9.9954,
+        414.9061,
+        768.0699,
+        9.1092,
+        9.8194,
+        19.2866,
+        18.7959,
+    ]
+
+
+def print_C6s_C8s(
+    C6s,
+    C8s,
+    M_tot,
+    pos,
+) -> None:
+    """
+    print_C6s_C8s prints C6s and C8s next to target diagonals
+    """
+    print("Z     C6s\tC8s\t\tC8_target")
+    t_C8 = target_C8_AA()
+    for i in range(M_tot):
+        l = "%d     %.4f\t%.4f\t\t%.4f" % (int(pos[i]), C6s[i, i], C8s[i, i], t_C8[i])
+        print(l)
+
+
+# /theoryfs2/ds/amwalla3/projects/dftd4/src/dftd4/damping/rational.f90
+
+def compute_bj_self(
+    params: [],
+    pos: np.array,
+    carts: np.array,
+    Ma: int,  # number of atoms in monomer A
+    Mb: int,  # number of atoms in monomer B
+    C6s: np.array,
+) -> float:
+    """
+    compute_bj_self computes energy from C6s, cartesian coordinates, and dimer sizes.
+
+from f90 code...
+
+do iat = 1, mol%nat
+   izp = mol%id(iat)
+   do jat = 1, iat
+         print *, iat, jat, r2, mol%nat
+      jzp = mol%id(jat)
+      rrij = 3*r4r2(izp)*r4r2(jzp)
+      r0ij = self%a1 * sqrt(rrij) + self%a2
+      c6ij = c6(jat, iat)
+      do jtr = 1, size(trans, 2)
+         vec(:) = mol%xyz(:, iat) - (mol%xyz(:, jat) + trans(:, jtr))
+         r2 = vec(1)*vec(1) + vec(2)*vec(2) + vec(3)*vec(3)
+         if (r2 > cutoff2 .or. r2 < epsilon(1.0_wp)) cycle
+
+         t6 = 1.0_wp/(r2**3 + r0ij**6)
+         t8 = 1.0_wp/(r2**4 + r0ij**8)
+
+         edisp = self%s6*t6 + self%s8*rrij*t8
+
+         dE = -c6ij*edisp * 0.5_wp
+
+         energy(iat) = energy(iat) + dE
+         if (iat /= jat) then
+            energy(jat) = energy(jat) + dE
+         end if
+      end do
+   end do
+end do
+    """
+    electron_mass = 9.1093837015e-31
+    c = 299792458
+    fine_structure_constant = 7.2973525693e-3
+    hbar = 6.62607015e-34 / (2 * math.pi)
+    bohr = hbar / (electron_mass * c * fine_structure_constant)
+    autoaa = bohr * 1e10
+    aatoau = 1 / autoaa
+
+    energy = 0
+    s6, s8, a1, a2 = params
+    C8s = np.zeros(np.shape(C6s))
+    N_tot = len(carts)
+    energies = np.zeros(Ma + Mb)
+    M_tot = len(carts)
+    lattice_points = 1
+
+    cs = aatoau * np.array(carts, copy=True)
+    for i in range(M_tot):
+        el1 = int(pos[i])
+        el1_r4r2 = r4r2_vals(el1)
+        Q_A = np.sqrt(np.sqrt(el1) * el1_r4r2)
+
+        for j in range(i):
+            if i == j:
+                continue
+            for k in range(lattice_points):
+                el2 = int(pos[j])
+                el2_r4r2 = r4r2_vals(el2)
+                Q_B = np.sqrt(np.sqrt(el2) * el2_r4r2)
+
+                rrij = 3 * Q_A * Q_B
+                r0ij = a1 * np.sqrt(rrij) + a2
+                # C8s[i, j] = 3 * C6s[i, j] * np.sqrt(Q_A * Q_B)
+                C6 = C6s[i, j]
+                # C8 = C8s[i, j]
+
+                r1, r2 = cs[i, :], cs[j, :]
+                # R = np.linalg.norm(r1 - r2)
+                r2 = np.subtract(r1, r2)
+                r2 = np.sum(np.multiply(r2, r2))
+                # R value is not a match since dftd4 converts input carts
+                t6 = 1 / (r2**3 + r0ij**6)
+                t8 = 1 / (r2**4 + r0ij**8)
+                edisp = s6 * t6 + s8 * rrij * t8
+
+                de = -C6 * edisp * 0.5
+                # print(carts[i, 0], i, j, R, edisp, de)
+
+                # i + 1 to match f90 indexing
+                # print("carts1 =", r1)
+                # print("carts2 =", r2)
+
+                # print *, iat, jat, r2, edisp, dE
+
+                energies[i] += de
+                if i != j:
+                    energies[j] += de
+        print(i)
+        print(energies)
+
+    energy = np.sum(energies)
+
+    return energy
+
+    # print(np.sum(C6s), np.sum(C8s))
+    # a = np.reshape(pos, (len(pos), 1))
+    # arr = np.hstack((a, carts))
+    # # r0ij = self%a1 * sqrt(rrij) + self%a2
+    # rrij = 3 * Q_A * Q_B
+    # r0ij = a1 * np.sqrt(rrij) + a2
+
+    # s6, s8, a1, a2 = params
+    # C8s = np.zeros(np.shape(C6s))
+    # N_tot = len(carts)
+    # for i in range(Ma + Mb):
+    #     el1 = int(pos[i])
+    #     el1_r4r2 = r4r2_vals(el1)
+    #     Q_A = np.sqrt(el1) * el1_r4r2
+    #
+    #     for j in range(Ma + Mb):
+    #
+    #         el2 = int(pos[j])
+    #         el2_r4r2 = r4r2_vals(el2)
+    #         Q_B = np.sqrt(el2) * el2_r4r2
+    #         C8s[i, j] = 3 * C6s[i, j] * np.sqrt(Q_A * Q_B)
+    #         C6 = C6s[i, j]
+    #         C8 = C8s[i, j]
+    #
+    #         r1, r2 = carts[i, :], carts[j, :]
+    #         R = np.linalg.norm(r1 - r2)
+    #         R0 = np.sqrt(C8 / C6)
+    #
+    #         if i < Ma and j >= Ma:
+    #             energy += C6 / (R**6.0 + (a1 * R0 + a2) ** 6.0)
+    #             energy += s8 * C8 / (R**8.0 + (a1 * R0 + a2) ** 8.0)
+    #
+    # energy *= -1
+    # return energy
+
+def compute_bj_dftd4(
+    params,
+    atom_numbers: np.array,
+    carts: np.array,
+):
+    s6, s8, a1, a2 = params
+    energy = 0.0
+    # disp = DispersionModel(
+    #     numbers=atom_numbers,
+    #     positions=carts,
+    # )
+    # param = DampingParam(s6=s6, s8=s8, a1=a1, a2=a2)
+    # res = disp.get_dispersion(param, grad=False)
+    # energy = res.get("energy")
+
+    write_xyz_from_np(atom_numbers, carts)
+    subprocess.call(
+        "dftd4 dat.xyz --verbose --pair-resolved --verbose --property --param %.4f %.4f %.4f %.4f > dat.txt"
+        % (s6, s8, a1, a2),
+        shell=True,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.STDOUT,
+    )
+    with open(".EDISP") as f:
+        # energy = json.load(f)["energy"]
+        energy = float(f.read())
+    # C6s_json = np.array(C6s_json).reshape((len(C6s), len(C6s)))
+    # converts to kcal/mol
+    return energy
+
+
+def build_dummy() -> None:
+    """
+    build_dummy builds and runs all elements to get r4r2
+
+    """
+    for i in elements:
+        e = i.number
+        atom_numbers = np.array([e, e])
+        carts = np.array(
+            [
+                [0, 0, 0],
+                [0, 2, 0],
+            ],
+        )
+        write_xyz_from_np(atom_numbers, carts, outfile="diatomic.xyz")
+        subprocess.call(
+            "dftd4 diatomic.xyz > diatomic.txt",
+            shell=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.STDOUT,
+        )
+        with open("diatomic.txt", "r") as f:
+            d = f.readlines()
+            print(d[15:16])
+
+
+def gather_data2(
+    condensed_path="condensed.pkl",
+):
+    params = [1.0000, 0.9, 0.4, 5.0]
+    el_dc = create_pt_dict()
+    df = pd.read_pickle(condensed_path)
+    xyzs = df[["xyz1", "xyz2", "xyz_d"]].to_numpy()
+    for sys in xyzs[:2]:
+        g1, g2, g3 = sys[0], sys[1], sys[2]
+        g1 = read_xyz(g1, el_dc)
+        g2 = read_xyz(g2, el_dc)
+        gt = np.vstack((g1, g2))
+        g3 = read_xyz(g3, el_dc)
+        if not np.all((gt == g3) == True):
+            print("not a match")
+            continue
+        pos = g3[:, 0]
+        carts = g3[:, 1:]
+        C6s = calc_dftd4_props(pos, carts)
+        Ma, Mb = len(g1), len(g2)
+        energy = compute_bj_self(params, pos, carts, Ma, Mb, C6s)
+        print("self :", energy)
+        energy = compute_bj_dftd4(params, pos, carts)
+        print("DFTD4:", energy)
+        print()
+
+    return
