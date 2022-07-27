@@ -19,6 +19,7 @@ from src.setup import (
     create_pt_dict,
     compute_bj_opt,
     gather_data3,
+    gather_data3_dimer_splits
 )
 from src.structs import d4_values, mol_i, mols_data
 import subprocess
@@ -151,6 +152,8 @@ def read_carts_compute_bj(
     xyz: np.array,
     C6s: np.array,
     C8s: np.array,
+    monAs: np.array,
+    monBs: np.array,
     el_dc: dict,
 ) -> float:
     """
@@ -158,7 +161,7 @@ def read_carts_compute_bj(
     """
     # geom = read_xyz(xyz, el_dc)
     # energy = compute_bj_opt(params, geom[:, 0], geom[:, 1:], C6s, C8s)
-    energy = compute_bj_opt(params, xyz[:, 0], xyz[:, 1:], C6s, C8s)
+    energy = compute_bj_opt(params, xyz[:, 0], xyz[:, 1:], C6s, C8s, monAs, monBs)
     return energy
 
 
@@ -169,27 +172,14 @@ def compute_int_energy(params: [float], df: pd.DataFrame):
     rmse = 0
     diff = np.zeros(len(df))
     el_dc = create_pt_dict()
-    # res = np.zeros(len(df))
-    # for n, (idx, item) in enumerate(df.iterrows()):
-    #     xyz = item["Geometry"]
-    #     C6s = item["C6s"]
-    #     C8s = item["C8s"]
-    #     d4 = read_carts_compute_bj(abs(params), xyz, C6s, C8s, el_dc)
-    #     dhf = item["HF INTERACTION ENERGY"]
-    #     sdd = d4 + dhf
-    #     ref = item["Benchmark"]
-    #     res[n] = ref - sdd
-    # rmse = np.sqrt(np.mean(np.square(res)))
-    # print(rmse, params)
-    # return rmse
-
     df["d4"] = df.apply(
         lambda row: read_carts_compute_bj(
             params,
-            # row["xyz_d"],
             row["Geometry"],
             row["C6s"],
             row["C8s"],
+            row["monAs"],
+            row["monBs"],
             el_dc,
         ),
         axis=1,
@@ -197,10 +187,10 @@ def compute_int_energy(params: [float], df: pd.DataFrame):
     df["diff"] = df.apply(
         lambda r: r["Benchmark"] - (r["HF INTERACTION ENERGY"] + r["d4"]), axis=1
     )
-    print(df[["Benchmark", "HF INTERACTION ENERGY", "d4", "diff"]])
+    # print(df[["Benchmark", "HF INTERACTION ENERGY", "d4", "diff"]])
 
     rmse = (df["diff"] ** 2).mean() ** 0.5
-    print("%.8f\t" % rmse, df["d4"].mean(), params)
+    print("%.8f\t" % rmse, params)
     df["diff"] = 0
     return rmse
 
@@ -242,11 +232,12 @@ def optimization():
     params = [0.9171, 0.3385, 2.883]
     print("RMSE\t\tparams")
     df = pd.read_pickle("opt3.pkl")
-    # df = df.iloc[[0, 1]]
-    # df["HF INTERACTION ENERGY"] = -df["HF INTERACTION ENERGY"]
+    df = df.dropna()
+    df = df.iloc[[0, 1, 2, 3, 4, 5]]
     ret = opt.minimize(compute_int_energy, args=(df), x0=params, method="powell")
-    print("Results =", ret)
+    print("\nResults\n", ret)
     return
+
 
 
 def main():
@@ -255,10 +246,16 @@ def main():
     """
     # create_data_csv()
     # gather_data2()
-    gather_data3()
-    optimization()
+    # gather_data3()
+    df = pd.read_pickle("opt3.pkl")
+    gather_data3_dimer_splits(df)
+    # optimization()
 
-    # compute_int_energy(params)
+    # params = [0.9171, 0.3385, 2.883]
+    # df = pd.read_pickle("opt3.pkl")
+    # df = df.dropna()
+    # df = df.iloc[[0, 1, 2, 3, 4, 5]]
+    # compute_int_energy(params, df)
 
     return
 

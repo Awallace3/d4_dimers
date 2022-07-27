@@ -2,12 +2,13 @@ import numpy as np
 import pandas as pd
 from periodictable import elements
 from .r4r2 import get_Q, r4r2_from_elements_call, r4r2_vals
-from .tools import print_cartesians
+from .tools import print_cartesians, print_cartesians_pos_carts
 import subprocess
 import json
 import math
 from .constants import Constants
 from tqdm import tqdm
+from psi4.driver.qcdb.bfs import BFS
 
 
 def write_xyz_from_np(atom_numbers, carts, outfile="dat.xyz") -> None:
@@ -389,6 +390,8 @@ def compute_bj_opt(
     carts: np.array,
     C6s: np.array,
     C8s: np.array,
+    monAs: np.array,
+    monBs: np.array,
 ) -> float:
     """
     compute_bj_opt computes energy from C6s, cartesian coordinates, and C8s for
@@ -396,21 +399,27 @@ def compute_bj_opt(
     """
     s8, a1, a2 = params
     s6 = 1
-    C8s = np.zeros(np.shape(C6s))
     N_tot = len(carts)
-
     aatoau = Constants().g_aatoau()
     energy = 0
     cs = aatoau * np.array(carts, copy=True)
-    for i in range(N_tot):
-        for j in range(i):
+    # print(s8, a1, a2, "\nmolecule\n")
+    for i in monAs:
+        # print(i)
+        for j in monBs:
+            # print(i, j)
             C6 = C6s[i, j]
             C8 = C8s[i, j]
             r1, r2 = cs[i, :], cs[j, :]
             R = np.linalg.norm(r1 - r2)
             R0 = np.sqrt(C8 / C6)
-            energy += C6 / (R**6.0 + (a1 * R0 + a2) ** 6.0)
-            energy += s8 * C8 / (R**8.0 + (a1 * R0 + a2) ** 8.0)
+            e6 = C6 / (R**6.0 + (a1 * R0 + a2) ** 6.0)
+            # print(e6)
+            e8 = s8 * C8 / (R**8.0 + (a1 * R0 + a2) ** 8.0)
+            # print(e8, C8)
+            energy += e6
+            energy += e8
+
     energy *= -627.509
     # energy *= -1
     return energy
@@ -663,6 +672,47 @@ def gather_data2(condensed_path="condensed.pkl", output_path="opt.pkl"):
     return
 
 
+"""
+1. make intermolecular distance matrix
+2. loop through rows and take maximum distance as cutoff
+"""
+
+class FailedToSplit(Exception):
+    """DID NOT BREAK INTO DIMER"""
+    def __init__(self, position):
+        self.position
+        super().__init__(self.message)
+
+def gather_data3_dimer_splits(
+    df: pd.DataFrame,
+) -> pd.DataFrame:
+    """
+    gather_data3_dimer_splits creates dimers from failed splits in gather_data3
+    from BFS
+    """
+    df[df['monBs'].isna()]
+    geom = df.iloc[0]["Geometry"]
+    print_cartesians(geom)
+    Rs = np.zeros((len(geom), len(geom)))
+    # monA = np.zeros(1)
+    # monB = np.zeros(1)
+    # for i, r1 in enumerate(geom):
+    #     for j, r2 in enumerate(geom):
+    #         R = np.linalg.norm(r1 - r2)
+    #         Rs[i, j] = R
+    # print(Rs)
+    # print("monA:")
+    # print_cartesians(monA)
+    # print("monB:")
+    # print_cartesians(monB)
+
+
+
+
+
+    return
+
+
 def gather_data3(master_path="master-regen.pkl", output_path="opt3.pkl"):
     el_dc = create_pt_dict()
     df = pd.read_pickle(master_path)
@@ -672,7 +722,10 @@ def gather_data3(master_path="master-regen.pkl", output_path="opt3.pkl"):
     xyzs = df["Geometry"].to_list()
     C6s = [np.array([]) for i in range(len(xyzs))]
     C8s = [np.array([]) for i in range(len(xyzs))]
+    monAs = [np.nan for i in range(len(xyzs))]
+    monBs = [np.nan for i in range(len(xyzs))]
 
+    ones, twos, clear = [], [], []
     for n, c in enumerate(tqdm(xyzs[:], desc="DFTD4 Props", ascii=True)):
         g3 = np.array(c)
         pos = g3[:, 0]
@@ -680,6 +733,24 @@ def gather_data3(master_path="master-regen.pkl", output_path="opt3.pkl"):
         C6, C8 = calc_dftd4_props(pos, carts)
         C6s[n] = C6
         C8s[n] = C8
+        frags = BFS(carts, pos, bond_threshold=0.5)
+        if len(frags) > 2:
+            ones.append(n)
+        elif len(frags) == 1:
+            twos.append(n)
+            monAs[n] = np.array(frags[0])
+        else:
+            monAs[n] = np.array(frags[0])
+            monBs[n] = np.array(frags[1])
+            clear.append(n)
+
+    print("total =", len(xyzs))
+    print("ones =", len(ones))
+    print("twos =", len(twos))
+    print("clear =", len(clear))
     df["C6s"] = C6s
-    df["C8s"] = C6s
+    df["C8s"] = C8s
+    df["monAs"] = monAs
+    df["monBs"] = monBs
+    df.to_pickle(output_path)
     return
