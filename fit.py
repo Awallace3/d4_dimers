@@ -52,7 +52,6 @@ def get_db(reffile):
     #training = master[master['Fitset']==True]
     training = master
     ntrain = len(training)
-    print(ntrain)
     return training
 
 def compute_bj(params, d3data):
@@ -142,6 +141,7 @@ def compute_int_energy(params):
     ntrain = len(training)
     train_weights = np.zeros(ntrain)
     res = np.zeros(ntrain)
+    d3s = np.zeros(ntrain)
     n = 0
     for idx,item in training.iterrows():
         d3data = item['D3Data']
@@ -156,13 +156,18 @@ def compute_int_energy(params):
             en = compute_zero3_b2(abs(params), d3data)
         if damp == 'ZERO3-S8':
             en = compute_zero3_s8(abs(params), d3data)
-
+        d3s[n] = en
         dhf = item['HF INTERACTION ENERGY']
         sdd = en + dhf
         ref = item['Benchmark']
         res[n] = ref - sdd
         train_weights[n] = item['weights']
         n += 1
+
+    training['d3'] = d3s
+    training['diff'] = res
+
+    print(training[["Benchmark", "HF INTERACTION ENERGY", "d3", "diff"]])
 
     rmse = np.sqrt(np.mean(np.square(res)))
     wrmse = np.sqrt(np.mean(np.divide(np.square(res),np.square(train_weights) )))

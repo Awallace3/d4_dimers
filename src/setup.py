@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 from periodictable import elements
-from dftd4.interface import DispersionModel, DampingParam
 from .r4r2 import get_Q, r4r2_from_elements_call, r4r2_vals
 from .tools import print_cartesians
 import subprocess
@@ -28,32 +27,29 @@ def write_xyz_from_np(atom_numbers, carts, outfile="dat.xyz") -> None:
 def calc_dftd4_props(
     atom_numbers: np.array,
     carts: np.array,
+    input_xyz: str = "dat.xyz",
+    output_json: str = "",
 ):
-    disp = DispersionModel(
-        numbers=atom_numbers,
-        positions=carts,
-    )
-    # res = disp.get_pairwise_dispersion(DampingParam(method='tpss'))
-    # param = DampingParam(s6=s6, s8=s8, a1=a1, a2=a2)
-    props = disp.get_properties()
-    C6s = props.get("c6 coefficients")
-    # print("P:", props.get("polarizibilities"))
-
-    write_xyz_from_np(atom_numbers, carts)
-    # print(atom_numbers, carts)
+    write_xyz_from_np(atom_numbers, carts, outfile=input_xyz)
+    if output_json == "":
+        args = ["dftd4", input_xyz, "--property"]
+        # cmd = "~/.local/bin/dftd4 %s --property" % (input_xyz)
+    else:
+        args = ["dftd4", input_xyz, "--property", "--json", output_json]
+        # cmd = "~/.local/bin/dftd4 %s --property --json %s" % (input_xyz, output_json)
     subprocess.call(
-        "dftd4 dat.xyz --json t.json > setup.txt",
-        shell=True,
+        # cmd,
+        # shell=True,
+        args=args,
+        shell=False,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.STDOUT,
     )
-    with open("t.json") as f:
-        C6s_json = json.load(f)["c6 coefficients"]
-    C6s_json = np.array(C6s_json).reshape((len(C6s), len(C6s)))
-    # print(C6s[0])
-    # print(C6s_json[0])
-    # print(props)
-    return C6s_json
+    with open("C_n.json") as f:
+        dat = json.load(f)
+        C6s = np.array(dat["c6"])
+        C8s = np.array(dat["c8"])
+    return C6s, C8s
 
 
 def read_master_regen(
@@ -136,7 +132,17 @@ def create_data_csv():
         fp = db_start + "Geometries/*dimer*"
         df = pd.read_csv(csv)
         df = df[["DB", "System #", "z", "Benchmark", "System"]]
-        df[["sapt0_N"]] = np.nan
+        df[
+            [
+                "sapt0_N",
+                "HF_jun_DZ",
+                "HF_aug_DZ",
+                "HF_cc_PVDZ",
+                "HF_cc_PTDZ",
+                "HF_aug_cc_PTDZ",
+            ]
+        ] = np.nan
+
         xyz = db_start + "Geometries/" + i + "_"
         df = generate_xyz_lists(df, xyz)
         for i in df["xyz_d"]:
@@ -145,18 +151,7 @@ def create_data_csv():
                     pass
 
         df.to_csv(condensed_csv)
-        # for i in range(len(df["DB"])):
-        #
-        #     print("\n", i)
-        #     print(df.loc[i]["xyz1"])
-        #     print(df.loc[i]["xyz2"])
-        #     print(df.loc[i]["xyz_d"])
-        print("\n", i)
-        print(df.loc[0]["xyz1"])
-        print(df.loc[0]["xyz2"])
-        print(df.loc[0]["xyz_d"])
     df = combine_dimer_csvs()
-    ms = pd.read_pickle('master-regen.pkl')
     return
 
 
@@ -417,6 +412,7 @@ def compute_bj_opt(
             energy += C6 / (R**6.0 + (a1 * R0 + a2) ** 6.0)
             energy += s8 * C8 / (R**8.0 + (a1 * R0 + a2) ** 8.0)
     energy *= -627.509
+    # energy *= -1
     return energy
 
 
@@ -633,7 +629,7 @@ def gather_data2_testing(
             continue
         pos = g3[:, 0]
         carts = g3[:, 1:]
-        C6s = calc_dftd4_props(pos, carts)
+        C6s, C8s = calc_dftd4_props(pos, carts)
         Ma, Mb = len(g1), len(g2)
         energy = compute_bj_pairs(params, pos, carts, Ma, Mb, C6s)
         print("self :", energy)
@@ -642,29 +638,48 @@ def gather_data2_testing(
         energy = compute_bj_dftd4(params, pos, carts)
         print("DFTD4:", energy)
         print()
-
     return
 
 
 def gather_data2(condensed_path="condensed.pkl", output_path="opt.pkl"):
-    # params = [1.0000, 0.9, 0.4, 5.0]
-    # el_dc = create_pt_dict()
-    # df = pd.read_pickle(condensed_path)
-    # xyzs = df["xyz_d"].to_numpy()
-    # C6s = [i for i in range(len(xyzs))]
-    # C8s = [i for i in range(len(xyzs))]
-    #
-    # for n, g3 in enumerate(tqdm(xyzs[:], desc="DFTD4 Props", ascii=True)):
-    #     g3 = read_xyz(g3, el_dc)
-    #     pos = g3[:, 0]
-    #     carts = g3[:, 1:]
-    #     C6 = calc_dftd4_props(pos, carts)
-    #     C8 = compute_C8s(pos, carts, C6)
-    #     C6s[n] = C6
-    #     C8s[n] = C8
-    # df["C6s"] = C6s
-    # df["C8s"] = C6s
-    # df.to_pickle(output_path)
-    df.read_pickle(output_path)
+    params = [0.9, 0.5, 5.0]
+    el_dc = create_pt_dict()
+    df = pd.read_pickle(condensed_path)
+    xyzs = df["xyz_d"].to_numpy()
+    C6s = [i for i in range(len(xyzs))]
+    C8s = [i for i in range(len(xyzs))]
 
+    for n, g3 in enumerate(tqdm(xyzs[:1], desc="DFTD4 Props", ascii=True)):
+        g3 = read_xyz(g3, el_dc)
+        pos = g3[:, 0]
+        carts = g3[:, 1:]
+        C6, C8 = calc_dftd4_props(pos, carts)
+        # C8 = compute_C8s(pos, carts, C6)
+        C6s[n] = C6
+        C8s[n] = C8
+    df["C6s"] = C6s
+    df["C8s"] = C6s
+    df.to_pickle(output_path)
+    return
+
+
+def gather_data3(master_path="master-regen.pkl", output_path="opt3.pkl"):
+    el_dc = create_pt_dict()
+    df = pd.read_pickle(master_path)
+    df = df[
+        ["DB", "System", "System #", "Benchmark", "HF INTERACTION ENERGY", "Geometry"]
+    ]
+    xyzs = df["Geometry"].to_list()
+    C6s = [np.array([]) for i in range(len(xyzs))]
+    C8s = [np.array([]) for i in range(len(xyzs))]
+
+    for n, c in enumerate(tqdm(xyzs[:], desc="DFTD4 Props", ascii=True)):
+        g3 = np.array(c)
+        pos = g3[:, 0]
+        carts = g3[:, 1:]
+        C6, C8 = calc_dftd4_props(pos, carts)
+        C6s[n] = C6
+        C8s[n] = C8
+    df["C6s"] = C6s
+    df["C8s"] = C6s
     return

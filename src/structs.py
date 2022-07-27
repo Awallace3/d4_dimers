@@ -8,6 +8,30 @@ class d4_values:
     Qs: [np.array]
     C8s: [np.array]
 
+@dataclass
+class method_info:
+    method: str
+    monA: float
+    monB: float
+    dimer: float
+    int_e: float
+    params: []
+
+
+@dataclass
+class dimers:
+    System: str
+    z: str
+    DB: str
+    C6s: np.array
+    C8s: np.array
+    Benchmark: float
+    HF_jun_DZ: float
+    HF_aug_DZ: float
+    HF_cc_PVDZ: float
+    HF_cc_PTDZ: float
+    HF_aug_cc_PTDZ: float
+
 
 @dataclass
 class mol_i:
