@@ -137,7 +137,7 @@ def compute_int_energy(params):
 
     damp = args.damp.upper()
     # Loop over each dimer in the training set
-    #training = get_db('master-0.85.pkl')
+    # training = get_db('master-0.85.pkl')
     training = get_db('master-regen.pkl')
     ntrain = len(training)
     train_weights = np.zeros(ntrain)
@@ -158,15 +158,8 @@ def compute_int_energy(params):
             en = compute_zero3_s8(abs(params), d3data)
 
         dhf = item['HF INTERACTION ENERGY']
-        print("dhf", dhf)
-        print("en", en)
         sdd = en + dhf
-        print("sdd", sdd)
         ref = item['Benchmark']
-        print("ref", ref)
-        print("res", ref - sdd)
-        return
-
         res[n] = ref - sdd
         train_weights[n] = item['weights']
         n += 1

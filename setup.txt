@@ -9,6 +9,16 @@
      |                    University of Bonn                     |
       ----------------------------------------------------------- 
 
+Rational (Becke-Johnson) damping: hf-D4
+---------------------
+  s6         1.0000
+  s8         1.6168
+  s9         0.0000
+  a1         0.4496
+  a2         3.3574
+ alp        16.0000
+--------------------
+
 Atomic data, radii in Ångström:
 ------------------------------------------------------
    Z          R(cov)      r4/r2   hardness         EN
@@ -75,4 +85,7 @@ Molecular properties (in atomic units):
  molecular C8              258237.0435
 ----------------------------------------
 
+Dispersion energy:      -1.3193728381125E-01 Eh
+
+[Info] Dispersion energy written to .EDISP
 [Info] JSON dump of results written to 't.json'

@@ -8,6 +8,7 @@ import subprocess
 import json
 import math
 from .constants import Constants
+from tqdm import tqdm
 
 
 def write_xyz_from_np(atom_numbers, carts, outfile="dat.xyz") -> None:
@@ -121,8 +122,8 @@ def combine_dimer_csvs():
     df = pd.concat(frames)
     print(df.head())
     print(len(df["DB"]))
-    df.to_pickle("condensed.pkl")
-    return
+    # df.to_pickle("condensed.pkl")
+    return df
 
 
 def create_data_csv():
@@ -138,14 +139,39 @@ def create_data_csv():
         df[["sapt0_N"]] = np.nan
         xyz = db_start + "Geometries/" + i + "_"
         df = generate_xyz_lists(df, xyz)
+        for i in df["xyz_d"]:
+            if i != "":
+                with open(i, "r") as f:
+                    pass
 
         df.to_csv(condensed_csv)
+        # for i in range(len(df["DB"])):
+        #
+        #     print("\n", i)
+        #     print(df.loc[i]["xyz1"])
+        #     print(df.loc[i]["xyz2"])
+        #     print(df.loc[i]["xyz_d"])
         print("\n", i)
         print(df.loc[0]["xyz1"])
         print(df.loc[0]["xyz2"])
         print(df.loc[0]["xyz_d"])
-    combine_dimer_csvs()
+    df = combine_dimer_csvs()
+    ms = pd.read_pickle('master-regen.pkl')
     return
+
+
+def convert_zs_HBC6(
+    z,
+) -> str:
+    """
+    convert_zs returns z for HBC6
+    """
+    z2 = "%.2f" % z
+    if z2[-1] == "0" and z2[-2] != ".":
+        v = z2[:-1]
+    else:
+        v = z2
+    return v
 
 
 def generate_xyz_lists(df: pd.DataFrame, xyz: str):
@@ -165,12 +191,12 @@ def generate_xyz_lists(df: pd.DataFrame, xyz: str):
         df["xyz2"] = df.apply(
             lambda x: xyz + str(x["System #"]) + "_reagentB.xyz", axis=1
         )
-    elif df["DB"].iat[0] == "NBC10ext":
+    elif df["DB"].iat[0] == "HBC6" or df["DB"].iat[0] == "NBC10ext":
         df["xyz_d"] = df.apply(
             lambda x: xyz
             + str(x["System #"])
             + "_"
-            + str("%.2f" % x["z"])
+            + convert_zs_HBC6(x["z"])
             + "_dimer.xyz",
             axis=1,
         )
@@ -178,7 +204,7 @@ def generate_xyz_lists(df: pd.DataFrame, xyz: str):
             lambda x: xyz
             + str(x["System #"])
             + "_"
-            + str("%.2f" % x["z"])
+            + convert_zs_HBC6(x["z"])
             + "_monomerA.xyz",
             axis=1,
         )
@@ -186,7 +212,7 @@ def generate_xyz_lists(df: pd.DataFrame, xyz: str):
             lambda x: xyz
             + str(x["System #"])
             + "_"
-            + str("%.2f" % x["z"])
+            + convert_zs_HBC6(x["z"])
             + "_monomerB.xyz",
             axis=1,
         )
@@ -286,6 +312,8 @@ def convert_str_carts_np_carts(carts: str, el_dc: dict = create_pt_dict()):
         a = line.split()
         for j in range(len(a)):
             if a[j].isalpha():
+                if len(a[j]) > 1:
+                    a[j] = a[j][:-1] + a[j][-1].lower()
                 a[j] = el_dc[a[j]]
             else:
                 a[j] = float(a[j])
@@ -300,7 +328,6 @@ def read_xyz(xyz_path: str, el_dc: dict) -> np.array:
     """
     with open(xyz_path, "r") as f:
         dat = "".join(f.readlines()[2:])
-    elems = np.array(["C", "H", "O", "N"], dtype="|S6")
     geom = convert_str_carts_np_carts(dat, el_dc)
     return geom
 
@@ -361,6 +388,38 @@ def print_C6s_C8s(
         print(l)
 
 
+def compute_bj_opt(
+    params: [],
+    pos: np.array,
+    carts: np.array,
+    C6s: np.array,
+    C8s: np.array,
+) -> float:
+    """
+    compute_bj_opt computes energy from C6s, cartesian coordinates, and C8s for
+    optimization from sklearn
+    """
+    s8, a1, a2 = params
+    s6 = 1
+    C8s = np.zeros(np.shape(C6s))
+    N_tot = len(carts)
+
+    aatoau = Constants().g_aatoau()
+    energy = 0
+    cs = aatoau * np.array(carts, copy=True)
+    for i in range(N_tot):
+        for j in range(i):
+            C6 = C6s[i, j]
+            C8 = C8s[i, j]
+            r1, r2 = cs[i, :], cs[j, :]
+            R = np.linalg.norm(r1 - r2)
+            R0 = np.sqrt(C8 / C6)
+            energy += C6 / (R**6.0 + (a1 * R0 + a2) ** 6.0)
+            energy += s8 * C8 / (R**8.0 + (a1 * R0 + a2) ** 8.0)
+    energy *= -627.509
+    return energy
+
+
 def compute_bj_pairs(
     params: [],
     pos: np.array,
@@ -404,57 +463,51 @@ def compute_bj_pairs(
     return energy
 
 
+def compute_C8s(
+    pos: np.array,
+    carts: np.array,
+    C6s: np.array,
+) -> float:
+    """
+    compute_bj_self computes energy from C6s, cartesian coordinates, and dimer sizes.
+    """
+    C8s = np.zeros(np.shape(C6s))
+    N_tot = len(carts)
+    aatoau = Constants().g_aatoau()
+    cs = aatoau * np.array(carts, copy=True)
+    for i in range(N_tot):
+        el1 = int(pos[i])
+        el1_r4r2 = r4r2_vals(el1)
+        Q_A = np.sqrt(el1) * el1_r4r2
+        # for j in range(i):
+        for j in range(N_tot):
+            el2 = int(pos[j])
+            el2_r4r2 = r4r2_vals(el2)
+            Q_B = np.sqrt(el2) * el2_r4r2
+            C8s[i, j] = 3 * C6s[i, j] * np.sqrt(Q_A * Q_B)
+            C6 = C6s[i, j]
+            C8 = C8s[i, j]
+    return C8s
+
 
 # /theoryfs2/ds/amwalla3/projects/dftd4/src/dftd4/damping/rational.f90
+
 
 def compute_bj_self(
     params: [],
     pos: np.array,
     carts: np.array,
-    Ma: int,  # number of atoms in monomer A
-    Mb: int,  # number of atoms in monomer B
     C6s: np.array,
 ) -> float:
     """
     compute_bj_self computes energy from C6s, cartesian coordinates, and dimer sizes.
-
-from f90 code...
-
-do iat = 1, mol%nat
-   izp = mol%id(iat)
-   do jat = 1, iat
-         print *, iat, jat, r2, mol%nat
-      jzp = mol%id(jat)
-      rrij = 3*r4r2(izp)*r4r2(jzp)
-      r0ij = self%a1 * sqrt(rrij) + self%a2
-      c6ij = c6(jat, iat)
-      do jtr = 1, size(trans, 2)
-         vec(:) = mol%xyz(:, iat) - (mol%xyz(:, jat) + trans(:, jtr))
-         r2 = vec(1)*vec(1) + vec(2)*vec(2) + vec(3)*vec(3)
-         if (r2 > cutoff2 .or. r2 < epsilon(1.0_wp)) cycle
-
-         t6 = 1.0_wp/(r2**3 + r0ij**6)
-         t8 = 1.0_wp/(r2**4 + r0ij**8)
-
-         edisp = self%s6*t6 + self%s8*rrij*t8
-
-         dE = -c6ij*edisp * 0.5_wp
-
-         energy(iat) = energy(iat) + dE
-         if (iat /= jat) then
-            energy(jat) = energy(jat) + dE
-         end if
-      end do
-   end do
-end do
     """
 
     energy = 0
     s6, s8, a1, a2 = params
     C8s = np.zeros(np.shape(C6s))
-    N_tot = len(carts)
-    energies = np.zeros(Ma + Mb)
     M_tot = len(carts)
+    energies = np.zeros(M_tot)
     lattice_points = 1
 
     aatoau = Constants().g_aatoau()
@@ -562,7 +615,7 @@ def build_dummy() -> None:
             print(d[15:16])
 
 
-def gather_data2(
+def gather_data2_testing(
     condensed_path="condensed.pkl",
 ):
     params = [1.0000, 0.9, 0.4, 5.0]
@@ -584,10 +637,34 @@ def gather_data2(
         Ma, Mb = len(g1), len(g2)
         energy = compute_bj_pairs(params, pos, carts, Ma, Mb, C6s)
         print("self :", energy)
-        energy = compute_bj_self(params, pos, carts, Ma, Mb, C6s)
+        energy = compute_bj_self(params, pos, carts, C6s)
         print("self :", energy)
         energy = compute_bj_dftd4(params, pos, carts)
         print("DFTD4:", energy)
         print()
+
+    return
+
+
+def gather_data2(condensed_path="condensed.pkl", output_path="opt.pkl"):
+    # params = [1.0000, 0.9, 0.4, 5.0]
+    # el_dc = create_pt_dict()
+    # df = pd.read_pickle(condensed_path)
+    # xyzs = df["xyz_d"].to_numpy()
+    # C6s = [i for i in range(len(xyzs))]
+    # C8s = [i for i in range(len(xyzs))]
+    #
+    # for n, g3 in enumerate(tqdm(xyzs[:], desc="DFTD4 Props", ascii=True)):
+    #     g3 = read_xyz(g3, el_dc)
+    #     pos = g3[:, 0]
+    #     carts = g3[:, 1:]
+    #     C6 = calc_dftd4_props(pos, carts)
+    #     C8 = compute_C8s(pos, carts, C6)
+    #     C6s[n] = C6
+    #     C8s[n] = C8
+    # df["C6s"] = C6s
+    # df["C8s"] = C6s
+    # df.to_pickle(output_path)
+    df.read_pickle(output_path)
 
     return

@@ -4,6 +4,10 @@ import numpy as np
 import math
 from src.r4r2 import r4r2_vals
 import json
+from src.constants import Constants
+from src.setup import convert_str_carts_np_carts, write_xyz_from_np
+import subprocess
+from dftd4.interface import DispersionModel, DampingParam
 
 
 def compute_bj_self_test_setup():
@@ -259,11 +263,74 @@ def compute_parameters():
     return
 
 
+def test_api():
+    test_carts = """
+7    -0.2143860000000000    -1.9930209999999999    0.0001580000000000
+6    -1.4834579999999999    -1.5376490000000000    0.0000390000000000
+7    -1.8969870000000000    -0.2697650000000000    -0.0001260000000000
+6    -0.8590920000000000    0.5833320000000000    -0.0001300000000000
+6    0.5023510000000000    0.2582240000000000    0.0000250000000000
+6    0.8189870000000000    -1.1204149999999999    0.0001690000000000
+7    1.2930250000000001    1.3953620000000000    -0.0000180000000000
+6    0.4308840000000000    2.3855279999999999    -0.0001910000000000
+7    -0.8846300000000000    1.9602990000000000    -0.0002680000000000
+1    -2.2473350000000001    -2.3170039999999998    0.0000550000000000
+7    2.0781529999999999    -1.5902790000000000    0.0003130000000000
+1    2.8393370000000000    -0.9285350000000000    0.0003540000000000
+1    2.2576250000000000    -2.5992259999999998    0.0005070000000000
+1    0.6864280000000000    3.4404690000000002    -0.0002720000000000
+1    -1.7150930000000000    2.5358360000000002    -0.0004080000000000
+7    0.9890610000000000    0.7972580000000000    3.4000580000000000
+6    1.2176640000000001    -0.5930370000000000    3.4000040000000000
+7    0.1323910000000000    -1.4089719999999999    3.3999649999999999
+6    -1.1109620000000000    -0.9038440000000000    3.3999709999999999
+6    -1.3524490000000000    0.5216270000000000    3.4000230000000000
+6    -0.2635560000000000    1.3337810000000001    3.4000629999999998
+1    1.8151999999999999    1.3809540000000000    3.4000919999999999
+8    2.3888159999999998    -0.9949650000000000    3.3999910000000000
+7    -2.1304249999999998    -1.7687059999999999    3.3999290000000002
+1    -1.9560750000000000    -2.7965740000000001    3.3998710000000001
+1    -3.0781360000000002    -1.4251389999999999    3.3999280000000001
+1    -2.3598170000000001    0.9292250000000000    3.4000319999999999
+1    -0.3321890000000000    2.4208530000000001    3.4001060000000001
+    """
+    aatoau = Constants().g_aatoau()
+    test_carts = convert_str_carts_np_carts(test_carts)
+    atom_numbers = test_carts[:, 0]
+    carts = test_carts[:, 1:]
+    c = aatoau * np.copy(carts)
+    disp = DispersionModel(
+        numbers=atom_numbers,
+        positions=c,
+    )
+    # res = disp.get_pairwise_dispersion(DampingParam(method='tpss'))
+    # param = DampingParam(s6=s6, s8=s8, a1=a1, a2=a2)
+    props = disp.get_properties()
+    C6s = props.get("c6 coefficients")
+    # print("P:", props.get("polarizibilities"))
+
+    write_xyz_from_np(atom_numbers, carts)
+    # print(atom_numbers, carts)
+    subprocess.call(
+        "dftd4 dat.xyz --mbdscale 0.0 --func hf --json t.json --property > setup.txt",
+        shell=True,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.STDOUT,
+    )
+    with open("t.json") as f:
+        C6s_json = json.load(f)["c6 coefficients"]
+    C6s_json = np.array(C6s_json).reshape((len(C6s), len(C6s)))
+    t = np.abs(np.subtract(C6s, C6s_json))
+    print(C6s[0])
+    print(C6s_json[0])
+    assert np.all(t < 1e-13)
+
+
 def main():
     """
     docstring
     """
-    compute_parameters()
+    test_api()
     return
 
 
