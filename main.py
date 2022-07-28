@@ -9,10 +9,9 @@ def main():
     """
     # gather_data3(output_path="opt5.pkl")
     df = pd.read_pickle("opt5.pkl")
-    df = df.loc[[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]]
-    params = [0.96678026, 0.22123128, 4.15329578]
-    # optimization(df, params)
-    opt_cross_val(df)
+    # df = df.loc[[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]]
+    params = [3.02227550, 0.47396846, 4.49845309]
+    opt_cross_val(df, nfolds=5, start_params=params)
 
     return
 
