@@ -96,24 +96,63 @@ def optimization(
     return out_params, mae, rmse, max_e
 
 
+def avg_matrix(
+    arr: np.array,
+) -> np.array:
+    """
+    avg_matrix computes average of each column
+    """
+    s = len(arr[0, :])
+    out = np.zeros(s)
+    for i in range(s):
+        out[i] = arr[:, i].sum()
+    return out
+
+
 def opt_cross_val(
     df: pd.DataFrame,
     nfolds: int = 5,
+    start_params: [] = [3.02227550, 0.47396846, 4.49845309],
 ) -> None:
     """
     opt_cross_val performs n-fold cross validation on opt*.pkl df from
     gather_data3
     """
-    folds = get_folds(5, len(df))
-
+    folds = get_folds(nfolds, len(df))
+    stats = np.zeros((nfolds, 3))
+    p_out = np.zeros((nfolds, len(start_params)))
+    mp, mmae, mrmse, mmax_e = optimization(df, start_params)
     for n, fold in enumerate(folds):
         print(f"Fold {n}")
         df["Fitset"] = fold
         training = df[df["Fitset"] == True]
+        training = training.reset_index(drop=True)
         testing = df[df["Fitset"] == False]
+        testing = testing.reset_index(drop=True)
         print(f"Training: {len(training)}")
         print(f"Testing: {len(testing)}")
-        # ret = opt.minimize(compute_int_energy, init, training, method='powell')
-        optimization(training)
+        o_params, mae, rmse, max_e = optimization(training, start_params)
+        stats[n] = np.array([mae, rmse, max_e])
+        p_out[n] = o_params
 
+    avg = avg_matrix(stats)
+    mae, rmse, max_e = avg
+
+    print("\n\t%d Fold Procedure" % nfolds)
+    print("\nParameters:\n", p_out)
+    print("\nStats:\n", stats)
+    print("\nFinal Results")
+    print("\n\tFull Optimization")
+    print("\nParameters\n")
+    print("        1. s6 = %.6f" % mp[0])
+    print("        2. a1 = %.6f" % mp[1])
+    print("        3. a2 = %.6f" % mp[2])
+    print("\nStats\n")
+    print("        1. MAE  = %.4f" % mmae)
+    print("        2. RMSE = %.4f" % mrmse)
+    print("        3. MAX  = %.4f" % mmax_e)
+    print("\nFinal %d-Fold Averaged Stats\n" % (nfolds))
+    print("        1. MAE  = %.4f" % mae)
+    print("        2. RMSE = %.4f" % rmse)
+    print("        3. MAX  = %.4f" % max_e)
     return
