@@ -154,3 +154,6 @@ opt3.pkl
 dat.xyz
 dat.xyz
 opt4.pkl
+fit.out
+opt*.pkl
+*.out

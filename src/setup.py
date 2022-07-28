@@ -11,6 +11,43 @@ from tqdm import tqdm
 from psi4.driver.qcdb.bfs import BFS
 
 
+def gather_data(
+    pkl_path: str = "master-regen.pkl",
+    csv_path: str = "SAPT-D3-Refit-Data.csv",
+    out_pkl: str = "data.pkl",
+):
+    """
+    gather_data collects pkl data
+
+    use gather_data3 for best output data from master-regen for other functions
+    """
+    ms = pd.read_pickle(pkl_path)
+    ms = ms[ms["DB"] != "PCONF"]
+    ms = ms[ms["DB"] != "SCONF"]
+    ms = ms[ms["DB"] != "ACONF"]
+    ms = ms[ms["DB"] != "CYCONF"]
+
+    df = pd.read_csv("SAPT-D3-Refit-Data.csv")
+    out_df = ms[["Benchmark", "HF INTERACTION ENERGY", "Geometry"]]
+    energies = ms[["Benchmark", "HF INTERACTION ENERGY"]].to_numpy()
+    carts = ms["Geometry"].to_list()
+    atom_order = [np.array(i[:, 0]) for i in carts]
+    carts = [i[:, 1:] for i in carts]
+
+    data = [energies, atom_order, carts]
+    C6s, C8s, Qs = [], [], []
+    for i in tqdm(range(len(data[0])), desc="DFTD4 Props", ascii=True):
+        C6, Q = calc_dftd4_props(data[1][i], data[2][i])
+        C6s.append(C6)
+        Qs.append(Q)
+    C6s = C6s
+    Qs = Qs
+    d4_vals = d4_values(C6s, Qs, C8s)
+    data_out = mols_data(energies, atom_order, carts, d4_vals)
+    write_pickle(data_out, out_pkl)
+    return data_out
+
+
 def write_xyz_from_np(atom_numbers, carts, outfile="dat.xyz") -> None:
     """
     write_xyz_from_np
@@ -651,6 +688,9 @@ def gather_data2_testing(
 
 
 def gather_data2(condensed_path="condensed.pkl", output_path="opt.pkl"):
+    """
+    use gather_data3 for best output data from master-regen for other functions
+    """
     params = [0.9, 0.5, 5.0]
     el_dc = create_pt_dict()
     df = pd.read_pickle(condensed_path)
@@ -663,19 +703,12 @@ def gather_data2(condensed_path="condensed.pkl", output_path="opt.pkl"):
         pos = g3[:, 0]
         carts = g3[:, 1:]
         C6, C8 = calc_dftd4_props(pos, carts)
-        # C8 = compute_C8s(pos, carts, C6)
         C6s[n] = C6
         C8s[n] = C8
     df["C6s"] = C6s
     df["C8s"] = C6s
     df.to_pickle(output_path)
     return
-
-
-"""
-1. make intermolecular distance matrix
-2. loop through rows and take maximum distance as cutoff
-"""
 
 
 class FailedToSplit(Exception):
@@ -688,6 +721,7 @@ class FailedToSplit(Exception):
 
 def split_Hs_carts(
     geom: np.array,
+    verbose: bool = False,
 ) -> (np.array, np.array,):
     """
     removes Hs from carts
@@ -733,14 +767,15 @@ def split_Hs_carts(
     for n, i in enumerate(f2):
         monBs.append(n + len(monAs))
     ft = np.vstack((f1, f2))
-    # print("monA", monAs)
-    # print_cartesians(f1)
-    # print("monB", monBs)
-    # print_cartesians(f2)
-    # print("\ncombined")
-    # print_cartesians(ft)
-    # print(len(ft) == len(geom))
-    # print(len(monAs) > 0 and len(monBs) > 0)
+    if verbose:
+        print("monA", monAs)
+        print_cartesians(f1)
+        print("monB", monBs)
+        print_cartesians(f2)
+        print("\ncombined")
+        print_cartesians(ft)
+        print(len(ft) == len(geom))
+        print(len(monAs) > 0 and len(monBs) > 0)
     return ft, np.array(monAs), np.array(monBs)
 
 
@@ -775,7 +810,15 @@ def gather_data3_dimer_splits(
     return df, ind1
 
 
-def gather_data3(master_path="master-regen.pkl", output_path="opt3.pkl"):
+def gather_data3(
+    master_path="master-regen.pkl",
+    output_path="opt3.pkl",
+    verbose=False,
+):
+    """
+    collects data from master-regen.pkl from jeffschriber's scripts for D3
+    (https://aip.scitation.org/doi/full/10.1063/5.0049745)
+    """
     el_dc = create_pt_dict()
     df = pd.read_pickle(master_path)
     df = df[
@@ -814,5 +857,7 @@ def gather_data3(master_path="master-regen.pkl", output_path="opt3.pkl"):
     df["C8s"] = C8s
     df["monAs"] = monAs
     df["monBs"] = monBs
+    df = df.reset_index(drop=True)
+    df, inds = gather_data3_dimer_splits(df)
     df.to_pickle(output_path)
     return
