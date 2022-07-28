@@ -19,7 +19,7 @@ from src.setup import (
     create_pt_dict,
     compute_bj_opt,
     gather_data3,
-    gather_data3_dimer_splits
+    gather_data3_dimer_splits,
 )
 from src.structs import d4_values, mol_i, mols_data
 import subprocess
@@ -228,16 +228,25 @@ def test_size(n=15):
 """
 
 
-def optimization():
+def optimization(df):
     params = [0.9171, 0.3385, 2.883]
     print("RMSE\t\tparams")
-    df = pd.read_pickle("opt3.pkl")
-    df = df.dropna()
-    df = df.iloc[[0, 1, 2, 3, 4, 5]]
+    # df = pd.read_pickle("opt3.pkl")
+    # df = df.dropna()
+    # df = df.iloc[[0, 1, 2, 3, 4, 5]]
     ret = opt.minimize(compute_int_energy, args=(df), x0=params, method="powell")
     print("\nResults\n", ret)
     return
 
+
+def acquire_opt4() -> pd.DataFrame:
+    """
+    acquire_opt4 gets monomers for remaining geoms
+    """
+    df = pd.read_pickle("opt4.pkl")
+    df = df.reset_index(drop=True)
+    df, inds = gather_data3_dimer_splits(df)
+    return df
 
 
 def main():
@@ -246,10 +255,9 @@ def main():
     """
     # create_data_csv()
     # gather_data2()
-    # gather_data3()
-    df = pd.read_pickle("opt3.pkl")
-    gather_data3_dimer_splits(df)
-    # optimization()
+    # gather_data3(output_path="opt4.pkl")
+    df = acquire_opt4()
+    optimization(df)
 
     # params = [0.9171, 0.3385, 2.883]
     # df = pd.read_pickle("opt3.pkl")

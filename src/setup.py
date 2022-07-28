@@ -677,11 +677,72 @@ def gather_data2(condensed_path="condensed.pkl", output_path="opt.pkl"):
 2. loop through rows and take maximum distance as cutoff
 """
 
+
 class FailedToSplit(Exception):
     """DID NOT BREAK INTO DIMER"""
+
     def __init__(self, position):
         self.position
         super().__init__(self.message)
+
+
+def split_Hs_carts(
+    geom: np.array,
+) -> (np.array, np.array,):
+    """
+    removes Hs from carts
+    """
+    g = geom.tolist()
+    Hs = []
+    Core = []
+    for i, r1 in enumerate(g):
+        if int(r1[0]) == 1:
+            Hs.append(np.array(r1))
+        else:
+            Core.append(r1)
+    g2 = np.array(Core)
+    frags = BFS(g2[:, 1:], g2[:, 0], bond_threshold=0.40)
+    f1, f2 = [], []
+    for n, i in enumerate(frags):
+        for j in i:
+            if n == 0:
+                f1.append(g2[j, :])
+            else:
+                f2.append(g2[j, :])
+    for i, r1 in enumerate(Hs):
+        l1, l2 = 100, 100
+        for j, r2 in enumerate(f1):
+            if int(r2[0]) != 1:
+                R = np.linalg.norm(r1[1:] - r2[1:])
+                if R < l1:
+                    l1 = R
+        for j, r2 in enumerate(f2):
+            if int(r2[0]) != 1:
+                R = np.linalg.norm(r1[1:] - r2[1:])
+                if R < l2:
+                    l2 = R
+        if l1 < l2:
+            f1.append(r1)
+        else:
+            f2.append(r1)
+    monAs, monBs = [], []
+    f1 = np.array(f1)
+    f2 = np.array(f2)
+    for n, i in enumerate(f1):
+        monAs.append(n)
+    for n, i in enumerate(f2):
+        monBs.append(n + len(monAs))
+    ft = np.vstack((f1, f2))
+    # print("monA", monAs)
+    # print_cartesians(f1)
+    # print("monB", monBs)
+    # print_cartesians(f2)
+    # print("\ncombined")
+    # print_cartesians(ft)
+    # print(len(ft) == len(geom))
+    # print(len(monAs) > 0 and len(monBs) > 0)
+    return ft, np.array(monAs), np.array(monBs)
+
 
 def gather_data3_dimer_splits(
     df: pd.DataFrame,
@@ -690,27 +751,28 @@ def gather_data3_dimer_splits(
     gather_data3_dimer_splits creates dimers from failed splits in gather_data3
     from BFS
     """
-    df[df['monBs'].isna()]
-    geom = df.iloc[0]["Geometry"]
-    print_cartesians(geom)
-    Rs = np.zeros((len(geom), len(geom)))
-    # monA = np.zeros(1)
-    # monB = np.zeros(1)
-    # for i, r1 in enumerate(geom):
-    #     for j, r2 in enumerate(geom):
-    #         R = np.linalg.norm(r1 - r2)
-    #         Rs[i, j] = R
-    # print(Rs)
-    # print("monA:")
-    # print_cartesians(monA)
-    # print("monB:")
-    # print_cartesians(monB)
+    ind1 = df["monBs"].index[df["monBs"].isna()]
+    for i in ind1:
+        g3 = df.loc[i, "Geometry"]
+        g3 = np.array(g3)
+        pos = g3[:, 0]
+        carts = g3[:, 1:]
+        frags = BFS(carts, pos, bond_threshold=0.35)
+        if len(frags) == 2:
+            f1 = frags[0]
+            f2 = frags[1]
+            df.loc[i, "monAs"] = f1
+            df.loc[i, "monBs"] = f2
 
-
-
-
-
-    return
+    df1 = df.copy()
+    ind2 = df["monBs"].index[df["monBs"].isna()]
+    for i in ind2:
+        g3 = df.loc[i, "Geometry"]
+        geom, monA, monB = split_Hs_carts(g3)
+        df.loc[i, "Geometry"] = geom
+        df.loc[i, "monAs"] = monA
+        df.loc[i, "monBs"] = monB
+    return df, ind1
 
 
 def gather_data3(master_path="master-regen.pkl", output_path="opt3.pkl"):
@@ -733,7 +795,7 @@ def gather_data3(master_path="master-regen.pkl", output_path="opt3.pkl"):
         C6, C8 = calc_dftd4_props(pos, carts)
         C6s[n] = C6
         C8s[n] = C8
-        frags = BFS(carts, pos, bond_threshold=0.5)
+        frags = BFS(carts, pos, bond_threshold=0.4)
         if len(frags) > 2:
             ones.append(n)
         elif len(frags) == 1:
