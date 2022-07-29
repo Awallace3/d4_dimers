@@ -39,18 +39,18 @@ He 2.0 0.0 0.0
 def write_psi4_sapt0(
     A: str,
     B: str,
+    meth_basis_dir: str,
     memory: str = "4 GB",
-    basis: str = "cc-pVDZ",
+    basis: str = "aug-cc-pvdz",
     in_file: str = "d",
-    path: str = "tmp",
-    jobs: [] = [],
 ) -> []:
     """
     run_sapt0 computes sapt0 without the dispersion term
     """
-    if not os.path.exists(path):
-        os.mkdir(path)
-    os.chdir(path)
+    b = basis_labels(meth_basis_dir)
+    if not os.path.exists(meth_basis_dir):
+        os.mkdir(meth_basis_dir)
+    os.chdir(meth_basis_dir)
 
     geom = "0 1\n%s--\n0 1\n%s" % (A, B)
     with open("%s.dat" % (in_file), "w") as f:
@@ -63,14 +63,11 @@ basis %s
 freeze_core true
 guess sad
 scf_type df
-SAPT0_E10 true
-SAPT0_E20IND true
-SAPT0_E20Disp false
 }
 """
             % basis
         )
-        f.write("\nenergy('sapt0')")
+        f.write("\nenergy('hf', bsse_type='cp')")
     #     with open("%s.pbs" % in_file, "w") as f:
     #         f.write(
     #             """
@@ -84,8 +81,7 @@ SAPT0_E20Disp false
     #         )
 
     os.chdir("..")
-    jobs.append("%s/%s" % (path, in_file))
-    # return jobs
+    return
 
 
 def run_sapt0(A: str, B: str, memory: str = "4 GB", basis="jun-cc-pvdz"):
@@ -116,14 +112,15 @@ def run_sapt0(A: str, B: str, memory: str = "4 GB", basis="jun-cc-pvdz"):
 def create_pylauncher(
     jobs: [],
     data_dir: str,
+    basis: str = "adz",
     name: str = "dimers",
     memory: str = "4gb",
     job_name: str = "my_psi4_jobs",
-    cores: int = 4, # cores and ppn should match
+    cores: int = 6,  # cores and ppn should match
     queue: str = "hive",
-    nodes: int = 10, # how many for all jobs
-    ppn: int = 4,
-    walltime: str = "260:00:00",
+    nodes: int = 10,  # how many for all jobs
+    ppn: int = 6,
+    walltime: str = "30:00:00",
 ) -> None:
     """
     create_pylauncher creates pylauncher and psi4_jobs
@@ -140,7 +137,7 @@ pylauncher3.ClassicLauncher(myjob, cores=%d)
     )
     d = ""
     for i in jobs:
-        d += "psi4 -n%d %s/%s.dat\n" % (cores, data_dir, i)
+        d += "psi4 -n%d %s/%s/%s.dat\n" % (cores, data_dir, basis, i)
     s = """#!/bin/bash
 #PBS -N %s
 #PBS -q %s
@@ -205,8 +202,10 @@ class DirectoryAlreadyExists(Exception):
 
 def create_hf_binding_energies_jobs(
     df: pd.DataFrame,
-    basis_set: str,
+    basis: str,
     out_df: str = "calc.pkl",
+    data_dir: str = "calc",
+    in_file: str = "dimer",
 ) -> None:
     """
     run_hf_binding_energies uses psi4 to calculate monA, monB, and dimer energies with HF
@@ -215,28 +214,43 @@ def create_hf_binding_energies_jobs(
     The inputted df will be saved to out_df after each computation finishes.
     """
     def_dir = os.getcwd()
-    data_dir = "calc_%s" % basis_set
     if not os.path.exists(data_dir):
         os.mkdir(data_dir)
-    else:
-        raise DirectoryAlreadyExists(data_dir)
-        return
+    # else:
+    #     raise DirectoryAlreadyExists(data_dir)
+    #     return
     os.chdir(data_dir)
     int_dir = os.getcwd()
     if not os.path.exists(data_dir):
         os.mkdir(data_dir)
     os.chdir(data_dir)
 
-    method = "hf/%s" % basis_set
-    print(method)
     jobs = []
     df.loc[[0, 1, 2, 3, 4, 5]]
+    basis_set, meth_basis_dir = basis_labels(basis)
+    method = "hf/%s" % basis_set
+    print(method)
     for idx, item in tqdm(
         df.iterrows(),
         total=df.shape[0],
         desc="Creating Inputs",
         ascii=True,
     ):
+        col = "HF_%s" % basis
+        v = df.loc[idx, col]
+        if not np.isnan(v):
+            print("skipping", idx, df.loc[idx, "DB"])
+            continue
+        p = "%d_%s" % (idx, item["DB"].replace(" - ", "_"))
+        job_p = "%s/%s/%s.dat" % (p, meth_basis_dir, in_file)
+
+        if os.path.exists(job_p):
+            print("skipping", idx, df.loc[idx, "DB"])
+            continue
+
+        if not os.path.exists(p):
+            os.mkdir(p)
+        os.chdir(p)
         c = item["Geometry"]
         monA = item["monAs"]
         monB = item["monBs"]
@@ -247,15 +261,15 @@ def create_hf_binding_energies_jobs(
             mB.append(c[i, :])
         mA = np_carts_to_string(mA)
         mB = np_carts_to_string(mB)
-        # run_sapt0(mA, mB, basis=basis_set)
-        p = "%d_%s" % (idx, item["DB"].replace(" - ", "_"))
         write_psi4_sapt0(
             mA,
             mB,
+            meth_basis_dir=meth_basis_dir,
             basis=basis_set,
-            path=p,
-            jobs=jobs,
+            in_file=in_file,
         )
+        jobs.append(job_p)
+        os.chdir("..")
     os.chdir(int_dir)
     create_pylauncher(jobs, data_dir=data_dir)
     os.chdir(def_dir)

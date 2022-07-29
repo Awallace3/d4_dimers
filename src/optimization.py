@@ -144,7 +144,7 @@ def opt_cross_val(
         print(f"Testing: {len(testing)}")
 
         o_params, omae, ormse, omax_e = optimization(training, mp)
-        mae, rmse, max_e = compute_int_energy_stats(params, test)
+        mae, rmse, max_e = compute_int_energy_stats(o_params, testing)
 
         stats[n] = np.array([mae, rmse, max_e])
         p_out[n] = o_params
@@ -154,7 +154,7 @@ def opt_cross_val(
     mae, rmse, max_e = avg
 
     total_time = (time.time() - start) / 60
-    print("\nTime = %.2f\n" % total_time)
+    print("\nTime = %.2f Minutes\n" % total_time)
     print("\n\t%d Fold Procedure" % nfolds)
     print("\nParameters:\n", p_out)
     print("\nStats:\n", stats)
