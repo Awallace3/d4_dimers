@@ -32,8 +32,8 @@ He 2.0 0.0 0.0
         }
     )
     wf = psi4.energy("sapt0")
-    psi4.core.print_variables()
-    print(wf * 627.509)
+    # psi4.core.print_variables()
+    # print(wf * 627.509)
 
 
 def write_psi4_sapt0(
@@ -115,14 +115,15 @@ def run_sapt0(A: str, B: str, memory: str = "4 GB", basis="jun-cc-pvdz"):
 
 def create_pylauncher(
     jobs: [],
+    data_dir: str,
     name: str = "dimers",
     memory: str = "4gb",
     job_name: str = "my_psi4_jobs",
-    cores: int = 4,
-    queue: str = "hive-nvme-sas",
-    nodes: int = 1,
-    ppn: int = 6,
-    walltime: str = "4000:00:00",
+    cores: int = 4, # cores and ppn should match
+    queue: str = "hive",
+    nodes: int = 10, # how many for all jobs
+    ppn: int = 4,
+    walltime: str = "260:00:00",
 ) -> None:
     """
     create_pylauncher creates pylauncher and psi4_jobs
@@ -139,7 +140,7 @@ pylauncher3.ClassicLauncher(myjob, cores=%d)
     )
     d = ""
     for i in jobs:
-        d += "psi4 -n%d %s\n" % (cores, i)
+        d += "psi4 -n%d %s/%s.dat\n" % (cores, data_dir, i)
     s = """#!/bin/bash
 #PBS -N %s
 #PBS -q %s
@@ -175,6 +176,33 @@ echo "Ending job."
     return
 
 
+def basis_labels(
+    basis: str,
+    method: str = "HF",
+) -> (str, str):
+    """
+    basis_labels converts basis to psi4 input basis
+    """
+    if basis == "adz":
+        return "aug-cc-pvdz", "%s_%s" % (method, basis)
+    elif basis == "jdz":
+        return "jun-cc-pvdz", "%s_%s" % (method, basis)
+    elif basis == "dz":
+        return "cc-pvdz", "%s_%s" % (method, basis)
+    elif basis == "tz":
+        return "cc-pvtz", "%s_%s" % (method, basis)
+    else:
+        return basis, "%s_%s" % (method, basis)
+
+
+class DirectoryAlreadyExists(Exception):
+    """Already created calc directory"""
+
+    def __init__(self, name):
+        self.name = name
+        super().__init__(self.name)
+
+
 def create_hf_binding_energies_jobs(
     df: pd.DataFrame,
     basis_set: str,
@@ -190,6 +218,9 @@ def create_hf_binding_energies_jobs(
     data_dir = "calc_%s" % basis_set
     if not os.path.exists(data_dir):
         os.mkdir(data_dir)
+    else:
+        raise DirectoryAlreadyExists(data_dir)
+        return
     os.chdir(data_dir)
     int_dir = os.getcwd()
     if not os.path.exists(data_dir):
@@ -199,6 +230,7 @@ def create_hf_binding_energies_jobs(
     method = "hf/%s" % basis_set
     print(method)
     jobs = []
+    df.loc[[0, 1, 2, 3, 4, 5]]
     for idx, item in tqdm(
         df.iterrows(),
         total=df.shape[0],
@@ -216,7 +248,7 @@ def create_hf_binding_energies_jobs(
         mA = np_carts_to_string(mA)
         mB = np_carts_to_string(mB)
         # run_sapt0(mA, mB, basis=basis_set)
-        p = "%d_%s" % (idx, item["DB"])
+        p = "%d_%s" % (idx, item["DB"].replace(" - ", "_"))
         write_psi4_sapt0(
             mA,
             mB,
@@ -225,6 +257,6 @@ def create_hf_binding_energies_jobs(
             jobs=jobs,
         )
     os.chdir(int_dir)
-    create_pylauncher(jobs)
+    create_pylauncher(jobs, data_dir=data_dir)
     os.chdir(def_dir)
     return

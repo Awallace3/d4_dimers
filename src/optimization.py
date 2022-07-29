@@ -4,7 +4,7 @@ from .setup import (
     gather_data3,
 )
 import scipy.optimize as opt
-
+import time
 import pandas as pd
 import numpy as np
 
@@ -92,7 +92,7 @@ def optimization(
     print("\nResults\n")
     out_params = ret.x
     mae, rmse, max_e = compute_int_energy_stats(out_params, df)
-    print("1. MAE = %.4f\n2. RMSE = %.4f\n3. MAX = %.4f" % (mae, rmse, max_e))
+    # print("1. MAE = %.4f\n2. RMSE = %.4f\n3. MAX = %.4f" % (mae, rmse, max_e))
     return out_params, mae, rmse, max_e
 
 
@@ -105,8 +105,17 @@ def avg_matrix(
     s = len(arr[0, :])
     out = np.zeros(s)
     for i in range(s):
-        out[i] = arr[:, i].sum()
+        out[i] = arr[:, i].sum() / len(arr[:, 0])
     return out
+
+
+def stats_testing_set(
+    params,
+    test,
+) -> (float, float, float):
+    """
+    stats_testing_set ...
+    """
 
 
 def opt_cross_val(
@@ -118,12 +127,14 @@ def opt_cross_val(
     opt_cross_val performs n-fold cross validation on opt*.pkl df from
     gather_data3
     """
+    start = time.time()
     folds = get_folds(nfolds, len(df))
     stats = np.zeros((nfolds, 3))
     p_out = np.zeros((nfolds, len(start_params)))
     mp, mmae, mrmse, mmax_e = optimization(df, start_params)
+    print("1. MAE = %.4f\n2. RMSE = %.4f\n3. MAX = %.4f" % (mmae, mrmse, mmax_e))
     for n, fold in enumerate(folds):
-        print(f"Fold {n}")
+        print(f"Fold {n} Start")
         df["Fitset"] = fold
         training = df[df["Fitset"] == True]
         training = training.reset_index(drop=True)
@@ -131,14 +142,19 @@ def opt_cross_val(
         testing = testing.reset_index(drop=True)
         print(f"Training: {len(training)}")
         print(f"Testing: {len(testing)}")
-        o_params, mae, rmse, max_e = optimization(training, mp)
-        # o_params, mae, rmse, max_e = optimization(training, start_params)
+
+        o_params, omae, ormse, omax_e = optimization(training, mp)
+        mae, rmse, max_e = compute_int_energy_stats(params, test)
+
         stats[n] = np.array([mae, rmse, max_e])
         p_out[n] = o_params
+        print(f"Fold {n} End")
 
     avg = avg_matrix(stats)
     mae, rmse, max_e = avg
 
+    total_time = (time.time() - start) / 60
+    print("\nTime = %.2f\n" % total_time)
     print("\n\t%d Fold Procedure" % nfolds)
     print("\nParameters:\n", p_out)
     print("\nStats:\n", stats)

@@ -11,6 +11,17 @@ from tqdm import tqdm
 from psi4.driver.qcdb.bfs import BFS
 
 
+def inpsect_master_regen():
+    pkl_path = ("master-regen.pkl",)
+    ms = pd.read_pickle(pkl_path)
+    ms = ms[ms["DB"] != "PCONF"]
+    ms = ms[ms["DB"] != "SCONF"]
+    ms = ms[ms["DB"] != "ACONF"]
+    ms = ms[ms["DB"] != "CYCONF"]
+    for i in ms.columns.values:
+        print(i)
+
+
 def gather_data(
     pkl_path: str = "master-regen.pkl",
     csv_path: str = "SAPT-D3-Refit-Data.csv",
@@ -861,3 +872,30 @@ def gather_data3(
     df, inds = gather_data3_dimer_splits(df)
     df.to_pickle(output_path)
     return
+
+
+def replace_hf_int_HF_jdz(df):
+    df["HF_jdz"] = df["HF INTERACTION ENERGY"]
+    df = df.drop(columns="HF INTERACTION ENERGY")
+    return df
+
+
+def expand_opt_df(
+    df,
+    columns_to_add: list = [
+        "HF_dz",
+        "HF_dt",
+        "HF_adz",
+        "HF_adt",
+    ],
+    replace_HF: bool = False,
+) -> pd.DataFrame:
+    """
+    expand_opt_df adds columns with nan
+    """
+    if replace_HF:
+        df = replace_hf_int_HF_jdz(df)
+    for i in columns_to_add:
+        df[i] = np.nan
+    print(df.columns.values)
+    return df
