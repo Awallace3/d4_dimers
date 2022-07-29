@@ -137,7 +137,7 @@ pylauncher3.ClassicLauncher(myjob, cores=%d)
     )
     d = ""
     for i in jobs:
-        d += "psi4 -n%d %s/%s/%s.dat\n" % (cores, data_dir, basis, i)
+        d += "psi4 -n%d %s/%s\n" % (cores, data_dir, i)
     s = """#!/bin/bash
 #PBS -N %s
 #PBS -q %s
@@ -206,6 +206,10 @@ def create_hf_binding_energies_jobs(
     out_df: str = "calc.pkl",
     data_dir: str = "calc",
     in_file: str = "dimer",
+    memory: str = "4gb",
+    nodes: int = 10,
+    cores: int = 6,
+    walltime: str = "30:00:00",
 ) -> None:
     """
     run_hf_binding_energies uses psi4 to calculate monA, monB, and dimer energies with HF
@@ -216,9 +220,6 @@ def create_hf_binding_energies_jobs(
     def_dir = os.getcwd()
     if not os.path.exists(data_dir):
         os.mkdir(data_dir)
-    # else:
-    #     raise DirectoryAlreadyExists(data_dir)
-    #     return
     os.chdir(data_dir)
     int_dir = os.getcwd()
     if not os.path.exists(data_dir):
@@ -239,13 +240,13 @@ def create_hf_binding_energies_jobs(
         col = "HF_%s" % basis
         v = df.loc[idx, col]
         if not np.isnan(v):
-            print("skipping", idx, df.loc[idx, "DB"])
+            # print("skipping", idx, df.loc[idx, "DB"])
             continue
         p = "%d_%s" % (idx, item["DB"].replace(" - ", "_"))
         job_p = "%s/%s/%s.dat" % (p, meth_basis_dir, in_file)
 
         if os.path.exists(job_p):
-            print("skipping", idx, df.loc[idx, "DB"])
+            # print("skipping", idx, df.loc[idx, "DB"])
             continue
 
         if not os.path.exists(p):
@@ -269,8 +270,18 @@ def create_hf_binding_energies_jobs(
             in_file=in_file,
         )
         jobs.append(job_p)
+        break
         os.chdir("..")
     os.chdir(int_dir)
-    create_pylauncher(jobs, data_dir=data_dir)
+    create_pylauncher(
+        jobs=jobs,
+        data_dir=data_dir,
+        basis=basis,
+        name=in_file,
+        memory=memory,
+        ppn=nodes,
+        nodes=nodes,
+        walltime=walltime,
+    )
     os.chdir(def_dir)
     return
