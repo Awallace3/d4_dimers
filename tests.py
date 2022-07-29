@@ -74,6 +74,7 @@ def test_dftd4_commandline_C6s():
     t = np.abs(np.subtract(C6s, C6s_json))
     os.remove("test.xyz")
     os.remove("test.json")
+    os.remove("C_n.json")
     assert np.all(t < 1e-13)
 
 

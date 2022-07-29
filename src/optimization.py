@@ -131,7 +131,8 @@ def opt_cross_val(
         testing = testing.reset_index(drop=True)
         print(f"Training: {len(training)}")
         print(f"Testing: {len(testing)}")
-        o_params, mae, rmse, max_e = optimization(training, start_params)
+        o_params, mae, rmse, max_e = optimization(training, mp)
+        # o_params, mae, rmse, max_e = optimization(training, start_params)
         stats[n] = np.array([mae, rmse, max_e])
         p_out[n] = o_params
 

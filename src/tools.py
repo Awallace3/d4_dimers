@@ -2,6 +2,15 @@ import pickle
 import numpy as np
 
 
+def np_carts_to_string(carts):
+    w = ""
+    for n, r in enumerate(carts):
+        e, x, y, z = r
+        line = "{:d}\t{:.10f}\t{:.10f}\t{:.10f}\n".format(int(e), x, y, z)
+        w += line
+    return w
+
+
 def print_cartesians(arr):
     """
     prints a 2-D numpy array in a nicer format
@@ -25,7 +34,6 @@ def print_cartesians_pos_carts(pos: np.array, carts: np.array):
         line = "{}\t{:.10f}\t{:.10f}\t{:.10f}".format(int(pos[n]), x, y, z)
         print(line)
     print()
-
 
 
 def write_pickle(data, fname="data.pickle"):
