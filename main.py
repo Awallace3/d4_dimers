@@ -1,28 +1,17 @@
 import pandas as pd
 from src.setup import gather_data3, read_master_regen, expand_opt_df
-from src.optimization import optimization, opt_cross_val
+from src.optimization import optimization, opt_cross_val, HF_only
 from src.jobs import create_hf_binding_energies_jobs, run_sapt0_example
-from src.harvest import ssi_bfdb_data
-
-# TODO: write mae on testing set
-# TODO: check on max_e specifically
-# TODO: look at HF damping parameters in f90
+from src.harvest import ssi_bfdb_data, harvest_data
 
 """
 dftd4/src/dftd4/param.f90
-
     case(p_hf)
       param = dftd_param ( & ! (SAW190103)
          &  s6=1.0000_wp, s8=1.61679827 _wp, a1=0.44959224 _wp, a2=3.35743605 _wp )
       !  Fitset: MD= -0.02597 MAD= 0.34732 RMSD= 0.49719
 ]
 """
-def progress(df):
-    print(df["HF_jdz"].isna().sum())
-    print(df["HF_adz"].isna().sum())
-    print(df["HF_adt"].isna().sum())
-    print(df["HF_dz"].isna().sum())
-    print(df["HF_dt"].isna().sum())
 
 
 def main():
@@ -35,10 +24,15 @@ def main():
     # df = expand_opt_df(df, replace_HF=False)
     # df = ssi_bfdb_data(df)
     # pd.to_pickle(df, "base.pkl")
-    df = pd.read_pickle("base.pkl")
+    df = pd.read_pickle("base1.pkl")
     basis_set = "adz"
-    create_hf_binding_energies_jobs(df, basis_set)
+    # basis_set = "dz"
+    # create_hf_binding_energies_jobs(df, basis_set)
+    # df = harvest_data(df, basis_set)
+    # pd.to_pickle(df, "base1.pkl")
 
+    # TODO: look at error stats with HF
+    # TODO: compare with base SAPT0
 
     # df = pd.read_pickle("opt5.pkl")
     # params = [1.61679827, 0.44959224, 3.35743605]

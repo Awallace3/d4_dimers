@@ -203,12 +203,11 @@ class DirectoryAlreadyExists(Exception):
 def create_hf_binding_energies_jobs(
     df: pd.DataFrame,
     basis: str,
-    out_df: str = "calc.pkl",
     data_dir: str = "calc",
     in_file: str = "dimer",
     memory: str = "4gb",
-    nodes: int = 10,
-    cores: int = 6,
+    nodes: int = 5,
+    cores: int = 4,
     walltime: str = "30:00:00",
 ) -> None:
     """
@@ -227,7 +226,7 @@ def create_hf_binding_energies_jobs(
     os.chdir(data_dir)
 
     jobs = []
-    df.loc[[0, 1, 2, 3, 4, 5]]
+    # df.loc[[0, 1, 2, 3, 4, 5]]
     basis_set, meth_basis_dir = basis_labels(basis)
     method = "hf/%s" % basis_set
     print(method)
@@ -240,13 +239,11 @@ def create_hf_binding_energies_jobs(
         col = "HF_%s" % basis
         v = df.loc[idx, col]
         if not np.isnan(v):
-            # print("skipping", idx, df.loc[idx, "DB"])
             continue
         p = "%d_%s" % (idx, item["DB"].replace(" - ", "_"))
         job_p = "%s/%s/%s.dat" % (p, meth_basis_dir, in_file)
 
         if os.path.exists(job_p):
-            # print("skipping", idx, df.loc[idx, "DB"])
             continue
 
         if not os.path.exists(p):
@@ -270,7 +267,6 @@ def create_hf_binding_energies_jobs(
             in_file=in_file,
         )
         jobs.append(job_p)
-        break
         os.chdir("..")
     os.chdir(int_dir)
     create_pylauncher(

@@ -9,8 +9,39 @@ import pandas as pd
 import numpy as np
 
 
+def HF_only() -> (float, float, float):
+    """
+    HF_only ...
+    """
+    df = pd.read_pickle("base.pkl")
+    basis_set = "adz"
+    HF_vals = [1.61679827, 0.44959224, 3.35743605]
+    mae, rmse, max_e = compute_int_energy_stats(HF_vals, df, "HF_jdz")
+    print("        1. MAE  = %.4f" % mae)
+    print("        2. RMSE = %.4f" % rmse)
+    print("        3. MAX  = %.4f" % max_e)
+    return mae, rmse, max_e
+
+
+
+def SAPT0_only() -> (float, float, float):
+    """
+    SAPT0_only returns stats on just SAPT0
+    """
+    # df = pd.read_pickle("base.pkl")
+    # basis_set = "adz"
+    # HF_vals = [1.61679827, 0.44959224, 3.35743605]
+    # mae, rmse, max_e = compute_int_energy_stats(HF_vals, df, "HF_jdz")
+    # print("        1. MAE  = %.4f" % mae)
+    # print("        2. RMSE = %.4f" % rmse)
+    # print("        3. MAX  = %.4f" % max_e)
+    return
+
+
+
+
 def compute_int_energy_stats(
-    params: [float], df: pd.DataFrame
+        params: [float], df: pd.DataFrame, hf_key: str = "HF INTERACTION ENERGY"
 ) -> (float, float, float,):
     """
     compute_int_energy is used to optimize paramaters for damping function in dftd4
@@ -30,7 +61,7 @@ def compute_int_energy_stats(
         axis=1,
     )
     df["diff"] = df.apply(
-        lambda r: r["Benchmark"] - (r["HF INTERACTION ENERGY"] + r["d4"]), axis=1
+        lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1
     )
     mae = df["diff"].abs().sum() / len(df["diff"])
     rmse = (df["diff"] ** 2).mean() ** 0.5
