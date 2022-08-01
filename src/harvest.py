@@ -50,7 +50,7 @@ def collect_HF_energy(
         else:
             pos = n
     d = d[pos].split()[-1]
-    return d
+    return float(d)
 
 
 def harvest_data(
