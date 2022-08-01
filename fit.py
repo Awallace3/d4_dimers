@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import scipy.optimize as opt
 import time
+from src.tools import print_cartesians
 
 
 #parse args
@@ -13,6 +14,8 @@ parser.add_argument('-d', '--damp', type=str, help="Damping function")
 parser.add_argument('-m', '--metric', type=str, help="fitting metric")
 args = parser.parse_args()
 
+class ExitEarly(Exception):
+    """Terminating after one cycle"""
 
 
 def get_db(reffile):
@@ -167,17 +170,57 @@ def compute_int_energy(params):
     training['d3'] = d3s
     training['diff'] = res
 
-    print(training[["Benchmark", "HF INTERACTION ENERGY", "d3", "diff"]])
+    df = training.copy()
+    df["diff_abs"] = df['diff'].abs()
+    df = df.sort_values(by=["diff_abs"], ascending=False)
+    # print(df[["Benchmark", "HF INTERACTION ENERGY", "d3", "diff", "diff_abs"]].head(30))
+    # print(df.iloc[0][["DB", "System", "Benchmark", "HF INTERACTION ENERGY", "diff", "diff_abs"]])
+
 
     rmse = np.sqrt(np.mean(np.square(res)))
     wrmse = np.sqrt(np.mean(np.divide(np.square(res),np.square(train_weights) )))
     wmse = np.mean(np.divide(np.square(res),np.square(train_weights) ))
     wmure = np.mean(np.divide(abs(res),train_weights)) * 100
 
+    mae = df["diff"].abs().sum() / len(df["diff"])
+    rmse = (df["diff"] ** 2).mean() ** 0.5
+    max_e = df["diff"].abs().max()
 
-    print(params, rmse, wrmse, wmure)
+    # print(params, rmse, wrmse, wmure)
+    df = df.sort_values(by=["diff_abs"], ascending=False)
+    df = df.reset_index(drop=False)
+    hf_key = "HF INTERACTION ENERGY"
+    print("        1. MAE  = %.4f" % mae)
+    print("        2. RMSE = %.4f" % rmse)
+    print("        3. MAX  = %.4f" % max_e)
+    print(
+        df[
+            [
+                "index",
+                "DB",
+                "Benchmark",
+                hf_key,
+                "diff",
+                "diff_abs",
+            ]
+        ].head(30)
+    )
+    for i in range(10):
+        print(f"\nMol {i}")
+        print(df.iloc[i][[
+                "index",
+                "DB",
+                "Benchmark",
+                hf_key,
+                "diff",
+                "diff_abs",
+            ]])
+        print("\nCartesians")
+        print_cartesians(df.iloc[i]["Geometry"])
+    training.to_pickle("jeff.pkl")
 
     metric = args.metric
+    raise ExitEarly()
     if args.metric.upper() == 'RMSE':
         return rmse
     if args.metric.upper() == 'WRMSE':
@@ -188,7 +231,8 @@ def compute_int_energy(params):
 damp = args.damp.upper()
 if damp == "BJ":
     #init = [1.49243587, 0.25149731, 3.84835139]
-    init = [0.9171, 0.3385, 2.883]
+    # init = [0.9171, 0.3385, 2.883]
+    init = [0.713190, 0.079541, 3.627854]
 
 #Zero
 if damp == "ZERO":
