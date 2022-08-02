@@ -4,7 +4,6 @@ import numpy as np
 from .tools import print_cartesians, np_carts_to_string
 import os
 from tqdm import tqdm
-from .setup import expand_opt_df
 
 
 def run_sapt0_example():
@@ -206,6 +205,32 @@ class DirectoryAlreadyExists(Exception):
         super().__init__(self.name)
 
 
+def expand_opt_df_jobs(
+    df,
+    columns_to_add: list = [
+        "HF_dz",
+        "HF_dt",
+        "HF_adz",
+        "HF_adt",
+        "HF_jdz",
+        "HF_jdt",
+    ],
+    prefix: str = "",
+    replace_HF: bool = False,
+) -> pd.DataFrame:
+    """
+    expand_opt_df_jobs adds columns with nan
+    """
+    if replace_HF:
+        df = replace_hf_int_HF_jdz(df)
+    columns_to_add = ["%s%s" % (prefix, i) for i in columns_to_add]
+    for i in columns_to_add:
+        if i not in df:
+            df[i] = np.nan
+    # print(df.columns.values)
+    return df
+
+
 def create_hf_binding_energies_jobs(
     df_p: "base1.pkl",
     bases: [],
@@ -223,7 +248,7 @@ def create_hf_binding_energies_jobs(
     The inputted df will be saved to out_df after each computation finishes.
     """
     df = pd.read_pickle(df_p)
-    df = expand_opt_df(df, bases, prefix="HF_", replace_HF=False)
+    df = expand_opt_df_jobs(df, bases, prefix="HF_", replace_HF=False)
     pd.to_pickle(df, df_p)
 
     def_dir = os.getcwd()
@@ -254,30 +279,32 @@ def create_hf_binding_energies_jobs(
             job_p = "%s/%s/%s.dat" % (p, meth_basis_dir, in_file)
 
             if os.path.exists(job_p):
-                continue
-
-            if not os.path.exists(p):
-                os.mkdir(p)
-            os.chdir(p)
-            c = item["Geometry"]
-            monA = item["monAs"]
-            monB = item["monBs"]
-            mA, mB = [], []
-            for i in monA:
-                mA.append(c[i, :])
-            for i in monB:
-                mB.append(c[i, :])
-            mA = np_carts_to_string(mA)
-            mB = np_carts_to_string(mB)
-            write_psi4_sapt0(
-                mA,
-                mB,
-                meth_basis_dir=meth_basis_dir,
-                basis=basis_set,
-                in_file=in_file,
-            )
+                out_p = "%s/%s/%s.out" % (p, meth_basis_dir, in_file)
+                if os.path.exists(out_p):
+                    continue
+            else:
+                if not os.path.exists(p):
+                    os.mkdir(p)
+                os.chdir(p)
+                c = item["Geometry"]
+                monA = item["monAs"]
+                monB = item["monBs"]
+                mA, mB = [], []
+                for i in monA:
+                    mA.append(c[i, :])
+                for i in monB:
+                    mB.append(c[i, :])
+                mA = np_carts_to_string(mA)
+                mB = np_carts_to_string(mB)
+                write_psi4_sapt0(
+                    mA,
+                    mB,
+                    meth_basis_dir=meth_basis_dir,
+                    basis=basis_set,
+                    in_file=in_file,
+                )
+                os.chdir("..")
             jobs.append(job_p)
-            os.chdir("..")
     os.chdir(int_dir)
     create_pylauncher(
         jobs=jobs,

@@ -16,7 +16,7 @@ def ssi_bfdb_data(df: pd.DataFrame, basis: str = "adz"):
         subprocess.call("curl '%s' > ssi_aug_cc_pvdz_ie.py" % url, shell=True)
     df2 = df.loc[df["DB"] == "SSI"]
     ind1 = df.index[df["DB"] == "SSI"]
-    for i in tqdm(ind1, ascii=True):
+    for i in tqdm(ind1, ascii=True, desc="Gathering SSI HF_%s" % basis):
         s = df.loc[i, "System"]
         s = s.replace("Residue ", "")
         s = s.replace(" and ", "-")
@@ -40,17 +40,20 @@ def collect_HF_energy(
     """
     cmd = "grep 'Counterpoise Corrected' %s -n | awk '{print $1}' | sed 's/://'" % file
     p = subprocess.run(cmd, shell=True, capture_output=True)
-    p = int(p.stdout) + 2
-    with open(file, "r") as f:
-        d = f.readlines()[p:]
-    pos = 0
-    for n, i in enumerate(d):
-        if i == "\n":
-            break
-        else:
-            pos = n
-    d = d[pos].split()[-1]
-    return float(d)
+    try:
+        p = int(p.stdout) + 2
+        with open(file, "r") as f:
+            d = f.readlines()[p:]
+        pos = 0
+        for n, i in enumerate(d):
+            if i == "\n":
+                break
+            else:
+                pos = n
+        d = d[pos].split()[-1]
+        return float(d)
+    except ValueError:
+        return np.nan
 
 
 def harvest_data(
@@ -70,7 +73,7 @@ def harvest_data(
     for idx, item in tqdm(
         df.iterrows(),
         total=df.shape[0],
-        desc="Creating Inputs",
+        desc="Gathering %s" % method,
         ascii=True,
     ):
         col = "HF_%s" % basis
@@ -82,7 +85,8 @@ def harvest_data(
             print("overwriting with calc value...")
         p = "%d_%s" % (idx, item["DB"].replace(" - ", "_"))
         out_p = "%s/%s/%s/%s/%s.out" % (data_dir, data_dir, p, meth_basis_dir, in_file)
-        HF = collect_HF_energy(out_p)
-        df.loc[idx, col] = HF
-    print(df["HF_adz"])
+        if os.path.exists(out_p):
+            HF = collect_HF_energy(out_p)
+            df.loc[idx, col] = HF
+    print(df['HF_%s' % basis])
     return df

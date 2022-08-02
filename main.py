@@ -1,8 +1,9 @@
 import pandas as pd
-from src.setup import gather_data3, read_master_regen, expand_opt_df
+from src.setup import gather_data3, read_master_regen
 from src.optimization import optimization, opt_cross_val, HF_only, find_max_e
 from src.jobs import create_hf_binding_energies_jobs, run_sapt0_example
 from src.harvest import ssi_bfdb_data, harvest_data
+import numpy as np
 
 """
 dftd4/src/dftd4/param.f90
@@ -31,15 +32,16 @@ def analyze_max_errors(
     find_max_e(df, params, hf_key, count)
 
 
+
+
 def main():
     """
     Computes best parameters for SAPT0-D4
     """
-    # gather_data3(output_path="opt5.pkl")
-
+    # gather_data3(output_path="opt_test.pkl", from_master=True)
     # df = pd.read_pickle("base.pkl")
     # df = ssi_bfdb_data(df)
-    df = pd.read_pickle("base1.pkl")
+
     # TODO: Show analyze_max_errors in comparison to jeff.out
     # analyze_max_errors(df, 10)
 
@@ -55,18 +57,18 @@ def main():
 
     # read_master_regen()
 
-    bases = ["tz", "atz", "jtz"]
-    create_hf_binding_energies_jobs(
-        "base1.pkl",
-        bases,
-        "calc",
-        "dimer",
-        "4gb",
-        6,
-        6,
-        "99:00:00",
-    )
-
+    # bases = ["tz", "atz", "jtz"]
+    # bases = ["tz"]
+    # create_hf_binding_energies_jobs(
+    #     "base1.pkl",
+    #     bases,
+    #     "calc",
+    #     "dimer",
+    #     "4gb",
+    #     10,
+    #     6,
+    #     "99:00:00",
+    # )
     return
 
 

@@ -10,6 +10,7 @@ from .constants import Constants
 from tqdm import tqdm
 from psi4.driver.qcdb.bfs import BFS
 import os
+from .harvest import ssi_bfdb_data, harvest_data
 
 
 def inpsect_master_regen():
@@ -99,8 +100,6 @@ def calc_dftd4_props(
         dat = json.load(f)
         C6s = np.array(dat["c6"])
         C8s = np.array(dat["c8"])
-    os.remove("C_n.json")
-    os.remove(input_xyz)
     if output_json != "":
         os.remove(input_xyz)
     return C6s, C8s
@@ -802,7 +801,11 @@ def gather_data3_dimer_splits(
     gather_data3_dimer_splits creates dimers from failed splits in gather_data3
     from BFS
     """
+    df_og = df.copy()
+    df = df[["Geometry", "monAs", "monBs"]]
     ind1 = df["monBs"].index[df["monBs"].isna()]
+    print(f"indexes: {ind1}")
+    print(df.columns.values)
     for i in ind1:
         g3 = df.loc[i, "Geometry"]
         g3 = np.array(g3)
@@ -812,8 +815,12 @@ def gather_data3_dimer_splits(
         if len(frags) == 2:
             f1 = frags[0]
             f2 = frags[1]
+            # df.loc[i, "monAs"] = ",".join([str(i) for i in f1])
+            # df.loc[i, "monBs"] = ",".join([str(i) for i in f2])
             df.loc[i, "monAs"] = f1
             df.loc[i, "monBs"] = f2
+
+    print("passed first")
 
     df1 = df.copy()
     ind2 = df["monBs"].index[df["monBs"].isna()]
@@ -823,66 +830,17 @@ def gather_data3_dimer_splits(
         df.loc[i, "Geometry"] = geom
         df.loc[i, "monAs"] = monA
         df.loc[i, "monBs"] = monB
-    return df, ind1
-
-
-def gather_data3(
-    master_path="master-regen.pkl",
-    output_path="opt3.pkl",
-    verbose=False,
-):
-    """
-    collects data from master-regen.pkl from jeffschriber's scripts for D3
-    (https://aip.scitation.org/doi/full/10.1063/5.0049745)
-    """
-    el_dc = create_pt_dict()
-    df = pd.read_pickle(master_path)
-    df = df[
-        ["DB", "System", "System #", "Benchmark", "HF INTERACTION ENERGY", "Geometry"]
-    ]
-    xyzs = df["Geometry"].to_list()
-    C6s = [np.array([]) for i in range(len(xyzs))]
-    C8s = [np.array([]) for i in range(len(xyzs))]
-    monAs = [np.nan for i in range(len(xyzs))]
-    monBs = [np.nan for i in range(len(xyzs))]
-
-    ones, twos, clear = [], [], []
-    for n, c in enumerate(tqdm(xyzs[:], desc="DFTD4 Props", ascii=True)):
-        g3 = np.array(c)
-        pos = g3[:, 0]
-        carts = g3[:, 1:]
-        C6, C8 = calc_dftd4_props(pos, carts)
-        C6s[n] = C6
-        C8s[n] = C8
-        frags = BFS(carts, pos, bond_threshold=0.4)
-        if len(frags) > 2:
-            ones.append(n)
-        elif len(frags) == 1:
-            twos.append(n)
-            monAs[n] = np.array(frags[0])
-        else:
-            monAs[n] = np.array(frags[0])
-            monBs[n] = np.array(frags[1])
-            clear.append(n)
-
-    print("total =", len(xyzs))
-    print("ones =", len(ones))
-    print("twos =", len(twos))
-    print("clear =", len(clear))
-    df["C6s"] = C6s
-    df["C8s"] = C8s
-    df["monAs"] = monAs
-    df["monBs"] = monBs
-    df = df.reset_index(drop=True)
-    df, inds = gather_data3_dimer_splits(df)
-    df.to_pickle(output_path)
-    return
-
-
-def replace_hf_int_HF_jdz(df):
-    df["HF_jdz"] = df["HF INTERACTION ENERGY"]
-    df = df.drop(columns="HF INTERACTION ENERGY")
-    return df
+    geoms = df["Geometry"].to_list()
+    monAs = df["monAs"].to_list()
+    monBs = df["monBs"].to_list()
+    del df_og["Geometry"]
+    del df_og["monAs"]
+    del df_og["monBs"]
+    df_og["Geometry"] = geoms
+    df_og["monAs"] = monAs
+    df_og["monBs"] = monBs
+    print(df_og.columns.values)
+    return df_og, ind1
 
 
 def expand_opt_df(
@@ -906,4 +864,91 @@ def expand_opt_df(
         if i not in df:
             df[i] = np.nan
     # print(df.columns.values)
+    return df
+
+
+def gather_data3(
+    master_path="master-regen.pkl",
+    output_path="opt3.pkl",
+    verbose=False,
+    HF_columns=[
+        "HF_dz",
+        "HF_adz",
+        "HF_atz",
+        "HF_tz",
+        "HF_jtz",
+    ],
+    from_master: bool = True,
+):
+    """
+    collects data from master-regen.pkl from jeffschriber's scripts for D3
+    (https://aip.scitation.org/doi/full/10.1063/5.0049745)
+    """
+    if from_master:
+        df = pd.read_pickle(master_path)
+        df["SAPT0"] = df["SAPT0 TOTAL ENERGY"]
+        df["SAPT"] = df["SAPT TOTAL ENERGY"]
+        df = df[
+            [
+                "DB",
+                "System",
+                "System #",
+                "Benchmark",
+                "HF INTERACTION ENERGY",
+                "Geometry",
+                "SAPT0",
+                "SAPT",
+            ]
+        ]
+        df = replace_hf_int_HF_jdz(df)
+        xyzs = df["Geometry"].to_list()
+        C6s = [np.array([]) for i in range(len(xyzs))]
+        C8s = [np.array([]) for i in range(len(xyzs))]
+        monAs = [np.nan for i in range(len(xyzs))]
+        monBs = [np.nan for i in range(len(xyzs))]
+
+        ones, twos, clear = [], [], []
+        for n, c in enumerate(tqdm(xyzs[:], desc="DFTD4 Props", ascii=True)):
+            g3 = np.array(c)
+            pos = g3[:, 0]
+            carts = g3[:, 1:]
+            C6, C8 = calc_dftd4_props(pos, carts)
+            C6s[n] = C6
+            C8s[n] = C8
+            frags = BFS(carts, pos, bond_threshold=0.4)
+            if len(frags) > 2:
+                ones.append(n)
+            elif len(frags) == 1:
+                twos.append(n)
+                # monAs[n] = np.array(frags[0])
+            else:
+                monAs[n] = np.array(frags[0])
+                monBs[n] = np.array(frags[1])
+                clear.append(n)
+
+        print("total =", len(xyzs))
+        print("ones =", len(ones))
+        print("twos =", len(twos))
+        print("clear =", len(clear))
+        df["C6s"] = C6s
+        df["C8s"] = C8s
+        df["monAs"] = monAs
+        df["monBs"] = monBs
+        df = df.reset_index(drop=True)
+        df.to_pickle(output_path)
+        df, inds = gather_data3_dimer_splits(df)
+        df = expand_opt_df(df, HF_columns)
+        df = ssi_bfdb_data(df)
+    else:
+        df = pd.read_pickle(output_path)
+        df = expand_opt_df(df, HF_columns)
+    for i in HF_columns:
+        df = harvest_data(df, i.split("_")[-1])
+    df.to_pickle(output_path)
+    return df
+
+
+def replace_hf_int_HF_jdz(df):
+    df["HF_jdz"] = df["HF INTERACTION ENERGY"]
+    df = df.drop(columns="HF INTERACTION ENERGY")
     return df

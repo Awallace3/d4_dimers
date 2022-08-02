@@ -60,21 +60,14 @@ def test_dftd4_commandline_C6s():
         output_json="test.json",
     )
 
-    # subprocess.call(
-    #     # "~/.local/bin/dftd4 dat.xyz --mbdscale 0.0 --func hf --json t.json --property > setup.txt",
-    #     "~/.local/bin/dftd4 dat.xyz --mbdscale 0.0 --json t.json --property",
-    #     shell=True,
-    #     stdout=subprocess.DEVNULL,
-    #     stderr=subprocess.STDOUT,
-    # )
     with open("test.json") as f:
         C6s_json = json.load(f)["c6 coefficients"]
     C6s_json = np.array(C6s_json).reshape((len(C6s), len(C6s)))
     print(C6s[0], C6s_json[0])
     t = np.abs(np.subtract(C6s, C6s_json))
-    os.remove("test.xyz")
-    os.remove("test.json")
-    os.remove("C_n.json")
+    # os.remove("test.xyz")
+    # os.remove("test.json")
+    # os.remove("C_n.json")
     assert np.all(t < 1e-13)
 
 
@@ -332,13 +325,14 @@ def compute_parameters():
 
 
 def test_Hs_splits_size_match_false():
-    df = pd.read_pickle("opt4.pkl")
+    df = pd.read_pickle("opt_test.pkl")
     df1 = df.reset_index(drop=True)
     df2, ind = gather_data3_dimer_splits(df1)
     correct = [False for i in ind]
+    print(correct)
     for n, i in enumerate(ind):
         c1 = df1.loc[i, "Geometry"]
-        c2 = df2.loc[i, "Geometry"][:-1, :]
+        c2 = df2.loc[i, "Geometry"][:-2, :]
         mol = [False for i in c1]
         for n1, r1 in enumerate(c1):
             for n2, r2 in enumerate(c2):
@@ -350,9 +344,8 @@ def test_Hs_splits_size_match_false():
             correct[n] = True
     assert sum(correct) != len(correct)
 
-
 def test_Hs_splits_size_match_true():
-    df = pd.read_pickle("opt4.pkl")
+    df = pd.read_pickle("opt_test.pkl")
     df1 = df.reset_index(drop=True)
     df2, ind = gather_data3_dimer_splits(df1)
     correct = [False for i in ind]
@@ -368,7 +361,30 @@ def test_Hs_splits_size_match_true():
         if sum(mol) == len(mol):
             print(n, correct)
             correct[n] = True
-    assert sum(correct) == len(correct)
+    assert sum(correct) == len(correct) and sum(correct) > 0
+
+
+def compare_opt_jeff() -> None:
+    """
+    compare_opt_jeff ...
+    """
+    df2 = pd.read_pickle("opt.pkl")
+    ms = pd.read_pickle("jeff.pkl")
+    df2 = df2.sort_values(by="Benchmark")
+    ms = ms.sort_values(by="Benchmark")
+    g1 = df2["Geometry"].to_list()
+    g3 = ms["Geometry"].to_list()
+    b1 = df2["Benchmark"].to_list()
+    b3 = ms["Benchmark"].to_list()
+    g = 0
+    b = 0
+    for i in range(len(g1)):
+        if np.array_equal(g1[i], g3[i]):
+            # if g1[i] == g3[i]:
+            g += 1
+        if b1[i] == b2[i]:
+            b += 1
+    assert g == b == len(g1)
 
 
 def main():
