@@ -380,7 +380,6 @@ def compare_opt_jeff() -> None:
     b = 0
     for i in range(len(g1)):
         if np.array_equal(g1[i], g3[i]):
-            # if g1[i] == g3[i]:
             g += 1
         if b1[i] == b2[i]:
             b += 1

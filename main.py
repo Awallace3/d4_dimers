@@ -3,7 +3,7 @@ from src.setup import gather_data3, read_master_regen
 from src.optimization import optimization, opt_cross_val, HF_only, find_max_e
 from src.jobs import create_hf_binding_energies_jobs, run_sapt0_example
 from src.harvest import ssi_bfdb_data, harvest_data
-import numpy as np
+from src.compare import error_stats_method, analyze_diffs
 
 """
 dftd4/src/dftd4/param.f90
@@ -32,6 +32,14 @@ def analyze_max_errors(
     find_max_e(df, params, hf_key, count)
 
 
+def get_params():
+    return {
+        "HF_jdz": [0.57791015, 0.67223747, 0.98740773],
+        "HF_adz": [0.5971246, 0.64577916, 1.17106229],
+    }
+
+
+# TODO: Show analyze_max_errors in comparison to jeff.out
 
 
 def main():
@@ -42,8 +50,11 @@ def main():
     # df = pd.read_pickle("base.pkl")
     # df = ssi_bfdb_data(df)
 
-    # TODO: Show analyze_max_errors in comparison to jeff.out
     # analyze_max_errors(df, 10)
+    df = pd.read_pickle("opt.pkl")
+    params_dc = get_params()
+    analyze_diffs(df, params_dc)
+    # s0, mae_s0, rmse_s0, max_e_s0 = error_stats_method(df, method="SAPT0")
 
     # basis_set = "dz"
     # df = harvest_data(df, basis_set)
