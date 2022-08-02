@@ -4,6 +4,7 @@ import numpy as np
 from .tools import print_cartesians, np_carts_to_string
 import os
 from tqdm import tqdm
+from .setup import expand_opt_df
 
 
 def run_sapt0_example():
@@ -178,7 +179,8 @@ def basis_labels(
     method: str = "HF",
 ) -> (str, str):
     """
-    basis_labels converts basis to psi4 input basis
+        basis_labels converts basis to psi4 input basis
+    ["tz", "atz", "jtz"]
     """
     if basis == "adz":
         return "aug-cc-pvdz", "%s_%s" % (method, basis)
@@ -188,6 +190,10 @@ def basis_labels(
         return "cc-pvdz", "%s_%s" % (method, basis)
     elif basis == "tz":
         return "cc-pvtz", "%s_%s" % (method, basis)
+    elif basis == "atz":
+        return "aug-cc-pvtz", "%s_%s" % (method, basis)
+    elif basis == "jtz":
+        return "jun-cc-pvtz", "%s_%s" % (method, basis)
     else:
         return basis, "%s_%s" % (method, basis)
 
@@ -201,8 +207,8 @@ class DirectoryAlreadyExists(Exception):
 
 
 def create_hf_binding_energies_jobs(
-    df: pd.DataFrame,
-    basis: str,
+    df_p: "base1.pkl",
+    bases: [],
     data_dir: str = "calc",
     in_file: str = "dimer",
     memory: str = "4gb",
@@ -216,6 +222,10 @@ def create_hf_binding_energies_jobs(
 
     The inputted df will be saved to out_df after each computation finishes.
     """
+    df = pd.read_pickle(df_p)
+    df = expand_opt_df(df, bases, prefix="HF_", replace_HF=False)
+    pd.to_pickle(df, df_p)
+
     def_dir = os.getcwd()
     if not os.path.exists(data_dir):
         os.mkdir(data_dir)
@@ -227,47 +237,47 @@ def create_hf_binding_energies_jobs(
 
     jobs = []
     # df.loc[[0, 1, 2, 3, 4, 5]]
-    basis_set, meth_basis_dir = basis_labels(basis)
-    method = "hf/%s" % basis_set
-    print(method)
     for idx, item in tqdm(
         df.iterrows(),
         total=df.shape[0],
         desc="Creating Inputs",
         ascii=True,
     ):
-        col = "HF_%s" % basis
-        v = df.loc[idx, col]
-        if not np.isnan(v):
-            continue
-        p = "%d_%s" % (idx, item["DB"].replace(" - ", "_"))
-        job_p = "%s/%s/%s.dat" % (p, meth_basis_dir, in_file)
+        for basis in bases:
+            basis_set, meth_basis_dir = basis_labels(basis)
+            method = "hf/%s" % basis_set
+            col = "HF_%s" % basis
+            v = df.loc[idx, col]
+            if not np.isnan(v):
+                continue
+            p = "%d_%s" % (idx, item["DB"].replace(" - ", "_"))
+            job_p = "%s/%s/%s.dat" % (p, meth_basis_dir, in_file)
 
-        if os.path.exists(job_p):
-            continue
+            if os.path.exists(job_p):
+                continue
 
-        if not os.path.exists(p):
-            os.mkdir(p)
-        os.chdir(p)
-        c = item["Geometry"]
-        monA = item["monAs"]
-        monB = item["monBs"]
-        mA, mB = [], []
-        for i in monA:
-            mA.append(c[i, :])
-        for i in monB:
-            mB.append(c[i, :])
-        mA = np_carts_to_string(mA)
-        mB = np_carts_to_string(mB)
-        write_psi4_sapt0(
-            mA,
-            mB,
-            meth_basis_dir=meth_basis_dir,
-            basis=basis_set,
-            in_file=in_file,
-        )
-        jobs.append(job_p)
-        os.chdir("..")
+            if not os.path.exists(p):
+                os.mkdir(p)
+            os.chdir(p)
+            c = item["Geometry"]
+            monA = item["monAs"]
+            monB = item["monBs"]
+            mA, mB = [], []
+            for i in monA:
+                mA.append(c[i, :])
+            for i in monB:
+                mB.append(c[i, :])
+            mA = np_carts_to_string(mA)
+            mB = np_carts_to_string(mB)
+            write_psi4_sapt0(
+                mA,
+                mB,
+                meth_basis_dir=meth_basis_dir,
+                basis=basis_set,
+                in_file=in_file,
+            )
+            jobs.append(job_p)
+            os.chdir("..")
     os.chdir(int_dir)
     create_pylauncher(
         jobs=jobs,

@@ -9,6 +9,7 @@ import math
 from .constants import Constants
 from tqdm import tqdm
 from psi4.driver.qcdb.bfs import BFS
+import os
 
 
 def inpsect_master_regen():
@@ -98,6 +99,10 @@ def calc_dftd4_props(
         dat = json.load(f)
         C6s = np.array(dat["c6"])
         C8s = np.array(dat["c8"])
+    os.remove("C_n.json")
+    os.remove(input_xyz)
+    if output_json != "":
+        os.remove(input_xyz)
     return C6s, C8s
 
 
@@ -888,6 +893,7 @@ def expand_opt_df(
         "HF_adz",
         "HF_adt",
     ],
+    prefix: str = "",
     replace_HF: bool = False,
 ) -> pd.DataFrame:
     """
@@ -895,7 +901,9 @@ def expand_opt_df(
     """
     if replace_HF:
         df = replace_hf_int_HF_jdz(df)
+    columns_to_add = ["%s%s" % (prefix, i) for i in columns_to_add]
     for i in columns_to_add:
-        df[i] = np.nan
-    print(df.columns.values)
+        if i not in df:
+            df[i] = np.nan
+    # print(df.columns.values)
     return df
