@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from periodictable import elements
 from .r4r2 import get_Q, r4r2_from_elements_call, r4r2_vals
-from .tools import print_cartesians, print_cartesians_pos_carts
+from .tools import print_cartesians, print_cartesians_pos_carts, np_carts_to_string
 import subprocess
 import json
 import math
@@ -11,6 +11,7 @@ from tqdm import tqdm
 from psi4.driver.qcdb.bfs import BFS
 import os
 from .harvest import ssi_bfdb_data, harvest_data
+import psi4
 
 
 def inpsect_master_regen():
@@ -73,6 +74,24 @@ def write_xyz_from_np(atom_numbers, carts, outfile="dat.xyz") -> None:
             line = "%s    %s\n" % (el, v)
             f.write(line)
     return
+
+
+def mol_testing(mol):
+    params = [1.61679827, 0.44959224, 3.35743605]
+    geom = mol["Geometry"]
+    Ma = mol["monAs"]
+    Mb = mol["monBs"]
+
+    atoms = geom[:, 0]
+    carts = geom[:, 1:]
+    C6s, C8s = calc_dftd4_props(atoms, carts)
+    print(np.array_equal(C6s, mol["C6s"]))
+    print(C6s[0])
+    print(mol["C6s"][0])
+    energy = compute_bj_pairs(params, atoms, carts, Ma, Mb, C6s)
+    print("HF_jdz", mol["HF_jdz"])
+    print("pairs =", energy)
+    print("EI =", mol["HF_jdz"] + energy)
 
 
 def calc_dftd4_props(
@@ -472,8 +491,62 @@ def compute_bj_opt(
             energy += e6
             energy += e8
 
-    energy *= -627.509
+    energy *= -1
     # energy *= -1
+    return energy
+
+
+def compute_bj_mons(
+    params: [],
+    pos: np.array,
+    carts: np.array,
+    M: [],  # number of atoms in monomer
+    C6s: np.array,
+) -> float:
+    """
+    compute_bj_mon computes energy from C6s, cartesian coordinates, and monomers.
+    """
+    energy = 0
+    mon_carts = np.zeros((len(M), 3))
+    mon_pos = np.zeros(len(M))
+    for n, i in enumerate(M):
+        mon_carts[n] = carts[i]
+        mon_pos[n] = pos[i]
+
+    s8, a1, a2 = params
+    s6 = 1.0
+    M_tot = len(mon_carts)
+    energies = np.zeros(M_tot)
+    lattice_points = 1
+    aatoau = Constants().g_aatoau()
+    cs = aatoau * np.array(mon_carts, copy=True)
+    for i in range(M_tot):
+        el1 = int(pos[i])
+        el1_r4r2 = r4r2_vals(el1)
+        Q_A = np.sqrt(np.sqrt(el1) * el1_r4r2)
+        for j in range(i):
+            if i == j:
+                continue
+            for k in range(lattice_points):
+                el2 = int(pos[j])
+                el2_r4r2 = r4r2_vals(el2)
+                Q_B = np.sqrt(np.sqrt(el2) * el2_r4r2)
+                rrij = 3 * Q_A * Q_B
+                r0ij = a1 * np.sqrt(rrij) + a2
+                C6 = C6s[i, j]
+                r1, r2 = cs[i, :], cs[j, :]
+                r2 = np.subtract(r1, r2)
+                r2 = np.sum(np.multiply(r2, r2))
+                # R value is not a match since dftd4 converts input carts
+                t6 = 1 / (r2**3 + r0ij**6)
+                t8 = 1 / (r2**4 + r0ij**8)
+                edisp = s6 * t6 + s8 * rrij * t8
+
+                de = -C6 * edisp * 0.5
+                energies[i] += de
+                if i != j:
+                    energies[j] += de
+    energy = np.sum(energies)
     return energy
 
 
@@ -484,12 +557,59 @@ def compute_bj_pairs(
     Ma: int,  # number of atoms in monomer A
     Mb: int,  # number of atoms in monomer B
     C6s: np.array,
+    index: int = 1,
+    mult_out: float = 1.0
 ) -> float:
     """
-    compute_bj_self computes energy from C6s, cartesian coordinates, and dimer sizes.
+    compute_bj_pairs computes energy from C6s, cartesian coordinates, and dimer sizes.
     """
-    s6, s8, a1, a2 = params
+    s8, a1, a2 = params
+    s6 = 1.0
     C8s = np.zeros(np.shape(C6s))
+
+    aatoau = Constants().g_aatoau()
+    energy = 0
+    cs = aatoau * np.array(carts, copy=True)
+    for i in Ma:
+        el1 = int(pos[i])
+        el1_r4r2 = r4r2_vals(el1)
+        Q_A = np.sqrt(el1) * el1_r4r2
+        for j in Mb:
+            el2 = int(pos[j])
+            el2_r4r2 = r4r2_vals(el2)
+            Q_B = np.sqrt(el2) * el2_r4r2
+            C8s[i, j] = 3 * C6s[i, j] * np.sqrt(Q_A * Q_B)
+            C6 = C6s[i, j]
+            C8 = C8s[i, j]
+
+            r1, r2 = cs[i, :], cs[j, :]
+            R = np.linalg.norm(r1 - r2)
+            R0 = np.sqrt(C8 / C6)
+
+            energy += C6 / (R**6.0 + (a1 * R0 + a2) ** 6.0)
+            energy += s8 * C8 / (R**8.0 + (a1 * R0 + a2) ** 8.0)
+
+    energy *= -mult_out
+    if index == 1466:
+        print(index, energy)
+    return energy
+
+
+def compute_bj_alt(
+    params: [],
+    pos: np.array,
+    carts: np.array,
+    Ma: int,  # number of atoms in monomer A
+    Mb: int,  # number of atoms in monomer B
+    C6s: np.array,
+) -> float:
+    """
+    compute_bj_alt computes energy from C6s, cartesian coordinates, and dimer sizes.
+    """
+    s8, a1, a2 = params
+    s6 = 1.0
+    C8s = np.zeros(np.shape(C6s))
+    energies = np.zeros(np.shape(C6s))
     N_tot = len(carts)
 
     aatoau = Constants().g_aatoau()
@@ -515,7 +635,12 @@ def compute_bj_pairs(
 
             energy += C6 / (R**6.0 + (a1 * R0 + a2) ** 6.0)
             energy += s8 * C8 / (R**8.0 + (a1 * R0 + a2) ** 8.0)
+            energies[i, j] += C6 / (R**6.0 + (a1 * R0 + a2) ** 6.0)
+            energies[i, j] += s8 * C8 / (R**8.0 + (a1 * R0 + a2) ** 8.0)
 
+    # print(energies)
+    energy = np.sum(energies)
+    # print(energy)
     energy *= -1
     return energy
 
@@ -525,9 +650,6 @@ def compute_C8s(
     carts: np.array,
     C6s: np.array,
 ) -> float:
-    """
-    compute_bj_self computes energy from C6s, cartesian coordinates, and dimer sizes.
-    """
     C8s = np.zeros(np.shape(C6s))
     N_tot = len(carts)
     aatoau = Constants().g_aatoau()
@@ -548,25 +670,21 @@ def compute_C8s(
 
 
 # /theoryfs2/ds/amwalla3/projects/dftd4/src/dftd4/damping/rational.f90
-
-
-def compute_bj_self(
+def compute_bj_f90(
     params: [],
     pos: np.array,
     carts: np.array,
     C6s: np.array,
 ) -> float:
     """
-    compute_bj_self computes energy from C6s, cartesian coordinates, and dimer sizes.
+    compute_bj_f90 computes energy from C6s, cartesian coordinates, and dimer sizes.
     """
-
     energy = 0
-    s6, s8, a1, a2 = params
-    C8s = np.zeros(np.shape(C6s))
+    s8, a1, a2 = params
+    s6 = 1.0
     M_tot = len(carts)
     energies = np.zeros(M_tot)
     lattice_points = 1
-
     aatoau = Constants().g_aatoau()
     cs = aatoau * np.array(carts, copy=True)
     for i in range(M_tot):
@@ -584,9 +702,7 @@ def compute_bj_self(
 
                 rrij = 3 * Q_A * Q_B
                 r0ij = a1 * np.sqrt(rrij) + a2
-                # C8s[i, j] = 3 * C6s[i, j] * np.sqrt(Q_A * Q_B)
                 C6 = C6s[i, j]
-                # C8 = C8s[i, j]
 
                 r1, r2 = cs[i, :], cs[j, :]
                 # R = np.linalg.norm(r1 - r2)
@@ -598,20 +714,10 @@ def compute_bj_self(
                 edisp = s6 * t6 + s8 * rrij * t8
 
                 de = -C6 * edisp * 0.5
-                # print(carts[i, 0], i, j, R, edisp, de)
-
-                # i + 1 to match f90 indexing
-                # print("carts1 =", r1)
-                # print("carts2 =", r2)
-
-                # print *, iat, jat, r2, edisp, dE
-
                 energies[i] += de
                 if i != j:
                     energies[j] += de
-
     energy = np.sum(energies)
-
     return energy
 
 
@@ -620,7 +726,8 @@ def compute_bj_dftd4(
     atom_numbers: np.array,
     carts: np.array,
 ):
-    s6, s8, a1, a2 = params
+    s8, a1, a2 = params
+    s6 = 1.0
     energy = 0.0
     # disp = DispersionModel(
     #     numbers=atom_numbers,
@@ -632,18 +739,23 @@ def compute_bj_dftd4(
 
     write_xyz_from_np(atom_numbers, carts)
     subprocess.call(
-        "dftd4 dat.xyz --verbose --pair-resolved --verbose --property --param %.4f %.4f %.4f %.4f > dat.txt"
+        "dftd4 dat.xyz --verbose --pair-resolved --verbose --property --param %.16f %.16f %.16f %.16f > dat.txt"
         % (s6, s8, a1, a2),
         shell=True,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.STDOUT,
     )
+    with open("dat.txt", "r") as f:
+        data = f.readlines()
+    for i in data:
+        if "2b" in i:
+            e_2b = float(i.split()[-1])
     with open(".EDISP") as f:
         # energy = json.load(f)["energy"]
         energy = float(f.read())
     # C6s_json = np.array(C6s_json).reshape((len(C6s), len(C6s)))
     # converts to kcal/mol
-    return energy
+    return energy, e_2b
 
 
 def build_dummy() -> None:
@@ -672,6 +784,115 @@ def build_dummy() -> None:
             print(d[15:16])
 
 
+def split_dimer(geom, Ma, Mb) -> (np.array, np.array):
+    """
+    split_dimer
+    """
+    ma = []
+    mb = []
+    for i in Ma:
+        ma.append(geom[i, :])
+    for i in Mb:
+        mb.append(geom[i, :])
+    return np.array(ma), np.array(mb)
+
+
+def compute_psi4_d4(geom, Ma, Mb, memory: str = "4 GB", basis="jun-cc-pvdz"):
+    ma, mb = split_dimer(geom, Ma, Mb)
+    ma = np_carts_to_string(ma)
+    mb = np_carts_to_string(mb)
+    geom = "0 1\n%s--\n0 1\n%s" % (ma, mb)
+    # geom = '%s--\n%s' % (A, B)
+    print(geom)
+    psi4.geometry(geom)
+    psi4.set_memory(memory)
+    psi4.set_options(
+        {
+            "basis": basis,
+            "freeze_core": "true",
+            "guess": "sad",
+            "scf_type": "df",
+        }
+    )
+    v = psi4.energy("hf-d4", bsse_type="cp")
+    print(v)
+
+    return
+
+
+def compute_bj_from_dimer_AB(
+    params,
+    pos,
+    carts,
+    Ma,
+    Mb,
+    C6s,
+) -> float:
+    """
+    compute_bj_from_dimer_AB computes dftd4 for dimer and each monomer and returns
+    subtraction.
+    """
+    f90 = compute_bj_f90(params, pos, carts, C6s)
+    monA = compute_bj_mons(params, pos, carts, Ma, C6s)
+    monB = compute_bj_mons(params, pos, carts, Mb, C6s)
+    AB = monA + monB
+    disp = f90 - (AB)
+    return disp * 627.509
+
+
+# self :     -26.86350371919017
+# DFTD4 2b : -26.86350371919017
+def gather_data2_testing_mol(mol):
+    params = [1.61679827, 0.44959224, 3.35743605]
+    print(params)
+    g3 = mol["Geometry"]
+    Ma, Mb = mol["monAs"], mol["monBs"]
+    pos = g3[:, 0]
+    carts = g3[:, 1:]
+    HF_jdz = mol["HF_jdz"]
+    C6s, C8s = calc_dftd4_props(pos, carts)
+    pairs = compute_bj_pairs(params, pos, carts, Ma, Mb, C6s)
+    alt = compute_bj_alt(params, pos, carts, Ma, Mb, C6s)
+    f90 = compute_bj_f90(params, pos, carts, C6s)
+    monA = compute_bj_mons(params, pos, carts, Ma, C6s)
+    monB = compute_bj_mons(params, pos, carts, Mb, C6s)
+    d_ab = compute_bj_from_dimer_AB(params, pos, carts, Ma, Mb, C6s)
+    AB = monA + monB
+
+    energy, e_2b = compute_bj_dftd4(params, pos, carts)
+    print("DFTD4 full:", energy)
+    print("pairs     :", pairs)
+    print("f90       :", f90)
+    print("DFTD4 2b  :", e_2b)
+    print("alt       :", alt)
+    print("f90  - DFTD4 2b = ", f90 - e_2b)
+    print("alt  - DFTD4 2b = ", alt - e_2b)
+    print("monA :", monA)
+    print("monB :", monB)
+    print("AB:", AB)
+    print("f90 - AB =", f90 - AB)
+    print("HF_jdz = ", HF_jdz)
+    print("BM     = ", mol['Benchmark'])
+    d4_1 = f90 - (AB)
+    ie1 = HF_jdz + d4_1 * 627.509
+    d4_2 = alt - (AB)
+    ie2 = HF_jdz + d4_2 * 627.509
+    ie3 = HF_jdz + d_ab
+    d4 = pairs
+    ie4 = HF_jdz + d4 * 627.509
+    print("DISP (f90 )  =", d4_1 * 627.509)
+    print("DISP (alt )  =", d4_2 * 627.509)
+    print("DISP (d_ab ) =", d_ab)
+    print("DISP (pairs) =", pairs * 627.509)
+    print("IE (f90 )    =", ie1)
+    print("IE (alt )    =", ie2)
+    print("IE (d_ab )   =", ie3)
+    print("IE (pairs)   =", ie4)
+    print(Ma, Mb)
+    print_cartesians(g3)
+    return
+
+
 def gather_data2_testing(
     condensed_path="condensed.pkl",
 ):
@@ -692,17 +913,27 @@ def gather_data2_testing(
         carts = g3[:, 1:]
         C6s, C8s = calc_dftd4_props(pos, carts)
         Ma, Mb = len(g1), len(g2)
-        energy = compute_bj_pairs(params, pos, carts, Ma, Mb, C6s)
+        pairs = compute_bj_alt(params, pos, carts, Ma, Mb, C6s)
+        print("pairs     :", pairs)
+        energy = compute_bj_f90(params, pos, carts, C6s)
         print("self :", energy)
-        energy = compute_bj_self(params, pos, carts, C6s)
-        print("self :", energy)
-        energy = compute_bj_dftd4(params, pos, carts)
-        print("DFTD4:", energy)
+        energy, e_2b = compute_bj_dftd4(params, pos, carts)
+        print("DFTD4 full:", energy)
+        print("DFTD4 2b  :", e_2b)
+        print("pairs - DFTD4 2b = ", pairs - e_2b)
         print()
     return
 
 
-def gather_data2(condensed_path="condensed.pkl", output_path="opt.pkl"):
+"""
+self : -0.03421315617528683
+DFTD4 full: -0.0338246418555
+self :      -0.03421315617528684
+DFTD4 2b  : -0.03421315617528684
+"""
+
+
+def gather_data2(condensed_path="condensed.pkl", output_path="opt2.pkl"):
     """
     use gather_data3 for best output data from master-regen for other functions
     """
@@ -795,17 +1026,15 @@ def split_Hs_carts(
 
 
 def gather_data3_dimer_splits(
-    df: pd.DataFrame,
+    df_og: pd.DataFrame,
 ) -> pd.DataFrame:
     """
     gather_data3_dimer_splits creates dimers from failed splits in gather_data3
     from BFS
     """
-    df_og = df.copy()
-    df = df[["Geometry", "monAs", "monBs"]]
+    df = df_og[["Geometry", "monAs", "monBs"]].copy()
     ind1 = df["monBs"].index[df["monBs"].isna()]
     print(f"indexes: {ind1}")
-    print(df.columns.values)
     for i in ind1:
         g3 = df.loc[i, "Geometry"]
         g3 = np.array(g3)
@@ -815,12 +1044,8 @@ def gather_data3_dimer_splits(
         if len(frags) == 2:
             f1 = frags[0]
             f2 = frags[1]
-            # df.loc[i, "monAs"] = ",".join([str(i) for i in f1])
-            # df.loc[i, "monBs"] = ",".join([str(i) for i in f2])
             df.loc[i, "monAs"] = f1
             df.loc[i, "monBs"] = f2
-
-    print("passed first")
 
     df1 = df.copy()
     ind2 = df["monBs"].index[df["monBs"].isna()]
@@ -839,7 +1064,6 @@ def gather_data3_dimer_splits(
     df_og["Geometry"] = geoms
     df_og["monAs"] = monAs
     df_og["monBs"] = monBs
-    print(df_og.columns.values)
     return df_og, ind1
 
 
@@ -881,6 +1105,7 @@ def gather_data3(
     from_master: bool = True,
 ):
     """
+    **NOTE** This damages ordering of geometries for C6s causing incorrect results.
     collects data from master-regen.pkl from jeffschriber's scripts for D3
     (https://aip.scitation.org/doi/full/10.1063/5.0049745)
     """
@@ -947,6 +1172,102 @@ def gather_data3(
     df.to_pickle(output_path)
     return df
 
+
+def reorganize_carts_to_split_middle(geoms: [], mAs: [], mBs:[]) -> []:
+    """
+    reorganize_carts_to_split_middle
+    """
+    for n, g in enumerate(geoms):
+        print(f"Mol {n}\n")
+        ma, mb = mAs[n], mBs[n]
+        print(ma, mb)
+
+
+def gather_data4(
+    master_path="master-regen.pkl",
+    output_path="opt4.pkl",
+    verbose=False,
+    HF_columns=[
+        "HF_dz",
+        "HF_adz",
+        "HF_atz",
+        "HF_tz",
+        "HF_jtz",
+    ],
+    from_master: bool = True,
+):
+    """
+    collects data from master-regen.pkl from jeffschriber's scripts for D3
+    (https://aip.scitation.org/doi/full/10.1063/5.0049745)
+    """
+    if from_master:
+        df = pd.read_pickle(master_path)
+        df["SAPT0"] = df["SAPT0 TOTAL ENERGY"]
+        df["SAPT"] = df["SAPT TOTAL ENERGY"]
+        df = df[
+            [
+                "DB",
+                "System",
+                "System #",
+                "Benchmark",
+                "HF INTERACTION ENERGY",
+                "Geometry",
+                "SAPT0",
+                "SAPT",
+            ]
+        ]
+        df = replace_hf_int_HF_jdz(df)
+        xyzs = df["Geometry"].to_list()
+        monAs = [np.nan for i in range(len(xyzs))]
+        monBs = [np.nan for i in range(len(xyzs))]
+
+        ones, twos, clear = [], [], []
+        for n, c in enumerate(tqdm(xyzs[:], desc="Dimer Splits", ascii=True)):
+            g3 = np.array(c)
+            pos = g3[:, 0]
+            carts = g3[:, 1:]
+            frags = BFS(carts, pos, bond_threshold=0.4)
+            if len(frags) > 2:
+                ones.append(n)
+            elif len(frags) == 1:
+                twos.append(n)
+                # monAs[n] = np.array(frags[0])
+            else:
+                monAs[n] = np.array(frags[0])
+                monBs[n] = np.array(frags[1])
+                clear.append(n)
+        print("total =", len(xyzs))
+        print("ones =", len(ones))
+        print("twos =", len(twos))
+        print("clear =", len(clear))
+        df["monAs"] = monAs
+        df["monBs"] = monBs
+        df = df.reset_index(drop=True)
+        df, inds = gather_data3_dimer_splits(df)
+        df = df.reset_index(drop=True)
+
+        xyzs = df["Geometry"].to_list()
+        C6s = [np.array([]) for i in range(len(xyzs))]
+        C8s = [np.array([]) for i in range(len(xyzs))]
+        for n, c in enumerate(tqdm(xyzs[:], desc="DFTD4 Props", ascii=True)):
+            g3 = np.array(c)
+            pos = g3[:, 0]
+            carts = g3[:, 1:]
+            C6, C8 = calc_dftd4_props(pos, carts)
+            C6s[n] = C6
+            C8s[n] = C8
+        df["C6s"] = C6s
+        df["C8s"] = C8s
+        df.to_pickle(output_path)
+        df = expand_opt_df(df, HF_columns)
+        df = ssi_bfdb_data(df)
+    else:
+        df = pd.read_pickle(output_path)
+        df = expand_opt_df(df, HF_columns)
+    for i in HF_columns:
+        df = harvest_data(df, i.split("_")[-1])
+    df.to_pickle(output_path)
+    return df
 
 def replace_hf_int_HF_jdz(df):
     df["HF_jdz"] = df["HF INTERACTION ENERGY"]

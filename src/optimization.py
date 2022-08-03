@@ -2,6 +2,9 @@ from .setup import (
     create_pt_dict,
     compute_bj_opt,
     gather_data3,
+    compute_bj_pairs,
+    compute_bj_from_dimer_AB,
+    calc_dftd4_props,
 )
 import scipy.optimize as opt
 import time
@@ -50,18 +53,47 @@ def find_max_e(
     print(f"\nhf_key = {hf_key}, Params = {params}")
     diff = np.zeros(len(df))
     el_dc = create_pt_dict()
+    # d4s = []
+    # for idx, i in df.loc[[1, 1466]].iterrows():
+    #     e = compute_bj_from_dimer_AB(
+    #         params,
+    #         i["Geometry"][:, 0],  # pos
+    #         i["Geometry"][:, 1:],  # carts
+    #         i["monAs"],
+    #         i["monBs"],
+    #         i["C6s"]
+    #
+    #     )
+    #     d4s.append(e)
+    #     if idx == 1466:
+    #         print(e)
+    #         print(i)
+    #         return
+    # df["d4"] = d4s
+
     df["d4"] = df.apply(
-        lambda row: compute_bj_opt(
+        lambda row: compute_bj_from_dimer_AB(
             params,
             row["Geometry"][:, 0],  # pos
             row["Geometry"][:, 1:],  # carts
-            row["C6s"],
-            row["C8s"],
             row["monAs"],
             row["monBs"],
+            row["C6s"],
         ),
+        # lambda row: compute_bj_opt(
+        #     params,
+        #     row["Geometry"][:, 0],  # pos
+        #     row["Geometry"][:, 1:],  # carts
+        #     row["C6s"],
+        #     row["C8s"],
+        #     row["monAs"],
+        #     row["monBs"],
+        # ),
         axis=1,
     )
+    print(df.loc[1466])
+    print(df.loc[1466, "d4"])
+    print(df.loc[1466, "d4"] + df.loc[1466, hf_key])
     df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
     mae = df["diff"].abs().sum() / len(df["diff"])
     rmse = (df["diff"] ** 2).mean() ** 0.5
@@ -104,15 +136,23 @@ def compute_int_energy_stats(
     diff = np.zeros(len(df))
     el_dc = create_pt_dict()
     df["d4"] = df.apply(
-        lambda row: compute_bj_opt(
+        lambda row: compute_bj_pairs(
             params,
             row["Geometry"][:, 0],  # pos
             row["Geometry"][:, 1:],  # carts
-            row["C6s"],
-            row["C8s"],
             row["monAs"],
             row["monBs"],
+            row["C6s"],
+            mult_out=627.509,
         ),
+        # lambda row: compute_bj_from_dimer_AB(
+        #     params,
+        #     row["Geometry"][:, 0],  # pos
+        #     row["Geometry"][:, 1:],  # carts
+        #     row["monAs"],
+        #     row["monBs"],
+        #     row["C6s"],
+        # ),
         axis=1,
     )
     df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
@@ -134,15 +174,23 @@ def compute_int_energy(
     diff = np.zeros(len(df))
     el_dc = create_pt_dict()
     df["d4"] = df.apply(
-        lambda row: compute_bj_opt(
+        lambda row: compute_bj_pairs(
             params,
             row["Geometry"][:, 0],  # pos
             row["Geometry"][:, 1:],  # carts
-            row["C6s"],
-            row["C8s"],
             row["monAs"],
             row["monBs"],
+            row["C6s"],
+            mult_out=627.509,
         ),
+        # lambda row: compute_bj_from_dimer_AB(
+        #     params,
+        #     row["Geometry"][:, 0],  # pos
+        #     row["Geometry"][:, 1:],  # carts
+        #     row["monAs"],
+        #     row["monBs"],
+        #     row["C6s"],
+        # ),
         axis=1,
     )
     df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
@@ -176,6 +224,7 @@ def optimization(
     # &  s6=1.0000_wp, s8=3.02227550_wp, a1=0.47396846_wp, a2=4.49845309_wp )
     print("RMSE\t\tparams")
     ret = opt.minimize(
+        # compute_int_energy, args=(df, hf_key), x0=params, method="powell"
         compute_int_energy, args=(df, hf_key), x0=params, method="powell"
     )
     print("\nResults\n")

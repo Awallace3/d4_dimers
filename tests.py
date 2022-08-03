@@ -1,5 +1,5 @@
 import pytest
-from src.setup import calc_dftd4_props, compute_bj_self
+from src.setup import calc_dftd4_props, compute_bj_f90
 import numpy as np
 import math
 from src.r4r2 import r4r2_vals
@@ -49,6 +49,30 @@ def carts1():
     """
 
 
+def carts2() -> str:
+    """
+    carts2
+    """
+    return """
+6       -1.0617092040   1.2971405720    0.2920600030
+8       -0.3581611160   2.2704586130    0.5318126680
+8       -0.5893035160   0.0949177580    0.0037888130
+6       -2.5584277980   1.3425498230    0.2962573200
+1       0.4044356590    0.1277226210    0.0184118380
+1       -2.8959979780   2.3474640020    0.5183163400
+1       -2.9328892780   1.0223904510    -0.6729955510
+1       -2.9372119600   0.6449104330    1.0395570840
+6       2.2924117880    1.1062202300    0.2673807780
+8       1.5887934230    0.1329057420    0.0275931760
+8       1.8199854540    2.3086556180    0.5551592490
+6       3.7891242360    1.0603174840    0.2654163830
+1       0.8261969140    2.2757573840    0.5407587450
+1       4.1267038000    0.0589982910    0.0278908880
+1       4.1706227810    1.7706704230    -0.4640525150
+1       4.1606405470    1.3630120010    1.2414717440
+"""
+
+
 def test_dftd4_commandline_C6s():
     test_carts = carts1()
     c = convert_str_carts_np_carts(test_carts)
@@ -71,72 +95,11 @@ def test_dftd4_commandline_C6s():
     assert np.all(t < 1e-13)
 
 
-def compute_bj_self_test_setup():
-    params = [1.0000, 0.9, 0.4, 5.0]
-    pos = np.array(
-        [
-            7.0,
-            6.0,
-            7.0,
-            6.0,
-            6.0,
-            6.0,
-            7.0,
-            6.0,
-            7.0,
-            1.0,
-            7.0,
-            1.0,
-            1.0,
-            1.0,
-            1.0,
-            7.0,
-            6.0,
-            7.0,
-            6.0,
-            6.0,
-            6.0,
-            1.0,
-            8.0,
-            7.0,
-            1.0,
-            1.0,
-            1.0,
-            1.0,
-        ]
-    )
-    carts = np.array(
-        [
-            [-2.143860e-01, -1.993021e00, 1.580000e-04],
-            [-1.483458e00, -1.537649e00, 3.900000e-05],
-            [-1.896987e00, -2.697650e-01, -1.260000e-04],
-            [-8.590920e-01, 5.833320e-01, -1.300000e-04],
-            [5.023510e-01, 2.582240e-01, 2.500000e-05],
-            [8.189870e-01, -1.120415e00, 1.690000e-04],
-            [1.293025e00, 1.395362e00, -1.800000e-05],
-            [4.308840e-01, 2.385528e00, -1.910000e-04],
-            [-8.846300e-01, 1.960299e00, -2.680000e-04],
-            [-2.247335e00, -2.317004e00, 5.500000e-05],
-            [2.078153e00, -1.590279e00, 3.130000e-04],
-            [2.839337e00, -9.285350e-01, 3.540000e-04],
-            [2.257625e00, -2.599226e00, 5.070000e-04],
-            [6.864280e-01, 3.440469e00, -2.720000e-04],
-            [-1.715093e00, 2.535836e00, -4.080000e-04],
-            [9.890610e-01, 7.972580e-01, 3.400058e00],
-            [1.217664e00, -5.930370e-01, 3.400004e00],
-            [1.323910e-01, -1.408972e00, 3.399965e00],
-            [-1.110962e00, -9.038440e-01, 3.399971e00],
-            [-1.352449e00, 5.216270e-01, 3.400023e00],
-            [-2.635560e-01, 1.333781e00, 3.400063e00],
-            [1.815200e00, 1.380954e00, 3.400092e00],
-            [2.388816e00, -9.949650e-01, 3.399991e00],
-            [-2.130425e00, -1.768706e00, 3.399929e00],
-            [-1.956075e00, -2.796574e00, 3.399871e00],
-            [-3.078136e00, -1.425139e00, 3.399928e00],
-            [-2.359817e00, 9.292250e-01, 3.400032e00],
-            [-3.321890e-01, 2.420853e00, 3.400106e00],
-        ]
-    )
+def compute_bj_f90_test_setup():
+    carts = convert_str_carts_np_carts(carts1())
+    params = [1.61679827, 0.44959224, 3.35743605]
+    pos = carts[:, 0]
+    carts = carts[:, 1:]
     Ma = 15
     Mb = 13
     C6s, C8s = calc_dftd4_props(pos, carts)
@@ -151,8 +114,8 @@ def read_dftd4_vals():
     return d
 
 
-def compute_bj_self_pieces():
-    params, pos, carts, Ma, Mb, C6s, C8s = compute_bj_self_test_setup()
+def compute_bj_f90_pieces():
+    params, pos, carts, Ma, Mb, C6s, C8s = compute_bj_f90_test_setup()
     rrijs, r2s, t6s, t8s, edisps, des = [], [], [], [], [], []
 
     electron_mass = 9.1093837015e-31
@@ -164,7 +127,8 @@ def compute_bj_self_pieces():
     aatoau = 1 / autoaa
 
     energy = 0
-    s6, s8, a1, a2 = params
+    s8, a1, a2 = params
+    s6 = 1.0
     C8s = np.zeros(np.shape(C6s))
     N_tot = len(carts)
     energies = np.zeros(Ma + Mb)
@@ -214,7 +178,7 @@ def compute_bj_self_pieces():
     return rrijs, r2s, t6s, t8s, edisps, des, energies, energy
 
 
-rrijs, r2s, t6s, t8s, edisps, des, energies, energy = compute_bj_self_pieces()
+rrijs, r2s, t6s, t8s, edisps, des, energies, energy = compute_bj_f90_pieces()
 d = read_dftd4_vals()
 rrijs_t, r2s_t, t6s_t, t8s_t, edisps_t, des_t, energies_t = (
     d["rrijs"],
@@ -302,7 +266,7 @@ def test_bj_energies():
 
 
 def compute_parameters():
-    # rrijs, r2s, t6s, t8s, edisps, des, energies, energy = compute_bj_self_pieces()
+    # rrijs, r2s, t6s, t8s, edisps, des, energies, energy = compute_bj_f90_pieces()
     # d = read_dftd4_vals()
     # rrijs_t, r2s_t, t6s_t, t8s_t, edisps_t, des_t = (
     #     d["rrijs"],
@@ -343,6 +307,7 @@ def test_Hs_splits_size_match_false():
             print(n, correct)
             correct[n] = True
     assert sum(correct) != len(correct)
+
 
 def test_Hs_splits_size_match_true():
     df = pd.read_pickle("opt_test.pkl")
