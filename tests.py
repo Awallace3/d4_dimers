@@ -1,5 +1,7 @@
 import pytest
-from src.setup import calc_dftd4_props, compute_bj_f90
+from src.tools import print_cartesians, print_cartesians_pos_carts
+from src.constants import Constants
+from src.setup import calc_dftd4_props, compute_bj_f90, compute_bj_pairs
 import numpy as np
 import math
 from src.r4r2 import r4r2_vals
@@ -107,7 +109,7 @@ def compute_bj_f90_test_setup():
 
 
 def read_dftd4_vals():
-    with open("vals.json") as f:
+    with open("vals_test.json") as f:
         d = json.load(f)
     for k, v in d.items():
         d[k] = np.array(v)
@@ -351,11 +353,94 @@ def compare_opt_jeff() -> None:
     assert g == b == len(g1)
 
 
+def calc_dftd4_pair_resolved(
+    atom_numbers: np.array,
+    carts: np.array,
+    input_xyz: str = "dat.xyz",
+    output_data: str = "dat.txt",
+    p: [] = [1.61679827, 0.44959224, 3.35743605],
+):
+    write_xyz_from_np(atom_numbers, carts, outfile=input_xyz)
+    args = [
+        "dftd4",
+        input_xyz,
+        "--pair-resolved",
+        "--property",
+        "--mbdscale",
+        "0.0",
+        "--param",
+        "1.0",
+        str(p[0]),
+        str(p[1]),
+        str(p[2]),
+    ]
+    out = subprocess.run(
+        args=args,
+        shell=False,
+        capture_output=True,
+    ).stdout.decode("utf-8")
+    print(out)
+    d = out.split("Pairwise representation")[-1]
+    d = d.split("\n")
+    clean = []
+    start = False
+    vs = []
+    for i in d[4:]:
+        if "------" in i:
+            break
+        else:
+            start = True
+        i = i.split()
+        p1, p2, e = int(i[0]), int(i[3]), float(i[-1])
+        vs.append([p1, p2, e])
+    M = vs[-1][0]
+    m = np.zeros((M, M))
+    for i in vs:
+        m[i[0] - 1, i[1] - 1] = i[2]
+
+    with open("C_n.json") as f:
+        dat = json.load(f)
+        C6s = np.array(dat["c6"])
+    return C6s, m
+
+
+def sum_ma_mb(
+    ma,
+    mb,
+    m: np.array,
+) -> float:
+    """
+    sum_ma_mb
+    """
+    e = 0
+    for i in ma:
+        for j in mb:
+            e += m[i, j]
+    return e
+
+
 def main():
     """
     docstring
     """
-    test_api()
+    # test_api()
+    carts = convert_str_carts_np_carts(carts2())
+    atoms = carts[:, 0]
+    carts = carts[:, 1:]
+    # aatoau = Constants().g_aatoau()
+    # cs = aatoau * np.array(carts, copy=True)
+    print(cs)
+    print_cartesians_pos_carts(atoms, cs)
+    ma, mb = [i for i in range(8)], [i + 8 for i in range(8)]
+    p = [1.61679827, 0.44959224, 3.35743605]
+    print(ma, mb)
+    C6s, m = calc_dftd4_pair_resolved(atoms, carts, p=p)
+    api = sum_ma_mb(ma, mb, m)
+    pairs = compute_bj_pairs(p, atoms, carts, ma, mb, C6s, mult_out=627.509)
+    print(m)
+    print(f"API  : {api}")
+    print(f"PAIRS: {pairs}")
+
     return
 
 

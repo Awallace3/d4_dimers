@@ -12,6 +12,7 @@ from psi4.driver.qcdb.bfs import BFS
 import os
 from .harvest import ssi_bfdb_data, harvest_data
 import psi4
+from qcelemental import constants
 
 
 def inpsect_master_regen():
@@ -842,6 +843,7 @@ def compute_bj_from_dimer_AB(
 
 # self :     -26.86350371919017
 # DFTD4 2b : -26.86350371919017
+
 def gather_data2_testing_mol(mol):
     params = [1.61679827, 0.44959224, 3.35743605]
     print(params)
@@ -858,6 +860,7 @@ def gather_data2_testing_mol(mol):
     monB = compute_bj_mons(params, pos, carts, Mb, C6s)
     d_ab = compute_bj_from_dimer_AB(params, pos, carts, Ma, Mb, C6s)
     AB = monA + monB
+    conv = constants.conversion_factor("hartree", "kcal / mol")
 
     energy, e_2b = compute_bj_dftd4(params, pos, carts)
     print("DFTD4 full:", energy)
@@ -874,16 +877,16 @@ def gather_data2_testing_mol(mol):
     print("HF_jdz = ", HF_jdz)
     print("BM     = ", mol['Benchmark'])
     d4_1 = f90 - (AB)
-    ie1 = HF_jdz + d4_1 * 627.509
+    ie1 = HF_jdz + d4_1 * conv
     d4_2 = alt - (AB)
-    ie2 = HF_jdz + d4_2 * 627.509
+    ie2 = HF_jdz + d4_2 * conv
     ie3 = HF_jdz + d_ab
     d4 = pairs
-    ie4 = HF_jdz + d4 * 627.509
-    print("DISP (f90 )  =", d4_1 * 627.509)
-    print("DISP (alt )  =", d4_2 * 627.509)
+    ie4 = HF_jdz + d4 * conv
+    print("DISP (f90 )  =", d4_1 * conv)
+    print("DISP (alt )  =", d4_2 * conv)
     print("DISP (d_ab ) =", d_ab)
-    print("DISP (pairs) =", pairs * 627.509)
+    print("DISP (pairs) =", pairs * conv)
     print("IE (f90 )    =", ie1)
     print("IE (alt )    =", ie2)
     print("IE (d_ab )   =", ie3)
@@ -1245,6 +1248,7 @@ def gather_data4(
         df = df.reset_index(drop=True)
         df, inds = gather_data3_dimer_splits(df)
         df = df.reset_index(drop=True)
+        # TODO: possibly add check to ensure geoms are splitted in carts before C6s
 
         xyzs = df["Geometry"].to_list()
         C6s = [np.array([]) for i in range(len(xyzs))]

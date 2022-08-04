@@ -72,13 +72,22 @@ def find_max_e(
     # df["d4"] = d4s
 
     df["d4"] = df.apply(
-        lambda row: compute_bj_from_dimer_AB(
+        # lambda row: compute_bj_from_dimer_AB(
+        #     params,
+        #     row["Geometry"][:, 0],  # pos
+        #     row["Geometry"][:, 1:],  # carts
+        #     row["monAs"],
+        #     row["monBs"],
+        #     row["C6s"],
+        # ),
+        lambda row: compute_bj_pairs(
             params,
             row["Geometry"][:, 0],  # pos
             row["Geometry"][:, 1:],  # carts
             row["monAs"],
             row["monBs"],
             row["C6s"],
+            mult_out=627.509,
         ),
         # lambda row: compute_bj_opt(
         #     params,
@@ -91,9 +100,6 @@ def find_max_e(
         # ),
         axis=1,
     )
-    print(df.loc[1466])
-    print(df.loc[1466, "d4"])
-    print(df.loc[1466, "d4"] + df.loc[1466, hf_key])
     df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
     mae = df["diff"].abs().sum() / len(df["diff"])
     rmse = (df["diff"] ** 2).mean() ** 0.5

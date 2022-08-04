@@ -21,5 +21,13 @@ molecule mol {
 1       4.1606405470    1.3630120010    1.2414717440
 }
 
-mol.run_dftd4("", "D4", {"s8": 1.61679827, "a1": 0.44959224, "a2": 3.35743605})
-activate(mB)
+set {
+basis jun-cc-pvdz
+freeze_core true
+guess sad
+scf_type df
+}
+
+set dft_dispersion_parameters [0.44959224, 3.35743605, 16.0, 1.0, 1.61679827, 0.0]
+energy('hf-d4', save_pairwise_disp=True)
+print_variables()
