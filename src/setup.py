@@ -546,6 +546,7 @@ def compute_bj_mons(
     energy = 0
     mon_carts = np.zeros((len(M), 3))
     mon_pos = np.zeros(len(M))
+    C6_mon = np.zeros((len(M), len(M)))
     for n, i in enumerate(M):
         mon_carts[n] = carts[i]
         mon_pos[n] = pos[i]
@@ -574,6 +575,7 @@ def compute_bj_mons(
                 c6_i, c6_j = M[i], M[j]
 
                 C6 = C6s[c6_i, c6_j]
+                C6_mon[i, j] = C6
                 r1, r2 = cs[i, :], cs[j, :]
                 r2 = np.subtract(r1, r2)
                 r2 = np.sum(np.multiply(r2, r2))
@@ -587,7 +589,7 @@ def compute_bj_mons(
                 if i != j:
                     energies[j] += de
     energy = np.sum(energies)
-    return energy
+    return energy, C6_mon
 
 
 def compute_bj_pairs(
@@ -895,10 +897,24 @@ def compute_bj_from_dimer_AB_with_C6s(
 
     C6_b, n, e = calc_dftd4_props_params(mon_pos, mon_carts, p=params)
     monB = compute_bj_f90(params, mon_pos, mon_carts, C6_b)
+
+    v, C6a = compute_bj_mons(params, pos, carts, Ma, C6s)
+    # v, C6b = compute_bj_mons(params, pos, carts, Mb, C6s)
+    print("monA")
+    print(C6_a[-1])
+    print(C6a[-1])
+    # TODO: just tally C6s for monomers as well
+
+    # print(np.subtract(C6_a[0], C6a[0]))
+
+
+    # print(np.subtract(C6_b, C6b))
+
     print(monB, e, monB - e)
     AB = monA + monB
     disp = f90 - (AB)
     return disp * mult_out
+    # return f90* mult_out
 
 
 def compute_bj_from_dimer_AB(
@@ -915,11 +931,12 @@ def compute_bj_from_dimer_AB(
     subtraction.
     """
     f90 = compute_bj_f90(params, pos, carts, C6s)
-    monA = compute_bj_mons(params, pos, carts, Ma, C6s)
-    monB = compute_bj_mons(params, pos, carts, Mb, C6s)
+    monA, C6 = compute_bj_mons(params, pos, carts, Ma, C6s)
+    monB, C6 = compute_bj_mons(params, pos, carts, Mb, C6s)
     AB = monA + monB
     disp = f90 - (AB)
     return disp * mult_out
+    # return f90* mult_out
 
 
 # self :     -26.86350371919017
@@ -938,8 +955,8 @@ def gather_data2_testing_mol(mol):
     pairs = compute_bj_pairs(params, pos, carts, Ma, Mb, C6s)
     alt = compute_bj_alt(params, pos, carts, Ma, Mb, C6s)
     f90 = compute_bj_f90(params, pos, carts, C6s)
-    monA = compute_bj_mons(params, pos, carts, Ma, C6s)
-    monB = compute_bj_mons(params, pos, carts, Mb, C6s)
+    monA, C6  = compute_bj_mons(params, pos, carts, Ma, C6s)
+    monB, C6  = compute_bj_mons(params, pos, carts, Mb, C6s)
     d_ab = compute_bj_from_dimer_AB(params, pos, carts, Ma, Mb, C6s)
     AB = monA + monB
     conv = constants.conversion_factor("hartree", "kcal / mol")

@@ -434,6 +434,42 @@ def create_test_opt_t_dm() -> None:
 
 # TODO: analyze monomers for dftd4
 
+def test_dm_vs_dftd4_disp():
+    df = create_test_opt_t_dm()
+    params=[1.61679827, 0.44959224, 3.35743605]
+    df["d4_dm_C6s"] = df.apply(
+        lambda row: compute_bj_from_dimer_AB_with_C6s(
+            params,
+            row["Geometry"][:, 0],  # pos
+            row["Geometry"][:, 1:],  # carts
+            row["monAs"],
+            row["monBs"],
+            row["C6s"],
+            mult_out=1.0,
+        ),
+        axis=1,
+    )
+    df["d4_dm"] = df.apply(
+        lambda row: compute_bj_from_dimer_AB(
+            params,
+            row["Geometry"][:, 0],  # pos
+            row["Geometry"][:, 1:],  # carts
+            row["monAs"],
+            row["monBs"],
+            row["C6s"],
+            mult_out=1.0,
+        ),
+        axis=1,
+    )
+    df["d4_dm_diff_psi4_DISP_dftd4"] = (df["d4_dm_C6s"] - df["psi4_DISP"])
+    df["d4_dm_diff_psi4_DISP_self"] = (df["d4_dm"] - df["psi4_DISP"])
+
+    print(df["d4_dm_C6s"])
+    print(df["d4_dm_diff_psi4_DISP_dftd4"])
+    print(df["psi4_DISP"])
+    print(df["d4_dm_diff_psi4_DISP_self"])
+    assert (df["d4_dm_diff_psi4_DISP_self"] == df["d4_dm_diff_psi4_DISP_dftd4"]).all()
+
 def test_dm_vs_dftd4():
     df = create_test_opt_t_dm()
     params=[1.61679827, 0.44959224, 3.35743605]
@@ -449,8 +485,6 @@ def test_dm_vs_dftd4():
         ),
         axis=1,
     )
-    print(df["d4_dm_C6s"])
-    df["d4_dm_diff_psi4_DISP_dftd4"] = (df["d4_dm_C6s"] - df["psi4_DISP"])
     df["d4_dm"] = df.apply(
         lambda row: compute_bj_from_dimer_AB(
             params,
@@ -463,40 +497,41 @@ def test_dm_vs_dftd4():
         ),
         axis=1,
     )
-    print(df["d4_dm_diff_psi4_DISP_dftd4"])
-    print(df["d4_dm"])
-    print(df["psi4_DISP"])
+    df["d4_dm_diff_psi4_DISP_dftd4"] = (df["d4_dm_C6s"] - df["psi4_DISP"])
     df["d4_dm_diff_psi4_DISP_self"] = (df["d4_dm"] - df["psi4_DISP"])
+
+    print(df["d4_dm_C6s"])
+    print(df["d4_dm_diff_psi4_DISP_dftd4"])
+    print(df["psi4_DISP"])
     print(df["d4_dm_diff_psi4_DISP_self"])
     assert (df["d4_dm_diff_psi4_DISP_self"] == df["d4_dm_diff_psi4_DISP_dftd4"]).all()
 
 
 
-
-def test_dm() -> None:
-    """
-    test_dm tests the psi4 predicted IE with the
-    computed compute_dimer_monomer
-    """
-    df = create_test_opt_t_dm()
-    params=[1.61679827, 0.44959224, 3.35743605]
-    df["d4_dm"] = df.apply(
-        lambda row: compute_bj_from_dimer_AB(
-            params,
-            row["Geometry"][:, 0],  # pos
-            row["Geometry"][:, 1:],  # carts
-            row["monAs"],
-            row["monBs"],
-            row["C6s"],
-            mult_out=1.0,
-        ),
-        axis=1,
-    )
-    print(df["d4_dm"])
-    print(df["psi4_DISP"])
-    df["d4_dm_diff_psi4_DISP"] = (df["d4_dm"] - df["psi4_DISP"])
-    print(df["d4_dm_diff_psi4_DISP"])
-    assert (df["d4_dm_diff_psi4_DISP"].abs() < 0).all()
+# def test_dm() -> None:
+#     """
+#     test_dm tests the psi4 predicted IE with the
+#     computed compute_dimer_monomer
+#     """
+#     df = create_test_opt_t_dm()
+#     params=[1.61679827, 0.44959224, 3.35743605]
+#     df["d4_dm"] = df.apply(
+#         lambda row: compute_bj_from_dimer_AB(
+#             params,
+#             row["Geometry"][:, 0],  # pos
+#             row["Geometry"][:, 1:],  # carts
+#             row["monAs"],
+#             row["monBs"],
+#             row["C6s"],
+#             mult_out=1.0,
+#         ),
+#         axis=1,
+#     )
+#     print(df["d4_dm"])
+#     print(df["psi4_DISP"])
+#     df["d4_dm_diff_psi4_DISP"] = (df["d4_dm"] - df["psi4_DISP"])
+#     print(df["d4_dm_diff_psi4_DISP"])
+#     assert (df["d4_dm_diff_psi4_DISP"].abs() < 0).all()
 
     # print(df["HF_jdz"])
     # df['d4_t'] = df['HF_jdz'] + df['d4_dm']
@@ -534,7 +569,7 @@ def main():
 
     df = create_test_opt_t_dm()
     params=[1.61679827, 0.44959224, 3.35743605]
-    df["d4_dm"] = df.apply(
+    df["d4_dm_C6s"] = df.apply(
         lambda row: compute_bj_from_dimer_AB_with_C6s(
             params,
             row["Geometry"][:, 0],  # pos
@@ -546,10 +581,10 @@ def main():
         ),
         axis=1,
     )
-    print(df["d4_dm"])
+    print(df["d4_dm_C6s"])
     print(df["psi4_DISP"])
-    df["d4_dm_diff_psi4_DISP"] = (df["d4_dm"] - df["psi4_DISP"])
-    print(df["d4_dm_diff_psi4_DISP"])
+    df["d4_dm_diff_psi4_DISP_C6s"] = (df["d4_dm_C6s"] - df["psi4_DISP"])
+    print(df["d4_dm_diff_psi4_DISP_C6s"])
     df["d4_dm"] = df.apply(
         lambda row: compute_bj_from_dimer_AB(
             params,
@@ -566,6 +601,9 @@ def main():
     print(df["psi4_DISP"])
     df["d4_dm_diff_psi4_DISP"] = (df["d4_dm"] - df["psi4_DISP"])
     print(df["d4_dm_diff_psi4_DISP"])
+    df["IE_c6s"] = df["HF_jdz"] + df["d4_dm_C6s"] * 627.509
+    df["IE_dm"] = df["HF_jdz"] + df["d4_dm"]      * 627.509
+    print(df[['IE_c6s', 'IE_dm', "psi4_IE"]])
     return
 
 
