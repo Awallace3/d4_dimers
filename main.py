@@ -1,6 +1,7 @@
 import pandas as pd
 from src.setup import (
     gather_data4,
+    gather_data5,
     gather_data2_testing_mol,
 )
 from src.optimization import optimization, opt_cross_val, HF_only, find_max_e
@@ -59,15 +60,14 @@ def main():
     """
     Computes best parameters for SAPT0-D4
     """
-    # gather_data4(output_path="opt4.pkl", from_master=False)
+    # gather_data5(output_path="opt5.pkl", from_master=False)
     # df = pd.read_pickle("base.pkl")
     # df = ssi_bfdb_data(df)
     # compute_values()
     # compute_values(7265)
 
-    df = pd.read_pickle("opt4.pkl")
-
-    # analyze_max_errors(df)
+    df = pd.read_pickle("opt5.pkl")
+    analyze_max_errors(df)
     # analyze_diffs(df, get_params(), hf_cols=["HF_jdz"])
     # analyze_diffs(df, params_dc, hf_cols=["HF_jdz", "HF_adz", "HF_dz"])
 

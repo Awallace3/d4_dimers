@@ -94,6 +94,7 @@ def mol_testing(mol):
     print("pairs =", energy)
     print("EI =", mol["HF_jdz"] + energy)
 
+
 def calc_dftd4_props_params(
     atom_numbers: np.array,
     carts: np.array,
@@ -130,6 +131,7 @@ def calc_dftd4_props_params(
     if output_json != "":
         os.remove(input_xyz)
     return C6s, C8s, e
+
 
 def calc_dftd4_props(
     atom_numbers: np.array,
@@ -533,6 +535,22 @@ def compute_bj_opt(
     return energy
 
 
+def create_mon_geom(
+    pos,
+    carts,
+    M,
+) -> (np.array, np.array):
+    """
+    create_mon_geom creates pos and carts from dimer
+    """
+    mon_carts = np.zeros((len(M), 3))
+    mon_pos = np.zeros(len(M))
+    for n, i in enumerate(M):
+        mon_carts[n] = carts[i]
+        mon_pos[n] = pos[i]
+    return mon_pos, mon_carts
+
+
 def compute_bj_mons(
     params: [],
     pos: np.array,
@@ -900,13 +918,12 @@ def compute_bj_from_dimer_AB_with_C6s(
 
     v, C6a = compute_bj_mons(params, pos, carts, Ma, C6s)
     # v, C6b = compute_bj_mons(params, pos, carts, Mb, C6s)
-    print("monA")
-    print(C6_a[-1])
-    print(C6a[-1])
+    # print("monA")
+    # print(C6_a[-1])
+    # print(C6a[-1])
     # TODO: just tally C6s for monomers as well
 
     # print(np.subtract(C6_a[0], C6a[0]))
-
 
     # print(np.subtract(C6_b, C6b))
 
@@ -916,6 +933,32 @@ def compute_bj_from_dimer_AB_with_C6s(
     return disp * mult_out
     # return f90* mult_out
 
+def compute_bj_from_dimer_AB_all_C6s(
+    params,
+    pos,
+    carts,
+    Ma,
+    Mb,
+    C6s,
+    C6_A,
+    C6_B,
+    mult_out=constants.conversion_factor("hartree", "kcal / mol"),
+) -> float:
+    """
+    compute_bj_from_dimer_AB computes dftd4 for dimer and each monomer and returns
+    subtraction.
+    """
+    f90 = compute_bj_f90(params, pos, carts, C6s)
+
+    mon_pa, mon_ca = create_mon_geom(pos, carts, Ma)
+    monA = compute_bj_f90(params, mon_pa, mon_ca, C6_A)
+
+    mon_pb, mon_cb = create_mon_geom(pos, carts, Mb)
+    monB = compute_bj_f90(params, mon_pb, mon_cb, C6_B)
+
+    AB = monA + monB
+    disp = f90 - (AB)
+    return disp * mult_out
 
 def compute_bj_from_dimer_AB(
     params,
@@ -955,8 +998,8 @@ def gather_data2_testing_mol(mol):
     pairs = compute_bj_pairs(params, pos, carts, Ma, Mb, C6s)
     alt = compute_bj_alt(params, pos, carts, Ma, Mb, C6s)
     f90 = compute_bj_f90(params, pos, carts, C6s)
-    monA, C6  = compute_bj_mons(params, pos, carts, Ma, C6s)
-    monB, C6  = compute_bj_mons(params, pos, carts, Mb, C6s)
+    monA, C6 = compute_bj_mons(params, pos, carts, Ma, C6s)
+    monB, C6 = compute_bj_mons(params, pos, carts, Mb, C6s)
     d_ab = compute_bj_from_dimer_AB(params, pos, carts, Ma, Mb, C6s)
     AB = monA + monB
     conv = constants.conversion_factor("hartree", "kcal / mol")
@@ -1376,4 +1419,105 @@ def gather_data4(
 def replace_hf_int_HF_jdz(df):
     df["HF_jdz"] = df["HF INTERACTION ENERGY"]
     df = df.drop(columns="HF INTERACTION ENERGY")
+    return df
+
+
+def gather_data5(
+    master_path="master-regen.pkl",
+    output_path="opt5.pkl",
+    verbose=False,
+    HF_columns=[
+        "HF_dz",
+        "HF_adz",
+        "HF_atz",
+        "HF_tz",
+        "HF_jtz",
+    ],
+    from_master: bool = True,
+):
+    """
+    collects data from master-regen.pkl from jeffschriber's scripts for D3
+    (https://aip.scitation.org/doi/full/10.1063/5.0049745)
+    """
+    if from_master:
+        df = pd.read_pickle(master_path)
+        df["SAPT0"] = df["SAPT0 TOTAL ENERGY"]
+        df["SAPT"] = df["SAPT TOTAL ENERGY"]
+        df = df[
+            [
+                "DB",
+                "System",
+                "System #",
+                "Benchmark",
+                "HF INTERACTION ENERGY",
+                "Geometry",
+                "SAPT0",
+                "SAPT",
+            ]
+        ]
+        df = replace_hf_int_HF_jdz(df)
+        xyzs = df["Geometry"].to_list()
+        monAs = [np.nan for i in range(len(xyzs))]
+        monBs = [np.nan for i in range(len(xyzs))]
+
+        ones, twos, clear = [], [], []
+        for n, c in enumerate(tqdm(xyzs[:], desc="Dimer Splits", ascii=True)):
+            g3 = np.array(c)
+            pos = g3[:, 0]
+            carts = g3[:, 1:]
+            frags = BFS(carts, pos, bond_threshold=0.4)
+            if len(frags) > 2:
+                ones.append(n)
+            elif len(frags) == 1:
+                twos.append(n)
+                # monAs[n] = np.array(frags[0])
+            else:
+                monAs[n] = np.array(frags[0])
+                monBs[n] = np.array(frags[1])
+                clear.append(n)
+        print("total =", len(xyzs))
+        print("ones =", len(ones))
+        print("twos =", len(twos))
+        print("clear =", len(clear))
+        df["monAs"] = monAs
+        df["monBs"] = monBs
+        df = df.reset_index(drop=True)
+        df, inds = gather_data3_dimer_splits(df)
+        df = df.reset_index(drop=True)
+        # TODO: possibly add check to ensure geoms are splitted in carts before C6s
+
+        xyzs = df["Geometry"].to_list()
+        C6s = [np.array([]) for i in range(len(xyzs))]
+        C6_A = [np.array([]) for i in range(len(xyzs))]
+        C6_B = [np.array([]) for i in range(len(xyzs))]
+        for n, c in enumerate(tqdm(xyzs[:], desc="DFTD4 Props", ascii=True)):
+            g3 = np.array(c)
+            pos = g3[:, 0]
+            carts = g3[:, 1:]
+            C6, na = calc_dftd4_props(pos, carts)
+            C6s[n] = C6
+
+            Ma = df.loc[n, "monAs"]
+            mon_pa, mon_ca = create_mon_geom(pos, carts, Ma)
+            C6a, na = calc_dftd4_props(mon_pa, mon_ca)
+            C6_A[n] = C6a
+
+            Mb = df.loc[n, "monBs"]
+            mon_pb, mon_cb = create_mon_geom(pos, carts, Mb)
+            C6b, na = calc_dftd4_props(mon_pb, mon_cb)
+            C6_B[n] = C6b
+
+        df["C6s"] = C6s
+        df["C6_A"] = C6_A
+        df["C6_B"] = C6_B
+        df.to_pickle(output_path)
+        df = expand_opt_df(df, HF_columns)
+        df = ssi_bfdb_data(df)
+        df.to_pickle(output_path)
+    else:
+        df = pd.read_pickle(output_path)
+        df = expand_opt_df(df, HF_columns)
+    for i in HF_columns:
+        df = harvest_data(df, i.split("_")[-1])
+    df.to_pickle(output_path)
     return df
