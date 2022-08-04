@@ -12,6 +12,8 @@ from src.setup import (
     write_xyz_from_np,
     calc_dftd4_props,
     gather_data3_dimer_splits,
+    compute_bj_from_dimer_AB,
+    compute_bj_from_dimer_AB_with_C6s,
 )
 import subprocess
 import os
@@ -419,28 +421,151 @@ def sum_ma_mb(
     return e
 
 
+def create_test_opt_t_dm() -> None:
+    """
+    create_test_opt_t_dm produces data for test_dm
+    """
+    df = pd.read_pickle("opt4.pkl")
+    test_df = df.loc[[1466, 7265]]
+    test_df["psi4_IE"] = [14.829109041411, 27.231587582085]
+    test_df["psi4_DISP"] = [-0.042809751053, -0.112493226560]
+    return test_df
+
+
+# TODO: analyze monomers for dftd4
+
+def test_dm_vs_dftd4():
+    df = create_test_opt_t_dm()
+    params=[1.61679827, 0.44959224, 3.35743605]
+    df["d4_dm_C6s"] = df.apply(
+        lambda row: compute_bj_from_dimer_AB_with_C6s(
+            params,
+            row["Geometry"][:, 0],  # pos
+            row["Geometry"][:, 1:],  # carts
+            row["monAs"],
+            row["monBs"],
+            row["C6s"],
+            mult_out=1.0,
+        ),
+        axis=1,
+    )
+    print(df["d4_dm_C6s"])
+    df["d4_dm_diff_psi4_DISP_dftd4"] = (df["d4_dm_C6s"] - df["psi4_DISP"])
+    df["d4_dm"] = df.apply(
+        lambda row: compute_bj_from_dimer_AB(
+            params,
+            row["Geometry"][:, 0],  # pos
+            row["Geometry"][:, 1:],  # carts
+            row["monAs"],
+            row["monBs"],
+            row["C6s"],
+            mult_out=1.0,
+        ),
+        axis=1,
+    )
+    print(df["d4_dm_diff_psi4_DISP_dftd4"])
+    print(df["d4_dm"])
+    print(df["psi4_DISP"])
+    df["d4_dm_diff_psi4_DISP_self"] = (df["d4_dm"] - df["psi4_DISP"])
+    print(df["d4_dm_diff_psi4_DISP_self"])
+    assert (df["d4_dm_diff_psi4_DISP_self"] == df["d4_dm_diff_psi4_DISP_dftd4"]).all()
+
+
+
+
+def test_dm() -> None:
+    """
+    test_dm tests the psi4 predicted IE with the
+    computed compute_dimer_monomer
+    """
+    df = create_test_opt_t_dm()
+    params=[1.61679827, 0.44959224, 3.35743605]
+    df["d4_dm"] = df.apply(
+        lambda row: compute_bj_from_dimer_AB(
+            params,
+            row["Geometry"][:, 0],  # pos
+            row["Geometry"][:, 1:],  # carts
+            row["monAs"],
+            row["monBs"],
+            row["C6s"],
+            mult_out=1.0,
+        ),
+        axis=1,
+    )
+    print(df["d4_dm"])
+    print(df["psi4_DISP"])
+    df["d4_dm_diff_psi4_DISP"] = (df["d4_dm"] - df["psi4_DISP"])
+    print(df["d4_dm_diff_psi4_DISP"])
+    assert (df["d4_dm_diff_psi4_DISP"].abs() < 0).all()
+
+    # print(df["HF_jdz"])
+    # df['d4_t'] = df['HF_jdz'] + df['d4_dm']
+    # df["d4_dm_diff_psi4"] = df["d4_t"] - df["psi4"]
+    # print(df['psi4'])
+    # print(df['d4_t'])
+    # print(df['d4_dm_diff_psi4'])
+    # assert (df["d4_dm_diff_psi4"].abs() < 0).all()
+
+
+
+
+
 def main():
     """
     docstring
     """
     # test_api()
-    carts = convert_str_carts_np_carts(carts2())
-    atoms = carts[:, 0]
-    carts = carts[:, 1:]
-    # aatoau = Constants().g_aatoau()
-    # cs = aatoau * np.array(carts, copy=True)
-    print(cs)
-    print_cartesians_pos_carts(atoms, cs)
-    ma, mb = [i for i in range(8)], [i + 8 for i in range(8)]
-    p = [1.61679827, 0.44959224, 3.35743605]
-    print(ma, mb)
-    C6s, m = calc_dftd4_pair_resolved(atoms, carts, p=p)
-    api = sum_ma_mb(ma, mb, m)
-    pairs = compute_bj_pairs(p, atoms, carts, ma, mb, C6s, mult_out=627.509)
-    print(m)
-    print(f"API  : {api}")
-    print(f"PAIRS: {pairs}")
+    # carts = convert_str_carts_np_carts(carts2())
+    # atoms = carts[:, 0]
+    # carts = carts[:, 1:]
+    # # aatoau = Constants().g_aatoau()
+    # # cs = aatoau * np.array(carts, copy=True)
+    # print(cs)
+    # print_cartesians_pos_carts(atoms, cs)
+    # ma, mb = [i for i in range(8)], [i + 8 for i in range(8)]
+    # p = [1.61679827, 0.44959224, 3.35743605]
+    # print(ma, mb)
+    # C6s, m = calc_dftd4_pair_resolved(atoms, carts, p=p)
+    # api = sum_ma_mb(ma, mb, m)
+    # pairs = compute_bj_pairs(p, atoms, carts, ma, mb, C6s, mult_out=627.509)
+    # print(m)
+    # print(f"API  : {api}")
+    # print(f"PAIRS: {pairs}")
 
+    df = create_test_opt_t_dm()
+    params=[1.61679827, 0.44959224, 3.35743605]
+    df["d4_dm"] = df.apply(
+        lambda row: compute_bj_from_dimer_AB_with_C6s(
+            params,
+            row["Geometry"][:, 0],  # pos
+            row["Geometry"][:, 1:],  # carts
+            row["monAs"],
+            row["monBs"],
+            row["C6s"],
+            mult_out=1.0,
+        ),
+        axis=1,
+    )
+    print(df["d4_dm"])
+    print(df["psi4_DISP"])
+    df["d4_dm_diff_psi4_DISP"] = (df["d4_dm"] - df["psi4_DISP"])
+    print(df["d4_dm_diff_psi4_DISP"])
+    df["d4_dm"] = df.apply(
+        lambda row: compute_bj_from_dimer_AB(
+            params,
+            row["Geometry"][:, 0],  # pos
+            row["Geometry"][:, 1:],  # carts
+            row["monAs"],
+            row["monBs"],
+            row["C6s"],
+            mult_out=1.0,
+        ),
+        axis=1,
+    )
+    print(df["d4_dm"])
+    print(df["psi4_DISP"])
+    df["d4_dm_diff_psi4_DISP"] = (df["d4_dm"] - df["psi4_DISP"])
+    print(df["d4_dm_diff_psi4_DISP"])
     return
 
 

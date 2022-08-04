@@ -30,3 +30,4 @@ scf_type df
 
 set dft_dispersion_parameters [0.44959224, 3.35743605, 16.0, 1.0, 1.61679827, 0.0]
 energy('hf-d4', save_pairwise_disp=True, bsse_type="cp")
+print_variables()

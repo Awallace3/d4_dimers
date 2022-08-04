@@ -94,6 +94,42 @@ def mol_testing(mol):
     print("pairs =", energy)
     print("EI =", mol["HF_jdz"] + energy)
 
+def calc_dftd4_props_params(
+    atom_numbers: np.array,
+    carts: np.array,
+    input_xyz: str = "dat.xyz",
+    output_json: str = "",
+    p: [] = [1.61679827, 0.44959224, 3.35743605],
+):
+    write_xyz_from_np(atom_numbers, carts, outfile=input_xyz)
+    args = [
+        "dftd4",
+        input_xyz,
+        "--pair-resolved",
+        "--property",
+        "--mbdscale",
+        "0.0",
+        "--param",
+        "1.0",
+        str(p[0]),
+        str(p[1]),
+        str(p[2]),
+    ]
+    out = subprocess.run(
+        args=args,
+        shell=False,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.STDOUT,
+    )
+    with open("C_n.json") as f:
+        dat = json.load(f)
+        C6s = np.array(dat["c6"])
+        C8s = np.array(dat["c8"])
+    with open(".EDISP") as f:
+        e = float(f.read().replace("\n", ""))
+    if output_json != "":
+        os.remove(input_xyz)
+    return C6s, C8s, e
 
 def calc_dftd4_props(
     atom_numbers: np.array,
@@ -534,7 +570,10 @@ def compute_bj_mons(
                 Q_B = np.sqrt(np.sqrt(el2) * el2_r4r2)
                 rrij = 3 * Q_A * Q_B
                 r0ij = a1 * np.sqrt(rrij) + a2
-                C6 = C6s[i, j]
+                # TODO: read correct C6s
+                c6_i, c6_j = M[i], M[j]
+
+                C6 = C6s[c6_i, c6_j]
                 r1, r2 = cs[i, :], cs[j, :]
                 r2 = np.subtract(r1, r2)
                 r2 = np.sum(np.multiply(r2, r2))
@@ -559,7 +598,7 @@ def compute_bj_pairs(
     Mb: int,  # number of atoms in monomer B
     C6s: np.array,
     index: int = 1,
-    mult_out: float = 1.0
+    mult_out: float = 1.0,
 ) -> float:
     """
     compute_bj_pairs computes energy from C6s, cartesian coordinates, and dimer sizes.
@@ -821,6 +860,47 @@ def compute_psi4_d4(geom, Ma, Mb, memory: str = "4 GB", basis="jun-cc-pvdz"):
     return
 
 
+def compute_bj_from_dimer_AB_with_C6s(
+    params,
+    pos,
+    carts,
+    Ma,
+    Mb,
+    C6s,
+    mult_out=627.509,
+) -> float:
+    """
+    compute_bj_from_dimer_AB_with_C6s computes dftd4 for dimer and each monomer and returns
+    subtraction after running dftd4 on monomers
+    """
+    C6_n, n, e = calc_dftd4_props_params(pos, carts, p=params)
+    f90 = compute_bj_f90(params, pos, carts, C6s)
+    print(f90, e, f90 - e)
+
+    mon_carts = np.zeros((len(Ma), 3))
+    mon_pos = np.zeros(len(Ma))
+    for n, i in enumerate(Ma):
+        mon_carts[n] = carts[i]
+        mon_pos[n] = pos[i]
+
+    C6_a, n, e = calc_dftd4_props_params(mon_pos, mon_carts, p=params)
+    monA = compute_bj_f90(params, mon_pos, mon_carts, C6_a)
+    print(monA, e, monA - e)
+
+    mon_carts = np.zeros((len(Mb), 3))
+    mon_pos = np.zeros(len(Mb))
+    for n, i in enumerate(Mb):
+        mon_carts[n] = carts[i]
+        mon_pos[n] = pos[i]
+
+    C6_b, n, e = calc_dftd4_props_params(mon_pos, mon_carts, p=params)
+    monB = compute_bj_f90(params, mon_pos, mon_carts, C6_b)
+    print(monB, e, monB - e)
+    AB = monA + monB
+    disp = f90 - (AB)
+    return disp * mult_out
+
+
 def compute_bj_from_dimer_AB(
     params,
     pos,
@@ -828,6 +908,7 @@ def compute_bj_from_dimer_AB(
     Ma,
     Mb,
     C6s,
+    mult_out=627.509,
 ) -> float:
     """
     compute_bj_from_dimer_AB computes dftd4 for dimer and each monomer and returns
@@ -838,11 +919,12 @@ def compute_bj_from_dimer_AB(
     monB = compute_bj_mons(params, pos, carts, Mb, C6s)
     AB = monA + monB
     disp = f90 - (AB)
-    return disp * 627.509
+    return disp * mult_out
 
 
 # self :     -26.86350371919017
 # DFTD4 2b : -26.86350371919017
+
 
 def gather_data2_testing_mol(mol):
     params = [1.61679827, 0.44959224, 3.35743605]
@@ -875,7 +957,7 @@ def gather_data2_testing_mol(mol):
     print("AB:", AB)
     print("f90 - AB =", f90 - AB)
     print("HF_jdz = ", HF_jdz)
-    print("BM     = ", mol['Benchmark'])
+    print("BM     = ", mol["Benchmark"])
     d4_1 = f90 - (AB)
     ie1 = HF_jdz + d4_1 * conv
     d4_2 = alt - (AB)
@@ -1176,7 +1258,7 @@ def gather_data3(
     return df
 
 
-def reorganize_carts_to_split_middle(geoms: [], mAs: [], mBs:[]) -> []:
+def reorganize_carts_to_split_middle(geoms: [], mAs: [], mBs: []) -> []:
     """
     reorganize_carts_to_split_middle
     """
@@ -1272,6 +1354,7 @@ def gather_data4(
         df = harvest_data(df, i.split("_")[-1])
     df.to_pickle(output_path)
     return df
+
 
 def replace_hf_int_HF_jdz(df):
     df["HF_jdz"] = df["HF INTERACTION ENERGY"]
