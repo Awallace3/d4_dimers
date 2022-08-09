@@ -135,14 +135,15 @@ def compute_int_energy_stats(
     diff = np.zeros(len(df))
     el_dc = create_pt_dict()
     df["d4"] = df.apply(
-        lambda row: compute_bj_pairs(
+        lambda row: compute_bj_from_dimer_AB_all_C6s(
             params,
             row["Geometry"][:, 0],  # pos
             row["Geometry"][:, 1:],  # carts
             row["monAs"],
             row["monBs"],
             row["C6s"],
-            mult_out=627.509,
+            C6_A=row["C6_A"],
+            C6_B=row["C6_B"],
         ),
         # lambda row: compute_bj_from_dimer_AB(
         #     params,
@@ -173,15 +174,25 @@ def compute_int_energy(
     diff = np.zeros(len(df))
     el_dc = create_pt_dict()
     df["d4"] = df.apply(
-        lambda row: compute_bj_pairs(
+        lambda row: compute_bj_from_dimer_AB_all_C6s(
             params,
             row["Geometry"][:, 0],  # pos
             row["Geometry"][:, 1:],  # carts
             row["monAs"],
             row["monBs"],
             row["C6s"],
-            mult_out=627.509,
+            C6_A=row["C6_A"],
+            C6_B=row["C6_B"],
         ),
+        # lambda row: compute_bj_pairs(
+        #     params,
+        #     row["Geometry"][:, 0],  # pos
+        #     row["Geometry"][:, 1:],  # carts
+        #     row["monAs"],
+        #     row["monBs"],
+        #     row["C6s"],
+        #     mult_out=627.509,
+        # ),
         # lambda row: compute_bj_from_dimer_AB(
         #     params,
         #     row["Geometry"][:, 0],  # pos
@@ -223,7 +234,7 @@ def optimization(
     # &  s6=1.0000_wp, s8=3.02227550_wp, a1=0.47396846_wp, a2=4.49845309_wp )
     print("RMSE\t\tparams")
     ret = opt.minimize(
-        # compute_int_energy, args=(df, hf_key), x0=params, method="powell"
+        # compute_int_energy, args=(df, hf_key), x0=params, method=""
         compute_int_energy, args=(df, hf_key), x0=params, method="powell"
     )
     print("\nResults\n")
@@ -241,8 +252,9 @@ def avg_matrix(
     """
     s = len(arr[0, :])
     out = np.zeros(s)
-    for i in range(s):
+    for i in range(s - 1):
         out[i] = arr[:, i].sum() / len(arr[:, 0])
+    out[-1] = np.amax(arr[:, -1])
     return out
 
 

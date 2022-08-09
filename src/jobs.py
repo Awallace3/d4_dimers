@@ -43,6 +43,7 @@ def write_psi4_sapt0(
     memory: str = "4 GB",
     basis: str = "aug-cc-pvdz",
     in_file: str = "d",
+    charge_mult: np.array = np.array([[0, 1], [0, 1], [0, 1]]),
 ) -> []:
     """
     run_sapt0 computes sapt0 without the dispersion term
@@ -51,8 +52,10 @@ def write_psi4_sapt0(
     if not os.path.exists(meth_basis_dir):
         os.mkdir(meth_basis_dir)
     os.chdir(meth_basis_dir)
-
-    geom = "0 1\n%s--\n0 1\n%s" % (A, B)
+    A_cm = charge_mult[1, :]
+    B_cm = charge_mult[2, :]
+    # geom = "0 1\n%s--\n0 1\n%s" % (A, B)
+    geom = f"{A_cm[0]} {A_cm[1]}\n{A}--\n{A_cm[0]} {A_cm[1]}\n{B}"
     with open("%s.dat" % (in_file), "w") as f:
         f.write("memory %s\n" % memory)
         f.write("molecule mol {\n%s}\n\n" % geom)
@@ -231,6 +234,86 @@ def expand_opt_df_jobs(
     return df
 
 
+def fix_hf_charges_energies_jobs(
+    df_p: "opt5.pkl",
+    bases: [],
+    db_check: [] = ["SSI"],
+    data_dir: str = "calc",
+    in_file: str = "dimer",
+    memory: str = "4gb",
+    nodes: int = 5,
+    cores: int = 4,
+    walltime: str = "30:00:00",
+) -> None:
+    """ """
+    df = pd.read_pickle(df_p)
+    df = expand_opt_df_jobs(df, bases, prefix="HF_", replace_HF=False)
+    pd.to_pickle(df, df_p)
+    inds = df["DB"].index[df["DB"].isin(db_check)]
+    print(inds)
+    def_dir = os.getcwd()
+    if not os.path.exists(data_dir):
+        os.mkdir(data_dir)
+    os.chdir(data_dir)
+    int_dir = os.getcwd()
+    if not os.path.exists(data_dir):
+        os.mkdir(data_dir)
+    os.chdir(data_dir)
+
+    jobs = []
+    # df.loc[[0, 1, 2, 3, 4, 5]]
+    for idx in tqdm(
+        inds,
+        desc="Creating Inputs",
+        ascii=True,
+    ):
+        item = df.loc[idx]
+        for basis in bases:
+            basis_set, meth_basis_dir = basis_labels(basis)
+            method = "hf/%s" % basis_set
+            col = "HF_%s" % basis
+            v = df.loc[idx, col]
+            p = "%d_%s" % (idx, item["DB"].replace(" - ", "_"))
+            job_p = "%s/%s/%s.dat" % (p, meth_basis_dir, in_file)
+            if not os.path.exists(p):
+                os.mkdir(p)
+            os.chdir(p)
+            c = item["Geometry"]
+            monA = item["monAs"]
+            monB = item["monBs"]
+            cm = item["charges"]
+            mA, mB = [], []
+            for i in monA:
+                mA.append(c[i, :])
+            for i in monB:
+                mB.append(c[i, :])
+            mA = np_carts_to_string(mA)
+            mB = np_carts_to_string(mB)
+            write_psi4_sapt0(
+                mA,
+                mB,
+                meth_basis_dir=meth_basis_dir,
+                basis=basis_set,
+                in_file=in_file,
+                charge_mult=cm,
+            )
+            os.chdir("..")
+            jobs.append(job_p)
+    os.chdir(int_dir)
+    create_pylauncher(
+        jobs=jobs,
+        data_dir=data_dir,
+        basis=basis,
+        name=in_file,
+        memory=memory,
+        ppn=nodes,
+        nodes=nodes,
+        walltime=walltime,
+    )
+    os.chdir(def_dir)
+    return
+
+
 def create_hf_binding_energies_jobs(
     df_p: "base1.pkl",
     bases: [],
@@ -289,6 +372,7 @@ def create_hf_binding_energies_jobs(
                 c = item["Geometry"]
                 monA = item["monAs"]
                 monB = item["monBs"]
+                cm = item["charges"]
                 mA, mB = [], []
                 for i in monA:
                     mA.append(c[i, :])
@@ -302,6 +386,7 @@ def create_hf_binding_energies_jobs(
                     meth_basis_dir=meth_basis_dir,
                     basis=basis_set,
                     in_file=in_file,
+                    charge_mult=cm,
                 )
                 os.chdir("..")
             jobs.append(job_p)

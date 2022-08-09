@@ -16,14 +16,20 @@ from qcelemental import constants
 
 
 def inpsect_master_regen():
-    pkl_path = ("master-regen.pkl",)
+    pd.set_option("display.max_columns", None)
+    pd.set_option("display.max_rows", None)
+    pkl_path = "master-regen.pkl"
     ms = pd.read_pickle(pkl_path)
     ms = ms[ms["DB"] != "PCONF"]
     ms = ms[ms["DB"] != "SCONF"]
     ms = ms[ms["DB"] != "ACONF"]
     ms = ms[ms["DB"] != "CYCONF"]
-    for i in ms.columns.values:
-        print(i)
+    # for i in ms.columns.values:
+    #     print(i)
+    ms = ms[ms["DB"] == "SSI"]
+    for idx, i in ms.iterrows():
+        if int(ms.loc[idx, "R"]) != 1:
+            print(ms.loc[idx])
 
 
 def gather_data(
@@ -933,6 +939,7 @@ def compute_bj_from_dimer_AB_with_C6s(
     return disp * mult_out
     # return f90* mult_out
 
+
 def compute_bj_from_dimer_AB_all_C6s(
     params,
     pos,
@@ -959,6 +966,7 @@ def compute_bj_from_dimer_AB_all_C6s(
     AB = monA + monB
     disp = f90 - (AB)
     return disp * mult_out
+
 
 def compute_bj_from_dimer_AB(
     params,
@@ -1422,6 +1430,32 @@ def replace_hf_int_HF_jdz(df):
     return df
 
 
+def assign_charges(df, path_SSI="data/SSI_xyzfiles/combined/") -> pd.DataFrame:
+    c = np.array([[0, 1], [0, 1], [0, 1]])
+    charges = [c for i in range(len(df))]
+    ind1 = df["DB"].index[df["DB"] == "SSI"]
+    cnt = 0
+    for i in ind1:
+        sys = df.loc[i, "System"]
+        sys = f"{path_SSI}SSI-{sys[8:14]}-{sys[19:25]}-{sys[-1]}"
+        f_d = f"{sys}-dimer.xyz"
+        f_A = f"{sys}-monoA-unCP.xyz"
+        f_B = f"{sys}-monoB-unCP.xyz"
+        with open(f_d, "r") as f:
+            c_d = f.readlines()[1].rstrip()
+            c_d = [int(i) for i in c_d.split()]
+        with open(f_A, "r") as f:
+            c_A = f.readlines()[1].rstrip()
+            c_A = [int(i) for i in c_A.split()]
+        with open(f_B, "r") as f:
+            c_B = f.readlines()[1].rstrip()
+            c_B = [int(i) for i in c_B.split()]
+        charge = np.array([c_d, c_A, c_B])
+        charges[i] = charge
+    df["charges"] = charges
+    return df
+
+
 def gather_data5(
     master_path="master-regen.pkl",
     output_path="opt5.pkl",
@@ -1484,8 +1518,6 @@ def gather_data5(
         df = df.reset_index(drop=True)
         df, inds = gather_data3_dimer_splits(df)
         df = df.reset_index(drop=True)
-        # TODO: possibly add check to ensure geoms are splitted in carts before C6s
-
         xyzs = df["Geometry"].to_list()
         C6s = [np.array([]) for i in range(len(xyzs))]
         C6_A = [np.array([]) for i in range(len(xyzs))]
@@ -1513,6 +1545,7 @@ def gather_data5(
         df.to_pickle(output_path)
         df = expand_opt_df(df, HF_columns)
         df = ssi_bfdb_data(df)
+        df = assign_charges(df)
         df.to_pickle(output_path)
     else:
         df = pd.read_pickle(output_path)

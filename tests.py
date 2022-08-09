@@ -19,6 +19,7 @@ from src.setup import (
 import subprocess
 import os
 import pandas as pd
+from qcelemental import constants
 
 
 def carts1():
@@ -531,39 +532,27 @@ def test_dm_all_C6s():
     assert (df["IE_diff"].abs() < 1e-4).all()
 
 
-# def test_dm() -> None:
-#     """
-#     test_dm tests the psi4 predicted IE with the
-#     computed compute_dimer_monomer
-#     """
-#     df = create_test_opt_t_dm()
-#     params=[1.61679827, 0.44959224, 3.35743605]
-#     df["d4_dm"] = df.apply(
-#         lambda row: compute_bj_from_dimer_AB(
-#             params,
-#             row["Geometry"][:, 0],  # pos
-#             row["Geometry"][:, 1:],  # carts
-#             row["monAs"],
-#             row["monBs"],
-#             row["C6s"],
-#             mult_out=1.0,
-#         ),
-#         axis=1,
-#     )
-#     print(df["d4_dm"])
-#     print(df["psi4_DISP"])
-#     df["d4_dm_diff_psi4_DISP"] = (df["d4_dm"] - df["psi4_DISP"])
-#     print(df["d4_dm_diff_psi4_DISP"])
-#     assert (df["d4_dm_diff_psi4_DISP"].abs() < 0).all()
-
-    # print(df["HF_jdz"])
-    # df['d4_t'] = df['HF_jdz'] + df['d4_dm']
-    # df["d4_dm_diff_psi4"] = df["d4_t"] - df["psi4"]
-    # print(df['psi4'])
-    # print(df['d4_t'])
-    # print(df['d4_dm_diff_psi4'])
-    # assert (df["d4_dm_diff_psi4"].abs() < 0).all()
-
+def ttest_pairs() -> None:
+    """
+    test_pairs
+    """
+    df = create_test_opt_t_dm2()
+    params=[1.61679827, 0.44959224, 3.35743605]
+    df["d4_dm_pairs"] = df.apply(
+        lambda row: compute_bj_pairs(
+            params,
+            row["Geometry"][:, 0],  # pos
+            row["Geometry"][:, 1:],  # carts
+            row["monAs"],
+            row["monBs"],
+            row["C6s"],
+            mult_out=constants.conversion_factor("hartree", "kcal / mol"),
+        ),
+        axis=1,
+    )
+    df["IE_pairs"] = df["HF_jdz"] + df["d4_dm_pairs"]
+    print(df[["IE_pairs", "psi4_IE"]])
+    assert ((df["IE_pairs"] - df["psi4_IE"]) < 1e-4).all()
 
 
 
@@ -572,23 +561,6 @@ def main():
     """
     docstring
     """
-    # test_api()
-    # carts = convert_str_carts_np_carts(carts2())
-    # atoms = carts[:, 0]
-    # carts = carts[:, 1:]
-    # # aatoau = Constants().g_aatoau()
-    # # cs = aatoau * np.array(carts, copy=True)
-    # print(cs)
-    # print_cartesians_pos_carts(atoms, cs)
-    # ma, mb = [i for i in range(8)], [i + 8 for i in range(8)]
-    # p = [1.61679827, 0.44959224, 3.35743605]
-    # print(ma, mb)
-    # C6s, m = calc_dftd4_pair_resolved(atoms, carts, p=p)
-    # api = sum_ma_mb(ma, mb, m)
-    # pairs = compute_bj_pairs(p, atoms, carts, ma, mb, C6s, mult_out=627.509)
-    # print(m)
-    # print(f"API  : {api}")
-    # print(f"PAIRS: {pairs}")
     df2 = create_test_opt_t_dm2()
     params=[1.61679827, 0.44959224, 3.35743605]
     df2["d4_dm_C6s"] = df2.apply(
@@ -601,7 +573,6 @@ def main():
             row["C6s"],
             C6_A=row["C6_A"],
             C6_B=row["C6_B"],
-            mult_out=627.509,
         ),
         axis=1,
     )
@@ -652,7 +623,6 @@ def main():
     print(df[['d4_dm_C6s', 'd4_dm', "d4_dm_pairs"]])
     print(df[['IE_c6s', 'IE_dm', "IE_pairs", "psi4_IE"]])
     print(df2[["IE_d4_all_C6s", "psi4_IE", "IE_diff"]])
-
     return
 
 
