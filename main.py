@@ -64,40 +64,73 @@ def analyze_max_errors(
 # TODO: error is in the C6s before dimer splits...
 
 
+def create_Grimme_db() -> pd.DataFrame:
+    """
+    create_Grimme_db
+    """
+    df = pd.read_pickle("s22s66.pkl")
+    start = len(df)
+    df1 = df[df["DB"] == "S22by7"]
+    df1 = df1.reset_index(drop=True)
+    df1["m"] = df1.apply(lambda r: "%.4f" % r["Benchmark"], axis=1)
+    df2 = pd.read_csv("./data/Databases/S22by7/benchmark_data.csv")
+    df2 = df2[["System #", "z", "Benchmark"]]
+    df3 = df2.groupby("Benchmark").mean().reset_index()
+    df3["m"] = df3.apply(lambda r: "%.4f" % r["Benchmark"], axis=1)
+    df_s22 = pd.merge(df1, df3, on=["m"], how="outer")
+    print("s22by7", len(df1))
+    print("s22by7", len(df_s22))
+
+    df1 = df[df["DB"] == "S66by10"]
+    df1 = df1.reset_index(drop=True)
+    df1["m"] = df1.apply(lambda r: "%.4f" % r["Benchmark"], axis=1)
+    df2 = pd.read_csv("./data/Databases/S66by10/benchmark_data.csv")
+    df2 = df2[["z", "Benchmark", "System #"]]
+    df3 = df2.groupby("Benchmark").mean().reset_index()
+    df3["m"] = df3.apply(lambda r: "%.4f" % r["Benchmark"], axis=1)
+    df_s66 = pd.merge(df1, df3, on=["m"], how="left")
+    df = pd.concat([df_s22, df_s66])
+    print("s66by10", len(df1))
+    print("s66by10", len(df_s66))
+    df["System #"] = df["System #_x"]
+    df["Benchmark"] = df["Benchmark_x"]
+    del df["System #_x"]
+    del df["Benchmark_x"]
+    del df["System #_y"]
+    del df["Benchmark_y"]
+    # assert start == len(df)
+    df.to_pickle("s22s66_Grimme.pkl")
+    return df
+
+
 def main():
     """
     Computes best parameters for SAPT0-D4
     """
-    # gather_data5(output_path="opt5.pkl", from_master=False, HF_columns=["HF_tz"])
-    # df = pd.read_pickle("base.pkl")
-    # df = ssi_bfdb_data(df)
+    # gather_data5(
+    #     output_path="opt5.pkl",
+    #     from_master=True,
+    #     # HF_columns=["HF_tz"],
+    #     HF_columns=["HF_dz", "HF_jdz", "HF_adz", "HF_tz"]
+    # )
     # compute_values()
     # compute_values(7265)
+    create_Grimme_db()
+    df = pd.read_pickle("s22s66_Grimme.pkl")
+    # print(df[["DB", "System #", "z"]].head())
+    print(df.columns)
+    print(df.head())
 
-    df = pd.read_pickle("opt6.pkl")
-    # assign_charges(df)
-    # df.to_pickle("opt6.pkl")
+    # df = pd.read_pickle("opt6.pkl")
+    # df= df[df["DB"].isin(["S66by10", "S22by7"])]
+    # print(df["System #"].head())
+    # s22s66.to_pickle("s22s66.pkl")
 
-    # print(df["HF_tz"].isna().sum())
-    # print(379 + 575)
-    # print(379 + 575 - 205)
     # df = df[df["DB"].isin(["SSI", "BBI"])]
-    # df = df[df["DB"].isin(["SSI"])]
-    # # BBI doesn't have any charged
-    # df = df[["HF_jdz","HF_tz"]]
-    # print(df["HF_tz"].isna().sum())
-    # for idx, i in df.iterrows():
-    #     print(i)
     # inpsect_master_regen()
     # analyze_max_errors(df)
-    # analyze_diffs(df, get_params(), hf_cols=["HF_jdz"])
-    # analyze_diffs(df, params_dc, hf_cols=["HF_jdz", "HF_adz", "HF_dz"])
-
-    # s0, mae_s0, rmse_s0, max_e_s0 = error_stats_method(df, method="SAPT0")
-    print(df.DB.unique())
-    return
     # df = df[df["DB"].isin(["S66by10", "S22by7"])]
-    # print(df["HF_tz"].isna().sum())
+
     # basis_set = "adz"
     # hf_key = "HF_%s" % basis_set
     # params = [1.61679827, 0.44959224, 3.35743605]
@@ -108,9 +141,8 @@ def main():
     # ]
     # opt_cross_val(df, nfolds=5, start_params=params, hf_key=hf_key)
 
-    bases = ["dz", "tz"]
+    # bases = ["dz", "tz"]
     # bases = ["atz"]
-    fix_hf_charges_energies_jobs("opt6.pkl", bases)
     # create_hf_binding_energies_jobs(
     #     "base1.pkl",
     #     bases,
@@ -121,6 +153,7 @@ def main():
     #     6,
     #     "99:00:00",
     # )
+    # fix_hf_charges_energies_jobs("opt6.pkl", bases)
     return
 
 

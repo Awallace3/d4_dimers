@@ -231,11 +231,14 @@ def optimization(
     params: [] = [3.02227550, 0.47396846, 4.49845309],
     hf_key: str = "HF INTERACTION ENERGY",
 ):
-    # &  s6=1.0000_wp, s8=3.02227550_wp, a1=0.47396846_wp, a2=4.49845309_wp )
+    # &  s8=1.0000_wp, s8=3.02227550_wp, a1=0.47396846_wp, a2=4.49845309_wp )
     print("RMSE\t\tparams")
     ret = opt.minimize(
         # compute_int_energy, args=(df, hf_key), x0=params, method=""
-        compute_int_energy, args=(df, hf_key), x0=params, method="powell"
+        compute_int_energy,
+        args=(df, hf_key),
+        x0=params,
+        method="powell",
     )
     print("\nResults\n")
     out_params = ret.x
@@ -277,6 +280,7 @@ def opt_cross_val(
     opt_cross_val performs n-fold cross validation on opt*.pkl df from
     gather_data3
     """
+    assert df[hf_key].isna().sum() == 0, "The HF_col provided has np.nan values present"
     start = time.time()
     folds = get_folds(nfolds, len(df))
     stats = np.zeros((nfolds, 3))
@@ -310,8 +314,10 @@ def opt_cross_val(
     print("\nStats:\n", stats)
     print("\nFinal Results")
     print("\n\tFull Optimization")
-    print("\nParameters\n")
-    print("        1. s6 = %.6f" % mp[0])
+    print("\nStarting Parameters\n")
+    print(start_params)
+    print("\nFinal Parameters for the whole data set\n")
+    print("        1. s8 = %.6f" % mp[0])
     print("        2. a1 = %.6f" % mp[1])
     print("        3. a2 = %.6f" % mp[2])
     print("\nStats\n")

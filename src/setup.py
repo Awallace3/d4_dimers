@@ -147,10 +147,18 @@ def calc_dftd4_props(
 ):
     write_xyz_from_np(atom_numbers, carts, outfile=input_xyz)
     if output_json == "":
-        args = ["dftd4", input_xyz, "--property"]
+        args = ["dftd4", input_xyz, "--property", "--mbdscale", "0.0"]
         # cmd = "~/.local/bin/dftd4 %s --property" % (input_xyz)
     else:
-        args = ["dftd4", input_xyz, "--property", "--json", output_json]
+        args = [
+            "dftd4",
+            input_xyz,
+            "--property",
+            "--json",
+            output_json,
+            "--mbdscale",
+            "0.0",
+        ]
         # cmd = "~/.local/bin/dftd4 %s --property --json %s" % (input_xyz, output_json)
     subprocess.call(
         # cmd,
