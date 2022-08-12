@@ -21,7 +21,7 @@ def HF_only() -> (float, float, float):
     df = pd.read_pickle("base.pkl")
     basis_set = "adz"
     HF_vals = [1.61679827, 0.44959224, 3.35743605]
-    mae, rmse, max_e = compute_int_energy_stats(HF_vals, df, "HF_jdz")
+    mae, rmse, max_e, mad = compute_int_energy_stats(HF_vals, df, "HF_jdz")
     print("        1. MAE  = %.4f" % mae)
     print("        2. RMSE = %.4f" % rmse)
     print("        3. MAX  = %.4f" % max_e)
@@ -159,7 +159,8 @@ def compute_int_energy_stats(
     mae = df["diff"].abs().sum() / len(df["diff"])
     rmse = (df["diff"] ** 2).mean() ** 0.5
     max_e = df["diff"].abs().max()
-    return mae, rmse, max_e
+    mad = df['diff'].mad()
+    return mae, rmse, max_e, mad
 
 
 def compute_int_energy(
@@ -239,10 +240,33 @@ def optimization(
         args=(df, hf_key),
         x0=params,
         method="powell",
+        # method="lm",
     )
     print("\nResults\n")
     out_params = ret.x
-    mae, rmse, max_e = compute_int_energy_stats(out_params, df, hf_key)
+    mae, rmse, max_e, mad = compute_int_energy_stats(out_params, df, hf_key)
+    # print("1. MAE = %.4f\n2. RMSE = %.4f\n3. MAX = %.4f" % (mae, rmse, max_e))
+    return out_params, mae, rmse, max_e
+
+
+def optimization_least_squares(
+    df: pd.DataFrame,
+    params: [] = [3.02227550, 0.47396846, 4.49845309],
+    hf_key: str = "HF INTERACTION ENERGY",
+):
+    # &  s8=1.0000_wp, s8=3.02227550_wp, a1=0.47396846_wp, a2=4.49845309_wp )
+    print("RMSE\t\tparams")
+    ret = opt.least_squares(
+        # compute_int_energy, args=(df, hf_key), x0=params, method=""
+        compute_int_energy,
+        args=(df, hf_key),
+        x0=params,
+        method="lm",
+        # method="lm",
+    )
+    print("\nResults\n")
+    out_params = ret.x
+    mae, rmse, max_e, mad = compute_int_energy_stats(out_params, df, hf_key)
     # print("1. MAE = %.4f\n2. RMSE = %.4f\n3. MAX = %.4f" % (mae, rmse, max_e))
     return out_params, mae, rmse, max_e
 
@@ -298,7 +322,7 @@ def opt_cross_val(
         print(f"Testing: {len(testing)}")
 
         o_params, omae, ormse, omax_e = optimization(training, mp, hf_key)
-        mae, rmse, max_e = compute_int_energy_stats(o_params, testing, hf_key)
+        mae, rmse, max_e, mad = compute_int_energy_stats(o_params, testing, hf_key)
 
         stats[n] = np.array([mae, rmse, max_e])
         p_out[n] = o_params

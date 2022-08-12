@@ -36,6 +36,50 @@ He 2.0 0.0 0.0
     # print(wf * 627.509)
 
 
+def write_psi4_sapt0_dftd4(
+    A: str,
+    B: str,
+    meth_basis_dir: str,
+    params: [] = [0.44959224, 3.35743605, 16.0, 1.0, 1.61679827, 0.0],
+    memory: str = "4 GB",
+    basis: str = "aug-cc-pvdz",
+    in_file: str = "d",
+    charge_mult: np.array = np.array([[0, 1], [0, 1], [0, 1]]),
+) -> []:
+    """
+    run_sapt0 computes sapt0 without the dispersion term
+    """
+    b = basis_labels(meth_basis_dir)
+    if not os.path.exists(meth_basis_dir):
+        os.mkdir(meth_basis_dir)
+    os.chdir(meth_basis_dir)
+    A_cm = charge_mult[1, :]
+    B_cm = charge_mult[2, :]
+    geom = f"{A_cm[0]} {A_cm[1]}\n{A}--\n{A_cm[0]} {A_cm[1]}\n{B}"
+    with open("%s.dat" % (in_file), "w") as f:
+        f.write("memory %s\n" % memory)
+        f.write("molecule mol {\n%s}\n\n" % geom)
+        f.write(
+            """
+set {
+basis %s
+freeze_core true
+guess sad
+scf_type df
+}
+"""
+            % basis
+        )
+        f.write(
+            """
+set dft_dispersion_parameters [0.44959224, 3.35743605, 16.0, 1.0, 1.61679827, 0.0]
+energy('hf-d4', save_pairwise_disp=True, bsse_type="cp")
+    """
+        )
+    os.chdir("..")
+    return
+
+
 def write_psi4_sapt0(
     A: str,
     B: str,
@@ -54,7 +98,6 @@ def write_psi4_sapt0(
     os.chdir(meth_basis_dir)
     A_cm = charge_mult[1, :]
     B_cm = charge_mult[2, :]
-    # geom = "0 1\n%s--\n0 1\n%s" % (A, B)
     geom = f"{A_cm[0]} {A_cm[1]}\n{A}--\n{A_cm[0]} {A_cm[1]}\n{B}"
     with open("%s.dat" % (in_file), "w") as f:
         f.write("memory %s\n" % memory)
@@ -71,18 +114,6 @@ scf_type df
             % basis
         )
         f.write("\nenergy('hf', bsse_type='cp')")
-    #     with open("%s.pbs" % in_file, "w") as f:
-    #         f.write(
-    #             """
-    # #PBS -N %s
-    # #PBS -q hive-nvme-sas
-    # #PBS -l nodes=1:ppn=6
-    # #PBS -l mem=4gb
-    # #PBS -l walltime=1000:00:00
-    # """
-    #             % path
-    #         )
-
     os.chdir("..")
     return
 
@@ -219,6 +250,7 @@ def expand_opt_df_jobs(
         "HF_jdt",
     ],
     prefix: str = "",
+    suffix: str = "",
     replace_HF: bool = False,
 ) -> pd.DataFrame:
     """
@@ -226,7 +258,7 @@ def expand_opt_df_jobs(
     """
     if replace_HF:
         df = replace_hf_int_HF_jdz(df)
-    columns_to_add = ["%s%s" % (prefix, i) for i in columns_to_add]
+    columns_to_add = ["%s%s%s" % (prefix, i, suffix) for i in columns_to_add]
     for i in columns_to_add:
         if i not in df:
             df[i] = np.nan
@@ -320,7 +352,7 @@ def create_hf_binding_energies_jobs(
     data_dir: str = "calc",
     in_file: str = "dimer",
     memory: str = "4gb",
-    nodes: int = 5,
+    nodes: int = 10,
     cores: int = 4,
     walltime: str = "30:00:00",
 ) -> None:
@@ -383,6 +415,100 @@ def create_hf_binding_energies_jobs(
                 write_psi4_sapt0(
                     mA,
                     mB,
+                    meth_basis_dir=meth_basis_dir,
+                    basis=basis_set,
+                    in_file=in_file,
+                    charge_mult=cm,
+                )
+                os.chdir("..")
+            jobs.append(job_p)
+    os.chdir(int_dir)
+    create_pylauncher(
+        jobs=jobs,
+        data_dir=data_dir,
+        basis=basis,
+        name=in_file,
+        memory=memory,
+        ppn=nodes,
+        nodes=nodes,
+        walltime=walltime,
+    )
+    os.chdir(def_dir)
+    return
+
+
+def create_hf_dftd4_ie_jobs(
+    df_p: "base1.pkl",
+    bases: [],
+    data_dir: str = "calc",
+    in_file: str = "dimer",
+    memory: str = "4gb",
+    nodes: int = 5,
+    cores: int = 4,
+    walltime: str = "30:00:00",
+    params: [] = [0.44959224, 3.35743605, 16.0, 1.0, 1.61679827, 0.0],
+) -> None:
+    """
+    uses psi4 to calculate monA, monB, and dimer energies with HF and dftd4
+    with a specified basis set.
+
+    The inputted df will be saved to out_df after each computation finishes.
+    """
+    df = pd.read_pickle(df_p)
+    df = expand_opt_df_jobs(df, bases, prefix="HF_", replace_HF=False, suffix="_dftd4")
+    pd.to_pickle(df, df_p)
+
+    def_dir = os.getcwd()
+    if not os.path.exists(data_dir):
+        os.mkdir(data_dir)
+    os.chdir(data_dir)
+    int_dir = os.getcwd()
+    if not os.path.exists(data_dir):
+        os.mkdir(data_dir)
+    os.chdir(data_dir)
+
+    jobs = []
+    # df.loc[[0, 1, 2, 3, 4, 5]]
+    for idx, item in tqdm(
+        df.iterrows(),
+        total=df.shape[0],
+        desc="Creating Inputs",
+        ascii=True,
+    ):
+        for basis in bases:
+            basis_set, meth_basis_dir = basis_labels(basis)
+            meth_basis_dir += "_dftd4"
+            method = "hf/%s" % basis_set
+            col = "HF_%s_dftd4" % basis
+            v = df.loc[idx, col]
+            if not np.isnan(v):
+                continue
+            p = "%d_%s" % (idx, item["DB"].replace(" - ", "_"))
+            job_p = "%s/%s/%s.dat" % (p, meth_basis_dir, in_file)
+
+            if os.path.exists(job_p):
+                out_p = "%s/%s/%s.out" % (p, meth_basis_dir, in_file)
+                if os.path.exists(out_p):
+                    continue
+            else:
+                if not os.path.exists(p):
+                    os.mkdir(p)
+                os.chdir(p)
+                c = item["Geometry"]
+                monA = item["monAs"]
+                monB = item["monBs"]
+                cm = item["charges"]
+                mA, mB = [], []
+                for i in monA:
+                    mA.append(c[i, :])
+                for i in monB:
+                    mB.append(c[i, :])
+                mA = np_carts_to_string(mA)
+                mB = np_carts_to_string(mB)
+                write_psi4_sapt0_dftd4(
+                    mA,
+                    mB,
+                    params=params,
                     meth_basis_dir=meth_basis_dir,
                     basis=basis_set,
                     in_file=in_file,

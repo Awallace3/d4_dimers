@@ -81,8 +81,6 @@ def harvest_data(
         if not np.isnan(v) and not overwrite:
             print("Data Already filled")
             continue
-        if not np.isnan(v) and overwrite:
-            print("overwriting with calc value...")
         p = "%d_%s" % (idx, item["DB"].replace(" - ", "_"))
         out_p = "%s/%s/%s/%s/%s.out" % (data_dir, data_dir, p, meth_basis_dir, in_file)
         if os.path.exists(out_p):

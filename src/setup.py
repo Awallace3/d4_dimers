@@ -1476,6 +1476,7 @@ def gather_data5(
         "HF_jtz",
     ],
     from_master: bool = True,
+    overwrite: bool = False,
 ):
     """
     collects data from master-regen.pkl from jeffschriber's scripts for D3
@@ -1559,6 +1560,6 @@ def gather_data5(
         df = pd.read_pickle(output_path)
         df = expand_opt_df(df, HF_columns)
     for i in HF_columns:
-        df = harvest_data(df, i.split("_")[-1])
+        df = harvest_data(df, i.split("_")[-1], overwrite=overwrite)
     df.to_pickle(output_path)
     return df
