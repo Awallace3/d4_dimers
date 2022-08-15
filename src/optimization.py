@@ -98,11 +98,13 @@ def find_max_e(
     rmse = (df["diff"] ** 2).mean() ** 0.5
     df["diff_abs"] = df["diff"].abs()
     max_e = df["diff_abs"].max()
+    mad = df['diff'].mad()
     df = df.sort_values(by=["diff_abs"], ascending=False)
     df = df.reset_index(drop=False)
     print("        1. MAE  = %.4f" % mae)
     print("        2. RMSE = %.4f" % rmse)
     print("        3. MAX  = %.4f" % max_e)
+    print("        4. MAD  = %.4f" % mad)
     print(
         df[
             [
@@ -123,6 +125,21 @@ def find_max_e(
         print_cartesians(df.iloc[i]["Geometry"])
     return mae, rmse, max_e, df
 
+def compute_int_energy_stats_dftd4_key(
+    df: pd.DataFrame,
+    hf_key: str = "HF INTERACTION ENERGY",
+    dftd4_key: str ="dftd4_atm"
+) -> (float, float, float,):
+    """
+    stats for atm
+    """
+    df['guess'] = df.apply(lambda r: r[hf_key] + r[dftd4_key], axis=1)
+    df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r[dftd4_key]), axis=1)
+    mae = df["diff"].abs().mean()
+    rmse = (df["diff"] ** 2).mean() ** 0.5
+    max_e = df["diff"].abs().max()
+    mad = df['diff'].mad()
+    return mae, rmse, max_e, mad
 
 def compute_int_energy_stats(
     params: [float],

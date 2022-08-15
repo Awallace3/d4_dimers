@@ -155,6 +155,7 @@ def create_pylauncher(
     nodes: int = 10,  # how many for all jobs
     ppn: int = 6,
     walltime: str = "30:00:00",
+    env: str = "psi4",
 ) -> None:
     """
     create_pylauncher creates pylauncher and psi4_jobs
@@ -172,32 +173,25 @@ pylauncher3.ClassicLauncher(myjob, cores=%d)
     d = ""
     for i in jobs:
         d += "psi4 -n%d %s/%s\n" % (cores, data_dir, i)
-    s = """#!/bin/bash
-#PBS -N %s
-#PBS -q %s
+    s = f"""#!/bin/bash
+#PBS -N {name}
+#PBS -q {queue}
 #PBS -j oe
-#PBS -l nodes=%d:ppn=%d	    #number of cores and cores per node required
-#PBS -l pmem=%s	    #memory per core
-#PBS -l walltime=%s
+#PBS -l nodes={nodes}:ppn={ppn}	    #number of cores and cores per node required
+#PBS -l pmem={memory}	    #memory per core
+#PBS -l walltime={walltime}
 #PBS -m p
 #PBS -V
 
 module load anaconda3
-conda activate psi4       #psi4 is my env w/ psi4 and paramiko
+conda activate {env}       #psi4 is my env w/ psi4 and paramiko
 module load pylauncher/3.0
 
 cd $PBS_O_WORKDIR
 echo "Starting job."
 python ./launcher.py
 echo "Ending job."
-""" % (
-        name,
-        queue,
-        nodes,
-        ppn,
-        memory,
-        walltime,
-    )
+"""
     with open("launcher.py", "w") as f:
         f.write(l)
     with open(job_name, "w") as f:
@@ -227,6 +221,8 @@ def basis_labels(
         return "aug-cc-pvtz", "%s_%s" % (method, basis)
     elif basis == "jtz":
         return "jun-cc-pvtz", "%s_%s" % (method, basis)
+    elif basis == "jdz_dftd4":
+        return "hf-d4", "%s_%s_dftd4" % (method, basis)
     else:
         return basis, "%s_%s" % (method, basis)
 
@@ -444,7 +440,8 @@ def create_hf_dftd4_ie_jobs(
     in_file: str = "dimer",
     memory: str = "4gb",
     nodes: int = 5,
-    cores: int = 4,
+    cores: int = 1,
+    ppn: int = 1,
     walltime: str = "30:00:00",
     params: [] = [0.44959224, 3.35743605, 16.0, 1.0, 1.61679827, 0.0],
 ) -> None:
@@ -486,35 +483,35 @@ def create_hf_dftd4_ie_jobs(
             p = "%d_%s" % (idx, item["DB"].replace(" - ", "_"))
             job_p = "%s/%s/%s.dat" % (p, meth_basis_dir, in_file)
 
-            if os.path.exists(job_p):
-                out_p = "%s/%s/%s.out" % (p, meth_basis_dir, in_file)
-                if os.path.exists(out_p):
-                    continue
-            else:
-                if not os.path.exists(p):
-                    os.mkdir(p)
-                os.chdir(p)
-                c = item["Geometry"]
-                monA = item["monAs"]
-                monB = item["monBs"]
-                cm = item["charges"]
-                mA, mB = [], []
-                for i in monA:
-                    mA.append(c[i, :])
-                for i in monB:
-                    mB.append(c[i, :])
-                mA = np_carts_to_string(mA)
-                mB = np_carts_to_string(mB)
-                write_psi4_sapt0_dftd4(
-                    mA,
-                    mB,
-                    params=params,
-                    meth_basis_dir=meth_basis_dir,
-                    basis=basis_set,
-                    in_file=in_file,
-                    charge_mult=cm,
-                )
-                os.chdir("..")
+            # if os.path.exists(job_p):
+            #     out_p = "%s/%s/%s.out" % (p, meth_basis_dir, in_file)
+            #     # if os.path.exists(out_p):
+            #     #     continue
+            # else:
+            if not os.path.exists(p):
+                os.mkdir(p)
+            os.chdir(p)
+            c = item["Geometry"]
+            monA = item["monAs"]
+            monB = item["monBs"]
+            cm = item["charges"]
+            mA, mB = [], []
+            for i in monA:
+                mA.append(c[i, :])
+            for i in monB:
+                mB.append(c[i, :])
+            mA = np_carts_to_string(mA)
+            mB = np_carts_to_string(mB)
+            write_psi4_sapt0_dftd4(
+                mA,
+                mB,
+                params=params,
+                meth_basis_dir=meth_basis_dir,
+                basis=basis_set,
+                in_file=in_file,
+                charge_mult=cm,
+            )
+            os.chdir("..")
             jobs.append(job_p)
     os.chdir(int_dir)
     create_pylauncher(
@@ -523,9 +520,11 @@ def create_hf_dftd4_ie_jobs(
         basis=basis,
         name=in_file,
         memory=memory,
-        ppn=nodes,
+        ppn=ppn,
         nodes=nodes,
+        cores=cores,
         walltime=walltime,
+        env="psi4dftd4",
     )
     os.chdir(def_dir)
     return

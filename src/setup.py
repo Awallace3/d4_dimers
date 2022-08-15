@@ -107,6 +107,7 @@ def calc_dftd4_props_params(
     input_xyz: str = "dat.xyz",
     output_json: str = "",
     p: [] = [1.61679827, 0.44959224, 3.35743605],
+    s9: str = "0.0",
 ):
     write_xyz_from_np(atom_numbers, carts, outfile=input_xyz)
     args = [
@@ -115,7 +116,7 @@ def calc_dftd4_props_params(
         "--pair-resolved",
         "--property",
         "--mbdscale",
-        "0.0",
+        s9,
         "--param",
         "1.0",
         str(p[0]),

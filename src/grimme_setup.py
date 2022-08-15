@@ -1,8 +1,15 @@
 import pandas as pd
 from tqdm import tqdm
-from .setup import create_pt_dict, calc_dftd4_props, create_mon_geom, expand_opt_df
+from .setup import (
+    create_pt_dict,
+    calc_dftd4_props,
+    create_mon_geom,
+    expand_opt_df,
+    calc_dftd4_props_params,
+)
 import numpy as np
 import psi4
+from qcelemental import constants
 
 """
 From Grimme's first citation...
@@ -91,7 +98,7 @@ def gather_BLIND_geoms() -> None:
     df["C6_B"] = C6_B
     bases = ["dz", "tz"]
     df = expand_opt_df(df, bases, prefix="HF_", replace_HF=False)
-    df.to_pickle('grimme.pkl')
+    df.to_pickle("grimme.pkl")
 
     return df
 
@@ -195,8 +202,8 @@ def create_Grimme_db(bases=["dz", "tz"]) -> pd.DataFrame:
     df3 = df2.groupby("Benchmark").mean().reset_index()
     df3["m"] = df3.apply(lambda r: "%.4f" % r["Benchmark"], axis=1)
     df_s22 = pd.merge(df1, df3, on=["m"], how="outer")
-    print("s22by7", len(df1))
-    print("s22by7", len(df_s22))
+    # print("s22by7", len(df1))
+    # print("s22by7", len(df_s22))
 
     df1 = df[df["DB"] == "S66by10"]
     df1 = df1.reset_index(drop=True)
@@ -212,17 +219,18 @@ def create_Grimme_db(bases=["dz", "tz"]) -> pd.DataFrame:
     assert start == len(df)
 
     # print(df_s22["z"].head(20))
-    print(len(df_s22))
+    # print(len(df_s22))
     df_s22 = df_s22[df_s22["z"].isin(np.array([0.9, 1.0, 1.2, 1.5, 2.0]))]
     # print(df_s22["z"].head(20))
-    print(len(df_s22))
+    print("s22by5 length:", len(df_s22))
 
     print(len(df_s66))
     # print(df_s66["z"].head(20))
-    df_s66 = df_s66[
-        df_s66["z"].isin(np.array([0.9, 0.95, 1.0, 1.05, 1.10, 1.25, 1.5, 2.0]))
-    ]
-    print(len(df_s66))
+    # df_s66 = df_s66[
+    #     df_s66["z"].isin(np.array([0.9, 0.95, 1.0, 1.05, 1.10, 1.25, 1.5, 2.0]))
+    # ]
+    df_s66 = df_s66[df_s66["z"] >= 0.9]
+    print("s66by8 length:", len(df_s66))
     print(df_s66["z"].head(20))
 
     df = pd.concat([df_s22, df_s66])
@@ -236,11 +244,13 @@ def create_Grimme_db(bases=["dz", "tz"]) -> pd.DataFrame:
     df.to_pickle("data/Grimme/s22s66_Grimme.pkl")
     return df
 
+
 def create_grimme_s22s66blind() -> None:
     """
     create_grimme_s22s66blind
     """
     df1 = pd.read_pickle("./data/Grimme/s22s66_Grimme.pkl")
+    # df1 = create_Grimme_db()
     df2 = pd.read_pickle("./data/Grimme/grimme_out.pkl")
     df2["DB"] = ["NCIBLIND10" for i in range(len(df2))]
     df2["charges"] = [np.array([[0, 1], [0, 1], [0, 1]]) for i in range(len(df2))]
@@ -253,7 +263,30 @@ def create_grimme_s22s66blind() -> None:
             del df2[i]
     frames = [df1, df2]
     df = pd.concat(frames)
+    df = collect_dftd4_atm_for_grimme_parameters(df)
     df.to_pickle("grimme_db.pkl")
+    print(len(df), len(df1), len(df2))
     return df
 
 
+def collect_atm_disp_e(atom_numbers, carts, Mas, Mbs):
+    x, z, d = calc_dftd4_props_params(atom_numbers, carts, s9="1.0")
+    x, z, ma = calc_dftd4_props_params(atom_numbers[Mas], carts[Mas, :], s9="1.0")
+    x, z, mb = calc_dftd4_props_params(atom_numbers[Mbs], carts[Mbs, :], s9="1.0")
+    v = d - (ma + mb)
+    v *= constants.conversion_factor("hartree", "kcal / mol")
+    return v
+
+
+def collect_dftd4_atm_for_grimme_parameters(df):
+    print(df.columns)
+    df["dftd4_atm"] = df.apply(
+        lambda r: collect_atm_disp_e(
+            r["Geometry"][:, 0],
+            r["Geometry"][:, 1:],
+            r["monAs"],
+            r["monBs"],
+        ),
+        axis=1,
+    )
+    return df

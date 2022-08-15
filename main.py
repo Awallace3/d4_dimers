@@ -14,6 +14,7 @@ from src.optimization import (
     find_max_e,
     optimization_least_squares,
     compute_int_energy_stats,
+    compute_int_energy_stats_dftd4_key,
 )
 from src.jobs import (
     create_hf_binding_energies_jobs,
@@ -50,15 +51,10 @@ dftd4/src/dftd4/param.f90
 
 def get_params():
     return {
-        # "HF_jdz": [0.57791015, 0.67223747, 0.98740773],
-        # "HF_adz": [0.5971246, 0.64577916, 1.17106229],
-        # "HF_jdz": [1.61679827, 0.44959224, 3.35743605],
-        # "HF_adz": [1.61679827, 0.44959224, 3.35743605],
-        # "HF_jdz": [1.61679827, 0.44959224, 3.35743605],
-        "HF_jdz": [0.86639457, 0.77313591, 0.79705373],
-        "HF_adz": [0.87605397, 0.74188409, 0.98700505],
-        "HF_dz": [0.83376653, 0.71675200, 1.01439706],
-        "HF_tz": [0.85959583, 0.69363123, 1.21911775],
+        "HF_jdz": [1.61679827, 0.44959224, 3.35743605],
+        "HF_adz": [1.61679827, 0.44959224, 3.35743605],
+        "HF_dz": [1.61679827, 0.44959224, 3.35743605],
+        "HF_tz": [1.61679827, 0.44959224, 3.35743605],
     }
 
 
@@ -92,38 +88,49 @@ def main():
     #     overwrite=False,
     # )
 
-    # df = gather_BLIND_geoms()
     # df = create_grimme_s22s66blind()
-    # create_Grimme_db()
 
+
+    # df = pd.read_pickle("opt6.pkl")
     # analyze_max_errors(df)
 
-    # df = pd.read_pickle("grimme_db.pkl")
-    # df = pd.read_pickle("grimme_db.pkl")
-    """
-    df = create_Grimme_db()
-    print(len(df))
-    basis_set = "dz"
+    df = pd.read_pickle("grimme_db.pkl")
+    # print(df.columns)
+    # print(len(df))
+    # print(df["dftd4_atm"])
+
+    basis_set = "jdz"
     hf_key = "HF_%s" % basis_set
     params = [1.61679827, 0.44959224, 3.35743605]
+    mae, rmse, max_e, mad = compute_int_energy_stats_dftd4_key(df, hf_key)
+    print("\nStats\n")
+    print("        1. MAE  = %.4f" % mae)
+    print("        2. RMSE = %.4f" % rmse)
+    print("        3. MAX  = %.4f" % max_e)
+    print("        4. MAD  = %.4f" % mad)
     mae, rmse, max_e, mad = compute_int_energy_stats(params, df, hf_key)
-    print(mad, rmse)
-    """
-
+    print("\nStats\n")
+    print("        1. MAE  = %.4f" % mae)
+    print("        2. RMSE = %.4f" % rmse)
+    print("        3. MAX  = %.4f" % max_e)
+    print("        4. MAD  = %.4f" % mad)
+    #
     # optimization_least_squares(df, params, hf_key="HF_jdz")
     # opt_cross_val(df, nfolds=5, start_params=params, hf_key=hf_key)
 
-    bases = ["jdz"]
-    create_hf_dftd4_ie_jobs(
-        "opt6.pkl",
-        bases,
-        "calc",
-        "dimer",
-        "4gb",
-        20,
-        6,
-        "99:00:00",
-    )
+    # bases = ["jdz"]
+    # create_hf_dftd4_ie_jobs(
+    #     df_p="opt6.pkl",
+    #     bases=bases,
+    #     data_dir="calc",
+    #     in_file="dimer",
+    #     memory="4gb",
+    #     nodes=20,
+    #     cores=1,
+    #     ppn=1,
+    #     walltime="40:00:00",
+    #     params=[0.44959224, 3.35743605, 16.0, 1.0, 1.61679827, 0.0],
+    # )
     # bases = ["dz", "tz"]
     # create_hf_binding_energies_jobs(
     #     "base1.pkl",
