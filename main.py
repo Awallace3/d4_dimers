@@ -30,6 +30,8 @@ from src.grimme_setup import (
     create_Grimme_db,
     create_grimme_s22s66blind,
 )
+from src.tools import print_cartesians
+import pickle
 
 """
 dftd4/src/dftd4/param.f90
@@ -80,46 +82,71 @@ def main():
     Computes best parameters for SAPT0-D4
     """
     # gather_data5(
-    #     output_path="opt5.pkl",
+    #     output_path="opt6.pkl",
     #     from_master=False,
-    #     # HF_columns=["HF_tz"],
-    #     # HF_columns=["HF_dz", "HF_jdz", "HF_adz", "HF_tz"]
-    #     HF_columns=["HF_dz", "HF_tz"],
+    #     # HF_columns=["HF_atz"],
+    #     # HF_columns=["HF_dz", "HF_jdz", "HF_adz", "HF_tz", "jdz_dftd4"],
+    #     HF_columns=["jdz_dftd4"],
+    #     # HF_columns=["HF_dz", "HF_tz"],
     #     overwrite=False,
     # )
-
-    # df = create_grimme_s22s66blind()
-
-
+    #
     # df = pd.read_pickle("opt6.pkl")
+    df = pd.read_pickle("tests/diffs.pkl")
+    compute_int_energy_stats_dftd4_key(df, hf_key='HF_jdz')
+    df.to_pickle("tests/diffs.pkl")
+    print(len(df))
+    print(df.columns.values)
+    # print(df['HF_diff'].to_list())
+
+    for idx, r in df.iterrows():
+        print(idx, r['HF_jdz_d4_sum'], r["HF_jdz_dftd4"], r["HF_diff"])
+    #     if r['diff'] < 1e-1:
+    #         continue
+    #     else:
+    #         print(idx, r['diff'], r['d4_jdz'], r['HF_jdz'], r['HF_jdz_dftd4'])
+
+    #
+    # create_grimme_s22s66blind()
+    # def merge_col(geom):
+    #     geom = np.around(geom, decimals=3)
+    #     s = sorted(np.array2string(geom))
+    #     s = "".join(s).strip()
+    #     ban = "-[]+e. "
+    #     s = "".join([i for i in s if i not in ban])
+    #     return s
+    # print(df)
     # analyze_max_errors(df)
 
-    df = pd.read_pickle("grimme_db.pkl")
-    # print(df.columns)
-    # print(len(df))
-    # print(df["dftd4_atm"])
-
-    basis_set = "jdz"
-    hf_key = "HF_%s" % basis_set
-    params = [1.61679827, 0.44959224, 3.35743605]
-    mae, rmse, max_e, mad = compute_int_energy_stats_dftd4_key(df, hf_key)
-    print("\nStats\n")
-    print("        1. MAE  = %.4f" % mae)
-    print("        2. RMSE = %.4f" % rmse)
-    print("        3. MAX  = %.4f" % max_e)
-    print("        4. MAD  = %.4f" % mad)
-    mae, rmse, max_e, mad = compute_int_energy_stats(params, df, hf_key)
-    print("\nStats\n")
-    print("        1. MAE  = %.4f" % mae)
-    print("        2. RMSE = %.4f" % rmse)
-    print("        3. MAX  = %.4f" % max_e)
-    print("        4. MAD  = %.4f" % mad)
+    # df = pd.read_pickle("grimme_db.pkl")
+    # #
+    # print(df)
+    # basis_set = "dz"
+    # hf_key = "HF_%s" % basis_set
+    # params = [1.61679827, 0.44959224, 3.35743605]
+    # mae, rmse, max_e, mad = compute_int_energy_stats(params, df, hf_key)
+    # print("\nStats\n")
+    # print("        1. MAE  = %.4f" % mae)
+    # print("        2. RMSE = %.4f" % rmse)
+    # print("        3. MAX  = %.4f" % max_e)
+    # print("        4. MAD  = %.4f" % mad)
     #
-    # optimization_least_squares(df, params, hf_key="HF_jdz")
+    # df = pd.read_pickle("data/grimme_fitset_db.pkl")
+    # basis_set = "jdz"
+    # hf_key = "HF_%s_no_cp" % basis_set
+    # params = [1.61679827, 0.44959224, 3.35743605]
+    # print("HF_jdz NO CP")
+    # optimization_least_squares(df, params, hf_key=hf_key)
+    # basis_set = "jdz"
+    # hf_key = "HF_%s" % basis_set
+    # params = [1.61679827, 0.44959224, 3.35743605]
+    # print("HF_jdz CP")
+    # optimization_least_squares(df, params, hf_key=hf_key)
     # opt_cross_val(df, nfolds=5, start_params=params, hf_key=hf_key)
 
     # bases = ["jdz"]
     # create_hf_dftd4_ie_jobs(
+    #     # df_p="./tests/td4.pkl",
     #     df_p="opt6.pkl",
     #     bases=bases,
     #     data_dir="calc",
@@ -142,6 +169,8 @@ def main():
     #     6,
     #     "99:00:00",
     # )
+    # fix_hf_charges_energies_jobs('opt6.pkl')
+
     return
 
 

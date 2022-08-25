@@ -6,10 +6,16 @@ from .setup import (
     create_mon_geom,
     expand_opt_df,
     calc_dftd4_props_params,
+    read_xyz,
+    create_pt_dict,
+    split_mons,
+    calc_c6s_for_df,
+    harvest_data,
 )
 import numpy as np
 import psi4
 from qcelemental import constants
+from psi4.driver.qcdb.bfs import BFS
 
 """
 From Grimme's first citation...
@@ -245,9 +251,9 @@ def create_Grimme_db(bases=["dz", "tz"]) -> pd.DataFrame:
     return df
 
 
-def create_grimme_s22s66blind() -> None:
+def create_grimme_s22s66blind_self() -> None:
     """
-    create_grimme_s22s66blind
+    create_grimme_s22s66blind_self
     """
     df1 = pd.read_pickle("./data/Grimme/s22s66_Grimme.pkl")
     # df1 = create_Grimme_db()
@@ -290,3 +296,44 @@ def collect_dftd4_atm_for_grimme_parameters(df):
         axis=1,
     )
     return df
+
+
+def create_grimme_s22s66blind() -> None:
+    """
+    create_grimme_s22s66blind
+    """
+    global el_dc
+    el_dc = create_pt_dict()
+    frames = []
+    g_ps = [
+        "./data/Grimme/d4fitset/NCIBLIND10",
+        "./data/Grimme/d4fitset/S66x8",
+        "./data/Grimme/d4fitset/S22x5",
+    ]
+    for i in g_ps:
+        df = pd.read_csv(f"{i}/ref.csv")
+        db = i.split("/")[-1]
+        df["System"] = df["dimer"]
+        df["Benchmark"] = df["reference"]
+        df["DB"] = db
+        del df["dimer"]
+        del df["monomerA"]
+        del df["monomerB"]
+        del df["reference"]
+        df["Geometry"] = df.apply(
+            lambda r: read_xyz(f'{i}/{r["System"]}/mol.xyz', el_dc), axis=1
+        )
+        geoms = df["Geometry"].tolist()
+        monAs, monBs = split_mons(geoms)
+        df["monAs"] = monAs
+        df["monBs"] = monBs
+        C6s, C6_A, C6_B = calc_c6s_for_df(geoms, monAs, monBs)
+        df["C6s"] = C6s
+        df["C6_A"] = C6_A
+        df["C6_B"] = C6_B
+        frames.append(df)
+    df = pd.concat(frames)
+    df.to_pickle('data/grimme_fitset.pkl')
+    # for i in HF_columns:
+    #     df = harvest_data(df, i.split("_")[-1], overwrite=overwrite)
+    return

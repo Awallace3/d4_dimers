@@ -4,6 +4,7 @@ import numpy as np
 from .tools import print_cartesians, np_carts_to_string
 import os
 from tqdm import tqdm
+import pickle
 
 
 def run_sapt0_example():
@@ -55,7 +56,7 @@ def write_psi4_sapt0_dftd4(
     os.chdir(meth_basis_dir)
     A_cm = charge_mult[1, :]
     B_cm = charge_mult[2, :]
-    geom = f"{A_cm[0]} {A_cm[1]}\n{A}--\n{A_cm[0]} {A_cm[1]}\n{B}"
+    geom = f"{A_cm[0]} {A_cm[1]}\n{A}--\n{B_cm[0]} {B_cm[1]}\n{B}"
     with open("%s.dat" % (in_file), "w") as f:
         f.write("memory %s\n" % memory)
         f.write("molecule mol {\n%s}\n\n" % geom)
@@ -98,7 +99,7 @@ def write_psi4_sapt0(
     os.chdir(meth_basis_dir)
     A_cm = charge_mult[1, :]
     B_cm = charge_mult[2, :]
-    geom = f"{A_cm[0]} {A_cm[1]}\n{A}--\n{A_cm[0]} {A_cm[1]}\n{B}"
+    geom = f"{A_cm[0]} {A_cm[1]}\n{A}--\n{B_cm[0]} {B_cm[1]}\n{B}"
     with open("%s.dat" % (in_file), "w") as f:
         f.write("memory %s\n" % memory)
         f.write("molecule mol {\n%s}\n\n" % geom)
@@ -124,7 +125,6 @@ def run_sapt0(A: str, B: str, memory: str = "4 GB", basis="jun-cc-pvdz"):
     """
     geom = "0 1\n%s--\n0 1\n%s" % (A, B)
     # geom = '%s--\n%s' % (A, B)
-    print(geom)
     psi4.geometry(geom)
     psi4.set_memory(memory)
     psi4.set_options(
@@ -222,7 +222,7 @@ def basis_labels(
     elif basis == "jtz":
         return "jun-cc-pvtz", "%s_%s" % (method, basis)
     elif basis == "jdz_dftd4":
-        return "hf-d4", "%s_%s_dftd4" % (method, basis)
+        return "hf-d4", "%s_%s" % (method, basis)
     else:
         return basis, "%s_%s" % (method, basis)
 
@@ -264,20 +264,23 @@ def expand_opt_df_jobs(
 
 def fix_hf_charges_energies_jobs(
     df_p: "opt5.pkl",
-    bases: [],
-    db_check: [] = ["SSI"],
+    bases: [""] = ["atz", "jdz_dftd4"],
     data_dir: str = "calc",
     in_file: str = "dimer",
     memory: str = "4gb",
-    nodes: int = 5,
-    cores: int = 4,
+    nodes: int = 20,
+    cores: int = 2,
+    ppn: int = 2,
     walltime: str = "30:00:00",
+    env="psi4dftd4",
 ) -> None:
     """ """
     df = pd.read_pickle(df_p)
     df = expand_opt_df_jobs(df, bases, prefix="HF_", replace_HF=False)
     pd.to_pickle(df, df_p)
-    inds = df["DB"].index[df["DB"].isin(db_check)]
+    # with open('charged.pkl', 'rb') as f:
+    #     inds = pickle.load(f)
+    inds = df.index[df["DB"] == "SSI"]
     print(inds)
     def_dir = os.getcwd()
     if not os.path.exists(data_dir):
@@ -334,9 +337,11 @@ def fix_hf_charges_energies_jobs(
         basis=basis,
         name=in_file,
         memory=memory,
-        ppn=nodes,
+        ppn=ppn,
         nodes=nodes,
+        cores=cores,
         walltime=walltime,
+        env=env,
     )
     os.chdir(def_dir)
     return
@@ -350,7 +355,9 @@ def create_hf_binding_energies_jobs(
     memory: str = "4gb",
     nodes: int = 10,
     cores: int = 4,
+    ppn: int = 1,
     walltime: str = "30:00:00",
+    env="psi4dftd4",
 ) -> None:
     """
     run_hf_binding_energies uses psi4 to calculate monA, monB, and dimer energies with HF
@@ -425,9 +432,11 @@ def create_hf_binding_energies_jobs(
         basis=basis,
         name=in_file,
         memory=memory,
-        ppn=nodes,
+        ppn=ppn,
         nodes=nodes,
+        cores=cores,
         walltime=walltime,
+        env=env,
     )
     os.chdir(def_dir)
     return
@@ -466,6 +475,9 @@ def create_hf_dftd4_ie_jobs(
 
     jobs = []
     # df.loc[[0, 1, 2, 3, 4, 5]]
+    print(len(df))
+    df = df[df["HF_jdz_dftd4"].isna()]
+    print(len(df))
     for idx, item in tqdm(
         df.iterrows(),
         total=df.shape[0],
@@ -495,6 +507,7 @@ def create_hf_dftd4_ie_jobs(
             monA = item["monAs"]
             monB = item["monBs"]
             cm = item["charges"]
+            # print(item["System"], cm)
             mA, mB = [], []
             for i in monA:
                 mA.append(c[i, :])

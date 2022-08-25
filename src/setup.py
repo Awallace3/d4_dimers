@@ -443,7 +443,7 @@ def convert_str_carts_np_carts(carts: str, el_dc: dict = create_pt_dict()):
     return ca
 
 
-def read_xyz(xyz_path: str, el_dc: dict) -> np.array:
+def read_xyz(xyz_path: str, el_dc: dict = create_pt_dict()) -> np.array:
     """
     read_xyz takes a path to xyz and returns np.array
     """
@@ -1236,6 +1236,7 @@ def expand_opt_df(
         "HF_dt",
         "HF_adz",
         "HF_adt",
+        "HF_jdz_dftd4"
     ],
     prefix: str = "",
     replace_HF: bool = False,
@@ -1464,6 +1465,60 @@ def assign_charges(df, path_SSI="data/SSI_xyzfiles/combined/") -> pd.DataFrame:
     df["charges"] = charges
     return df
 
+def split_mons(xyzs) -> []:
+    """
+    split_mons takes xyzs and splits
+    """
+    monAs = [np.nan for i in range(len(xyzs))]
+    monBs = [np.nan for i in range(len(xyzs))]
+    ones, twos, clear = [], [], []
+    for n, c in enumerate(tqdm(xyzs[:], desc="Dimer Splits", ascii=True)):
+        g3 = np.array(c)
+        pos = g3[:, 0]
+        carts = g3[:, 1:]
+        frags = BFS(carts, pos, bond_threshold=0.4)
+        if len(frags) > 2:
+            ones.append(n)
+        elif len(frags) == 1:
+            twos.append(n)
+            # monAs[n] = np.array(frags[0])
+        else:
+            monAs[n] = np.array(frags[0])
+            monBs[n] = np.array(frags[1])
+            clear.append(n)
+    print("total =", len(xyzs))
+    print("ones =", len(ones))
+    print("twos =", len(twos))
+    print("clear =", len(clear))
+    return monAs, monBs
+
+
+def calc_c6s_for_df(xyzs, monAs, monBs) -> ([], [], []):
+    """
+    calc_c6s_for_df
+    """
+    C6s = [np.array([]) for i in range(len(xyzs))]
+    C6_A = [np.array([]) for i in range(len(xyzs))]
+    C6_B = [np.array([]) for i in range(len(xyzs))]
+    for n, c in enumerate(tqdm(xyzs[:], desc="DFTD4 Props", ascii=True)):
+        g3 = np.array(c)
+        pos = g3[:, 0]
+        carts = g3[:, 1:]
+        C6, na = calc_dftd4_props(pos, carts)
+        C6s[n] = C6
+
+        Ma = monAs[n]
+        mon_pa, mon_ca = create_mon_geom(pos, carts, Ma)
+        C6a, na = calc_dftd4_props(mon_pa, mon_ca)
+        C6_A[n] = C6a
+
+        Mb = monBs[n]
+        mon_pb, mon_cb = create_mon_geom(pos, carts, Mb)
+        C6b, na = calc_dftd4_props(mon_pb, mon_cb)
+        C6_B[n] = C6b
+    return C6s, C6_A, C6_B
+
+
 
 def gather_data5(
     master_path="master-regen.pkl",
@@ -1474,7 +1529,6 @@ def gather_data5(
         "HF_adz",
         "HF_atz",
         "HF_tz",
-        "HF_jtz",
     ],
     from_master: bool = True,
     overwrite: bool = False,
@@ -1501,54 +1555,14 @@ def gather_data5(
         ]
         df = replace_hf_int_HF_jdz(df)
         xyzs = df["Geometry"].to_list()
-        monAs = [np.nan for i in range(len(xyzs))]
-        monBs = [np.nan for i in range(len(xyzs))]
-
-        ones, twos, clear = [], [], []
-        for n, c in enumerate(tqdm(xyzs[:], desc="Dimer Splits", ascii=True)):
-            g3 = np.array(c)
-            pos = g3[:, 0]
-            carts = g3[:, 1:]
-            frags = BFS(carts, pos, bond_threshold=0.4)
-            if len(frags) > 2:
-                ones.append(n)
-            elif len(frags) == 1:
-                twos.append(n)
-                # monAs[n] = np.array(frags[0])
-            else:
-                monAs[n] = np.array(frags[0])
-                monBs[n] = np.array(frags[1])
-                clear.append(n)
-        print("total =", len(xyzs))
-        print("ones =", len(ones))
-        print("twos =", len(twos))
-        print("clear =", len(clear))
+        monAs, monBs = split_mons(xyzs)
         df["monAs"] = monAs
         df["monBs"] = monBs
         df = df.reset_index(drop=True)
         df, inds = gather_data3_dimer_splits(df)
         df = df.reset_index(drop=True)
         xyzs = df["Geometry"].to_list()
-        C6s = [np.array([]) for i in range(len(xyzs))]
-        C6_A = [np.array([]) for i in range(len(xyzs))]
-        C6_B = [np.array([]) for i in range(len(xyzs))]
-        for n, c in enumerate(tqdm(xyzs[:], desc="DFTD4 Props", ascii=True)):
-            g3 = np.array(c)
-            pos = g3[:, 0]
-            carts = g3[:, 1:]
-            C6, na = calc_dftd4_props(pos, carts)
-            C6s[n] = C6
-
-            Ma = df.loc[n, "monAs"]
-            mon_pa, mon_ca = create_mon_geom(pos, carts, Ma)
-            C6a, na = calc_dftd4_props(mon_pa, mon_ca)
-            C6_A[n] = C6a
-
-            Mb = df.loc[n, "monBs"]
-            mon_pb, mon_cb = create_mon_geom(pos, carts, Mb)
-            C6b, na = calc_dftd4_props(mon_pb, mon_cb)
-            C6_B[n] = C6b
-
+        C6s, C6_A, C6_B = calc_c6s_for_df(xyzs, monAs, monBs)
         df["C6s"] = C6s
         df["C6_A"] = C6_A
         df["C6_B"] = C6_B
