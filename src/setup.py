@@ -69,7 +69,7 @@ def gather_data(
     return data_out
 
 
-def write_xyz_from_np(atom_numbers, carts, outfile="dat.xyz") -> None:
+def write_xyz_from_np(atom_numbers, carts, outfile="dat.xyz", charges=[0, 1]) -> None:
     """
     write_xyz_from_np
     """
@@ -140,6 +140,58 @@ def calc_dftd4_props_params(
     return C6s, C8s, e
 
 
+def calc_dftd4_props_psi4_dftd4(
+    atom_numbers: np.array,
+    carts: np.array,
+    charges: np.array,
+    input_xyz: str = "dat.xyz",
+    output_json: str = "tmp.json",
+):
+    write_xyz_from_np(atom_numbers, carts, outfile=input_xyz, charges=charges)
+    if output_json == "":
+        # args = ["dftd4", input_xyz, "--property", "--mbdscale", "0.0"]
+        args = [
+            "/theoryfs2/ds/amwalla3/miniconda3/bin/dftd4",
+            input_xyz,
+            "--property",
+            "--mbdscale",
+            "0.0",
+            "-c",
+            str(charges[0]),
+        ]
+        # cmd = "~/.local/bin/dftd4 %s --property" % (input_xyz)
+    else:
+        args = [
+            "/theoryfs2/ds/amwalla3/miniconda3/bin/dftd4",
+            input_xyz,
+            "--property",
+            "--json",
+            output_json,
+            "--mbdscale",
+            "0.0",
+            "-c",
+            str(charges[0]),
+        ]
+        # cmd = "~/.local/bin/dftd4 %s --property --json %s" % (input_xyz, output_json)
+    subprocess.call(
+        # cmd,
+        # shell=True,
+        args=args,
+        shell=False,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.STDOUT,
+    )
+    with open(output_json) as f:
+        dat = json.load(f)
+        C6s = np.array(dat["c6 coefficients"])
+        n = int(np.sqrt(len(C6s)))
+        C6s = np.reshape(C6s, (n, n))
+        # C8s = np.array(dat["c8"])
+    if output_json != "":
+        os.remove(input_xyz)
+    return C6s
+
+
 def calc_dftd4_props(
     atom_numbers: np.array,
     carts: np.array,
@@ -148,6 +200,7 @@ def calc_dftd4_props(
 ):
     write_xyz_from_np(atom_numbers, carts, outfile=input_xyz)
     if output_json == "":
+        # args = ["dftd4", input_xyz, "--property", "--mbdscale", "0.0"]
         args = ["dftd4", input_xyz, "--property", "--mbdscale", "0.0"]
         # cmd = "~/.local/bin/dftd4 %s --property" % (input_xyz)
     else:
@@ -558,11 +611,13 @@ def create_mon_geom(
     """
     create_mon_geom creates pos and carts from dimer
     """
-    mon_carts = np.zeros((len(M), 3))
-    mon_pos = np.zeros(len(M))
-    for n, i in enumerate(M):
-        mon_carts[n] = carts[i]
-        mon_pos[n] = pos[i]
+    # mon_carts = np.zeros((len(M), 3))
+    # mon_pos = np.zeros(len(M))
+    # for n, i in enumerate(M):
+    #     mon_carts[n] = carts[i]
+    #     mon_pos[n] = pos[i]
+    mon_carts = carts[M]
+    mon_pos = pos[M]
     return mon_pos, mon_carts
 
 
@@ -633,7 +688,7 @@ def compute_bj_pairs(
     Mb: int,  # number of atoms in monomer B
     C6s: np.array,
     index: int = 1,
-    mult_out: float = 1.0,
+    mult_out=constants.conversion_factor("hartree", "kcal / mol"),
 ) -> float:
     """
     compute_bj_pairs computes energy from C6s, cartesian coordinates, and dimer sizes.
@@ -645,6 +700,7 @@ def compute_bj_pairs(
     aatoau = Constants().g_aatoau()
     energy = 0
     cs = aatoau * np.array(carts, copy=True)
+    # cs = np.array(carts)
     for i in Ma:
         el1 = int(pos[i])
         el1_r4r2 = r4r2_vals(el1)
@@ -902,7 +958,7 @@ def compute_bj_from_dimer_AB_with_C6s(
     Ma,
     Mb,
     C6s,
-    mult_out=627.509,
+    mult_out=constants.conversion_factor("hartree", "kcal / mol"),
 ) -> float:
     """
     compute_bj_from_dimer_AB_with_C6s computes dftd4 for dimer and each monomer and returns
@@ -965,6 +1021,7 @@ def compute_bj_from_dimer_AB_all_C6s(
     subtraction.
     """
     f90 = compute_bj_f90(params, pos, carts, C6s)
+    # print_cartesians_pos_carts(pos, carts)
 
     mon_pa, mon_ca = create_mon_geom(pos, carts, Ma)
     monA = compute_bj_f90(params, mon_pa, mon_ca, C6_A)
@@ -1226,18 +1283,14 @@ def gather_data3_dimer_splits(
     df_og["Geometry"] = geoms
     df_og["monAs"] = monAs
     df_og["monBs"] = monBs
+    assert df["monAs"].isna().sum() == 0, "Not all dimers split!"
+    assert df["monBs"].isna().sum() == 0, "Not all dimers split!"
     return df_og, ind1
 
 
 def expand_opt_df(
     df,
-    columns_to_add: list = [
-        "HF_dz",
-        "HF_dt",
-        "HF_adz",
-        "HF_adt",
-        "HF_jdz_dftd4"
-    ],
+    columns_to_add: list = ["HF_dz", "HF_dt", "HF_adz", "HF_adt", "HF_jdz_dftd4"],
     prefix: str = "",
     replace_HF: bool = False,
 ) -> pd.DataFrame:
@@ -1465,6 +1518,7 @@ def assign_charges(df, path_SSI="data/SSI_xyzfiles/combined/") -> pd.DataFrame:
     df["charges"] = charges
     return df
 
+
 def split_mons(xyzs) -> []:
     """
     split_mons takes xyzs and splits
@@ -1493,7 +1547,7 @@ def split_mons(xyzs) -> []:
     return monAs, monBs
 
 
-def calc_c6s_for_df(xyzs, monAs, monBs) -> ([], [], []):
+def calc_c6s_for_df(xyzs, monAs, monBs, charges) -> ([], [], []):
     """
     calc_c6s_for_df
     """
@@ -1504,20 +1558,23 @@ def calc_c6s_for_df(xyzs, monAs, monBs) -> ([], [], []):
         g3 = np.array(c)
         pos = g3[:, 0]
         carts = g3[:, 1:]
-        C6, na = calc_dftd4_props(pos, carts)
+        c = charges[n]
+        # C6, na = calc_dftd4_props(pos, carts)
+        C6 = calc_dftd4_props_psi4_dftd4(pos, carts, c[0])
         C6s[n] = C6
 
         Ma = monAs[n]
         mon_pa, mon_ca = create_mon_geom(pos, carts, Ma)
-        C6a, na = calc_dftd4_props(mon_pa, mon_ca)
+        # C6a, na = calc_dftd4_props(mon_pa, mon_ca)
+        C6a = calc_dftd4_props_psi4_dftd4(mon_pa, mon_ca, c[1])
         C6_A[n] = C6a
 
         Mb = monBs[n]
         mon_pb, mon_cb = create_mon_geom(pos, carts, Mb)
-        C6b, na = calc_dftd4_props(mon_pb, mon_cb)
+        # C6b, na = calc_dftd4_props(mon_pb, mon_cb)
+        C6b = calc_dftd4_props_psi4_dftd4(mon_pb, mon_cb, c[2])
         C6_B[n] = C6b
     return C6s, C6_A, C6_B
-
 
 
 def gather_data5(
@@ -1560,16 +1617,20 @@ def gather_data5(
         df["monBs"] = monBs
         df = df.reset_index(drop=True)
         df, inds = gather_data3_dimer_splits(df)
+        monAs = df["monAs"].to_list()
+        monBs = df["monBs"].to_list()
+        # t = [x for x in monAs if type(x) != type(np.array)]
         df = df.reset_index(drop=True)
         xyzs = df["Geometry"].to_list()
-        C6s, C6_A, C6_B = calc_c6s_for_df(xyzs, monAs, monBs)
+        df = assign_charges(df)
+        charges = df["charges"]
+        C6s, C6_A, C6_B = calc_c6s_for_df(xyzs, monAs, monBs, charges)
         df["C6s"] = C6s
         df["C6_A"] = C6_A
         df["C6_B"] = C6_B
         df.to_pickle(output_path)
         df = expand_opt_df(df, HF_columns)
         df = ssi_bfdb_data(df)
-        df = assign_charges(df)
         df.to_pickle(output_path)
     else:
         df = pd.read_pickle(output_path)

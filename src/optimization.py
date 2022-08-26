@@ -139,7 +139,9 @@ def compute_int_energy_stats_dftd4_key(
     params = [1.61679827, 0.44959224, 3.35743605]
     t = df[hf_key].isna().sum()
     assert t == 0, f"The HF_col provided has np.nan values present, {t}"
-    df.dropna(subset=[dftd4_key], how='all', inplace=True)
+    # df.dropna(subset=[dftd4_key], how='all', inplace=True)
+    t = df[dftd4_key].isna().sum()
+    assert t == 0, f"The HF_col provided has np.nan values present, {t}"
 
     # df = df.iloc[df.index[df[dftd4_key].isna()]]
     # t = df[dftd4_key].isna().sum()
@@ -156,10 +158,18 @@ def compute_int_energy_stats_dftd4_key(
             row["C6s"],
             C6_A=row["C6_A"],
             C6_B=row["C6_B"],
+        # lambda row: compute_bj_pairs(
+        #     params,
+        #     row["Geometry"][:, 0],  # pos
+        #     row["Geometry"][:, 1:],  # carts
+        #     row["monAs"],
+        #     row["monBs"],
+        #     row["C6s"],
         ),
         axis=1,
     )
     df[f"{hf_key}_d4_sum"] = df.apply(lambda r: r[hf_key] + r['HF_jdz_d4'], axis=1)
+    df["HF_diff"] = df.apply(lambda r: r[f"{hf_key}_d4_sum"] - r[dftd4_key], axis=1)
     return
 
 

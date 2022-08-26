@@ -82,25 +82,36 @@ def main():
     Computes best parameters for SAPT0-D4
     """
     # gather_data5(
-    #     output_path="opt6.pkl",
-    #     from_master=False,
+    #     output_path="opt8.pkl",
+    #     from_master=True,
     #     # HF_columns=["HF_atz"],
-    #     # HF_columns=["HF_dz", "HF_jdz", "HF_adz", "HF_tz", "jdz_dftd4"],
-    #     HF_columns=["jdz_dftd4"],
+    #     HF_columns=["HF_dz", "HF_jdz", "HF_adz", "HF_tz", "HF_jdz_dftd4"],
+    #     # HF_columns=["HF_jdz_dftd4"],
     #     # HF_columns=["HF_dz", "HF_tz"],
-    #     overwrite=False,
+    #     overwrite=True,
     # )
-    #
-    # df = pd.read_pickle("opt6.pkl")
+
+    # df = pd.read_pickle("opt8.pkl")
     df = pd.read_pickle("tests/diffs.pkl")
-    compute_int_energy_stats_dftd4_key(df, hf_key='HF_jdz')
+    print(df['C6s'])
+    # print(df1.iloc[6165]['HF_jdz_dftd4'])
+    # print(df.iloc[6165]['HF_jdz_dftd4'])
+    # df = pd.read_pickle("opt6.pkl")
+    # df = pd.read_pickle("tests/diffs.pkl")
+    # compute_int_energy_stats_dftd4_key(df, hf_key='HF_jdz')
     df.to_pickle("tests/diffs.pkl")
+    print(df['HF_jdz_d4'])
     print(len(df))
     print(df.columns.values)
     # print(df['HF_diff'].to_list())
+    df["HF_diff_abs"] = df["HF_diff"].abs()
+    df = df.sort_values("HF_diff_abs", ascending=False)
+    mu = df['HF_diff'].abs().mean()
+    print("MAE:", mu)
 
     for idx, r in df.iterrows():
-        print(idx, r['HF_jdz_d4_sum'], r["HF_jdz_dftd4"], r["HF_diff"])
+        if abs(r["HF_diff"]) > 1e-1:
+            print(idx, r['DB'], r['HF_jdz_d4_sum'], r["HF_jdz_dftd4"], r["HF_diff"])
     #     if r['diff'] < 1e-1:
     #         continue
     #     else:
