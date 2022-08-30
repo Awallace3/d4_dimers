@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from periodictable import elements
-from .r4r2 import get_Q, r4r2_from_elements_call, r4r2_vals
+from .r4r2 import get_Q, r4r2_from_elements_call, r4r2_vals, r4r2_ls
 from .tools import print_cartesians, print_cartesians_pos_carts, np_carts_to_string
 import subprocess
 import json
@@ -57,7 +57,7 @@ def gather_data(
 
     data = [energies, atom_order, carts]
     C6s, C8s, Qs = [], [], []
-    for i in tqdm(range(len(data[0])), desc="DFTD4 Props", ascii=True):
+    for i in tqdm(range(len(data[0])), desc="DFTD4 Props", ascii=True, bar_format='{l_bar}{bar:10}{r_bar}{bar:-10b}'):
         C6, Q = calc_dftd4_props(data[1][i], data[2][i])
         C6s.append(C6)
         Qs.append(Q)
@@ -108,10 +108,11 @@ def calc_dftd4_props_params(
     output_json: str = "",
     p: [] = [1.61679827, 0.44959224, 3.35743605],
     s9: str = "0.0",
+    dftd4_p: str = "dftd4"
 ):
     write_xyz_from_np(atom_numbers, carts, outfile=input_xyz)
     args = [
-        "dftd4",
+        dftd4_p,
         input_xyz,
         "--pair-resolved",
         "--property",
@@ -851,6 +852,54 @@ def compute_bj_f90(
     energy = np.sum(energies)
     return energy
 
+def compute_bj_f90_exact(
+    params: [],
+    pos: np.array,
+    carts: np.array,
+    C6s: np.array,
+) -> float:
+    """
+    compute_bj_f90 computes energy from C6s, cartesian coordinates, and dimer sizes.
+    """
+    r4r2 = r4r2_ls()
+    energy = 0
+    s8, a1, a2 = params
+    s6 = 1.0
+    M_tot = len(carts)
+    energies = np.zeros(M_tot)
+    lattice_points = 1
+    aatoau = Constants().g_aatoau()
+    cs = aatoau * np.array(carts, copy=True)
+    cutoff2 = 60
+    for i in range(M_tot):
+        # el1 = int(pos[i])
+        # el1_r4r2 = r4r2_vals(el1)
+        # Q_A = np.sqrt(np.sqrt(el1) * el1_r4r2)
+
+        for j in range(i):
+            rrij = 3 * r4r2[int(pos[i]) - 1] * r4r2[int(pos[j]) - 1]
+            r0ij = a1 * np.sqrt(rrij) + a2
+            C6 = C6s[i, j]
+            r1, r2 = cs[i, :], cs[j, :]
+            r2 = np.subtract(r1, r2)
+            r2 = np.sum(np.multiply(r2, r2))
+            if r2 > cutoff2 or r2 < 2.2204460492503131e-016:
+                continue
+            for k in range(lattice_points):
+                # el2 = int(pos[j])
+                # el2_r4r2 = r4r2_vals(el2)
+                # Q_B = np.sqrt(np.sqrt(el2) * el2_r4r2)
+                # rrij = 3 * Q_A * Q_B
+
+                t6 = 1 / (r2**3 + r0ij**6)
+                t8 = 1 / (r2**4 + r0ij**8)
+                edisp = s6 * t6 + s8 * rrij * t8
+                de = -C6 * edisp * 0.5
+                energies[i] += de
+                if i != j:
+                    energies[j] += de
+    energy = np.sum(energies)
+    return energy
 
 def compute_bj_dftd4(
     params,
@@ -1526,7 +1575,7 @@ def split_mons(xyzs) -> []:
     monAs = [np.nan for i in range(len(xyzs))]
     monBs = [np.nan for i in range(len(xyzs))]
     ones, twos, clear = [], [], []
-    for n, c in enumerate(tqdm(xyzs[:], desc="Dimer Splits", ascii=True)):
+    for n, c in enumerate(tqdm(xyzs[:], desc="Dimer Splits", ascii=True, bar_format='{l_bar}{bar:10}{r_bar}{bar:-10b}')):
         g3 = np.array(c)
         pos = g3[:, 0]
         carts = g3[:, 1:]
@@ -1554,7 +1603,7 @@ def calc_c6s_for_df(xyzs, monAs, monBs, charges) -> ([], [], []):
     C6s = [np.array([]) for i in range(len(xyzs))]
     C6_A = [np.array([]) for i in range(len(xyzs))]
     C6_B = [np.array([]) for i in range(len(xyzs))]
-    for n, c in enumerate(tqdm(xyzs[:], desc="DFTD4 Props", ascii=True)):
+    for n, c in enumerate(tqdm(xyzs[:], desc="DFTD4 Props", ascii=True, bar_format='{l_bar}{bar:10}{r_bar}{bar:-10b}')):
         g3 = np.array(c)
         pos = g3[:, 0]
         carts = g3[:, 1:]
@@ -1589,6 +1638,7 @@ def gather_data5(
     ],
     from_master: bool = True,
     overwrite: bool = False,
+    replace_hf: bool = False,
 ):
     """
     collects data from master-regen.pkl from jeffschriber's scripts for D3
@@ -1610,7 +1660,9 @@ def gather_data5(
                 "SAPT",
             ]
         ]
-        df = replace_hf_int_HF_jdz(df)
+
+        if replace_hf:
+            df = replace_hf_int_HF_jdz(df)
         xyzs = df["Geometry"].to_list()
         monAs, monBs = split_mons(xyzs)
         df["monAs"] = monAs

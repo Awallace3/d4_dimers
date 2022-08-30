@@ -6,12 +6,14 @@ from .setup import (
     compute_bj_from_dimer_AB,
     calc_dftd4_props,
     compute_bj_from_dimer_AB_all_C6s,
+    calc_dftd4_props_params,
 )
 import scipy.optimize as opt
 import time
 import pandas as pd
 import numpy as np
 from .tools import print_cartesians
+from qcelemental import constants
 
 
 def HF_only() -> (float, float, float):
@@ -158,17 +160,17 @@ def compute_int_energy_stats_dftd4_key(
             row["C6s"],
             C6_A=row["C6_A"],
             C6_B=row["C6_B"],
-        # lambda row: compute_bj_pairs(
-        #     params,
-        #     row["Geometry"][:, 0],  # pos
-        #     row["Geometry"][:, 1:],  # carts
-        #     row["monAs"],
-        #     row["monBs"],
-        #     row["C6s"],
+            # lambda row: compute_bj_pairs(
+            #     params,
+            #     row["Geometry"][:, 0],  # pos
+            #     row["Geometry"][:, 1:],  # carts
+            #     row["monAs"],
+            #     row["monBs"],
+            #     row["C6s"],
         ),
         axis=1,
     )
-    df[f"{hf_key}_d4_sum"] = df.apply(lambda r: r[hf_key] + r['HF_jdz_d4'], axis=1)
+    df[f"{hf_key}_d4_sum"] = df.apply(lambda r: r[hf_key] + r["HF_jdz_d4"], axis=1)
     df["HF_diff"] = df.apply(lambda r: r[f"{hf_key}_d4_sum"] - r[dftd4_key], axis=1)
     return
 
@@ -199,6 +201,7 @@ def compute_int_energy_stats(
         axis=1,
     )
     df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
+    df["y_pred"] = df.apply(lambda r: r[hf_key] + r["d4"], axis=1)
     mae = df["diff"].abs().mean()
     rmse = (df["diff"] ** 2).mean() ** 0.5
     max_e = df["diff"].abs().max()
@@ -449,4 +452,66 @@ def opt_cross_val(
     print("        1. MAE  = %.4f" % mae)
     print("        2. RMSE = %.4f" % rmse)
     print("        3. MAX  = %.4f" % max_e)
+    tab = f""" table ouput
+| Level of Theory | s8       | a1       | a2       | MAE    | RMSE   | MAX_E  |
+|-----------------|----------|----------|----------|--------|--------|--------|
+|   {hf_key}    | {mp[0]} | {mp[1]} | {mp[2]} | {mae} | {rmse} | {max_e} |
+|-----------------|----------|----------|----------|--------|--------|--------|
+"""
+    print(tab)
+    return
+
+
+def calc_dftd4_disp_pieces(atoms, geom, ma, mb, params, s9="0.0"):
+    x, y, d = calc_dftd4_props_params(atoms, geom, p=params, s9=s9)
+    x, y, a = calc_dftd4_props_params(atoms[ma], geom[ma, :], p=params, s9=s9)
+    x, y, b = calc_dftd4_props_params(atoms[mb], geom[mb, :], p=params, s9=s9)
+    return d - (a + b)
+
+
+def compute_dftd4_values(
+    df,
+    params=[1.61679827, 0.44959224, 3.35743605],
+    s9="0.0",
+    key="dftd4_disp_ie_grimme_params",
+) -> pd.DataFrame:
+    """
+    compute_dftd4_values
+    """
+    m = constants.conversion_factor("hartree", "kcal / mol")
+    df[key] = df.apply(
+        lambda r: m * calc_dftd4_disp_pieces(
+            r["Geometry"][:, 0], r["Geometry"][:, 1:], r["monAs"], r["monBs"], params, s9=s9
+        ),
+        axis=1,
+    )
+    return df
+
+
+def compute_stats_dftd4_values_fixed(
+    df,
+    cols=["HF_dz","HF_jdz", "HF_qz"],
+    fixed_col="dftd4_disp_ie_grimme_params",
+) -> None:
+    """
+    compute_stats_dftd4_values_fixed
+    """
+    print(f"fixed_col: {fixed_col}")
+    for c in cols:
+        assert df[c].isna().sum() == 0
+        assert df[fixed_col].isna().sum() == 0
+        print(f"\ncolumn: {c}")
+        df["ie"] = df[c] + df[fixed_col]
+        df["diff"] = df["Benchmark"] - df["ie"]
+        mae = df["diff"].abs().mean()
+        rmse = (df["diff"] ** 2).mean() ** 0.5
+        max_e = df["diff"].abs().max()
+        mad = df["diff"].mad()
+        mean_diff = df["diff"].mean()
+        print("\nStats\n")
+        print("        1. MAE  = %.4f" % mae)
+        print("        2. RMSE = %.4f" % rmse)
+        print("        3. MAX  = %.4f" % max_e)
+        print("        4. MAD  = %.4f" % mad)
+        print("        5. MD   = %.4f" % mean_diff)
     return

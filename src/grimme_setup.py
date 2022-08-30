@@ -12,6 +12,7 @@ from .setup import (
     calc_c6s_for_df,
     harvest_data,
 )
+from .optimization import compute_int_energy_stats
 import numpy as np
 import psi4
 from qcelemental import constants
@@ -333,7 +334,20 @@ def create_grimme_s22s66blind() -> None:
         df["C6_B"] = C6_B
         frames.append(df)
     df = pd.concat(frames)
-    df.to_pickle('data/grimme_fitset.pkl')
+    df.to_pickle("data/grimme_fitset.pkl")
     # for i in HF_columns:
     #     df = harvest_data(df, i.split("_")[-1], overwrite=overwrite)
     return
+
+
+def gather_grimme_from_db():
+    df = pd.read_pickle("data/grimme_fitset.pkl")
+    df["DB"] = "G"
+    df = expand_opt_df(df)
+    print(df.columns)
+    df = harvest_data(df, "jdz_dftd4", data_dir="calcgrimme", overwrite=True)
+    df.to_pickle("data/grimme_fitset_db.pkl")
+    return df
+
+
+

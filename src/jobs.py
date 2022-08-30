@@ -201,6 +201,32 @@ echo "Ending job."
     return
 
 
+def basis_labels_heavy_elements(
+    basis: str,
+    method: str = "HF",
+) -> (str, str):
+    """
+        basis_labels converts basis to psi4 input basis
+    ["tz", "atz", "jtz"]
+    """
+    if basis == "adz":
+        return "aug-cc-pv(d+d)z", "%s_%s" % (method, basis)
+    elif basis == "jdz":
+        return "jun-cc-pv(d+d)z", "%s_%s" % (method, basis)
+    elif basis == "dz":
+        return "cc-pv(d+d)z", "%s_%s" % (method, basis)
+    elif basis == "tz":
+        return "cc-pv(t+d)z", "%s_%s" % (method, basis)
+    elif basis == "atz":
+        return "aug-cc-pv(t+d)z", "%s_%s" % (method, basis)
+    elif basis == "jtz":
+        return "jun-cc-pv(t+d)z", "%s_%s" % (method, basis)
+    elif basis == "jdz_dftd4":
+        return "hf-d4", "%s_%s" % (method, basis)
+    else:
+        return basis, "%s_%s" % (method, basis)
+
+
 def basis_labels(
     basis: str,
     method: str = "HF",
@@ -263,14 +289,14 @@ def expand_opt_df_jobs(
 
 
 def fix_hf_charges_energies_jobs(
-    df_p: "opt5.pkl",
-    bases: [""] = ["atz", "jdz_dftd4"],
+    df_p: "opt6.pkl",
+    bases: [""] = ["jdz"],
     data_dir: str = "calc",
     in_file: str = "dimer",
     memory: str = "4gb",
-    nodes: int = 20,
-    cores: int = 2,
-    ppn: int = 2,
+    nodes: int = 40,
+    cores: int = 1,
+    ppn: int = 1,
     walltime: str = "30:00:00",
     env="psi4dftd4",
 ) -> None:
@@ -280,7 +306,8 @@ def fix_hf_charges_energies_jobs(
     pd.to_pickle(df, df_p)
     # with open('charged.pkl', 'rb') as f:
     #     inds = pickle.load(f)
-    inds = df.index[df["DB"] == "SSI"]
+    # inds = df.index[df["DB"] == "SSI"]
+    inds = range(len(df))
     print(inds)
     def_dir = os.getcwd()
     if not os.path.exists(data_dir):
@@ -391,8 +418,8 @@ def create_hf_binding_energies_jobs(
             method = "hf/%s" % basis_set
             col = "HF_%s" % basis
             v = df.loc[idx, col]
-            if not np.isnan(v):
-                continue
+            # if not np.isnan(v):
+            #     continue
             p = "%d_%s" % (idx, item["DB"].replace(" - ", "_"))
             job_p = "%s/%s/%s.dat" % (p, meth_basis_dir, in_file)
 
@@ -462,6 +489,7 @@ def create_hf_dftd4_ie_jobs(
     """
     df = pd.read_pickle(df_p)
     df = expand_opt_df_jobs(df, bases, prefix="HF_", replace_HF=False, suffix="_dftd4")
+    print(df.columns)
     pd.to_pickle(df, df_p)
 
     def_dir = os.getcwd()
@@ -538,6 +566,191 @@ def create_hf_dftd4_ie_jobs(
         cores=cores,
         walltime=walltime,
         env="psi4dftd4",
+    )
+    os.chdir(def_dir)
+    return
+
+
+def fix_heavy_element_basis_sets_dftd4(
+    df,
+    bases: [] = ["jdz"],
+    data_dir: str = "calc",
+    in_file: str = "dimer",
+    memory: str = "4gb",
+    nodes: int = 5,
+    cores: int = 1,
+    ppn: int = 1,
+    walltime: str = "30:00:00",
+    params: [] = [0.44959224, 3.35743605, 16.0, 1.0, 1.61679827, 0.0],
+) -> None:
+    """
+    uses psi4 to calculate monA, monB, and dimer energies with HF and dftd4
+    with a specified basis set.
+
+    The inputted df will be saved to out_df after each computation finishes.
+    """
+    df = expand_opt_df_jobs(df, bases, prefix="HF_", replace_HF=False, suffix="_dftd4")
+    # print(df.columns)
+    # pd.to_pickle(df, df_p)
+
+    def_dir = os.getcwd()
+    if not os.path.exists(data_dir):
+        os.mkdir(data_dir)
+    os.chdir(data_dir)
+    int_dir = os.getcwd()
+    if not os.path.exists(data_dir):
+        os.mkdir(data_dir)
+    os.chdir(data_dir)
+
+    jobs = []
+    # df.loc[[0, 1, 2, 3, 4, 5]]
+    print(len(df))
+    # df = df[df["HF_jdz_dftd4"].isna()]
+    for idx, item in tqdm(
+        df.iterrows(),
+        total=df.shape[0],
+        desc="Creating Inputs",
+        ascii=True,
+    ):
+        for basis in bases:
+            basis_set, meth_basis_dir = basis_labels_heavy_elements(basis)
+            meth_basis_dir += "_dftd4"
+            method = "hf/%s" % basis_set
+            col = "HF_%s_dftd4" % basis
+            v = df.loc[idx, col]
+
+            p = "%d_%s" % (idx, item["DB"].replace(" - ", "_"))
+            job_p = "%s/%s/%s.dat" % (p, meth_basis_dir, in_file)
+
+            # if os.path.exists(job_p):
+            #     out_p = "%s/%s/%s.out" % (p, meth_basis_dir, in_file)
+            #     # if os.path.exists(out_p):
+            #     #     continue
+            # else:
+            if not os.path.exists(p):
+                os.mkdir(p)
+            os.chdir(p)
+            c = item["Geometry"]
+            monA = item["monAs"]
+            monB = item["monBs"]
+            cm = item["charges"]
+            # print(item["System"], cm)
+            mA, mB = [], []
+            for i in monA:
+                mA.append(c[i, :])
+            for i in monB:
+                mB.append(c[i, :])
+            mA = np_carts_to_string(mA)
+            mB = np_carts_to_string(mB)
+            write_psi4_sapt0_dftd4(
+                mA,
+                mB,
+                params=params,
+                meth_basis_dir=meth_basis_dir,
+                basis=basis_set,
+                in_file=in_file,
+                charge_mult=cm,
+            )
+            os.chdir("..")
+            jobs.append(job_p)
+    os.chdir(int_dir)
+    create_pylauncher(
+        jobs=jobs,
+        data_dir=data_dir,
+        basis=basis,
+        name=in_file,
+        memory=memory,
+        ppn=ppn,
+        nodes=nodes,
+        cores=cores,
+        walltime=walltime,
+        env="psi4dftd4",
+    )
+    os.chdir(def_dir)
+    return
+
+
+def fix_heavy_element_basis_sets(
+    df,
+    bases: [] = ["dz", "jdz", "adz", "tz"],
+    data_dir: str = "calc",
+    in_file: str = "dimer",
+    memory: str = "4gb",
+    nodes: int = 10,
+    cores: int = 4,
+    ppn: int = 1,
+    walltime: str = "30:00:00",
+    env="psi4dftd4",
+) -> None:
+    """
+    run_hf_binding_energies uses psi4 to calculate monA, monB, and dimer energies with HF
+    with a specified basis set.
+
+    The inputted df will be saved to out_df after each computation finishes.
+    """
+    # df = pd.read_pickle(df_p)
+    df = expand_opt_df_jobs(df, bases, prefix="HF_", replace_HF=False)
+    # pd.to_pickle(df, df_p)
+
+    def_dir = os.getcwd()
+    if not os.path.exists(data_dir):
+        os.mkdir(data_dir)
+    os.chdir(data_dir)
+    int_dir = os.getcwd()
+    if not os.path.exists(data_dir):
+        os.mkdir(data_dir)
+    os.chdir(data_dir)
+
+    jobs = []
+    for idx, item in tqdm(
+        df.iterrows(),
+        total=df.shape[0],
+        desc="Creating Inputs",
+        ascii=True,
+    ):
+        for basis in bases:
+            basis_set, meth_basis_dir = basis_labels_heavy_elements(basis)
+            method = "hf/%s" % basis_set
+            col = "HF_%s" % basis
+            v = df.loc[idx, col]
+            p = "%d_%s" % (idx, item["DB"].replace(" - ", "_"))
+            job_p = "%s/%s/%s.dat" % (p, meth_basis_dir, in_file)
+            if not os.path.exists(p):
+                os.mkdir(p)
+            os.chdir(p)
+            c = item["Geometry"]
+            monA = item["monAs"]
+            monB = item["monBs"]
+            cm = item["charges"]
+            mA, mB = [], []
+            for i in monA:
+                mA.append(c[i, :])
+            for i in monB:
+                mB.append(c[i, :])
+            mA = np_carts_to_string(mA)
+            mB = np_carts_to_string(mB)
+            write_psi4_sapt0(
+                mA,
+                mB,
+                meth_basis_dir=meth_basis_dir,
+                basis=basis_set,
+                in_file=in_file,
+                charge_mult=cm,
+            )
+            os.chdir("..")
+            jobs.append(job_p)
+    os.chdir(int_dir)
+    create_pylauncher(
+        jobs=jobs,
+        data_dir=data_dir,
+        basis=basis,
+        name=in_file,
+        memory=memory,
+        ppn=ppn,
+        nodes=nodes,
+        cores=cores,
+        walltime=walltime,
+        env=env,
     )
     os.chdir(def_dir)
     return

@@ -1,7 +1,12 @@
 import pytest
 from src.tools import print_cartesians, print_cartesians_pos_carts
 from src.constants import Constants
-from src.setup import calc_dftd4_props, compute_bj_f90, compute_bj_pairs
+from src.setup import (
+    calc_dftd4_props,
+    compute_bj_f90,
+    compute_bj_pairs,
+    calc_dftd4_props_params,
+)
 import numpy as np
 import math
 from src.r4r2 import r4r2_vals
@@ -20,6 +25,7 @@ import subprocess
 import os
 import pandas as pd
 from qcelemental import constants
+from src.optimization import compute_int_energy_stats_dftd4_key
 
 
 def carts1():
@@ -79,26 +85,28 @@ def carts2() -> str:
 """
 
 
-def test_dftd4_commandline_C6s():
-    test_carts = carts1()
-    c = convert_str_carts_np_carts(test_carts)
-    write_xyz_from_np(c[:, 0], c[:, 1:], outfile="test.xyz")
-    C6s, C8s = calc_dftd4_props(
-        c[:, 0],
-        c[:, 1:],
-        input_xyz="test.xyz",
-        output_json="test.json",
-    )
-
-    with open("test.json") as f:
-        C6s_json = json.load(f)["c6 coefficients"]
-    C6s_json = np.array(C6s_json).reshape((len(C6s), len(C6s)))
-    print(C6s[0], C6s_json[0])
-    t = np.abs(np.subtract(C6s, C6s_json))
-    # os.remove("test.xyz")
-    # os.remove("test.json")
-    # os.remove("C_n.json")
-    assert np.all(t < 1e-13)
+# def test_dftd4_commandline_C6s():
+#     test_carts = carts1()
+#     c = convert_str_carts_np_carts(test_carts)
+#     write_xyz_from_np(c[:, 0], c[:, 1:], outfile="test.xyz")
+#     C6s, C8s = calc_dftd4_props(
+#         c[:, 0],
+#         c[:, 1:],
+#         input_xyz="test.xyz",
+#         output_json="test.json",
+#     )
+#     print(C6s)
+#
+#     with open("test.json") as f:
+#         C6s_json = json.load(f)["c6 coefficients"]
+#         print(C6s_json)
+#     C6s_json = np.array(C6s_json).reshape((len(C6s), len(C6s)))
+#     print(C6s[0], C6s_json[0])
+#     t = np.abs(np.subtract(C6s, C6s_json))
+#     # os.remove("test.xyz")
+#     # os.remove("test.json")
+#     # os.remove("C_n.json")
+#     assert np.all(t < 1e-13)
 
 
 def compute_bj_f90_test_setup():
@@ -184,91 +192,91 @@ def compute_bj_f90_pieces():
     return rrijs, r2s, t6s, t8s, edisps, des, energies, energy
 
 
-rrijs, r2s, t6s, t8s, edisps, des, energies, energy = compute_bj_f90_pieces()
-d = read_dftd4_vals()
-rrijs_t, r2s_t, t6s_t, t8s_t, edisps_t, des_t, energies_t = (
-    d["rrijs"],
-    d["r2s"],
-    d["t6s"],
-    d["t8s"],
-    d["edisps"],
-    d["des"],
-    d["energy"],
-)
+# rrijs, r2s, t6s, t8s, edisps, des, energies, energy = compute_bj_f90_pieces()
+# d = read_dftd4_vals()
+# rrijs_t, r2s_t, t6s_t, t8s_t, edisps_t, des_t, energies_t = (
+#     d["rrijs"],
+#     d["r2s"],
+#     d["t6s"],
+#     d["t8s"],
+#     d["edisps"],
+#     d["des"],
+#     d["energy"],
+# )
 # @pytest.mark.parametrize("rrijs", rrijs)
 # @pytest.mark.parametrize("rrijs_t", rrijs_t)
-def test_bj_rrij():
-    """
-    dispersion2
-    _t are reported up to 6 decimal places
-    """
-    t = np.abs(np.subtract(rrijs, rrijs_t))
-    assert np.all(t < 1e-6)
-
-
-def test_bj_r2s():
-    """
-    dispersion2
-    _t are reported up to 6 decimal places
-    """
-    t = np.abs(np.subtract(r2s, r2s_t))
-    assert np.all(t < 1e-5)
-
-
-def test_bj_t6s():
-    """
-    dispersion2
-    _t are reported up to 16 decimal places
-    """
-    t = np.abs(np.subtract(t6s, t6s_t))
-    assert np.all(t < 1e-16)
-
-
-def test_bj_t8s():
-    """
-    dispersion2
-    _t are reported up to 16 decimal places
-    """
-    t = np.abs(np.subtract(t8s, t8s_t))
-    assert np.all(t < 1e-16)
-
-
-def test_bj_edisps():
-    """
-    dispersion2
-    _t are reported up to 16 decimal places
-    """
-    t = np.abs(np.subtract(edisps, edisps_t))
-    assert np.all(t < 1e-16)
-
-
-def test_bj_des():
-    """
-    dispersion2
-    _t are reported up to 16 decimal places
-    """
-    t = np.abs(np.subtract(des, des_t))
-    assert np.all(t < 1e-16)
-
-
-def test_bj_energies():
-    """
-    dispersion2
-    _t are reported up to 16 decimal places
-    """
-    t = np.abs(np.subtract(energies, energies_t))
-    assert np.all(t < 1e-16)
-
-
-def test_bj_energies():
-    """
-    dispersion2
-    _t are reported up to 16 decimal places
-    """
-    e = np.sum(energies)
-    e_t = np.sum(energies_t)
-    t = np.abs(e - e_t)
-    assert t < 1e-16
+# def test_bj_rrij():
+#     """
+#     dispersion2
+#     _t are reported up to 6 decimal places
+#     """
+#     t = np.abs(np.subtract(rrijs, rrijs_t))
+#     assert np.all(t < 1e-6)
+#
+#
+# def test_bj_r2s():
+#     """
+#     dispersion2
+#     _t are reported up to 6 decimal places
+#     """
+#     t = np.abs(np.subtract(r2s, r2s_t))
+#     assert np.all(t < 1e-5)
+#
+#
+# def test_bj_t6s():
+#     """
+#     dispersion2
+#     _t are reported up to 16 decimal places
+#     """
+#     t = np.abs(np.subtract(t6s, t6s_t))
+#     assert np.all(t < 1e-16)
+#
+#
+# def test_bj_t8s():
+#     """
+#     dispersion2
+#     _t are reported up to 16 decimal places
+#     """
+#     t = np.abs(np.subtract(t8s, t8s_t))
+#     assert np.all(t < 1e-16)
+#
+#
+# def test_bj_edisps():
+#     """
+#     dispersion2
+#     _t are reported up to 16 decimal places
+#     """
+#     t = np.abs(np.subtract(edisps, edisps_t))
+#     assert np.all(t < 1e-16)
+#
+#
+# def test_bj_des():
+#     """
+#     dispersion2
+#     _t are reported up to 16 decimal places
+#     """
+#     t = np.abs(np.subtract(des, des_t))
+#     assert np.all(t < 1e-16)
+#
+#
+# def test_bj_energies():
+#     """
+#     dispersion2
+#     _t are reported up to 16 decimal places
+#     """
+#     t = np.abs(np.subtract(energies, energies_t))
+#     assert np.all(t < 1e-16)
+#
+#
+# def test_bj_energies():
+#     """
+#     dispersion2
+#     _t are reported up to 16 decimal places
+#     """
+#     e = np.sum(energies)
+#     e_t = np.sum(energies_t)
+#     t = np.abs(e - e_t)
+#     assert t < 1e-16
 
 
 def compute_parameters():
@@ -482,36 +490,36 @@ def create_test_opt_t_dm2() -> None:
 #     assert (df["d4_dm_diff_psi4_DISP_self"] == df["d4_dm_diff_psi4_DISP_dftd4"]).all()
 
 
-def test_dm_vs_dftd4():
-    df = create_test_opt_t_dm()
-    params = [1.61679827, 0.44959224, 3.35743605]
-    df["d4_dm_C6s"] = df.apply(
-        lambda row: compute_bj_from_dimer_AB_with_C6s(
-            params,
-            row["Geometry"][:, 0],  # pos
-            row["Geometry"][:, 1:],  # carts
-            row["monAs"],
-            row["monBs"],
-            row["C6s"],
-            mult_out=1.0,
-        ),
-        axis=1,
-    )
-    df["d4_dm"] = df.apply(
-        lambda row: compute_bj_from_dimer_AB(
-            params,
-            row["Geometry"][:, 0],  # pos
-            row["Geometry"][:, 1:],  # carts
-            row["monAs"],
-            row["monBs"],
-            row["C6s"],
-            mult_out=1.0,
-        ),
-        axis=1,
-    )
-
-    print(df["d4_dm_C6s"])
-    # assert (df["d4_dm_diff_psi4_DISP_self"] - df["d4_dm_diff_psi4_DISP_dftd4"] < 1).all()
+# def test_dm_vs_dftd4():
+#     df = create_test_opt_t_dm()
+#     params = [1.61679827, 0.44959224, 3.35743605]
+#     df["d4_dm_C6s"] = df.apply(
+#         lambda row: compute_bj_from_dimer_AB_with_C6s(
+#             params,
+#             row["Geometry"][:, 0],  # pos
+#             row["Geometry"][:, 1:],  # carts
+#             row["monAs"],
+#             row["monBs"],
+#             row["C6s"],
+#             mult_out=1.0,
+#         ),
+#         axis=1,
+#     )
+#     df["d4_dm"] = df.apply(
+#         lambda row: compute_bj_from_dimer_AB(
+#             params,
+#             row["Geometry"][:, 0],  # pos
+#             row["Geometry"][:, 1:],  # carts
+#             row["monAs"],
+#             row["monBs"],
+#             row["C6s"],
+#             mult_out=1.0,
+#         ),
+#         axis=1,
+#     )
+#
+#     print(df["d4_dm_C6s"])
+# assert (df["d4_dm_diff_psi4_DISP_self"] - df["d4_dm_diff_psi4_DISP_dftd4"] < 1).all()
 
 
 def test_dm_all_C6s():
@@ -628,15 +636,129 @@ def main():
     return
 
 
+def calc_dftd4_disp_pieces(atoms, geom, ma, mb, params):
+    x, y, d = calc_dftd4_props_params(atoms, geom, p=params)
+    print(x[0][0])
+    x, y, a = calc_dftd4_props_params(atoms[ma], geom[ma, :], p=params)
+    x, y, b = calc_dftd4_props_params(atoms[mb], geom[mb, :], p=params)
+    return d - (a + b)
+
+
+def compute_difference_cbjp_vs_dftd4(ind, df):
+    mol = df.iloc[ind]
+    print(mol)
+    params = [1.61679827, 0.44959224, 3.35743605]
+    cbjp = compute_bj_from_dimer_AB_all_C6s(
+        params,
+        mol["Geometry"][:, 0],  # pos
+        mol["Geometry"][:, 1:],  # carts
+        mol["monAs"],
+        mol["monBs"],
+        mol["C6s"],
+        mol["C6_A"],
+        mol["C6_B"],
+        mult_out=1.0,
+    )
+    e = calc_dftd4_disp_pieces(
+        mol["Geometry"][:, 0],
+        mol["Geometry"][:, 1:],
+        mol["monAs"],
+        mol["monBs"],
+        params,
+    )
+    return cbjp, e
+
+
+def test_dftd4_versions():
+    m_id = 4756
+    df = pd.read_pickle("tests/diffs.pkl")
+    mol = df.iloc[m_id]
+    atom_numbers = mol["Geometry"][:, 0]
+    carts = mol["Geometry"][:, 1:]
+    x, y, e1 = calc_dftd4_props_params(atom_numbers, carts, dftd4_p="dftd4")
+    x, y, e2 = calc_dftd4_props_params(
+        atom_numbers, carts, dftd4_p="/theoryfs2/ds/amwalla3/miniconda3/bin/dftd4"
+    )
+    h_to_kcal_mol = constants.conversion_factor("hartree", "kcal / mol")
+    e1 *= h_to_kcal_mol
+    e2 *= h_to_kcal_mol
+    assert abs(e1 - e2) < 1e-4
+
+
+def test_grimme_dftd4_psi4():
+    df = pd.read_pickle("tests/diffs_grimme.pkl")
+    compute_int_energy_stats_dftd4_key(df, hf_key="HF_jdz")
+    df["HF_diff_abs"] = df["HF_diff"].abs()
+    assert (df["HF_diff_abs"] < 1e-4).sum() == len(df)
+
+
+# def test_dftd4_all():
+#     """ """
+#     df = pd.read_pickle("tests/diffs.pkl")
+#     cs, es = [], []
+#     for i in range(len(df)):
+#         cbjp, e = compute_difference_cbjp_vs_dftd4(i, df)
+#         cs.append(cbjp)
+#         es.append(e)
+#
+#     h_to_kcal_mol = constants.conversion_factor("hartree", "kcal / mol")
+#     cs = np.array(cs) * h_to_kcal_mol
+#     es = np.array(es) * h_to_kcal_mol
+#     diff = np.abs(np.subtract(cs, es))
+#     assert np.all((diff < 1e-6))
+
+
+def test_dftd4_0():
+    """
+    test difference between dftd4 and self C6s w/ damping on ind=0
+    """
+    df = pd.read_pickle("tests/diffs.pkl")
+    cbjp, e = compute_difference_cbjp_vs_dftd4(0, df)
+
+    h_to_kcal_mol = constants.conversion_factor("hartree", "kcal / mol")
+    cbjp *= h_to_kcal_mol
+    e *= h_to_kcal_mol
+    print(cbjp, e)
+    assert abs(cbjp - e) < 1e-8
+
+
+def test_dftd4_SSI_5555():
+    """
+    test difference between dftd4 and self C6s w/ damping on ind=5555
+    """
+    df = pd.read_pickle("tests/diffs.pkl")
+    cbjp, e = compute_difference_cbjp_vs_dftd4(5555, df)
+
+    h_to_kcal_mol = constants.conversion_factor("hartree", "kcal / mol")
+    cbjp *= h_to_kcal_mol
+    e *= h_to_kcal_mol
+    print(cbjp, e)
+    assert abs(cbjp - e) < 1e-8
+
+
+def test_dftd4_X10by20_4756():
+    """
+    test difference between dftd4 and self C6s w/ damping on ind=4756
+    """
+    df = pd.read_pickle("tests/diffs.pkl")
+    cbjp, e = compute_difference_cbjp_vs_dftd4(4756, df)
+
+    h_to_kcal_mol = constants.conversion_factor("hartree", "kcal / mol")
+    cbjp *= h_to_kcal_mol
+    e *= h_to_kcal_mol
+    print(cbjp, e)
+    assert abs(cbjp - e) < 1e-8
+
+
 def test_dftd4_calc_psi4() -> None:
     """
     test_dftd4_calc_psi4
     params = [1.61679827, 0.44959224, 3.35743605]
     """
     df = pd.read_pickle("tests/diffs.pkl")
-    df.dropna(subset=["HF_jdz_dftd4"], how='all', inplace=True)
+    df.dropna(subset=["HF_jdz_dftd4"], how="all", inplace=True)
     print(df.columns)
-    df['diff'] = df.apply(lambda r: r['HF_jdz_d4_sum'] - r["HF_jdz_dftd4"], axis=1)
+    df["diff"] = df.apply(lambda r: r["HF_jdz_d4_sum"] - r["HF_jdz_dftd4"], axis=1)
 
     v = (df["HF_diff"].abs() < 1e-1).all()
     print(sorted(df["HF_diff"].abs().to_list(), reverse=True)[:50])
