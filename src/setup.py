@@ -110,6 +110,7 @@ def calc_dftd4_props_params(
     s9: str = "0.0",
     dftd4_p: str = "dftd4"
 ):
+    # mult_out=constants.conversion_factor("hartree", "kcal / mol"),
     write_xyz_from_np(atom_numbers, carts, outfile=input_xyz)
     args = [
         dftd4_p,

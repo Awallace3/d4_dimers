@@ -409,7 +409,6 @@ def calc_dftd4_pair_resolved(
     m = np.zeros((M, M))
     for i in vs:
         m[i[0] - 1, i[1] - 1] = i[2]
-
     with open("C_n.json") as f:
         dat = json.load(f)
         C6s = np.array(dat["c6"])
@@ -567,7 +566,7 @@ def ttest_pairs() -> None:
     assert ((df["IE_pairs"] - df["psi4_IE"]) < 1e-4).all()
 
 
-def main():
+def version_tests():
     """
     docstring
     """
@@ -763,6 +762,25 @@ def test_dftd4_calc_psi4() -> None:
     v = (df["HF_diff"].abs() < 1e-1).all()
     print(sorted(df["HF_diff"].abs().to_list(), reverse=True)[:50])
     assert v
+
+
+def main():
+    # TODO: attempt pair-resolved dispersion for C6s
+    df = pd.read_pickle("tests/diffs_grimme.pkl")
+    m = df.iloc[0]
+    print(m)
+    # pairs is tabulated in kcal/mol already
+    C6s, pairs = calc_dftd4_pair_resolved(m["Geometry"][:, 0], m["Geometry"][:, 1:])
+    disp = 0
+    for a in m['monAs']:
+        for b in m['monBs']:
+            disp += pairs[a, b]
+    print('pairs', pairs)
+    print(disp, m['dftd4_disp_ie_grimme_params'])
+
+
+
+    return
 
 
 if __name__ == "__main__":

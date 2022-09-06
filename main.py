@@ -92,31 +92,35 @@ def main():
     #     output_path="opt8.pkl",
     #     from_master=False,
     #     # HF_columns=["HF_jdz"],
-    #     HF_columns=["HF_dz", "HF_jdz", "HF_adz", "HF_tz", "HF_jdz_dftd4"],
+    #     # HF_columns=["HF_dz", "HF_jdz", "HF_adz", "HF_tz", "HF_jdz_dftd4"],
     #     # HF_columns=["HF_jdz_dftd4"],
-    #     # HF_columns=["HF_dz", "HF_tz"],
-    #     overwrite=True,
+    #     # HF_columns=["HF_tz"],
+    #     HF_columns=["HF_atz"],
+    #     overwrite=False,
     # )
-    # df = pd.read_pickle("opt8.pkl")
+
+    df = pd.read_pickle("opt8.pkl")
+    # print(df['HF_atz'])
     # # print(len(df))
     # df['d'] = df['HF_jdz'] - df['HF INTERACTION ENERGY']
     # df = df.sort_values(['d'], ascending=False)
     # # df = df[df['d'].abs() > 1e-3]
     # print(df['d'], df['d'].max(), df['d'].mean(), sep='\n')
     # # df = pd.read_pickle("tests/diffs.pkl")
-    df = pd.read_pickle("data/grimme_fitset_db.pkl")
+    # gather_grimme_from_db()
+    # df = pd.read_pickle("data/grimme_fitset_db.pkl")
     # compute_dftd4_values(df, s9="0.0", key="dftd4_disp_ie_grimme_params")
     # compute_dftd4_values(df, s9="1.0", key="dftd4_disp_ie_grimme_params_ATM")
-    df.to_pickle("data/grimme_fitset_db.pkl")
-    compute_stats_dftd4_values_fixed(df, fixed_col="dftd4_disp_ie_grimme_params")
-    compute_stats_dftd4_values_fixed(df, fixed_col='dftd4_disp_ie_grimme_params_ATM')
+    # df.to_pickle("data/grimme_fitset_db.pkl")
+    # compute_stats_dftd4_values_fixed(df, fixed_col="dftd4_disp_ie_grimme_params")
+    # compute_stats_dftd4_values_fixed(df, fixed_col='dftd4_disp_ie_grimme_params_ATM')
 
     # # df = pd.read_pickle("tests/diffs_grimme.pkl")
     # compute_int_energy_stats_dftd4_key(df, hf_key='HF_jdz')
     # # print(df.columns.values)
     # print(df)
 
-    # # df.to_pickle("tests/diffs_grimme.pkl")
+    # df.to_pickle("tests/diffs_grimme.pkl")
     # df.to_pickle("tests/diffs.pkl")
     # print(df.columns.values)
     # df["HF_diff_abs"] = df["HF_diff"].abs()
@@ -158,14 +162,17 @@ def main():
     # basis_set = "jdz"
     # hf_key = "HF_%s" % basis_set
     # params = [1.61679827, 0.44959224, 3.35743605]
-    # # print("HF_jdz CP")
+    # print("HF_jdz CP")
     # optimization_least_squares(df, params, hf_key=hf_key)
-    # # basis_set = "dz"
-    # # hf_key = "HF_%s" % basis_set
-    # # params = [1.61679827, 0.44959224, 3.35743605]
-    # # print("HF_jdz CP")
-    # # optimization_least_squares(df, params, hf_key=hf_key)
-    # opt_cross_val(df, nfolds=5, start_params=params, hf_key=hf_key)
+    # df = pd.read_pickle("data/grimme_fitset_db.pkl")
+    df = pd.read_pickle("opt8.pkl")
+    # df = df.iloc[[0, 1, 3, 4]]
+    basis_set = "atz"
+    hf_key = "HF_%s" % basis_set
+    params = [1.61679827, 0.44959224, 3.35743605]
+    # print("HF_dz CP")
+    # optimization_least_squares(df, params, hf_key=hf_key)
+    opt_cross_val(df, nfolds=5, start_params=params, hf_key=hf_key, output_l_marker="")
 
     # bases = ["jdz"]
     # bases = ["jdz"]

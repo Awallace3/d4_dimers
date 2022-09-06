@@ -1,5 +1,6 @@
 import pickle
 import numpy as np
+import pandas as pd
 
 
 def np_carts_to_string(carts):
@@ -44,3 +45,19 @@ def write_pickle(data, fname="data.pickle"):
 def read_pickle(fname="data.pickle"):
     with open(fname, "rb") as handle:
         return pickle.load(handle)
+
+
+def df_to_latex_table_round(
+    df,
+    index_col="method",
+    cols_round={"RMSE": 4, "MAX_E": 4, "MAD": 4, "MD": 4},
+    l_out="out",
+):
+    df = df.set_index(index_col)
+    s = df.style
+    for k, v in cols_round.items():
+        s.format(subset=k, precision=v)
+    print(s.to_latex())
+    with open(f"latex_outfiles/{l_out}.tex", "w") as f:
+        f.write(s.to_latex())
+    return

@@ -12,8 +12,11 @@ import scipy.optimize as opt
 import time
 import pandas as pd
 import numpy as np
-from .tools import print_cartesians
+from .tools import print_cartesians, df_to_latex_table_round
 from qcelemental import constants
+
+
+# from scipy.metrics import mean_squared_error
 
 
 def HF_only() -> (float, float, float):
@@ -340,7 +343,7 @@ def optimization(
     out_params = ret.x
     mae, rmse, max_e, mad, mean_diff = compute_int_energy_stats(out_params, df, hf_key)
     # print("1. MAE = %.4f\n2. RMSE = %.4f\n3. MAX = %.4f" % (mae, rmse, max_e))
-    return out_params, mae, rmse, max_e
+    return out_params, mae, rmse, max_e, mad, mean_diff
 
 
 def optimization_least_squares(
@@ -396,18 +399,30 @@ def opt_cross_val(
     nfolds: int = 5,
     start_params: [] = [3.02227550, 0.47396846, 4.49845309],
     hf_key: str = "HF INTERACTION ENERGY",
+    output_l_marker: str = "G_"
 ) -> None:
     """
     opt_cross_val performs n-fold cross validation on opt*.pkl df from
     gather_data3
     """
     nans = df[hf_key].isna().sum()
-    assert nans == 0, f"The HF_col provided has np.nan values present with {nans} nans"
+    inds = df.index[df[hf_key].isna()]
+    assert nans == 0, f"The HF_col provided has np.nan values present with {inds} nans"
     start = time.time()
     folds = get_folds(nfolds, len(df))
-    stats = np.zeros((nfolds, 3))
+    stats_np = np.zeros((nfolds, 4))
     p_out = np.zeros((nfolds, len(start_params)))
-    mp, mmae, mrmse, mmax_e = optimization(df, start_params, hf_key)
+    mp, mmae, mrmse, mmax_e, mmad, mmean_diff = optimization(df, start_params, hf_key)
+    stats = {
+        "method": [f"{hf_key} full"],
+        "s8": [mp[0]],
+        "a1": [mp[1]],
+        "a2": [mp[2]],
+        "RMSE": [mrmse],
+        "MAD": [mmad],
+        "MD": [mmean_diff],
+        "MAX_E": [mmax_e],
+    }
     print("1. MAE = %.4f\n2. RMSE = %.4f\n3. MAX = %.4f" % (mmae, mrmse, mmax_e))
     for n, fold in enumerate(folds):
         print(f"Fold {n} Start")
@@ -419,17 +434,37 @@ def opt_cross_val(
         print(f"Training: {len(training)}")
         print(f"Testing: {len(testing)}")
 
-        o_params, omae, ormse, omax_e = optimization(training, mp, hf_key)
-        mae, rmse, max_e, mad, mean_dif = compute_int_energy_stats(
+        o_params, omae, ormse, omax_e, omad, omean_diff = optimization(
+            training, mp, hf_key
+        )
+        mae, rmse, max_e, mad, mean_diff = compute_int_energy_stats(
             o_params, testing, hf_key
         )
 
-        stats[n] = np.array([mae, rmse, max_e])
+        stats_np[n] = np.array([rmse, mad, mean_diff, max_e])
         p_out[n] = o_params
         print(f"Fold {n} End")
 
-    avg = avg_matrix(stats)
-    mae, rmse, max_e = avg
+        stats["method"].append(f"{hf_key} fold {n+1}")
+        stats["RMSE"].append(rmse)
+        stats["MAD"].append(mad)
+        stats["MD"].append(mean_diff)
+        stats["s8"].append(o_params[0])
+        stats["a1"].append(o_params[1])
+        stats["a2"].append(o_params[2])
+        stats["MAX_E"].append(max_e)
+
+    avg = avg_matrix(stats_np)
+    rmse, mad, mean_diff, max_e = avg
+
+    stats["method"].append(f"{hf_key}")
+    stats["RMSE"].append(rmse)
+    stats["MAX_E"].append(max_e)
+    stats["MAD"].append(mad)
+    stats["MD"].append(mean_diff)
+    stats["s8"].append(mp[0])
+    stats["a1"].append(mp[1])
+    stats["a2"].append(mp[2])
 
     total_time = (time.time() - start) / 60
     print("\nTime = %.2f Minutes\n" % total_time)
@@ -445,11 +480,11 @@ def opt_cross_val(
     print("        2. a1 = %.6f" % mp[1])
     print("        3. a2 = %.6f" % mp[2])
     print("\nStats\n")
-    print("        1. MAE  = %.4f" % mmae)
+    print("        1. MAD  = %.4f" % mmad)
     print("        2. RMSE = %.4f" % mrmse)
     print("        3. MAX  = %.4f" % mmax_e)
     print("\nFinal %d-Fold Averaged Stats\n" % (nfolds))
-    print("        1. MAE  = %.4f" % mae)
+    print("        1. MAD  = %.4f" % mad)
     print("        2. RMSE = %.4f" % rmse)
     print("        3. MAX  = %.4f" % max_e)
     tab = f""" table ouput
@@ -459,6 +494,20 @@ def opt_cross_val(
 |-----------------|----------|----------|----------|--------|--------|--------|
 """
     print(tab)
+    df2 = pd.DataFrame(stats)
+    df_to_latex_table_round(
+        df2,
+        cols_round={
+            "RMSE": 4,
+            "MAX_E": 4,
+            "MAD": 4,
+            "MD": 4,
+            "s8": 6,
+            "a1": 6,
+            "a2": 6,
+        },
+        l_out=f"{output_l_marker}{hf_key}_5f_P",
+    )
     return
 
 
@@ -480,8 +529,14 @@ def compute_dftd4_values(
     """
     m = constants.conversion_factor("hartree", "kcal / mol")
     df[key] = df.apply(
-        lambda r: m * calc_dftd4_disp_pieces(
-            r["Geometry"][:, 0], r["Geometry"][:, 1:], r["monAs"], r["monBs"], params, s9=s9
+        lambda r: m
+        * calc_dftd4_disp_pieces(
+            r["Geometry"][:, 0],
+            r["Geometry"][:, 1:],
+            r["monAs"],
+            r["monBs"],
+            params,
+            s9=s9,
         ),
         axis=1,
     )
@@ -490,28 +545,54 @@ def compute_dftd4_values(
 
 def compute_stats_dftd4_values_fixed(
     df,
-    cols=["HF_dz","HF_jdz", "HF_qz"],
+    cols=[
+        "HF_dz",
+        "HF_jdz_no_cp",
+        "HF_jdz",
+        "HF_qz_no_cp",
+        "HF_qz_conv_e_4",
+        "HF_qz",
+    ],
     fixed_col="dftd4_disp_ie_grimme_params",
 ) -> None:
     """
     compute_stats_dftd4_values_fixed
     """
-    print(f"fixed_col: {fixed_col}")
+    print(f"\nfixed_col: {fixed_col}\n")
+    stats = {
+        "method": [],
+        "RMSE": [],
+        "MAX_E": [],
+        "MAD": [],
+        "MD": [],
+    }
+    assert df[fixed_col].isna().sum() == 0
     for c in cols:
         assert df[c].isna().sum() == 0
-        assert df[fixed_col].isna().sum() == 0
-        print(f"\ncolumn: {c}")
         df["ie"] = df[c] + df[fixed_col]
         df["diff"] = df["Benchmark"] - df["ie"]
-        mae = df["diff"].abs().mean()
-        rmse = (df["diff"] ** 2).mean() ** 0.5
+        mean_diff = df["diff"].mean()
+        rmse = ((df["diff"] ** 2).mean()) ** 0.5
         max_e = df["diff"].abs().max()
         mad = df["diff"].mad()
-        mean_diff = df["diff"].mean()
-        print("\nStats\n")
-        print("        1. MAE  = %.4f" % mae)
-        print("        2. RMSE = %.4f" % rmse)
-        print("        3. MAX  = %.4f" % max_e)
-        print("        4. MAD  = %.4f" % mad)
-        print("        5. MD   = %.4f" % mean_diff)
+        stats["method"].append(c)
+        stats["RMSE"].append(rmse)
+        stats["MAX_E"].append(max_e)
+        stats["MAD"].append(mad)
+        stats["MD"].append(mean_diff)
+
+    stats["method"].append("Grimme")
+    stats["RMSE"].append(0.497190)
+    stats["MAX_E"].append(np.nan)
+    stats["MAD"].append(0.347320)
+    stats["MD"].append(-0.025970)
+    df2 = pd.DataFrame(stats)
+    df_to_latex_table_round(
+        df2,
+        cols_round={"RMSE": 4, "MAX_E": 4, "MAD": 4, "MD": 4},
+        l_out=fixed_col,
+    )
+    # df2.reset_index(drop=True)
+    print(df2)
+
     return
