@@ -39,6 +39,7 @@ from src.tools import print_cartesians
 import pickle
 
 """
+/theoryfs2/ds/amwalla3/miniconda3/envs/pysr_psi4/lib/python3.9/site-packages/psi4/__init__.py
 dftd4/src/dftd4/param.f90
     case(p_hf)
       param = dftd_param ( & ! (SAW190103)
@@ -107,10 +108,10 @@ def main():
     # # df = df[df['d'].abs() > 1e-3]
     # print(df['d'], df['d'].max(), df['d'].mean(), sep='\n')
     # # df = pd.read_pickle("tests/diffs.pkl")
-    # gather_grimme_from_db()
+    gather_grimme_from_db()
     # df = pd.read_pickle("data/grimme_fitset_db.pkl")
-    # compute_dftd4_values(df, s9="0.0", key="dftd4_disp_ie_grimme_params")
-    # compute_dftd4_values(df, s9="1.0", key="dftd4_disp_ie_grimme_params_ATM")
+    compute_dftd4_values(df, s9="0.0", key="dftd4_disp_ie_grimme_params")
+    compute_dftd4_values(df, s9="1.0", key="dftd4_disp_ie_grimme_params_ATM")
     # df.to_pickle("data/grimme_fitset_db.pkl")
     # compute_stats_dftd4_values_fixed(df, fixed_col="dftd4_disp_ie_grimme_params")
     # compute_stats_dftd4_values_fixed(df, fixed_col='dftd4_disp_ie_grimme_params_ATM')

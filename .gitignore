@@ -172,3 +172,6 @@ vals.json
 grimme.pkl
 grimme_db.pkl
 vals.json
+symbolic_regression/*.pkl
+symbolic_regression/*.csv
+symbolic_regression/*.csv*

@@ -412,7 +412,9 @@ def calc_dftd4_pair_resolved(
     with open("C_n.json") as f:
         dat = json.load(f)
         C6s = np.array(dat["c6"])
-    return C6s, m
+    with open(".EDISP", 'r') as f:
+        e = float(f.read().rstrip())
+    return C6s, m, e
 
 
 def sum_ma_mb(
@@ -770,13 +772,15 @@ def main():
     m = df.iloc[0]
     print(m)
     # pairs is tabulated in kcal/mol already
-    C6s, pairs = calc_dftd4_pair_resolved(m["Geometry"][:, 0], m["Geometry"][:, 1:])
+    C6s, pairs, e = calc_dftd4_pair_resolved(m["Geometry"][:, 0], m["Geometry"][:, 1:])
     disp = 0
     for a in m['monAs']:
         for b in m['monBs']:
             disp += pairs[a, b]
     print('pairs', pairs)
-    print(disp, m['dftd4_disp_ie_grimme_params'])
+    print(disp, m['dftd4_disp_ie_grimme_params'], m['HF_qz'], m["Benchmark"])
+    mult_out=constants.conversion_factor("hartree", "kcal / mol")
+    print(e * mult_out)
 
 
 
