@@ -1,11 +1,15 @@
 import pytest
-from src.tools import print_cartesians, print_cartesians_pos_carts
+from src.tools import print_cartesians, print_cartesians_pos_carts, convert_geom_to_bohr
 from src.constants import Constants
 from src.setup import (
     calc_dftd4_props,
     compute_bj_f90,
     compute_bj_pairs,
     calc_dftd4_props_params,
+    create_mon_geom,
+    calc_dftd4_pair_resolved,
+    compute_pairwise_dispersion,
+
 )
 import numpy as np
 import math
@@ -365,57 +369,6 @@ def compare_opt_jeff() -> None:
     assert g == b == len(g1)
 
 
-def calc_dftd4_pair_resolved(
-    atom_numbers: np.array,
-    carts: np.array,
-    input_xyz: str = "dat.xyz",
-    output_data: str = "dat.txt",
-    p: [] = [1.61679827, 0.44959224, 3.35743605],
-):
-    write_xyz_from_np(atom_numbers, carts, outfile=input_xyz)
-    args = [
-        "dftd4",
-        input_xyz,
-        "--pair-resolved",
-        "--property",
-        "--mbdscale",
-        "0.0",
-        "--param",
-        "1.0",
-        str(p[0]),
-        str(p[1]),
-        str(p[2]),
-    ]
-    out = subprocess.run(
-        args=args,
-        shell=False,
-        capture_output=True,
-    ).stdout.decode("utf-8")
-    print(out)
-    d = out.split("Pairwise representation")[-1]
-    d = d.split("\n")
-    clean = []
-    start = False
-    vs = []
-    for i in d[4:]:
-        if "------" in i:
-            break
-        else:
-            start = True
-        i = i.split()
-        p1, p2, e = int(i[0]), int(i[3]), float(i[-1])
-        vs.append([p1, p2, e])
-    M = vs[-1][0]
-    m = np.zeros((M, M))
-    for i in vs:
-        m[i[0] - 1, i[1] - 1] = i[2]
-    with open("C_n.json") as f:
-        dat = json.load(f)
-        C6s = np.array(dat["c6"])
-    with open(".EDISP", 'r') as f:
-        e = float(f.read().rstrip())
-    return C6s, m, e
-
 
 def sum_ma_mb(
     ma,
@@ -729,7 +682,6 @@ def test_dftd4_SSI_5555():
     """
     df = pd.read_pickle("tests/diffs.pkl")
     cbjp, e = compute_difference_cbjp_vs_dftd4(5555, df)
-
     h_to_kcal_mol = constants.conversion_factor("hartree", "kcal / mol")
     cbjp *= h_to_kcal_mol
     e *= h_to_kcal_mol
@@ -766,24 +718,21 @@ def test_dftd4_calc_psi4() -> None:
     assert v
 
 
+
+
 def main():
     # TODO: attempt pair-resolved dispersion for C6s
     df = pd.read_pickle("tests/diffs_grimme.pkl")
-    m = df.iloc[0]
-    print(m)
+    m = df.iloc[1]
+    *_, disp = compute_pairwise_dispersion(m)
     # pairs is tabulated in kcal/mol already
-    C6s, pairs, e = calc_dftd4_pair_resolved(m["Geometry"][:, 0], m["Geometry"][:, 1:])
-    disp = 0
-    for a in m['monAs']:
-        for b in m['monBs']:
-            disp += pairs[a, b]
-    print('pairs', pairs)
-    print(disp, m['dftd4_disp_ie_grimme_params'], m['HF_qz'], m["Benchmark"])
-    mult_out=constants.conversion_factor("hartree", "kcal / mol")
-    print(e * mult_out)
-
-
-
+    # disp = 0
+    # for a in m["monAs"]:
+    #     for b in m["monBs"]:
+    #         disp += pairs[a, b]
+    print(disp, m["dftd4_disp_ie_grimme_params"], m["HF_qz"], m["Benchmark"])
+    mult_out = constants.conversion_factor("hartree", "kcal / mol")
+    # print(e * mult_out)
     return
 
 

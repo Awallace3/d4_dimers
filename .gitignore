@@ -175,3 +175,7 @@ vals.json
 symbolic_regression/*.pkl
 symbolic_regression/*.csv
 symbolic_regression/*.csv*
+data1.json
+pairs.json
+sr.pkl
+sr1.pkl

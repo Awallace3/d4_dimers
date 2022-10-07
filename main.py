@@ -2,10 +2,12 @@ import pandas as pd
 from src.setup import (
     gather_data4,
     gather_data5,
+    gather_data6,
     gather_data2_testing_mol,
     inpsect_master_regen,
     assign_charges,
     expand_opt_df,
+    compute_pairwise_dispersion,
 )
 from src.optimization import (
     optimization,
@@ -70,6 +72,7 @@ def analyze_max_errors(
         find_max_e(df, v, k, count)
     return
 
+
 def fix_heavy() -> None:
     """
     fix_heavy
@@ -77,8 +80,8 @@ def fix_heavy() -> None:
     inds = []
     df = pd.read_pickle("opt8.pkl")
     for idx, i in df.iterrows():
-        g = df.iloc[idx]['Geometry']
-        if np.any(g[:,0] > 10):
+        g = df.iloc[idx]["Geometry"]
+        if np.any(g[:, 0] > 10):
             inds.append(idx)
     df2 = df.iloc[inds]
     fix_heavy_element_basis_sets(df2)
@@ -89,18 +92,44 @@ def main():
     """
     Computes best parameters for SAPT0-D4
     """
+    # TODO: add D3 params to overall .pkl
+    # ms = inpsect_master_regen()
+    # ms = ms[['Benchmark', 'System', 'System #', 'Disp20', 'SAPT DISP ENERGY']]
+    # ms['B'] = str(ms['Benchmark'])
+    # ms['m'] = ms['System'] + str(ms['System #']) + ms['B']
+
     # gather_data5(
-    #     output_path="opt8.pkl",
-    #     from_master=False,
+    #     output_path="opt6.pkl",
+    #     from_master=True,
     #     # HF_columns=["HF_jdz"],
-    #     # HF_columns=["HF_dz", "HF_jdz", "HF_adz", "HF_tz", "HF_jdz_dftd4"],
+    #     HF_columns=["HF_dz", "HF_jdz", "HF_adz", "HF_tz", "HF_jdz_dftd4"],
     #     # HF_columns=["HF_jdz_dftd4"],
     #     # HF_columns=["HF_tz"],
-    #     HF_columns=["HF_atz"],
+    #     # HF_columns=["HF_atz"],
     #     overwrite=False,
     # )
+    # gather_data6(
+    #     output_path="sr1.pkl",
+    #     from_master=True,
+    #     # HF_columns=["HF_jdz"],
+    #     HF_columns=["HF_dz", "HF_jdz", "HF_adz", "HF_tz", "HF_jdz_dftd4"],
+    #     # HF_columns=["HF_jdz_dftd4"],
+    #     # HF_columns=["HF_tz"],
+    #     # HF_columns=["HF_atz"],
+    #     overwrite=False,
+    # )
+    df = pd.read_pickle("sr1.pkl")
+    print(df)
+    # return
 
-    df = pd.read_pickle("opt8.pkl")
+    # df = pd.read_pickle("opt9.pkl")
+    # df['B'] = str(df['Benchmark'])
+    # df['m'] = df['System'] + str(df['System #']) + df['B']
+    # df.merge(ms, on='m')
+    # df.to_pickle("opt9.pkl")
+    # print(df)
+
+
     # print(df['HF_atz'])
     # # print(len(df))
     # df['d'] = df['HF_jdz'] - df['HF INTERACTION ENERGY']
@@ -108,11 +137,27 @@ def main():
     # # df = df[df['d'].abs() > 1e-3]
     # print(df['d'], df['d'].max(), df['d'].mean(), sep='\n')
     # # df = pd.read_pickle("tests/diffs.pkl")
-    gather_grimme_from_db()
-    # df = pd.read_pickle("data/grimme_fitset_db.pkl")
-    compute_dftd4_values(df, s9="0.0", key="dftd4_disp_ie_grimme_params")
-    compute_dftd4_values(df, s9="1.0", key="dftd4_disp_ie_grimme_params_ATM")
-    # df.to_pickle("data/grimme_fitset_db.pkl")
+    # gather_grimme_from_db()
+    # df = pd.read_pickle("data/grimme_fitset_db2.pkl")
+    # compute_dftd4_values(df, s9="0.0", key="dftd4_disp_ie_grimme_params")
+    # compute_dftd4_values(df, s9="1.0", key="dftd4_disp_ie_grimme_params_ATM")
+    # df.to_pickle("sr1.pkl")
+    return
+    # pdi, pa, pb, pdisp = [], [], [],[]
+    # for i, r in df.iterrows():
+    #     pairs, pairs_a, pairs_b, disp = compute_pairwise_dispersion(r)
+    #     pdi.append(pairs)
+    #     pa.append(pairs_a)
+    #     pb.append(pairs_b)
+    #     pdisp.append(disp)
+    # df['pairs'] = pdi
+    # df['pa'] = pa
+    # df['pb'] = pb
+    # df['pdisp'] = pdisp
+    #
+    # df.to_pickle("data/grimme_fitset_db3.pkl")
+    # return
+    # df.to_pickle("opt5_d4.pkl")
     # compute_stats_dftd4_values_fixed(df, fixed_col="dftd4_disp_ie_grimme_params")
     # compute_stats_dftd4_values_fixed(df, fixed_col='dftd4_disp_ie_grimme_params_ATM')
 
@@ -148,17 +193,16 @@ def main():
     # df = pd.read_pickle("grimme_db.pkl")
     # #
     # print(df)
-    # basis_set = "qz"
-    # hf_key = "HF_%s" % basis_set
-    # params = [1.61679827, 0.44959224, 3.35743605]
-    # print(df[["HF_jdz", "HF_qz"]])
-    # mae, rmse, max_e, mad, mean_diff = compute_int_energy_stats(params, df, hf_key)
-    # print("\nStats\n")
-    # print("        1. MAE  = %.4f" % mae)
-    # print("        2. RMSE = %.4f" % rmse)
-    # print("        3. MAX  = %.4f" % max_e)
-    # print("        4. MAD  = %.4f" % mad)
-    # print("        5. MD   = %.4f" % mean_diff)
+    basis_set = "qz_no_df"
+    hf_key = "HF_%s" % basis_set
+    params = [1.61679827, 0.44959224, 3.35743605]
+    mae, rmse, max_e, mad, mean_diff = compute_int_energy_stats(params, df, hf_key)
+    print("\nStats\n")
+    print("        1. MAE  = %.4f" % mae)
+    print("        2. RMSE = %.4f" % rmse)
+    print("        3. MAX  = %.4f" % max_e)
+    print("        4. MAD  = %.4f" % mad)
+    print("        5. MD   = %.4f" % mean_diff)
     #
     # basis_set = "jdz"
     # hf_key = "HF_%s" % basis_set
@@ -166,14 +210,35 @@ def main():
     # print("HF_jdz CP")
     # optimization_least_squares(df, params, hf_key=hf_key)
     # df = pd.read_pickle("data/grimme_fitset_db.pkl")
-    df = pd.read_pickle("opt8.pkl")
+    # df = pd.read_pickle("opt8.pkl")
     # df = df.iloc[[0, 1, 3, 4]]
-    basis_set = "atz"
-    hf_key = "HF_%s" % basis_set
-    params = [1.61679827, 0.44959224, 3.35743605]
-    # print("HF_dz CP")
-    # optimization_least_squares(df, params, hf_key=hf_key)
-    opt_cross_val(df, nfolds=5, start_params=params, hf_key=hf_key, output_l_marker="")
+    # df = pd.read_pickle("data/grimme_fitset_db.pkl")
+    # df = pd.read_pickle("opt8.pkl")
+    # # print(df.columns.values)
+    # # return
+    bases = [
+        # 'HF_dz',
+        # 'HF_jdz',
+        # 'HF_adz',
+        # 'HF_tz',
+        # "HF_jdz_no_cp",
+        # "HF_dz_no_cp",
+        # "HF_qz",
+        # "HF_qz_no_cp",
+        "HF_qz_no_df",
+        # "HF_qz_conv_e_4",
+    ]
+    for i in bases:
+        print(i)
+        params = [1.61679827, 0.44959224, 3.35743605]
+        opt_cross_val(df, nfolds=5, start_params=params, hf_key=i, output_l_marker="G_", optimizer_func=optimization)
+        opt_cross_val(df, nfolds=5, start_params=params, hf_key=i, output_l_marker="least", optimizer_func=optimization_least_squares)
+    # basis_set = "atz"
+    # hf_key = "HF_%s" % basis_set
+    # params = [1.61679827, 0.44959224, 3.35743605]
+    # # print("HF_dz CP")
+    # # optimization_least_squares(df, params, hf_key=hf_key)
+    # opt_cross_val(df, nfolds=5, start_params=params, hf_key=hf_key, output_l_marker="")
 
     # bases = ["jdz"]
     # bases = ["jdz"]
@@ -201,20 +266,7 @@ def main():
     #     "99:00:00",
     # )
     # fix_hf_charges_energies_jobs('opt6.pkl')
-
     return
-
-
-def compute_values(id=1466) -> None:
-    """
-    compute_values ...
-    """
-    df = pd.read_pickle("opt.pkl")
-    mol = df.loc[id]
-    print(mol)
-    gather_data2_testing_mol(mol)
-    return
-
 
 if __name__ == "__main__":
     main()

@@ -60,7 +60,6 @@ def find_max_e(
     """
     print(f"\nhf_key = {hf_key}, Params = {params}")
     diff = np.zeros(len(df))
-    el_dc = create_pt_dict()
     df["d4"] = df.apply(
         lambda row: compute_bj_from_dimer_AB_all_C6s(
             params,
@@ -189,7 +188,6 @@ def compute_int_energy_stats(
     t = df[hf_key].isna().sum()
     assert t == 0, f"The HF_col provided has np.nan values present, {t}"
     diff = np.zeros(len(df))
-    el_dc = create_pt_dict()
     df["d4"] = df.apply(
         lambda row: compute_bj_from_dimer_AB_all_C6s(
             params,
@@ -217,13 +215,16 @@ def compute_int_energy_least_squares(
     params: [float],
     df: pd.DataFrame,
     hf_key: str = "HF INTERACTION ENERGY",
+    ban_neg_params: bool = False,
 ):
     """
     compute_int_energy is used to optimize paramaters for damping function in dftd4
     """
     rmse = 0
-    diff = np.zeros(len(df))
-    el_dc = create_pt_dict()
+    if ban_neg_params:
+        for i in params:
+            if i < 0:
+                return [10 for i in range(len(df))]
     df["d4"] = df.apply(
         lambda row: compute_bj_from_dimer_AB_all_C6s(
             params,
@@ -235,23 +236,6 @@ def compute_int_energy_least_squares(
             C6_A=row["C6_A"],
             C6_B=row["C6_B"],
         ),
-        # lambda row: compute_bj_pairs(
-        #     params,
-        #     row["Geometry"][:, 0],  # pos
-        #     row["Geometry"][:, 1:],  # carts
-        #     row["monAs"],
-        #     row["monBs"],
-        #     row["C6s"],
-        #     mult_out=627.509,
-        # ),
-        # lambda row: compute_bj_from_dimer_AB(
-        #     params,
-        #     row["Geometry"][:, 0],  # pos
-        #     row["Geometry"][:, 1:],  # carts
-        #     row["monAs"],
-        #     row["monBs"],
-        #     row["C6s"],
-        # ),
         axis=1,
     )
     df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
@@ -268,9 +252,11 @@ def compute_int_energy(
     """
     compute_int_energy is used to optimize paramaters for damping function in dftd4
     """
+    for i in params:
+        if i < 0:
+            return 10
     rmse = 0
     diff = np.zeros(len(df))
-    el_dc = create_pt_dict()
     df["d4"] = df.apply(
         lambda row: compute_bj_from_dimer_AB_all_C6s(
             params,
@@ -282,23 +268,6 @@ def compute_int_energy(
             C6_A=row["C6_A"],
             C6_B=row["C6_B"],
         ),
-        # lambda row: compute_bj_pairs(
-        #     params,
-        #     row["Geometry"][:, 0],  # pos
-        #     row["Geometry"][:, 1:],  # carts
-        #     row["monAs"],
-        #     row["monBs"],
-        #     row["C6s"],
-        #     mult_out=627.509,
-        # ),
-        # lambda row: compute_bj_from_dimer_AB(
-        #     params,
-        #     row["Geometry"][:, 0],  # pos
-        #     row["Geometry"][:, 1:],  # carts
-        #     row["monAs"],
-        #     row["monBs"],
-        #     row["C6s"],
-        # ),
         axis=1,
     )
     df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
@@ -364,11 +333,8 @@ def optimization_least_squares(
     print("\nResults\n")
     out_params = ret.x
     mae, rmse, max_e, mad, mean_diff = compute_int_energy_stats(out_params, df, hf_key)
-    print(
-        "1. MAE = %.4f\n2. RMSE = %.4f\n3. MAX = %.4f\n4. MAD = %.4f\n5. MD = %.4f"
-        % (mae, rmse, max_e, mad, mean_diff)
-    )
-    return out_params, mae, rmse, max_e
+    # return out_params, mae, rmse, max_e
+    return out_params, mae, rmse, max_e, mad, mean_diff
 
 
 def avg_matrix(
@@ -399,7 +365,8 @@ def opt_cross_val(
     nfolds: int = 5,
     start_params: [] = [3.02227550, 0.47396846, 4.49845309],
     hf_key: str = "HF INTERACTION ENERGY",
-    output_l_marker: str = "G_"
+    output_l_marker: str = "G_",
+    optimizer_func=optimization,
 ) -> None:
     """
     opt_cross_val performs n-fold cross validation on opt*.pkl df from
@@ -412,7 +379,8 @@ def opt_cross_val(
     folds = get_folds(nfolds, len(df))
     stats_np = np.zeros((nfolds, 4))
     p_out = np.zeros((nfolds, len(start_params)))
-    mp, mmae, mrmse, mmax_e, mmad, mmean_diff = optimization(df, start_params, hf_key)
+    # mp, mmae, mrmse, mmax_e, mmad, mmean_diff = optimization(df, start_params, hf_key)
+    mp, mmae, mrmse, mmax_e, mmad, mmean_diff = optimizer_func(df, start_params, hf_key)
     stats = {
         "method": [f"{hf_key} full"],
         "s8": [mp[0]],
@@ -434,7 +402,10 @@ def opt_cross_val(
         print(f"Training: {len(training)}")
         print(f"Testing: {len(testing)}")
 
-        o_params, omae, ormse, omax_e, omad, omean_diff = optimization(
+        # o_params, omae, ormse, omax_e, omad, omean_diff = optimization(
+        #     training, mp, hf_key
+        # )
+        o_params, omae, ormse, omax_e, omad, omean_diff = optimizer_func(
             training, mp, hf_key
         )
         mae, rmse, max_e, mad, mean_diff = compute_int_energy_stats(

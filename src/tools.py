@@ -1,6 +1,7 @@
 import pickle
 import numpy as np
 import pandas as pd
+import qcelemental
 
 
 def np_carts_to_string(carts):
@@ -61,3 +62,10 @@ def df_to_latex_table_round(
     with open(f"latex_outfiles/{l_out}.tex", "w") as f:
         f.write(s.to_latex())
     return
+
+
+def convert_geom_to_bohr(geom):
+    c = qcelemental.constants.conversion_factor("angstrom", "bohr")
+    # c = qcelemental.constants.conversion_factor("bohr", "angstrom")
+    print(c)
+    return np.array(geom, copy=True) * c
