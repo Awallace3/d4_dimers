@@ -26,13 +26,14 @@ def inpsect_master_regen():
     ms = ms[ms["DB"] != "CYCONF"]
     # for i in ms.columns.values:
     #     print(i)
-    ms = ms[ms["DB"] == "SSI"]
-    for idx, i in ms.iterrows():
-        if int(ms.loc[idx, "R"]) != 1:
-            print(ms.loc[idx])
+    # ms = ms[ms["DB"] == "SSI"]
+    # for idx, i in ms.iterrows():
+    #     if int(ms.loc[idx, "R"]) != 1:
+    #         print(ms.loc[idx])
     print(ms.columns.values)
     for i in ms.columns.values:
         if "disp" in i.lower():
+            print(i, 'NaNs =', ms[i].isna().sum())
             ms["t"] = ms.apply(
                 lambda r: abs(r["Benchmark"] - (r["HF INTERACTION ENERGY"] + r[i])),
                 axis=1,
@@ -1976,6 +1977,7 @@ def gather_data6(
     """
     if from_master:
         df = pd.read_pickle(master_path)
+        # df = inpsect_master_regen()
         df["SAPT0"] = df["SAPT0 TOTAL ENERGY"]
         df["SAPT"] = df["SAPT TOTAL ENERGY"]
         df = df[
@@ -1990,10 +1992,10 @@ def gather_data6(
                 "SAPT",
                 "Disp20",
                 "SAPT DISP ENERGY",
+                "SAPT DISP20 ENERGY",
                 "D3Data",
             ]
         ]
-
         if replace_hf:
             df = replace_hf_int_HF_jdz(df)
         xyzs = df["Geometry"].to_list()

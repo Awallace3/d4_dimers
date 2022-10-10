@@ -94,6 +94,8 @@ def main():
     """
     # TODO: add D3 params to overall .pkl
     # ms = inpsect_master_regen()
+    # return
+    # print('Disp20', ms['Disp20'].isna().sum())
     # ms = ms[['Benchmark', 'System', 'System #', 'Disp20', 'SAPT DISP ENERGY']]
     # ms['B'] = str(ms['Benchmark'])
     # ms['m'] = ms['System'] + str(ms['System #']) + ms['B']
@@ -108,18 +110,17 @@ def main():
     #     # HF_columns=["HF_atz"],
     #     overwrite=False,
     # )
-    # gather_data6(
-    #     output_path="sr1.pkl",
-    #     from_master=True,
-    #     # HF_columns=["HF_jdz"],
-    #     HF_columns=["HF_dz", "HF_jdz", "HF_adz", "HF_tz", "HF_jdz_dftd4"],
-    #     # HF_columns=["HF_jdz_dftd4"],
-    #     # HF_columns=["HF_tz"],
-    #     # HF_columns=["HF_atz"],
-    #     overwrite=False,
-    # )
-    df = pd.read_pickle("sr1.pkl")
-    print(df)
+    gather_data6(
+        output_path="sr2.pkl",
+        from_master=True,
+        # HF_columns=["HF_jdz"],
+        HF_columns=["HF_dz", "HF_jdz", "HF_adz", "HF_tz", "HF_jdz_dftd4"],
+        # HF_columns=["HF_jdz_dftd4"],
+        # HF_columns=["HF_tz"],
+        # HF_columns=["HF_atz"],
+        overwrite=True,
+    )
+    # df = pd.read_pickle("sr1.pkl")
     # return
 
     # df = pd.read_pickle("opt9.pkl")
@@ -139,9 +140,10 @@ def main():
     # # df = pd.read_pickle("tests/diffs.pkl")
     # gather_grimme_from_db()
     # df = pd.read_pickle("data/grimme_fitset_db2.pkl")
-    # compute_dftd4_values(df, s9="0.0", key="dftd4_disp_ie_grimme_params")
-    # compute_dftd4_values(df, s9="1.0", key="dftd4_disp_ie_grimme_params_ATM")
-    # df.to_pickle("sr1.pkl")
+    compute_dftd4_values(df, s9="0.0", key="dftd4_disp_ie_grimme_params")
+    compute_dftd4_values(df, s9="1.0", key="dftd4_disp_ie_grimme_params_ATM")
+    df.to_pickle("sr2.pkl")
+    print(df['Disp20'].isna().sum())
     return
     # pdi, pa, pb, pdisp = [], [], [],[]
     # for i, r in df.iterrows():
