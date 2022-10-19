@@ -367,6 +367,8 @@ def opt_cross_val(
     hf_key: str = "HF INTERACTION ENERGY",
     output_l_marker: str = "G_",
     optimizer_func=optimization,
+    compute_int_energy_stats_func=compute_int_energy_stats,
+    opt_type='Powell',
 ) -> None:
     """
     opt_cross_val performs n-fold cross validation on opt*.pkl df from
@@ -383,6 +385,7 @@ def opt_cross_val(
     mp, mmae, mrmse, mmax_e, mmad, mmean_diff = optimizer_func(df, start_params, hf_key)
     stats = {
         "method": [f"{hf_key} full"],
+        "Optimization Algorithm": [opt_type],
         "s8": [mp[0]],
         "a1": [mp[1]],
         "a2": [mp[2]],
@@ -392,6 +395,8 @@ def opt_cross_val(
         "MAX_E": [mmax_e],
     }
     print("1. MAE = %.4f\n2. RMSE = %.4f\n3. MAX = %.4f" % (mmae, mrmse, mmax_e))
+    # reset params to mp
+    start_params = mp
     for n, fold in enumerate(folds):
         print(f"Fold {n} Start")
         df["Fitset"] = fold
@@ -406,17 +411,21 @@ def opt_cross_val(
         #     training, mp, hf_key
         # )
         o_params, omae, ormse, omax_e, omad, omean_diff = optimizer_func(
-            training, mp, hf_key
+            # training, mp, hf_key
+            training, start_params, hf_key
         )
-        mae, rmse, max_e, mad, mean_diff = compute_int_energy_stats(
+        mae, rmse, max_e, mad, mean_diff = compute_int_energy_stats_func(
             o_params, testing, hf_key
         )
+        print("TRAINING RMSE: %.4f" % ormse)
+        print("TESTING  RMSE: %.4f" % rmse)
 
         stats_np[n] = np.array([rmse, mad, mean_diff, max_e])
         p_out[n] = o_params
         print(f"Fold {n} End")
 
         stats["method"].append(f"{hf_key} fold {n+1}")
+        stats['Optimization Algorithm'].append(opt_type)
         stats["RMSE"].append(rmse)
         stats["MAD"].append(mad)
         stats["MD"].append(mean_diff)
@@ -429,6 +438,7 @@ def opt_cross_val(
     rmse, mad, mean_diff, max_e = avg
 
     stats["method"].append(f"{hf_key}")
+    stats['Optimization Algorithm'].append(opt_type)
     stats["RMSE"].append(rmse)
     stats["MAX_E"].append(max_e)
     stats["MAD"].append(mad)

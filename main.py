@@ -37,8 +37,9 @@ from src.grimme_setup import (
     create_grimme_s22s66blind,
     gather_grimme_from_db,
 )
-from src.tools import print_cartesians
+from src.tools import print_cartesians, stats_to_latex_row
 import pickle
+from src.jeff import compute_error_stats_d3, d3data_stats, optimization_d3
 
 """
 /theoryfs2/ds/amwalla3/miniconda3/envs/pysr_psi4/lib/python3.9/site-packages/psi4/__init__.py
@@ -110,18 +111,22 @@ def main():
     #     # HF_columns=["HF_atz"],
     #     overwrite=False,
     # )
-    gather_data6(
-        output_path="sr2.pkl",
-        from_master=True,
-        # HF_columns=["HF_jdz"],
-        HF_columns=["HF_dz", "HF_jdz", "HF_adz", "HF_tz", "HF_jdz_dftd4"],
-        # HF_columns=["HF_jdz_dftd4"],
-        # HF_columns=["HF_tz"],
-        # HF_columns=["HF_atz"],
-        overwrite=True,
-    )
-    # df = pd.read_pickle("sr1.pkl")
-    # return
+    # gather_data6(
+    #     output_path="sr2.pkl",
+    #     from_master=False,
+    #     # HF_columns=["HF_jdz"],
+    #     # HF_columns=["HF_dz", "HF_jdz", "HF_adz", "HF_tz", "HF_jdz_dftd4"],
+    #     # HF_columns=["HF_jdz_dftd4"],
+    #     HF_columns=["HF_atz", "HF_jtz"],
+    #     # HF_columns=["HF_atz"],
+    #     overwrite=True,
+    # )
+    #
+    df = pd.read_pickle("sr2.pkl")
+    # print('atz', df['HF_atz'].isna().sum())
+    # print('jtz', df['HF_jtz'].isna().sum())
+
+    # d3data_stats(df)
 
     # df = pd.read_pickle("opt9.pkl")
     # df['B'] = str(df['Benchmark'])
@@ -129,7 +134,6 @@ def main():
     # df.merge(ms, on='m')
     # df.to_pickle("opt9.pkl")
     # print(df)
-
 
     # print(df['HF_atz'])
     # # print(len(df))
@@ -140,11 +144,11 @@ def main():
     # # df = pd.read_pickle("tests/diffs.pkl")
     # gather_grimme_from_db()
     # df = pd.read_pickle("data/grimme_fitset_db2.pkl")
-    compute_dftd4_values(df, s9="0.0", key="dftd4_disp_ie_grimme_params")
-    compute_dftd4_values(df, s9="1.0", key="dftd4_disp_ie_grimme_params_ATM")
-    df.to_pickle("sr2.pkl")
-    print(df['Disp20'].isna().sum())
-    return
+    # compute_dftd4_values(df, s9="0.0", key="dftd4_disp_ie_grimme_params")
+    # compute_dftd4_values(df, s9="1.0", key="dftd4_disp_ie_grimme_params_ATM")
+    # df.to_pickle("sr2.pkl")
+    # print(df['Disp20'].isna().sum())
+    # return
     # pdi, pa, pb, pdisp = [], [], [],[]
     # for i, r in df.iterrows():
     #     pairs, pairs_a, pairs_b, disp = compute_pairwise_dispersion(r)
@@ -195,16 +199,16 @@ def main():
     # df = pd.read_pickle("grimme_db.pkl")
     # #
     # print(df)
-    basis_set = "qz_no_df"
-    hf_key = "HF_%s" % basis_set
-    params = [1.61679827, 0.44959224, 3.35743605]
-    mae, rmse, max_e, mad, mean_diff = compute_int_energy_stats(params, df, hf_key)
-    print("\nStats\n")
-    print("        1. MAE  = %.4f" % mae)
-    print("        2. RMSE = %.4f" % rmse)
-    print("        3. MAX  = %.4f" % max_e)
-    print("        4. MAD  = %.4f" % mad)
-    print("        5. MD   = %.4f" % mean_diff)
+    # basis_set = "qz_no_df"
+    # hf_key = "HF_%s" % basis_set
+    # params = [1.61679827, 0.44959224, 3.35743605]
+    # mae, rmse, max_e, mad, mean_diff = compute_int_energy_stats(params, df, hf_key)
+    # print("\nStats\n")
+    # print("        1. MAE  = %.4f" % mae)
+    # print("        2. RMSE = %.4f" % rmse)
+    # print("        3. MAX  = %.4f" % max_e)
+    # print("        4. MAD  = %.4f" % mad)
+    # print("        5. MD   = %.4f" % mean_diff)
     #
     # basis_set = "jdz"
     # hf_key = "HF_%s" % basis_set
@@ -217,24 +221,39 @@ def main():
     # df = pd.read_pickle("data/grimme_fitset_db.pkl")
     # df = pd.read_pickle("opt8.pkl")
     # # print(df.columns.values)
-    # # return
+
+
+    return
     bases = [
-        # 'HF_dz',
-        # 'HF_jdz',
-        # 'HF_adz',
-        # 'HF_tz',
+        # "HF_dz",
+        # "HF_jdz",
+        # "HF_adz",
+        # "HF_tz",
+        "HF_atz",
         # "HF_jdz_no_cp",
         # "HF_dz_no_cp",
         # "HF_qz",
         # "HF_qz_no_cp",
-        "HF_qz_no_df",
+        # "HF_qz_no_df",
         # "HF_qz_conv_e_4",
     ]
+
     for i in bases:
         print(i)
-        params = [1.61679827, 0.44959224, 3.35743605]
-        opt_cross_val(df, nfolds=5, start_params=params, hf_key=i, output_l_marker="G_", optimizer_func=optimization)
-        opt_cross_val(df, nfolds=5, start_params=params, hf_key=i, output_l_marker="least", optimizer_func=optimization_least_squares)
+        # params = [1.61679827, 0.44959224, 3.35743605]
+        params = [0.713190, 0.079541, 3.627854]
+        opt_cross_val(
+            df,
+            nfolds=5,
+            start_params=params,
+            hf_key=i,
+            output_l_marker="D3_",
+            optimizer_func=optimization_d3,
+            compute_int_energy_stats_func=compute_error_stats_d3,
+            opt_type="Powell",
+        )
+        # opt_cross_val(df, nfolds=5, start_params=params, hf_key=i, output_l_marker="G_", optimizer_func=optimization)
+        # opt_cross_val(df, nfolds=5, start_params=params, hf_key=i, output_l_marker="least", optimizer_func=optimization_least_squares)
     # basis_set = "atz"
     # hf_key = "HF_%s" % basis_set
     # params = [1.61679827, 0.44959224, 3.35743605]
@@ -269,6 +288,7 @@ def main():
     # )
     # fix_hf_charges_energies_jobs('opt6.pkl')
     return
+
 
 if __name__ == "__main__":
     main()

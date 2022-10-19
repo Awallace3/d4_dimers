@@ -69,3 +69,8 @@ def convert_geom_to_bohr(geom):
     # c = qcelemental.constants.conversion_factor("bohr", "angstrom")
     print(c)
     return np.array(geom, copy=True) * c
+
+
+def stats_to_latex_row(name, rmse, max_e, mad, md):
+    v = f"    {name}  &  {rmse:.4f}  &  {max_e:.4f}  &  {mad:.4f}  &  {md:.4f}\n"
+    return v
