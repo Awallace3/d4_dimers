@@ -23,7 +23,9 @@ def d3data_stats(df):
     with open("stats.txt", "w") as f:
         for i in bases:
             print(i)
-            mae, rmse, max_e, mad, mean_dif = compute_error_stats_d3(df, i)
+            mae, rmse, max_e, mad, mean_dif = compute_error_stats_d3(
+                [0.713190, 0.079541, 3.627854], df, i
+            )
             v = stats_to_latex_row(i, rmse, max_e, mad, mean_dif)
             f.write(v)
             print(rmse, max_e, mad, mean_dif)
@@ -44,9 +46,10 @@ def compute_bj(params, d3data):
 
 
 def compute_error_stats_d3(
+    params,
     df,
     hf_key,
-    params=[0.713190, 0.079541, 3.627854],
+    # params=[0.713190, 0.079541, 3.627854],
 ) -> []:
     """
     compute_error_stats uses jeffs d3date to compute error
@@ -73,18 +76,18 @@ def compute_int_energy_d3(
     hf_key: str = "HF INTERACTION ENERGY",
 ):
     """
-    compute_int_energy is used to optimize paramaters for damping function in dftd4
+    compute_int_energy_d3 is used to optimize paramaters for d3
     """
     for i in params:
         if i < 0:
             return 10
     rmse = 0
     diff = np.zeros(len(df))
-    df["d4"] = df.apply(
+    df["d3"] = df.apply(
         lambda r: compute_bj(params, r["D3Data"]),
         axis=1,
     )
-    df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
+    df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d3"]), axis=1)
     rmse = (df["diff"] ** 2).mean() ** 0.5
     print("%.8f\t" % rmse, params.tolist())
     df["diff"] = 0
@@ -95,7 +98,7 @@ def optimization_d3(
     df: pd.DataFrame,
     params: [] = [0.713190, 0.079541, 3.627854],
     hf_key: str = "HF_dz",
-    opt_method: str = "powell" # "lm"
+    opt_method: str = "powell",  # "lm"
 ):
     """
     Use with src/optimization.opt_cross_val()
@@ -109,5 +112,4 @@ def optimization_d3(
     )
     print("\nResults\n")
     out_params = ret.x
-    mae, rmse, max_e, mad, mean_diff = compute_error_stats_d3(df, hf_key, out_params)
-    return out_params, mae, rmse, max_e, mad, mean_diff
+    return out_params

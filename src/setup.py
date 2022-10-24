@@ -16,14 +16,14 @@ from qcelemental import constants
 
 
 def inpsect_master_regen():
-    pd.set_option("display.max_columns", None)
-    pd.set_option("display.max_rows", None)
+    # pd.set_option("display.max_columns", None)
+    # pd.set_option("display.max_rows", None)
     pkl_path = "master-regen.pkl"
     ms = pd.read_pickle(pkl_path)
-    ms = ms[ms["DB"] != "PCONF"]
-    ms = ms[ms["DB"] != "SCONF"]
-    ms = ms[ms["DB"] != "ACONF"]
-    ms = ms[ms["DB"] != "CYCONF"]
+    # ms = ms[ms["DB"] != "PCONF"]
+    # ms = ms[ms["DB"] != "SCONF"]
+    # ms = ms[ms["DB"] != "ACONF"]
+    # ms = ms[ms["DB"] != "CYCONF"]
     # for i in ms.columns.values:
     #     print(i)
     # ms = ms[ms["DB"] == "SSI"]
@@ -31,14 +31,14 @@ def inpsect_master_regen():
     #     if int(ms.loc[idx, "R"]) != 1:
     #         print(ms.loc[idx])
     print(ms.columns.values)
-    for i in ms.columns.values:
-        if "disp" in i.lower():
-            print(i, 'NaNs =', ms[i].isna().sum())
-            ms["t"] = ms.apply(
-                lambda r: abs(r["Benchmark"] - (r["HF INTERACTION ENERGY"] + r[i])),
-                axis=1,
-            )
-            print(i, ms["t"].mean(), (ms["t"] ** 2).mean() ** 0.5, ms["t"].max())
+    # for i in ms.columns.values:
+    #     if "disp" in i.lower():
+    #         print(i, 'NaNs =', ms[i].isna().sum())
+    #         ms["t"] = ms.apply(
+    #             lambda r: abs(r["Benchmark"] - (r["HF INTERACTION ENERGY"] + r[i])),
+    #             axis=1,
+    #         )
+    #         print(i, ms["t"].mean(), (ms["t"] ** 2).mean() ** 0.5, ms["t"].max())
     return ms
 
 
@@ -1866,21 +1866,21 @@ def calc_c6s_c8s_pairDisp2_for_df(xyzs, monAs, monBs, charges) -> ([], [], []):
         c = charges[n]
         C6, C8, dispd = calc_dftd4_c6_c8_pairDisp2(pos, carts, c[0])
         C6s[n] = C6
-        C8s[n] = C6
+        C8s[n] = C8
         disp_d[n] = dispd
 
         Ma = monAs[n]
         mon_pa, mon_ca = create_mon_geom(pos, carts, Ma)
         C6a, C8a, dispa = calc_dftd4_c6_c8_pairDisp2(mon_pa, mon_ca, c[1])
         C6_A[n] = C6a
-        C8_A[n] = C6a
+        C8_A[n] = C8a
         disp_a[n] = dispa
 
         Mb = monBs[n]
         mon_pb, mon_cb = create_mon_geom(pos, carts, Mb)
         C6b, C8b, dispb = calc_dftd4_c6_c8_pairDisp2(mon_pb, mon_cb, c[2])
         C6_B[n] = C6b
-        C8_B[n] = C6b
+        C8_B[n] = C8b
         disp_b[n] = dispb
     return C6s, C6_A, C6_B, C8s, C8_A, C8_B, disp_d, disp_a, disp_b
 
@@ -1955,6 +1955,43 @@ def gather_data5(
         df = harvest_data(df, i.split("_")[-1], overwrite=overwrite)
     df.to_pickle(output_path)
     return df
+
+def ram_data():
+    df = pd.read_pickle('master-regen.pkl')
+    df = df[
+        [
+            "Name",
+            "DB",
+            "Benchmark",
+            "SAPT TOTAL ENERGY",
+            "SAPT IND ENERGY",
+            "SAPT EXCH ENERGY",
+            "SAPT ELST ENERGY",
+            "SAPT DISP ENERGY",
+            "SAPT0 TOTAL ENERGY",
+            "SAPT0 IND ENERGY",
+            "SAPT0 EXCH ENERGY",
+            "SAPT0 ELST ENERGY",
+            "SAPT0 DISP ENERGY",
+            "Geometry",
+            'R'
+            # TODO: add RA and RB
+        ]
+    ]
+    xyzs = df["Geometry"].to_list()
+    monAs, monBs = split_mons(xyzs)
+    ra, rb = [], []
+    for n in range(len(xyzs)):
+        a = xyzs[0][monAs[0]]
+        b = xyzs[0][monBs[0]]
+        ra.append(a)
+        rb.append(b)
+    df['RA'] = ra
+    df['RB'] = rb
+    df.to_pickle("rm.pkl")
+    print(df)
+    return
+
 
 
 def gather_data6(

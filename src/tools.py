@@ -71,6 +71,40 @@ def convert_geom_to_bohr(geom):
     return np.array(geom, copy=True) * c
 
 
+def hf_key_to_latex_cmd(hf_key, d4=True) -> str:
+    """
+    hf_key_to_latex_cmd
+    """
+    out = ""
+    if d4:
+        if hf_key == "HF_dz":
+            out = "\\sdz"
+        elif hf_key == "HF_jdz":
+            out = "\\sjdz"
+        elif hf_key == "HF_adz":
+            out = "\\sadz"
+        elif hf_key == "HF_tz":
+            out = "\\stz"
+        elif hf_key == "HF_atz":
+            out = "\\satz"
+        elif hf_key == "HF_jtz":
+            out = "\\sjtz"
+    else:
+        if hf_key == "HF_dz":
+            out = "\\sddz"
+        elif hf_key == "HF_jdz":
+            out = "\\sdjdz"
+        elif hf_key == "HF_adz":
+            out = "\\sdadz"
+        elif hf_key == "HF_tz":
+            out = "\\sdtz"
+        elif hf_key == "HF_atz":
+            out = "\\sdatz"
+        elif hf_key == "HF_jtz":
+            out = "\\sdjtz"
+    return out
+
+
 def stats_to_latex_row(name, rmse, max_e, mad, md):
     v = f"    {name}  &  {rmse:.4f}  &  {max_e:.4f}  &  {mad:.4f}  &  {md:.4f}\n"
     return v

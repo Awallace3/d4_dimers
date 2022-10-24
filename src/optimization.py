@@ -310,9 +310,9 @@ def optimization(
     )
     print("\nResults\n")
     out_params = ret.x
-    mae, rmse, max_e, mad, mean_diff = compute_int_energy_stats(out_params, df, hf_key)
+    # mae, rmse, max_e, mad, mean_diff = compute_int_energy_stats(out_params, df, hf_key)
     # print("1. MAE = %.4f\n2. RMSE = %.4f\n3. MAX = %.4f" % (mae, rmse, max_e))
-    return out_params, mae, rmse, max_e, mad, mean_diff
+    return out_params
 
 
 def optimization_least_squares(
@@ -382,7 +382,10 @@ def opt_cross_val(
     stats_np = np.zeros((nfolds, 4))
     p_out = np.zeros((nfolds, len(start_params)))
     # mp, mmae, mrmse, mmax_e, mmad, mmean_diff = optimization(df, start_params, hf_key)
-    mp, mmae, mrmse, mmax_e, mmad, mmean_diff = optimizer_func(df, start_params, hf_key)
+    mp = optimizer_func(df, start_params, hf_key)
+    mmae, mrmse, mmax_e, mmad, mmean_diff = compute_int_energy_stats_func(
+        mp, df, hf_key
+    )
     stats = {
         "method": [f"{hf_key} full"],
         "Optimization Algorithm": [opt_type],
@@ -407,17 +410,12 @@ def opt_cross_val(
         print(f"Training: {len(training)}")
         print(f"Testing: {len(testing)}")
 
-        # o_params, omae, ormse, omax_e, omad, omean_diff = optimization(
-        #     training, mp, hf_key
-        # )
-        o_params, omae, ormse, omax_e, omad, omean_diff = optimizer_func(
-            # training, mp, hf_key
+        o_params = optimizer_func(
             training, start_params, hf_key
         )
         mae, rmse, max_e, mad, mean_diff = compute_int_energy_stats_func(
             o_params, testing, hf_key
         )
-        print("TRAINING RMSE: %.4f" % ormse)
         print("TESTING  RMSE: %.4f" % rmse)
 
         stats_np[n] = np.array([rmse, mad, mean_diff, max_e])
@@ -434,6 +432,8 @@ def opt_cross_val(
         stats["a2"].append(o_params[2])
         stats["MAX_E"].append(max_e)
 
+    print("stats_np")
+    print(stats_np)
     avg = avg_matrix(stats_np)
     rmse, mad, mean_diff, max_e = avg
 
@@ -468,13 +468,15 @@ def opt_cross_val(
     print("        1. MAD  = %.4f" % mad)
     print("        2. RMSE = %.4f" % rmse)
     print("        3. MAX  = %.4f" % max_e)
-    tab = f""" table ouput
-| Level of Theory | s8       | a1       | a2       | MAE    | RMSE   | MAX_E  |
-|-----------------|----------|----------|----------|--------|--------|--------|
-|   {hf_key}    | {mp[0]} | {mp[1]} | {mp[2]} | {mae} | {rmse} | {max_e} |
-|-----------------|----------|----------|----------|--------|--------|--------|
-"""
-    print(tab)
+#     tab = f""" table ouput
+# | Level of Theory | s8       | a1       | a2       | MAE    | RMSE   | MAX_E  |
+# |-----------------|----------|----------|----------|--------|--------|--------|
+# |   {hf_key}    | {mp[0]} | {mp[1]} | {mp[2]} | {mae} | {rmse} | {max_e} |
+# |-----------------|----------|----------|----------|--------|--------|--------|
+# """
+#     print(tab)
+    print("Params:")
+    print(mp)
     df2 = pd.DataFrame(stats)
     df_to_latex_table_round(
         df2,

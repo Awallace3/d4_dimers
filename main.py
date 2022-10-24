@@ -8,6 +8,7 @@ from src.setup import (
     assign_charges,
     expand_opt_df,
     compute_pairwise_dispersion,
+    ram_data,
 )
 from src.optimization import (
     optimization,
@@ -37,7 +38,12 @@ from src.grimme_setup import (
     create_grimme_s22s66blind,
     gather_grimme_from_db,
 )
-from src.tools import print_cartesians, stats_to_latex_row
+from src.tools import (
+    print_cartesians,
+    stats_to_latex_row,
+    hf_key_to_latex_cmd,
+    df_to_latex_table_round,
+)
 import pickle
 from src.jeff import compute_error_stats_d3, d3data_stats, optimization_d3
 
@@ -50,6 +56,46 @@ dftd4/src/dftd4/param.f90
       !  Fitset: MD= -0.02597 MAD= 0.34732 RMSD= 0.49719
 ]
 """
+
+
+def error_stats_fixed_params(
+    df,
+    bases=[
+        "HF_dz",
+        "HF_jdz",
+        "HF_adz",
+        "HF_tz",
+        "HF_atz",
+    ],
+    p=[0.732484, 0.094481, 3.632253],
+    error_stat_func=compute_error_stats_d3,
+    d4=True,
+) -> None:
+    """
+    compute_d3_d4_errors_fixed computes error stats on d3 and d4
+    """
+    stats = {
+        "method": [],
+        "RMSE": [],
+        "MAD": [],
+        "MD": [],
+        "MAX_E": [],
+    }
+    for i in bases:
+        print(i)
+        mae, rmse, max_e, mad, mean_diff = error_stat_func(p, df, i)
+        stats["method"].append(hf_key_to_latex_cmd(i, d4))
+        stats["RMSE"].append(rmse)
+        stats["MAD"].append(mad)
+        stats["MAX_E"].append(max_e)
+        stats["MD"].append(mean_diff)
+    print(stats)
+    if d4:
+        l_out = "D4_fixed_stats"
+    else:
+        l_out = "D3_fixed_stats"
+    df_to_latex_table_round(pd.DataFrame(stats), l_out=l_out)
+    return
 
 
 def get_params():
@@ -94,7 +140,8 @@ def main():
     Computes best parameters for SAPT0-D4
     """
     # TODO: add D3 params to overall .pkl
-    # ms = inpsect_master_regen()
+    # rm = pd.read_pickle("rm.pkl")
+    # ram_data()
     # return
     # print('Disp20', ms['Disp20'].isna().sum())
     # ms = ms[['Benchmark', 'System', 'System #', 'Disp20', 'SAPT DISP ENERGY']]
@@ -112,17 +159,35 @@ def main():
     #     overwrite=False,
     # )
     # gather_data6(
-    #     output_path="sr2.pkl",
-    #     from_master=False,
+    #     output_path="sr3.pkl",
+    #     from_master=True,
     #     # HF_columns=["HF_jdz"],
     #     # HF_columns=["HF_dz", "HF_jdz", "HF_adz", "HF_tz", "HF_jdz_dftd4"],
+    #     HF_columns=["HF_dz", "HF_jdz", "HF_adz", "HF_tz", "HF_jdz_dftd4", "HF_atz", "HF_jtz"],
     #     # HF_columns=["HF_jdz_dftd4"],
-    #     HF_columns=["HF_atz", "HF_jtz"],
+    #     # HF_columns=[],
     #     # HF_columns=["HF_atz"],
     #     overwrite=True,
     # )
-    #
+    # return
+
     df = pd.read_pickle("sr2.pkl")
+    d3 = [0.732484, 0.094481, 3.632253]
+    d4 = [0.829861, 0.706055, 1.123903]
+    # error_stats_fixed_params(
+    #     df,
+    #     p=d3,
+    #     error_stat_func=compute_error_stats_d3,
+    #     d4=False
+    # )
+    error_stats_fixed_params(
+        df,
+        p=d4,
+        error_stat_func=compute_int_energy_stats,
+        d4=True
+    )
+    return
+    # df = df.iloc[[0, 1]]
     # print('atz', df['HF_atz'].isna().sum())
     # print('jtz', df['HF_jtz'].isna().sum())
 
@@ -222,13 +287,11 @@ def main():
     # df = pd.read_pickle("opt8.pkl")
     # # print(df.columns.values)
 
-
-    return
     bases = [
-        # "HF_dz",
-        # "HF_jdz",
-        # "HF_adz",
-        # "HF_tz",
+        "HF_dz",
+        "HF_jdz",
+        "HF_adz",
+        "HF_tz",
         "HF_atz",
         # "HF_jdz_no_cp",
         # "HF_dz_no_cp",
@@ -241,17 +304,25 @@ def main():
     for i in bases:
         print(i)
         # params = [1.61679827, 0.44959224, 3.35743605]
+        # params = [0.7683276390453782 , 0.09699087897359535 , 3.6407701963142745]
+        # mae, rmse, max_e, mad, mean_diff = compute_error_stats_d3(params, df, "HF_jdz")
+        # print("rmse: %.4f\nmax_e: %.4f" % (rmse, max_e))
         params = [0.713190, 0.079541, 3.627854]
-        opt_cross_val(
-            df,
-            nfolds=5,
-            start_params=params,
-            hf_key=i,
-            output_l_marker="D3_",
-            optimizer_func=optimization_d3,
-            compute_int_energy_stats_func=compute_error_stats_d3,
-            opt_type="Powell",
-        )
+        mae, rmse, max_e, mad, mean_diff = compute_error_stats_d3(params, df, i)
+        # print("rmse: %.4f\nmax_e: %.4f" % (rmse, max_e))
+        # params = [0.713108, 0.079643, 3.627271]
+        # mae, rmse, max_e, mad, mean_diff = compute_error_stats_d3(params, df, "HF_jdz")
+        # print("rmse: %.4f\nmax_e: %.4f" % (rmse, max_e))
+        # opt_cross_val(
+        #     df,
+        #     nfolds=5,
+        #     start_params=params,
+        #     hf_key=i,
+        #     output_l_marker="D3_",
+        #     optimizer_func=optimization_d3,
+        #     compute_int_energy_stats_func=compute_error_stats_d3,
+        #     opt_type="Powell",
+        # )
         # opt_cross_val(df, nfolds=5, start_params=params, hf_key=i, output_l_marker="G_", optimizer_func=optimization)
         # opt_cross_val(df, nfolds=5, start_params=params, hf_key=i, output_l_marker="least", optimizer_func=optimization_least_squares)
     # basis_set = "atz"
