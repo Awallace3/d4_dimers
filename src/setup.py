@@ -13,6 +13,7 @@ import os
 from .harvest import ssi_bfdb_data, harvest_data
 import psi4
 from qcelemental import constants
+import qcelemental as qcel
 
 
 def inpsect_master_regen():
@@ -1692,6 +1693,30 @@ def replace_hf_int_HF_jdz(df):
     return df
 
 
+def assign_charge_single(mol, path_SSI="data/SSI_xyzfiles/combined/") -> pd.DataFrame:
+    c = np.array([[0, 1], [0, 1], [0, 1]])
+    sys = mol["System"]
+    sys = f"{path_SSI}SSI-{sys[8:14]}-{sys[19:25]}-{sys[-1]}"
+    f_d = f"{sys}-dimer.xyz"
+    f_A = f"{sys}-monoA-unCP.xyz"
+    f_B = f"{sys}-monoB-unCP.xyz"
+    with open(f_d, "r") as f:
+        c_d = f.readlines()[1].rstrip()
+        c_d = [int(i) for i in c_d.split()]
+    with open(f_A, "r") as f:
+        c_A = f.readlines()[1].rstrip()
+        c_A = [int(i) for i in c_A.split()]
+    with open(f_B, "r") as f:
+        c_B = f.readlines()[1].rstrip()
+        c_B = [int(i) for i in c_B.split()]
+    charge = np.array([c_d, c_A, c_B])
+    print(sys)
+    print(f_d)
+    print(f_A)
+    print(f_B)
+    print(charge)
+    return charge
+
 def assign_charges(df, path_SSI="data/SSI_xyzfiles/combined/") -> pd.DataFrame:
     c = np.array([[0, 1], [0, 1], [0, 1]])
     charges = [c for i in range(len(df))]
@@ -1713,6 +1738,11 @@ def assign_charges(df, path_SSI="data/SSI_xyzfiles/combined/") -> pd.DataFrame:
             c_B = f.readlines()[1].rstrip()
             c_B = [int(i) for i in c_B.split()]
         charge = np.array([c_d, c_A, c_B])
+        # print(sys)
+        # print(f_d)
+        # print(f_A)
+        # print(f_B)
+        # print(charge)
         charges[i] = charge
     df["charges"] = charges
     return df
@@ -1956,42 +1986,92 @@ def gather_data5(
     df.to_pickle(output_path)
     return df
 
+
+def r_z_tq_to_mol(r, tq, mult) -> qcel.models.Molecule:
+    """
+    r_z_tq_to_mol takes in carts, charges, and total charge
+    to create qcel Molecule.
+    """
+    geom = f"""
+{int(tq)} {int(mult)}
+"""
+    geom = f""""""
+    for n, i in enumerate(r):
+        s = f"{int(i[0])} {i[1]:.8f} {i[2]:.8f} {i[3]:.8f}\n"
+        # if n != len(r) -1:
+        #     s+='\n'
+        geom += s
+    return geom
+
+
+def ram_data_2():
+    df = pd.read_pickle("rm.pkl")
+    df = df[df["DB"] == "SSI"].reset_index(inplace=False)
+    # mol = df.iloc[[0, 1]]
+    # df = assign_charges(df)
+    mol = df.iloc[2]
+    print(mol)
+    assign_charge_single(mol)
+    c = mol["charges"]
+    g1 = r_z_tq_to_mol(mol["RA"], c[1][0], c[1][1])
+    g2 = r_z_tq_to_mol(mol["RB"], c[2][0], c[2][1])
+    geom = g1 + "--\n" + g2
+    print("GEOM")
+    print(geom)
+    dimer = qcel.models.Molecule.from_data(geom)
+    return
+
+
 def ram_data():
-    df = pd.read_pickle('master-regen.pkl')
+    df = pd.read_pickle("master-regen.pkl")
     df = df[
         [
             "Name",
             "DB",
             "Benchmark",
             "SAPT TOTAL ENERGY",
-            "SAPT IND ENERGY",
-            "SAPT EXCH ENERGY",
-            "SAPT ELST ENERGY",
-            "SAPT DISP ENERGY",
+            "System",
+            # "SAPT IND ENERGY",
+            # "SAPT EXCH ENERGY",
+            # "SAPT ELST ENERGY",
+            # "SAPT DISP ENERGY",
             "SAPT0 TOTAL ENERGY",
-            "SAPT0 IND ENERGY",
-            "SAPT0 EXCH ENERGY",
-            "SAPT0 ELST ENERGY",
-            "SAPT0 DISP ENERGY",
+            # "SAPT0 IND ENERGY",
+            # "SAPT0 EXCH ENERGY",
+            # "SAPT0 ELST ENERGY",
+            # "SAPT0 DISP ENERGY",
             "Geometry",
-            'R'
+            "R"
             # TODO: add RA and RB
         ]
     ]
     xyzs = df["Geometry"].to_list()
     monAs, monBs = split_mons(xyzs)
+    df["monAs"] = monAs
+    df["monBs"] = monBs
+    df = df.reset_index(drop=True)
+    df, inds = gather_data3_dimer_splits(df)
+    monAs = df["monAs"].to_list()
+    monBs = df["monBs"].to_list()
     ra, rb = [], []
     for n in range(len(xyzs)):
-        a = xyzs[0][monAs[0]]
-        b = xyzs[0][monBs[0]]
+        a = xyzs[n][monAs[n]]
+        b = xyzs[n][monBs[n]]
         ra.append(a)
         rb.append(b)
-    df['RA'] = ra
-    df['RB'] = rb
+    df["RA"] = ra
+    df["RB"] = rb
+    xyzs = df["Geometry"].to_list()
+    # monAs = df["monAs"].to_list()
+    # monBs = df["monBs"].to_list()
+    # # t = [x for x in monAs if type(x) != type(np.array)]
+    # df = df.reset_index(drop=True)
+    # xyzs = df["Geometry"].to_list()
+    df = assign_charges(df)
+    # df = df.drop(["monAs", "monBs"])
+    # return
     df.to_pickle("rm.pkl")
-    print(df)
     return
-
 
 
 def gather_data6(
@@ -2066,9 +2146,9 @@ def gather_data6(
         df["C8s"] = C8s
         df["C8_A"] = C8_A
         df["C8_B"] = C8_B
-        df['disp_d'] = disp_d
-        df['disp_a'] = disp_a
-        df['disp_b'] = disp_b
+        df["disp_d"] = disp_d
+        df["disp_a"] = disp_a
+        df["disp_b"] = disp_b
 
         df.to_pickle(output_path)
         df = expand_opt_df(df, HF_columns)
