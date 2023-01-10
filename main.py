@@ -9,6 +9,7 @@ from src.setup import (
     expand_opt_df,
     compute_pairwise_dispersion,
     ram_data,
+    ram_data_2,
 )
 from src.optimization import (
     optimization,
@@ -46,6 +47,7 @@ from src.tools import (
 )
 import pickle
 from src.jeff import compute_error_stats_d3, d3data_stats, optimization_d3
+from qcelemental import constants
 
 """
 /theoryfs2/ds/amwalla3/miniconda3/envs/pysr_psi4/lib/python3.9/site-packages/psi4/__init__.py
@@ -135,14 +137,89 @@ def fix_heavy() -> None:
     fix_heavy_element_basis_sets_dftd4(df2)
 
 
+def compare_methods(df, m1="Benchmark", m2="qtp_00_adz_saptdft", arr=True) -> None:
+    """
+    compare_methods
+    """
+    print(m1, "versus", m2)
+    df = df.replace({None: np.nan})
+    df = df[df[m2].notna()]
+    if arr:
+        df["dif"] = df.apply(lambda r: r[m1] - r[m2][0], axis=1)
+    else:
+        df["dif"] = df.apply(lambda r: r[m1] - r[m2], axis=1)
+    mean = df["dif"].mean()
+    max_error = df["dif"].abs().max()
+    MAD = df["dif"].mad()
+    RMSE = (df["dif"] ** 2).mean() ** 0.5
+    print(
+        f"{mean = } kcal/mol\n{max_error = } kcal/mol\n{MAD = } kcal/mol\n{RMSE = } kcal/mol\n"
+    )
+
+
+def failed(
+    df,
+) -> None:
+    """
+    failed
+    """
+    df = pd.read_pickle("data/schr_dft.pkl")
+    print(df.columns.values)
+    t = df[df["pbe0_adz_saptdft"].isna()]
+    print(len(t))
+    # print(t)
+    t2 = t[t["pbe0_adz_cation_A"].isna()]
+    # t2 = t[t["pbe0_adz_grac_A"].isna()]
+    print("cation_A")
+    print(t2[["pbe0_adz_cation_A", "pbe0_adz_cation_B"]])
+    print(t2["main_id"].to_list())
+    # t3 = t[t["pbe0_adz_grac_B"].isna()]
+    t3 = t[t["pbe0_adz_cation_B"].isna()]
+    print("cation_B")
+    print(t3[["pbe0_adz_cation_A", "pbe0_adz_cation_B"]])
+    print(t3["main_id"].to_list())
+    errors = list(set(t2["main_id"].to_list()).union(t3["main_id"].to_list()))
+    print(errors)
+    print(len(errors))
+
+
 def main():
     """
     Computes best parameters for SAPT0-D4
     """
+    df = pd.read_pickle("data/schr_dft.pkl")
+    print(df.columns.values)
+    df = df[~df["pbe0_adz_saptdft"].isna()]
+    k = constants.conversion_factor("hartree", "kcal / mol")
+    df["pbe0_adz_saptdft_ndisp"] = df.apply(
+        lambda r: (sum(r["pbe0_adz_saptdft"][:2]) + r["pbe0_adz_saptdft"][3])
+        * k,
+        axis=1,
+    )
+    print(df[["Benchmark", "pbe0_adz_saptdft_ndisp"]])
+    print(df.iloc[0]["pbe0_adz_saptdft"] * 627.509)
     # TODO: add D3 params to overall .pkl
     # rm = pd.read_pickle("rm.pkl")
     # ram_data()
+    # ram_data_2()
     # return
+    # df = pd.read_pickle("data/schr.pkl")
+
+    # print(t['main_id'].to_list())
+
+    # for n, i in t.iterrows():
+    #     print(
+    #         i["DB"],
+    #         i["pbe0_adz_A"],
+    #         i["pbe0_adz_B"],
+    #         i["pbe0_adz_cation_A"],
+    #         i["pbe0_adz_cation_B"],
+    #     )
+
+    # compare_methods(df)
+    # compare_methods(df, m2='qtp_02_adz_saptdft')
+    # compare_methods(df, m2='pbe0_adz_saptdft')
+    return
     # print('Disp20', ms['Disp20'].isna().sum())
     # ms = ms[['Benchmark', 'System', 'System #', 'Disp20', 'SAPT DISP ENERGY']]
     # ms['B'] = str(ms['Benchmark'])
@@ -181,10 +258,7 @@ def main():
     #     d4=False
     # )
     error_stats_fixed_params(
-        df,
-        p=d4,
-        error_stat_func=compute_int_energy_stats,
-        d4=True
+        df, p=d4, error_stat_func=compute_int_energy_stats, d4=True
     )
     return
     # df = df.iloc[[0, 1]]
