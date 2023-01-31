@@ -10,6 +10,8 @@ from src.setup import (
     compute_pairwise_dispersion,
     ram_data,
     ram_data_2,
+    compute_bj_from_dimer_AB_all_C6s_NO_DAMPING,
+    compute_bj_from_dimer_AB_all_C6s,
 )
 from src.optimization import (
     optimization,
@@ -21,6 +23,7 @@ from src.optimization import (
     compute_int_energy_stats_dftd4_key,
     compute_dftd4_values,
     compute_stats_dftd4_values_fixed,
+    compute_int_energy_NO_DAMPING,
 )
 from src.jobs import (
     create_hf_binding_energies_jobs,
@@ -46,6 +49,7 @@ from src.tools import (
     df_to_latex_table_round,
 )
 import pickle
+from pprint import pprint as pp
 from src.jeff import compute_error_stats_d3, d3data_stats, optimization_d3
 from qcelemental import constants
 
@@ -183,21 +187,74 @@ def failed(
     print(len(errors))
 
 
+def df_empty_cols(df, col="pbe0_adz_grac_A") -> None:
+    """
+    df_empty_gracs
+    """
+    a = df[df[col].isna()]
+    print(len(a))
+    return
+
+
 def main():
     """
     Computes best parameters for SAPT0-D4
     """
     df = pd.read_pickle("data/schr_dft.pkl")
-    print(df.columns.values)
+    # df = df.iloc[range(2500, 3500)]
+    # df_empty_cols(df)
+    row = df.iloc[3000]
+    disp_no_damp = compute_bj_from_dimer_AB_all_C6s_NO_DAMPING(
+        row["Geometry"][:, 0],  # pos
+        row["Geometry"][:, 1:],  # carts
+        row["monAs"],
+        row["monBs"],
+        row["C6s"],
+        C6_A=row["C6_A"],
+        C6_B=row["C6_B"],
+    )
+    params = [1.61679827, 0.44959224, 3.35743605] # HF
+    disp_damp_HF = compute_bj_from_dimer_AB_all_C6s(
+        params,
+        row["Geometry"][:, 0],  # pos
+        row["Geometry"][:, 1:],  # carts
+        row["monAs"],
+        row["monBs"],
+        row["C6s"],
+        C6_A=row["C6_A"],
+        C6_B=row["C6_B"],
+    )
+    print(f"{disp_no_damp =}")
+    print(f"{disp_damp_HF =}")
+    # print(df.iloc[3000])
+
+    # print(df.iloc[3000])
+    # pp(df.columns.values)
+    # print(df.iloc[3000]["pbe0_adz_saptdft"] * 627.509)
+    return
+    """
     df = df[~df["pbe0_adz_saptdft"].isna()]
     k = constants.conversion_factor("hartree", "kcal / mol")
     df["pbe0_adz_saptdft_ndisp"] = df.apply(
-        lambda r: (sum(r["pbe0_adz_saptdft"][:2]) + r["pbe0_adz_saptdft"][3])
-        * k,
+        lambda r: (sum(r["pbe0_adz_saptdft"][:2]) + r["pbe0_adz_saptdft"][3]) * k,
         axis=1,
     )
-    print(df[["Benchmark", "pbe0_adz_saptdft_ndisp"]])
+    df["pbe0_adz_saptdft_sum"] = df.apply(
+        lambda r: (sum(r["pbe0_adz_saptdft"][:4])) * k,
+        axis=1,
+    )
+    print(df[["Benchmark", "pbe0_adz_saptdft_ndisp", "pbe0_adz_saptdft_sum", "HF_adz"]])
     print(df.iloc[0]["pbe0_adz_saptdft"] * 627.509)
+    """
+    # avg = df.apply(
+    #     lambda r: (r["pbe0_adz_saptdft_ndisp"] - r["HF_adz"]),
+    #     axis=1,
+    # ).mean()
+    # print(avg)
+
+    return
+
+    # return
     # TODO: add D3 params to overall .pkl
     # rm = pd.read_pickle("rm.pkl")
     # ram_data()
@@ -219,7 +276,6 @@ def main():
     # compare_methods(df)
     # compare_methods(df, m2='qtp_02_adz_saptdft')
     # compare_methods(df, m2='pbe0_adz_saptdft')
-    return
     # print('Disp20', ms['Disp20'].isna().sum())
     # ms = ms[['Benchmark', 'System', 'System #', 'Disp20', 'SAPT DISP ENERGY']]
     # ms['B'] = str(ms['Benchmark'])
@@ -248,19 +304,19 @@ def main():
     # )
     # return
 
-    df = pd.read_pickle("sr2.pkl")
-    d3 = [0.732484, 0.094481, 3.632253]
-    d4 = [0.829861, 0.706055, 1.123903]
+    # df = pd.read_pickle("sr2.pkl")
+    # d3 = [0.732484, 0.094481, 3.632253]
+    # d4 = [0.829861, 0.706055, 1.123903]
+    # # error_stats_fixed_params(
+    # #     df,
+    # #     p=d3,
+    # #     error_stat_func=compute_error_stats_d3,
+    # #     d4=False
+    # # )
     # error_stats_fixed_params(
-    #     df,
-    #     p=d3,
-    #     error_stat_func=compute_error_stats_d3,
-    #     d4=False
+    #     df, p=d4, error_stat_func=compute_int_energy_stats, d4=True
     # )
-    error_stats_fixed_params(
-        df, p=d4, error_stat_func=compute_int_energy_stats, d4=True
-    )
-    return
+    # return
     # df = df.iloc[[0, 1]]
     # print('atz', df['HF_atz'].isna().sum())
     # print('jtz', df['HF_jtz'].isna().sum())
@@ -340,6 +396,7 @@ def main():
     # print(df)
     # basis_set = "qz_no_df"
     # hf_key = "HF_%s" % basis_set
+    # hf_key=
     # params = [1.61679827, 0.44959224, 3.35743605]
     # mae, rmse, max_e, mad, mean_diff = compute_int_energy_stats(params, df, hf_key)
     # print("\nStats\n")
@@ -362,17 +419,18 @@ def main():
     # # print(df.columns.values)
 
     bases = [
-        "HF_dz",
-        "HF_jdz",
+        # "HF_dz",
+        # "HF_jdz",
         "HF_adz",
-        "HF_tz",
-        "HF_atz",
+        # "HF_tz",
+        # "HF_atz",
         # "HF_jdz_no_cp",
         # "HF_dz_no_cp",
         # "HF_qz",
         # "HF_qz_no_cp",
         # "HF_qz_no_df",
         # "HF_qz_conv_e_4",
+        # "pbe0_adz_saptdft_ndisp"
     ]
 
     for i in bases:
@@ -382,7 +440,9 @@ def main():
         # mae, rmse, max_e, mad, mean_diff = compute_error_stats_d3(params, df, "HF_jdz")
         # print("rmse: %.4f\nmax_e: %.4f" % (rmse, max_e))
         params = [0.713190, 0.079541, 3.627854]
-        mae, rmse, max_e, mad, mean_diff = compute_error_stats_d3(params, df, i)
+        params = [0.829861, 0.706055, 1.123903]
+        print("D3")
+        # mae, rmse, max_e, mad, mean_diff = compute_error_stats_d3(params, df, i)
         # print("rmse: %.4f\nmax_e: %.4f" % (rmse, max_e))
         # params = [0.713108, 0.079643, 3.627271]
         # mae, rmse, max_e, mad, mean_diff = compute_error_stats_d3(params, df, "HF_jdz")
@@ -397,7 +457,15 @@ def main():
         #     compute_int_energy_stats_func=compute_error_stats_d3,
         #     opt_type="Powell",
         # )
-        # opt_cross_val(df, nfolds=5, start_params=params, hf_key=i, output_l_marker="G_", optimizer_func=optimization)
+        print("D4")
+        opt_cross_val(
+            df,
+            nfolds=5,
+            start_params=params,
+            hf_key=i,
+            output_l_marker="G_",
+            optimizer_func=optimization,
+        )
         # opt_cross_val(df, nfolds=5, start_params=params, hf_key=i, output_l_marker="least", optimizer_func=optimization_least_squares)
     # basis_set = "atz"
     # hf_key = "HF_%s" % basis_set

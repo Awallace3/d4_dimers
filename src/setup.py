@@ -1001,6 +1001,46 @@ def compute_bj_f90(
     energy = np.sum(energies)
     return energy
 
+def compute_bj_f90_NO_DAMPING(
+    pos: np.array,
+    carts: np.array,
+    C6s: np.array,
+) -> float:
+    """
+    compute_bj_f90 computes energy from C6s, cartesian coordinates, and dimer sizes.
+    """
+    energy = 0
+    M_tot = len(carts)
+    energies = np.zeros(M_tot)
+    lattice_points = 1
+    aatoau = Constants().g_aatoau()
+    cs = aatoau * np.array(carts, copy=True)
+    for i in range(M_tot):
+        el1 = int(pos[i])
+        el1_r4r2 = r4r2_vals(el1)
+        Q_A = np.sqrt(np.sqrt(el1) * el1_r4r2)
+        for j in range(i):
+            if i == j:
+                continue
+            for k in range(lattice_points):
+                el2 = int(pos[j])
+                el2_r4r2 = r4r2_vals(el2)
+                Q_B = np.sqrt(np.sqrt(el2) * el2_r4r2)
+
+                C6 = C6s[i, j]
+                C8 = 3 * C6 * np.sqrt(Q_A * Q_B)
+                r1, r2 = cs[i, :], cs[j, :]
+                r2 = np.subtract(r1, r2)
+                r2 = np.sum(np.multiply(r2, r2))
+                R_6 = r2 ** 6
+                R_8 = r2 ** 8
+
+                de = C6 / R_6 + C8 / R_8
+                energies[i] += de
+                if i != j:
+                    energies[j] += de
+    energy = -np.sum(energies)
+    return energy
 
 def compute_bj_f90_exact(
     params: [],
@@ -1232,6 +1272,34 @@ def compute_bj_from_dimer_AB_all_C6s(
     AB = monA + monB
     disp = f90 - (AB)
     return disp * mult_out
+
+def compute_bj_from_dimer_AB_all_C6s_NO_DAMPING(
+    pos,
+    carts,
+    Ma,
+    Mb,
+    C6s,
+    C6_A,
+    C6_B,
+    mult_out=constants.conversion_factor("hartree", "kcal / mol"),
+) -> float:
+    """
+    compute_bj_from_dimer_AB computes dftd4 for dimer and each monomer and returns
+    subtraction.
+    """
+    f90 = compute_bj_f90_NO_DAMPING(pos, carts, C6s)
+    # print_cartesians_pos_carts(pos, carts)
+
+    mon_pa, mon_ca = create_mon_geom(pos, carts, Ma)
+    monA = compute_bj_f90_NO_DAMPING(mon_pa, mon_ca, C6_A)
+
+    mon_pb, mon_cb = create_mon_geom(pos, carts, Mb)
+    monB = compute_bj_f90_NO_DAMPING(mon_pb, mon_cb, C6_B)
+
+    AB = monA + monB
+    disp = f90 - (AB)
+    return disp * mult_out
+
 
 
 def compute_bj_from_dimer_AB(

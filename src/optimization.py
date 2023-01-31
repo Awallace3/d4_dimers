@@ -6,6 +6,7 @@ from .setup import (
     compute_bj_from_dimer_AB,
     calc_dftd4_props,
     compute_bj_from_dimer_AB_all_C6s,
+    compute_bj_from_dimer_AB_all_C6s_NO_DAMPING,
     calc_dftd4_props_params,
 )
 import scipy.optimize as opt
@@ -277,6 +278,36 @@ def compute_int_energy(
     return rmse
 
 
+def compute_int_energy_NO_DAMPING(
+    df: pd.DataFrame,
+    hf_key: str = "HF INTERACTION ENERGY",
+):
+    """
+    compute_int_energy is used to optimize paramaters for damping function in dftd4
+    """
+    rmse = 0
+    diff = np.zeros(len(df))
+    df["d4_NO_DAMPING"] = df.apply(
+        lambda row: compute_bj_from_dimer_AB_all_C6s_NO_DAMPING(
+            row["Geometry"][:, 0],  # pos
+            row["Geometry"][:, 1:],  # carts
+            row["monAs"],
+            row["monBs"],
+            row["C6s"],
+            C6_A=row["C6_A"],
+            C6_B=row["C6_B"],
+        ),
+        axis=1,
+    )
+    df["diff"] = df.apply(
+        lambda r: r["Benchmark"] - (r[hf_key] + r["d4_NO_DAMPING"]), axis=1
+    )
+    rmse = (df["diff"] ** 2).mean() ** 0.5
+    print("%.8f\t" % rmse)
+    df["diff"] = 0
+    return rmse, df
+
+
 def get_folds(nfold, ntrain):
     """
     computes labels for fitset
@@ -368,7 +399,7 @@ def opt_cross_val(
     output_l_marker: str = "G_",
     optimizer_func=optimization,
     compute_int_energy_stats_func=compute_int_energy_stats,
-    opt_type='Powell',
+    opt_type="Powell",
 ) -> None:
     """
     opt_cross_val performs n-fold cross validation on opt*.pkl df from
@@ -410,9 +441,7 @@ def opt_cross_val(
         print(f"Training: {len(training)}")
         print(f"Testing: {len(testing)}")
 
-        o_params = optimizer_func(
-            training, start_params, hf_key
-        )
+        o_params = optimizer_func(training, start_params, hf_key)
         mae, rmse, max_e, mad, mean_diff = compute_int_energy_stats_func(
             o_params, testing, hf_key
         )
@@ -423,7 +452,7 @@ def opt_cross_val(
         print(f"Fold {n} End")
 
         stats["method"].append(f"{hf_key} fold {n+1}")
-        stats['Optimization Algorithm'].append(opt_type)
+        stats["Optimization Algorithm"].append(opt_type)
         stats["RMSE"].append(rmse)
         stats["MAD"].append(mad)
         stats["MD"].append(mean_diff)
@@ -438,7 +467,7 @@ def opt_cross_val(
     rmse, mad, mean_diff, max_e = avg
 
     stats["method"].append(f"{hf_key}")
-    stats['Optimization Algorithm'].append(opt_type)
+    stats["Optimization Algorithm"].append(opt_type)
     stats["RMSE"].append(rmse)
     stats["MAX_E"].append(max_e)
     stats["MAD"].append(mad)
@@ -468,13 +497,13 @@ def opt_cross_val(
     print("        1. MAD  = %.4f" % mad)
     print("        2. RMSE = %.4f" % rmse)
     print("        3. MAX  = %.4f" % max_e)
-#     tab = f""" table ouput
-# | Level of Theory | s8       | a1       | a2       | MAE    | RMSE   | MAX_E  |
-# |-----------------|----------|----------|----------|--------|--------|--------|
-# |   {hf_key}    | {mp[0]} | {mp[1]} | {mp[2]} | {mae} | {rmse} | {max_e} |
-# |-----------------|----------|----------|----------|--------|--------|--------|
-# """
-#     print(tab)
+    #     tab = f""" table ouput
+    # | Level of Theory | s8       | a1       | a2       | MAE    | RMSE   | MAX_E  |
+    # |-----------------|----------|----------|----------|--------|--------|--------|
+    # |   {hf_key}    | {mp[0]} | {mp[1]} | {mp[2]} | {mae} | {rmse} | {max_e} |
+    # |-----------------|----------|----------|----------|--------|--------|--------|
+    # """
+    #     print(tab)
     print("Params:")
     print(mp)
     df2 = pd.DataFrame(stats)
