@@ -113,3 +113,43 @@ def optimization_d3(
     print("\nResults\n")
     out_params = ret.x
     return out_params
+
+def error_stats_fixed_params(
+    df,
+    bases=[
+        "HF_dz",
+        "HF_jdz",
+        "HF_adz",
+        "HF_tz",
+        "HF_atz",
+    ],
+    p=[0.732484, 0.094481, 3.632253],
+    error_stat_func=compute_error_stats_d3,
+    d4=True,
+) -> None:
+    """
+    compute_d3_d4_errors_fixed computes error stats on d3 and d4
+    """
+    stats = {
+        "method": [],
+        "RMSE": [],
+        "MAD": [],
+        "MD": [],
+        "MAX_E": [],
+    }
+    for i in bases:
+        print(i)
+        mae, rmse, max_e, mad, mean_diff = error_stat_func(p, df, i)
+        stats["method"].append(hf_key_to_latex_cmd(i, d4))
+        stats["RMSE"].append(rmse)
+        stats["MAD"].append(mad)
+        stats["MAX_E"].append(max_e)
+        stats["MD"].append(mean_diff)
+    print(stats)
+    if d4:
+        l_out = "D4_fixed_stats"
+    else:
+        l_out = "D3_fixed_stats"
+    df_to_latex_table_round(pd.DataFrame(stats), l_out=l_out)
+    return
+

@@ -1271,7 +1271,42 @@ def compute_bj_from_dimer_AB_all_C6s(
 
     AB = monA + monB
     disp = f90 - (AB)
+    print(f"{monA * mult_out = }")
+    print(f"{monB * mult_out = }")
+    print(f"{f90  * mult_out= }")
     return disp * mult_out
+    # return f90 * mult_out
+
+
+def compute_bj_from_dimer_AB_all_C6s_dimer_only(
+    params,
+    pos,
+    carts,
+    Ma,
+    Mb,
+    C6s,
+    C6_A,
+    C6_B,
+    mult_out=constants.conversion_factor("hartree", "kcal / mol"),
+) -> float:
+    """
+    compute_bj_from_dimer_AB computes dftd4 for dimer and each monomer and returns
+    subtraction.
+    """
+    f90 = compute_bj_f90(params, pos, carts, C6s)
+    # print_cartesians_pos_carts(pos, carts)
+
+    # mon_pa, mon_ca = create_mon_geom(pos, carts, Ma)
+    # monA = compute_bj_f90(params, mon_pa, mon_ca, C6_A)
+    #
+    # mon_pb, mon_cb = create_mon_geom(pos, carts, Mb)
+    # monB = compute_bj_f90(params, mon_pb, mon_cb, C6_B)
+    #
+    # AB = monA + monB
+    # disp = f90 - (AB)
+    print(f"{f90  * mult_out= }")
+    return f90 * mult_out
+    # return f90 * mult_out
 
 def compute_bj_from_dimer_AB_all_C6s_NO_DAMPING(
     pos,
@@ -1298,7 +1333,11 @@ def compute_bj_from_dimer_AB_all_C6s_NO_DAMPING(
 
     AB = monA + monB
     disp = f90 - (AB)
+    print(f"{monA * mult_out = }")
+    print(f"{monB * mult_out = }")
+    print(f"{f90  * mult_out= }")
     return disp * mult_out
+    # return f90 * mult_out
 
 
 

@@ -274,7 +274,8 @@ def compute_int_energy(
     df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
     rmse = (df["diff"] ** 2).mean() ** 0.5
     print("%.8f\t" % rmse, params.tolist())
-    df["diff"] = 0
+    # df["diff"] = 0
+    print(df)
     return rmse
 
 
@@ -607,4 +608,25 @@ def compute_stats_dftd4_values_fixed(
     # df2.reset_index(drop=True)
     print(df2)
 
+    return
+
+def get_params():
+    return {
+        "HF_jdz": [1.61679827, 0.44959224, 3.35743605],
+        "HF_adz": [1.61679827, 0.44959224, 3.35743605],
+        "HF_dz": [1.61679827, 0.44959224, 3.35743605],
+        "HF_tz": [1.61679827, 0.44959224, 3.35743605],
+    }
+
+
+def analyze_max_errors(
+    df,
+    count: int = 5,
+) -> None:
+    """
+    analyze_max_errors looks at largest max errors
+    """
+    params_dc = get_params()
+    for k, v in params_dc.items():
+        find_max_e(df, v, k, count)
     return

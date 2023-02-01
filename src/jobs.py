@@ -754,3 +754,17 @@ def fix_heavy_element_basis_sets(
     )
     os.chdir(def_dir)
     return
+
+def fix_heavy() -> None:
+    """
+    fix_heavy
+    """
+    inds = []
+    df = pd.read_pickle("opt8.pkl")
+    for idx, i in df.iterrows():
+        g = df.iloc[idx]["Geometry"]
+        if np.any(g[:, 0] > 10):
+            inds.append(idx)
+    df2 = df.iloc[inds]
+    fix_heavy_element_basis_sets(df2)
+    fix_heavy_element_basis_sets_dftd4(df2)
