@@ -36,6 +36,7 @@ from src.tools import (
     stats_to_latex_row,
     hf_key_to_latex_cmd,
     df_to_latex_table_round,
+    print_cartesians_dimer,
 )
 
 
@@ -44,23 +45,54 @@ def main():
     Computes best parameters for SAPT0-D4
     """
     # TODO: plot damping function (f vs. r_ab)
+
     df = pd.read_pickle("data/schr_dft.pkl")
-    # df = df.iloc[range(2500, 3500)]
-    # df_empty_cols(df)
+    print(df.columns.values)
+    for n, r in df.iterrows():
+        # print(r)
+        for i in r["Geometry"]:
+            el = int(i[0])
+            if el == 17:
+                print(n)
+                print_cartesians_dimer(
+                    r["Geometry"],
+                    r["monAs"],
+                    r["monBs"],
+                    r["charges"],
+                )
+
+    # for i in range(1, 10):
+    #     r = df.iloc[i * 150]
+    #     geom = r["Geometry"]
+    #     pos = geom[:,0]
+    #     carts = geom[:,1:]
+    #     mona, monb = r["monAs"], r["monBs"]
+    #     ma_g = carts[mona, :]
+    #     mb_g = carts[monb, :]
+    #     ma_p = pos[mona]
+    #     mb_p = pos[monb]
+    #     print("index: ", i)
+    #     # print(r)
+    #     # print(ma_g)
+    #     print_cartesians_pos_carts(ma_p, ma_g)
+    #     print_cartesians_pos_carts(mb_p, mb_g)
+    return
     HF_params = [1.61679827, 0.44959224, 3.35743605]  # HF
     adz_opt_params = [0.829861, 0.706055, 1.123903]
     row = df.iloc[3000]
     saptdft.compute_disp_3_forms(row, HF_params)
-    saptdft.compute_disp_3_forms(row, adz_opt_params)
-
-    print(row[["Benchmark", "HF_adz"]])
-    print_cartesians(row["Geometry"])
-    print()
-    row = df.iloc[0]
-    saptdft.compute_disp_3_forms(row, HF_params)
-    saptdft.compute_disp_3_forms(row, adz_opt_params)
-    print(row[["Benchmark", "HF_adz"]])
-    print_cartesians(row["Geometry"])
+    # saptdft.compute_disp_3_forms(row, adz_opt_params)
+    #
+    # print_cartesians(row["Geometry"])
+    # print(row[["Benchmark", "HF_adz"]])
+    # print_cartesians(row["Geometry"])
+    # print()
+    # row = df.iloc[0]
+    # saptdft.compute_disp_3_forms(row, HF_params)
+    # saptdft.compute_disp_3_forms(row, adz_opt_params)
+    # print(row[["Benchmark", "HF_adz"]])
+    # print_cartesians(row["Geometry"])
+    # saptdft.plot_BJ_damping(1.61679827, 0.44959224, 3.35743605)
 
     return
     """
