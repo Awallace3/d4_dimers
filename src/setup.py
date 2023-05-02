@@ -1253,8 +1253,7 @@ def compute_bj_from_dimer_AB_with_C6s(
     return disp * mult_out
     # return f90* mult_out
 
-
-def compute_bj_from_dimer_AB_all_C6s(
+def compute_bj_from_dimer_AB_all_C6s_OG(
     params,
     pos,
     carts,
@@ -1266,8 +1265,8 @@ def compute_bj_from_dimer_AB_all_C6s(
     mult_out=constants.conversion_factor("hartree", "kcal / mol"),
 ) -> float:
     """
-    compute_bj_from_dimer_AB computes dftd4 for dimer and each monomer and returns
-    subtraction.
+    compute_bj_from_dimer_AB computes dftd4 for dimer and each monomer and
+    returns subtraction. From original dftd4 optimization
     """
     f90 = compute_bj_f90(params, pos, carts, C6s)
     # print_cartesians_pos_carts(pos, carts)
@@ -1285,6 +1284,38 @@ def compute_bj_from_dimer_AB_all_C6s(
     print(f"{f90  * mult_out= }")
     return disp * mult_out
     # return f90 * mult_out
+
+def compute_bj_from_dimer_AB_all_C6s(
+    params,
+    pos,
+    carts,
+    Ma,
+    Mb,
+    C6s,
+    C6_A,
+    C6_B,
+    mult_out=constants.conversion_factor("hartree", "kcal / mol"),
+    r4r2_ls: [] = r4r2.r4r2_vals_ls()
+) -> float:
+    """
+    compute_bj_from_dimer_AB computes dftd4 for dimer and each monomer and returns
+    subtraction.
+    """
+    f90 = compute_bj_f90_simplified(params, pos, carts, C6s, r4r2_ls)
+    # print_cartesians_pos_carts(pos, carts)
+
+    mon_pa, mon_ca = create_mon_geom(pos, carts, Ma)
+    monA = compute_bj_f90_simplified(params, mon_pa, mon_ca, C6_A, r4r2_ls)
+
+    mon_pb, mon_cb = create_mon_geom(pos, carts, Mb)
+    monB = compute_bj_f90_simplified(params, mon_pb, mon_cb, C6_B, r4r2_ls)
+
+    AB = monA + monB
+    disp = f90 - (AB)
+    # print(f"{monA * mult_out = }")
+    # print(f"{monB * mult_out = }")
+    # print(f"{f90  * mult_out= }")
+    return disp * mult_out
 
 
 def compute_bj_from_dimer_AB_all_C6s_dimer_only(
@@ -2280,10 +2311,10 @@ def gather_data6(
 
 
 def compute_bj_f90_simplified(
+    params: [],
     pos: np.array,
     carts: np.array,
     C6s: np.array,
-    params: [] = [1.61679827, 0.44959224, 3.35743605],
     r4r2_ls: [] = r4r2.r4r2_vals_ls()
 ) -> float:
     """
@@ -2297,7 +2328,6 @@ def compute_bj_f90_simplified(
     energies = np.zeros(M_tot)
     lattice_points = 1
     cs = carts
-    r4r2_ls = r4r2.r4r2_vals_ls()
 
     for i in range(M_tot):
         el1 = int(pos[i])

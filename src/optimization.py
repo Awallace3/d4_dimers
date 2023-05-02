@@ -9,6 +9,7 @@ from .setup import (
     compute_bj_from_dimer_AB_all_C6s_NO_DAMPING,
     calc_dftd4_props_params,
 )
+from . import r4r2
 import scipy.optimize as opt
 import time
 import pandas as pd
@@ -61,6 +62,7 @@ def find_max_e(
     """
     print(f"\nhf_key = {hf_key}, Params = {params}")
     diff = np.zeros(len(df))
+    r4r2_ls = r4r2.r4r2_vals_ls()
     df["d4"] = df.apply(
         lambda row: compute_bj_from_dimer_AB_all_C6s(
             params,
@@ -71,6 +73,7 @@ def find_max_e(
             row["C6s"],
             row["C6_A"],
             row["C6_B"],
+            r4r2_ls = r4r2_ls,
         ),
         # lambda row: compute_bj_from_dimer_AB(
         #     params,
@@ -153,6 +156,7 @@ def compute_int_energy_stats_dftd4_key(
     # assert t == 0, f"The dftd4_key provided has np.nan values present, {t}"
 
     # df[f"{dftd4_key}_d4"] = df.apply(lambda r: r[hf_key] + r[dftd4_key], axis=1)
+    r4r2_ls = r4r2.r4r2_vals_ls()
     df[f"{hf_key}_d4"] = df.apply(
         lambda row: compute_bj_from_dimer_AB_all_C6s(
             params,
@@ -163,6 +167,7 @@ def compute_int_energy_stats_dftd4_key(
             row["C6s"],
             C6_A=row["C6_A"],
             C6_B=row["C6_B"],
+            r4r2_ls = r4r2_ls,
             # lambda row: compute_bj_pairs(
             #     params,
             #     row["Geometry"][:, 0],  # pos
@@ -189,6 +194,7 @@ def compute_int_energy_stats(
     t = df[hf_key].isna().sum()
     assert t == 0, f"The HF_col provided has np.nan values present, {t}"
     diff = np.zeros(len(df))
+    r4r2_ls = r4r2.r4r2_vals_ls()
     df["d4"] = df.apply(
         lambda row: compute_bj_from_dimer_AB_all_C6s(
             params,
@@ -199,6 +205,7 @@ def compute_int_energy_stats(
             row["C6s"],
             C6_A=row["C6_A"],
             C6_B=row["C6_B"],
+            r4r2_ls = r4r2_ls,
         ),
         axis=1,
     )
@@ -226,6 +233,7 @@ def compute_int_energy_least_squares(
         for i in params:
             if i < 0:
                 return [10 for i in range(len(df))]
+    r4r2_ls = r4r2.r4r2_vals_ls()
     df["d4"] = df.apply(
         lambda row: compute_bj_from_dimer_AB_all_C6s(
             params,
@@ -236,6 +244,7 @@ def compute_int_energy_least_squares(
             row["C6s"],
             C6_A=row["C6_A"],
             C6_B=row["C6_B"],
+            r4r2_ls = r4r2_ls,
         ),
         axis=1,
     )
@@ -258,6 +267,7 @@ def compute_int_energy(
             return 10
     rmse = 0
     diff = np.zeros(len(df))
+    r4r2_ls = r4r2.r4r2_vals_ls()
     df["d4"] = df.apply(
         lambda row: compute_bj_from_dimer_AB_all_C6s(
             params,
@@ -268,6 +278,7 @@ def compute_int_energy(
             row["C6s"],
             C6_A=row["C6_A"],
             C6_B=row["C6_B"],
+            r4r2_ls = r4r2_ls,
         ),
         axis=1,
     )

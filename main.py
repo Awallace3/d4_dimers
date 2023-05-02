@@ -13,27 +13,28 @@ def data_wrangling() -> None:
     data_wrangling
     """
     df = pd.read_pickle("data/schr_dft.pkl")
+
     print(df.columns)
-    pd.set_option('display.max_rows', None)
-    df2 = df[df['DB'].isin(["HBC1", "NBC10"])]
-    df2 = df[df['DB'].isin(["NBC10"])]
-    systems = list(set(df2['System'].to_list()))
+    pd.set_option("display.max_rows", None)
+    df2 = df[df["DB"].isin(["HBC1", "NBC10"])]
+    df2 = df[df["DB"].isin(["NBC10"])]
+    systems = list(set(df2["System"].to_list()))
     print(systems)
-    t1 = df2[df['System'] == 'Pyridine Dimer S2 Configuration']
+    t1 = df2[df["System"] == "Pyridine Dimer S2 Configuration"]
     # print(t1[['System', 'System #']])
     print("[")
     for n, r in t1.iterrows():
-        c1, c2 = r['charges'][1], r['charges'][2]
+        c1, c2 = r["charges"][1], r["charges"][2]
         print()
         print('[\n"""')
         print(f"{c1[0]} {c1[1]}")
-        tools.print_cartesians(r['Geometry'][r['monAs'], :])
+        tools.print_cartesians(r["Geometry"][r["monAs"], :])
         print("--")
         print(f"{c2[0]} {c2[1]}")
-        tools.print_cartesians(r['Geometry'][r['monBs'], :])
+        tools.print_cartesians(r["Geometry"][r["monBs"], :])
         print('"""\n],')
         atomic_numbers, atoms = [], []
-        for i in r['Geometry']:
+        for i in r["Geometry"]:
             el, x, y, z = i
             atoms.append((x, y, z))
             atomic_numbers.append(el)
@@ -94,18 +95,18 @@ def main():
         "HF_qz_no_cp",
         "HF_qz_no_df",
         "HF_qz_conv_e_4",
-        "pbe0_adz_saptdft_ndisp"
+        "pbe0_adz_saptdft_ndisp",
     ]
 
+    params = [1.61679827, 0.44959224, 3.35743605]
+    params_d3 = [0.7683276390453782 , 0.09699087897359535 , 3.6407701963142745]
     for i in bases:
         print(i)
-        params = [1.61679827, 0.44959224, 3.35743605]
-        # params = [0.7683276390453782 , 0.09699087897359535 , 3.6407701963142745]
         print("D3")
         src.optimization.opt_cross_val(
             df,
             nfolds=5,
-            start_params=params,
+            start_params=params_d3,
             hf_key=i,
             output_l_marker="D3_",
             optimizer_func=src.jeff.optimization_d3,
@@ -121,9 +122,14 @@ def main():
             output_l_marker="G_",
             optimizer_func=src.optimization.optimization,
         )
-        src.optimization.opt_cross_val(df, nfolds=5, start_params=params, hf_key=i,
-                                       output_l_marker="least", optimizer_func=src.optimization.optimization_least_squares,)
-
+        src.optimization.opt_cross_val(
+            df,
+            nfolds=5,
+            start_params=params,
+            hf_key=i,
+            output_l_marker="least",
+            optimizer_func=src.optimization.optimization_least_squares,
+        )
     return
 
 
