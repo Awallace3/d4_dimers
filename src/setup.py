@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from periodictable import elements
 from .r4r2 import get_Q, r4r2_from_elements_call, r4r2_vals, r4r2_ls
+from . import r4r2
 from .tools import print_cartesians, print_cartesians_pos_carts, np_carts_to_string
 import subprocess
 import json
@@ -205,7 +206,7 @@ def calc_dftd4_props_params(
     output_json: str = "",
     p: [] = [1.61679827, 0.44959224, 3.35743605],
     s9: str = "0.0",
-    dftd4_p: str = "dftd4",
+    dftd4_p: str = "/theoryfs2/ds/amwalla3/.local/bin/dftd4",
 ):
     # mult_out=constants.conversion_factor("hartree", "kcal / mol"),
     write_xyz_from_np(atom_numbers, carts, outfile=input_xyz)
@@ -2276,3 +2277,55 @@ def gather_data6(
         df = harvest_data(df, i.split("_")[-1], overwrite=overwrite)
     df.to_pickle(output_path)
     return df
+
+
+def compute_bj_f90_simplified(
+    pos: np.array,
+    carts: np.array,
+    C6s: np.array,
+    params: [] = [1.61679827, 0.44959224, 3.35743605],
+    r4r2_ls: [] = r4r2.r4r2_vals_ls()
+) -> float:
+    """
+    compute_bj_f90_simplified computes energy from C6s, cartesian
+    coordinates, and dimer sizes with r4r2 passed in as arg.
+    """
+    energy = 0
+    s8, a1, a2 = params
+    s6 = 1.0
+    M_tot = len(carts)
+    energies = np.zeros(M_tot)
+    lattice_points = 1
+    cs = carts
+    r4r2_ls = r4r2.r4r2_vals_ls()
+
+    for i in range(M_tot):
+        el1 = int(pos[i])
+        Q_A = (0.5 * el1 ** 0.5 * r4r2_ls[el1 - 1]) ** 0.5
+
+        for j in range(i + 1):
+            el2 = int(pos[j])
+            Q_B = (0.5 * el2 ** 0.5 * r4r2_ls[el2 - 1]) ** 0.5
+            if i == j:
+                continue
+            for k in range(lattice_points):
+
+                rrij = 3 * Q_A * Q_B
+                r0ij = a1 * np.sqrt(rrij) + a2
+                C6ij = C6s[i, j]
+
+                r1, r2 = cs[i, :], cs[j, :]
+                r2 = np.subtract(r1, r2)
+                r2 = np.sum(np.multiply(r2, r2))
+
+                t6 = 1 / (r2**3 + r0ij**6)
+                t8 = 1 / (r2**4 + r0ij**8)
+
+                edisp = s6 * t6 + s8 * rrij * t8
+
+                de = -C6ij * edisp * 0.5
+                energies[i] += de
+                if i != j:
+                    energies[j] += de
+    energy = np.sum(energies)
+    return energy

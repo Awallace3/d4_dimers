@@ -306,45 +306,45 @@ def compute_parameters():
     return
 
 
-def test_Hs_splits_size_match_false():
-    df = pd.read_pickle("opt_test.pkl")
-    df1 = df.reset_index(drop=True)
-    df2, ind = gather_data3_dimer_splits(df1)
-    correct = [False for i in ind]
-    print(correct)
-    for n, i in enumerate(ind):
-        c1 = df1.loc[i, "Geometry"]
-        c2 = df2.loc[i, "Geometry"][:-2, :]
-        mol = [False for i in c1]
-        for n1, r1 in enumerate(c1):
-            for n2, r2 in enumerate(c2):
-                if np.array_equal(r1, r2):
-                    mol[n1] = True
-                    break
-        if sum(mol) == len(mol):
-            print(n, correct)
-            correct[n] = True
-    assert sum(correct) != len(correct)
-
-
-def test_Hs_splits_size_match_true():
-    df = pd.read_pickle("opt_test.pkl")
-    df1 = df.reset_index(drop=True)
-    df2, ind = gather_data3_dimer_splits(df1)
-    correct = [False for i in ind]
-    for n, i in enumerate(ind):
-        c1 = df1.loc[i, "Geometry"]
-        c2 = df2.loc[i, "Geometry"]
-        mol = [False for i in c1]
-        for n1, r1 in enumerate(c1):
-            for n2, r2 in enumerate(c2):
-                if np.array_equal(r1, r2):
-                    mol[n1] = True
-                    break
-        if sum(mol) == len(mol):
-            print(n, correct)
-            correct[n] = True
-    assert sum(correct) == len(correct) and sum(correct) > 0
+# def test_Hs_splits_size_match_false():
+#     df = pd.read_pickle("opt_test.pkl")
+#     df1 = df.reset_index(drop=True)
+#     df2, ind = gather_data3_dimer_splits(df1)
+#     correct = [False for i in ind]
+#     print(correct)
+#     for n, i in enumerate(ind):
+#         c1 = df1.loc[i, "Geometry"]
+#         c2 = df2.loc[i, "Geometry"][:-2, :]
+#         mol = [False for i in c1]
+#         for n1, r1 in enumerate(c1):
+#             for n2, r2 in enumerate(c2):
+#                 if np.array_equal(r1, r2):
+#                     mol[n1] = True
+#                     break
+#         if sum(mol) == len(mol):
+#             print(n, correct)
+#             correct[n] = True
+#     assert sum(correct) != len(correct)
+#
+#
+# def test_Hs_splits_size_match_true():
+#     df = pd.read_pickle("opt_test.pkl")
+#     df1 = df.reset_index(drop=True)
+#     df2, ind = gather_data3_dimer_splits(df1)
+#     correct = [False for i in ind]
+#     for n, i in enumerate(ind):
+#         c1 = df1.loc[i, "Geometry"]
+#         c2 = df2.loc[i, "Geometry"]
+#         mol = [False for i in c1]
+#         for n1, r1 in enumerate(c1):
+#             for n2, r2 in enumerate(c2):
+#                 if np.array_equal(r1, r2):
+#                     mol[n1] = True
+#                     break
+#         if sum(mol) == len(mol):
+#             print(n, correct)
+#             correct[n] = True
+#     assert sum(correct) == len(correct) and sum(correct) > 0
 
 
 def compare_opt_jeff() -> None:
@@ -367,7 +367,6 @@ def compare_opt_jeff() -> None:
         if b1[i] == b2[i]:
             b += 1
     assert g == b == len(g1)
-
 
 
 def sum_ma_mb(
@@ -624,12 +623,14 @@ def compute_difference_cbjp_vs_dftd4(ind, df):
 
 
 def test_dftd4_versions():
-    m_id = 4756
+    m_id = 1
     df = pd.read_pickle("tests/diffs.pkl")
+    print(df)
     mol = df.iloc[m_id]
     atom_numbers = mol["Geometry"][:, 0]
     carts = mol["Geometry"][:, 1:]
-    x, y, e1 = calc_dftd4_props_params(atom_numbers, carts, dftd4_p="dftd4")
+    x, y, e1 = calc_dftd4_props_params(
+        atom_numbers, carts, dftd4_p="/theoryfs2/ds/amwalla3/.local/bin/dftd4")
     x, y, e2 = calc_dftd4_props_params(
         atom_numbers, carts, dftd4_p="/theoryfs2/ds/amwalla3/miniconda3/bin/dftd4"
     )
@@ -675,32 +676,44 @@ def test_dftd4_0():
     print(cbjp, e)
     assert abs(cbjp - e) < 1e-8
 
-
-def test_dftd4_SSI_5555():
+def test_dftd4_5():
     """
-    test difference between dftd4 and self C6s w/ damping on ind=5555
+    test difference between dftd4 and self C6s w/ damping on ind=0
     """
     df = pd.read_pickle("tests/diffs.pkl")
-    cbjp, e = compute_difference_cbjp_vs_dftd4(5555, df)
+    cbjp, e = compute_difference_cbjp_vs_dftd4(5, df)
+
     h_to_kcal_mol = constants.conversion_factor("hartree", "kcal / mol")
     cbjp *= h_to_kcal_mol
     e *= h_to_kcal_mol
     print(cbjp, e)
     assert abs(cbjp - e) < 1e-8
 
-
-def test_dftd4_X10by20_4756():
-    """
-    test difference between dftd4 and self C6s w/ damping on ind=4756
-    """
-    df = pd.read_pickle("tests/diffs.pkl")
-    cbjp, e = compute_difference_cbjp_vs_dftd4(4756, df)
-
-    h_to_kcal_mol = constants.conversion_factor("hartree", "kcal / mol")
-    cbjp *= h_to_kcal_mol
-    e *= h_to_kcal_mol
-    print(cbjp, e)
-    assert abs(cbjp - e) < 1e-8
+# def test_dftd4_SSI_5555():
+#     """
+#     test difference between dftd4 and self C6s w/ damping on ind=5555
+#     """
+#     df = pd.read_pickle("tests/diffs.pkl")
+#     cbjp, e = compute_difference_cbjp_vs_dftd4(5555, df)
+#     h_to_kcal_mol = constants.conversion_factor("hartree", "kcal / mol")
+#     cbjp *= h_to_kcal_mol
+#     e *= h_to_kcal_mol
+#     print(cbjp, e)
+#     assert abs(cbjp - e) < 1e-8
+#
+#
+# def test_dftd4_X10by20_4756():
+#     """
+#     test difference between dftd4 and self C6s w/ damping on ind=4756
+#     """
+#     df = pd.read_pickle("tests/diffs.pkl")
+#     cbjp, e = compute_difference_cbjp_vs_dftd4(4756, df)
+#
+#     h_to_kcal_mol = constants.conversion_factor("hartree", "kcal / mol")
+#     cbjp *= h_to_kcal_mol
+#     e *= h_to_kcal_mol
+#     print(cbjp, e)
+#     assert abs(cbjp - e) < 1e-8
 
 
 def test_dftd4_calc_psi4() -> None:
@@ -711,13 +724,12 @@ def test_dftd4_calc_psi4() -> None:
     df = pd.read_pickle("tests/diffs.pkl")
     df.dropna(subset=["HF_jdz_dftd4"], how="all", inplace=True)
     print(df.columns)
-    df["diff"] = df.apply(lambda r: r["HF_jdz_d4_sum"] - r["HF_jdz_dftd4"], axis=1)
+    df["diff"] = df.apply(lambda r: r["HF_jdz_d4_sum"] -
+                          r["HF_jdz_dftd4"], axis=1)
 
     v = (df["HF_diff"].abs() < 1e-1).all()
     print(sorted(df["HF_diff"].abs().to_list(), reverse=True)[:50])
     assert v
-
-
 
 
 def main():

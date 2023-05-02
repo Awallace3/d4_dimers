@@ -140,7 +140,7 @@ def compute_disp_3_forms(
     params=[1.61679827, 0.44959224, 3.35743605],  # HF
 ) -> None:
     """
-    compute_disp_3_forms
+    compute_disp_3_forms no damping, INCORRECT=>UPDATE
     """
     mult_out = constants.conversion_factor("hartree", "kcal / mol")
     print("\tEnergies are in kcal/mol\n")

@@ -44,6 +44,7 @@ def generate_truncated_csv(path: str="master-regen.pkl"):
     df = df[["DB", "Name", "HF INTERACTION ENERGY", "HF TOTAL ENERGY", "System #", "Geometry", "Benchmark"]]
     print(df[[ "HF INTERACTION ENERGY", "Benchmark" ]].head())
     df.to_csv("truncated.csv")
+    return
 
 def main():
     # create_data_csv()
