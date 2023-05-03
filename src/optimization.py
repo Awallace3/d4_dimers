@@ -214,7 +214,8 @@ def compute_int_energy_stats(
     mae = df["diff"].abs().mean()
     rmse = (df["diff"] ** 2).mean() ** 0.5
     max_e = df["diff"].abs().max()
-    mad = df["diff"].mad()
+    # mad = df["diff"].mad()
+    mad = abs(df['diff'] - df['diff'].mean()).mean()
     mean_dif = df["diff"].mean()
     return mae, rmse, max_e, mad, mean_dif
 
@@ -258,13 +259,15 @@ def compute_int_energy(
     params: [float],
     df: pd.DataFrame,
     hf_key: str = "HF INTERACTION ENERGY",
+    prevent_negative_params: bool = False,
 ):
     """
     compute_int_energy is used to optimize paramaters for damping function in dftd4
     """
-    for i in params:
-        if i < 0:
-            return 10
+    if prevent_negative_params:
+        for i in params:
+            if i < 0:
+                return 10
     rmse = 0
     diff = np.zeros(len(df))
     r4r2_ls = r4r2.r4r2_vals_ls()
@@ -286,7 +289,7 @@ def compute_int_energy(
     rmse = (df["diff"] ** 2).mean() ** 0.5
     print("%.8f\t" % rmse, params.tolist())
     # df["diff"] = 0
-    print(df)
+    # print(df)
     return rmse
 
 

@@ -905,7 +905,6 @@ def compute_bj_alt(
         Q_A = np.sqrt(el1) * el1_r4r2
 
         for j in range(i):
-
             el2 = int(pos[j])
             el2_r4r2 = r4r2_vals(el2)
             Q_B = np.sqrt(el2) * el2_r4r2
@@ -1004,6 +1003,7 @@ def compute_bj_f90(
     energy = np.sum(energies)
     return energy
 
+
 def compute_bj_f90_NO_DAMPING(
     pos: np.array,
     carts: np.array,
@@ -1041,8 +1041,8 @@ def compute_bj_f90_NO_DAMPING(
                 r2 = np.sum(np.multiply(r2, r2))
                 r2 = np.sqrt(r2)
                 print(i, j, int(pos[i]), int(pos[j]), C6, C8, r2, Q_A, Q_B)
-                R_6 = r2 ** 6
-                R_8 = r2 ** 8
+                R_6 = r2**6
+                R_8 = r2**8
 
                 de = C6 / R_6 + C8 / R_8
                 energies[i] += de
@@ -1050,6 +1050,7 @@ def compute_bj_f90_NO_DAMPING(
                     energies[j] += de
     energy = -np.sum(energies)
     return energy
+
 
 def compute_bj_f90_exact(
     params: [],
@@ -1253,6 +1254,7 @@ def compute_bj_from_dimer_AB_with_C6s(
     return disp * mult_out
     # return f90* mult_out
 
+
 def compute_bj_from_dimer_AB_all_C6s_OG(
     params,
     pos,
@@ -1285,6 +1287,7 @@ def compute_bj_from_dimer_AB_all_C6s_OG(
     return disp * mult_out
     # return f90 * mult_out
 
+
 def compute_bj_from_dimer_AB_all_C6s(
     params,
     pos,
@@ -1295,20 +1298,38 @@ def compute_bj_from_dimer_AB_all_C6s(
     C6_A,
     C6_B,
     mult_out=constants.conversion_factor("hartree", "kcal / mol"),
-    r4r2_ls: [] = r4r2.r4r2_vals_ls()
+    r4r2_ls: [] = r4r2.r4r2_vals_ls(),
 ) -> float:
     """
     compute_bj_from_dimer_AB computes dftd4 for dimer and each monomer and returns
     subtraction.
     """
-    f90 = compute_bj_f90_simplified(params, pos, carts, C6s, r4r2_ls)
+    f90 = compute_bj_f90_simplified(
+        params=params,
+        pos=pos,
+        carts=carts,
+        C6s=C6s,
+        r4r2_ls=r4r2_ls,
+    )
     # print_cartesians_pos_carts(pos, carts)
 
     mon_pa, mon_ca = create_mon_geom(pos, carts, Ma)
-    monA = compute_bj_f90_simplified(params, mon_pa, mon_ca, C6_A, r4r2_ls)
+    monA = compute_bj_f90_simplified(
+        params=params,
+        pos=mon_pa,
+        carts=mon_ca,
+        C6s=C6_A,
+        r4r2_ls=r4r2_ls,
+    )
 
     mon_pb, mon_cb = create_mon_geom(pos, carts, Mb)
-    monB = compute_bj_f90_simplified(params, mon_pb, mon_cb, C6_B, r4r2_ls)
+    monB = compute_bj_f90_simplified(
+        params=params,
+        pos=mon_pb,
+        carts=mon_cb,
+        C6s=C6_B,
+        r4r2_ls=r4r2_ls,
+    )
 
     AB = monA + monB
     disp = f90 - (AB)
@@ -1348,6 +1369,7 @@ def compute_bj_from_dimer_AB_all_C6s_dimer_only(
     return f90 * mult_out
     # return f90 * mult_out
 
+
 def compute_bj_from_dimer_AB_all_C6s_NO_DAMPING(
     pos,
     carts,
@@ -1378,7 +1400,6 @@ def compute_bj_from_dimer_AB_all_C6s_NO_DAMPING(
     print(f"{f90  * mult_out= }")
     return disp * mult_out
     # return f90 * mult_out
-
 
 
 def compute_bj_from_dimer_AB(
@@ -1864,6 +1885,7 @@ def assign_charge_single(mol, path_SSI="data/SSI_xyzfiles/combined/") -> pd.Data
     print(charge)
     return charge
 
+
 def assign_charges(df, path_SSI="data/SSI_xyzfiles/combined/") -> pd.DataFrame:
     c = np.array([[0, 1], [0, 1], [0, 1]])
     charges = [c for i in range(len(df))]
@@ -2315,7 +2337,7 @@ def compute_bj_f90_simplified(
     pos: np.array,
     carts: np.array,
     C6s: np.array,
-    r4r2_ls: [] = r4r2.r4r2_vals_ls()
+    r4r2_ls: [] = r4r2.r4r2_vals_ls(),
 ) -> float:
     """
     compute_bj_f90_simplified computes energy from C6s, cartesian
@@ -2327,19 +2349,20 @@ def compute_bj_f90_simplified(
     M_tot = len(carts)
     energies = np.zeros(M_tot)
     lattice_points = 1
-    cs = carts
+    # cs = carts
+    aatoau = Constants().g_aatoau()
+    cs = aatoau * np.array(carts, copy=True)
 
     for i in range(M_tot):
         el1 = int(pos[i])
-        Q_A = (0.5 * el1 ** 0.5 * r4r2_ls[el1 - 1]) ** 0.5
+        Q_A = (0.5 * el1**0.5 * r4r2_ls[el1 - 1]) ** 0.5
 
         for j in range(i + 1):
             el2 = int(pos[j])
-            Q_B = (0.5 * el2 ** 0.5 * r4r2_ls[el2 - 1]) ** 0.5
+            Q_B = (0.5 * el2**0.5 * r4r2_ls[el2 - 1]) ** 0.5
             if i == j:
                 continue
             for k in range(lattice_points):
-
                 rrij = 3 * Q_A * Q_B
                 r0ij = a1 * np.sqrt(rrij) + a2
                 C6ij = C6s[i, j]

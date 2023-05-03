@@ -13,7 +13,6 @@ def data_wrangling() -> None:
     data_wrangling
     """
     df = pd.read_pickle("data/schr_dft.pkl")
-
     print(df.columns)
     pd.set_option("display.max_rows", None)
     df2 = df[df["DB"].isin(["HBC1", "NBC10"])]
@@ -47,30 +46,152 @@ def data_wrangling() -> None:
     return
 
 
+def optimize_paramaters(df, bases) -> None:
+    # bases = [
+    #     "TAG",
+    #     # "HF_dz",
+    #     # "HF_jdz",
+    #     # "HF_adz",
+    #     # "HF_tz",
+    #     # "HF_atz",
+    #     # "HF_jdz_no_cp",
+    #     # "HF_dz_no_cp",
+    #     # "HF_qz",
+    #     # "HF_qz_no_cp",
+    #     # "HF_qz_no_df",
+    #     # "HF_qz_conv_e_4",
+    #     # "pbe0_adz_saptdft_ndisp",
+    # ]
+
+    adz_opt_params = [0.829861, 0.706055, 1.123903]
+    params = [1.61679827, 0.44959224, 3.35743605]
+    params_d3 = [0.7683276390453782, 0.09699087897359535, 3.6407701963142745]
+    for i in bases:
+        print(i)
+        # print("D3")
+        # src.optimization.opt_cross_val(
+        #     df,
+        #     nfolds=5,
+        #     start_params=params_d3,
+        #     hf_key=i,
+        #     output_l_marker="D3_",
+        #     optimizer_func=src.jeff.optimization_d3,
+        #     compute_int_energy_stats_func=src.jeff.compute_error_stats_d3,
+        #     opt_type="Powell",
+        # )
+        print("D4")
+        src.optimization.opt_cross_val(
+            df,
+            nfolds=5,
+            # start_params=params,
+            start_params=adz_opt_params,
+            hf_key=i,
+            output_l_marker="G_",
+            optimizer_func=src.optimization.optimization,
+        )
+        # src.optimization.opt_cross_val(
+        #     df,
+        #     nfolds=5,
+        #     start_params=params,
+        #     hf_key=i,
+        #     output_l_marker="least",
+        #     optimizer_func=src.optimization.optimization_least_squares,
+        # )
+    return
+
+
+def compute_D3_D4_values_for_params(
+    df: pd.DataFrame,
+    params_d3: [],
+    params_d4: [],
+    label: str,
+) -> pd.DataFrame:
+    """
+    compute_D3_D4_values_for_params
+    """
+
+    df[f"-D3 ({label})"] = df.apply(
+        lambda r: src.jeff.compute_bj(params_d3, r["D3Data"]),
+        axis=1,
+    )
+    df[f"-D4 ({label})"] = df.apply(
+        lambda row: src.setup.compute_bj_from_dimer_AB_all_C6s(
+            params_d4,
+            row["Geometry"][:, 0],  # pos
+            row["Geometry"][:, 1:],  # carts
+            row["monAs"],
+            row["monBs"],
+            row["C6s"],
+            C6_A=row["C6_A"],
+            C6_B=row["C6_B"],
+        ),
+        axis=1,
+    )
+    return df
+
+
 def main():
     """
     Computes best parameters for SAPT0-D4
     """
     # TODO: plot damping function (f vs. r_ab)
 
-    df = pd.read_pickle("data/schr_dft.pkl")
-    HF_params = [1.61679827, 0.44959224, 3.35743605]  # HF
-    adz_opt_params = [0.829861, 0.706055, 1.123903]
+    pkl_name = "data/schr_dft.pkl"
+    df = pd.read_pickle(pkl_name)
+    print(df.columns)
+    params_dict = src.paramsTable.paramsDict()
+    params_d4 = params_dict["sadz"][1:]
+
+    params_d3 = params_dict["sdadz"][1:]
+    print(params_d3)
+    print(params_d4)
+    df = compute_D3_D4_values_for_params(df, params_d3, params_d4, "adz")
+    print(df)
+    print(df.columns)
+    df.to_pickle(pkl_name)
+    return
+    df["SAPT0-D4/aug-cc-pVDZ"] = df.apply(
+        lambda row: row["HF_adz"] + row["-D4 (adz)"],
+        axis=1,
+    )
+
+    df["adz_diff"] = df["SAPT0-D4/aug-cc-pVDZ"] - df["Benchmark"]
+    df["HF_adz_diff"] = df["HF_adz"] - df["Benchmark"]
+    print(df["adz_diff"].describe())
+    print(df["HF_adz_diff"].describe())
+    src.plotting.plot_dbs(df, "adz_diff", "SAPT0-D4/aug-cc-pVDZ", "adz_diff")
+    src.plotting.plot_dbs(df, "HF_adz_diff", "HF/aug-cc-pVDZ", "HF_adz_diff")
 
     """
-    df = df[~df["pbe0_adz_saptdft"].isna()]
-    k = constants.conversion_factor("hartree", "kcal / mol")
-    df["pbe0_adz_saptdft_ndisp"] = df.apply(
+    df_saptdft = df[~df["pbe0_adz_saptdft"].isna()].copy()
+    k = qcel.constants.conversion_factor("hartree", "kcal / mol")
+    df_saptdft["pbe0_adz_saptdft_ndisp"] = df_saptdft.apply(
         lambda r: (sum(r["pbe0_adz_saptdft"][:2]) + r["pbe0_adz_saptdft"][3]) * k,
         axis=1,
     )
-    df["pbe0_adz_saptdft_sum"] = df.apply(
+    df_saptdft["pbe0_adz_saptdft_sum"] = df_saptdft.apply(
         lambda r: (sum(r["pbe0_adz_saptdft"][:4])) * k,
         axis=1,
     )
-    print(df[["Benchmark", "pbe0_adz_saptdft_ndisp", "pbe0_adz_saptdft_sum", "HF_adz"]])
-    print(df.iloc[0]["pbe0_adz_saptdft"] * 627.509)
+    print(df_saptdft[["Benchmark", "pbe0_adz_saptdft_ndisp", "pbe0_adz_saptdft_sum", "HF_adz"]])
     """
+
+    bases = [
+        # "HF_dz",
+        # "HF_jdz",
+        # "HF_adz",
+        # "HF_tz",
+        # "HF_atz",
+        # "HF_jdz_no_cp",
+        # "HF_dz_no_cp",
+        # "HF_qz",
+        # "HF_qz_no_cp",
+        # "HF_qz_no_df",
+        # "HF_qz_conv_e_4",
+        "pbe0_adz_saptdft_ndisp",
+    ]
+    # optimize_paramaters(df_saptdft, bases)
+    # print(df.iloc[0]["pbe0_adz_saptdft"] * 627.509)
 
     # src.setup.gather_data6(
     #     output_path="sr3.pkl",
@@ -82,54 +203,6 @@ def main():
 
     # src.optimization.compute_stats_dftd4_values_fixed(df, fixed_col="dftd4_disp_ie_grimme_params")
     # src.optimization.compute_stats_dftd4_values_fixed(df, fixed_col='dftd4_disp_ie_grimme_params_ATM')
-
-    bases = [
-        "HF_dz",
-        "HF_jdz",
-        "HF_adz",
-        "HF_tz",
-        "HF_atz",
-        "HF_jdz_no_cp",
-        "HF_dz_no_cp",
-        "HF_qz",
-        "HF_qz_no_cp",
-        "HF_qz_no_df",
-        "HF_qz_conv_e_4",
-        "pbe0_adz_saptdft_ndisp",
-    ]
-
-    params = [1.61679827, 0.44959224, 3.35743605]
-    params_d3 = [0.7683276390453782 , 0.09699087897359535 , 3.6407701963142745]
-    for i in bases:
-        print(i)
-        print("D3")
-        src.optimization.opt_cross_val(
-            df,
-            nfolds=5,
-            start_params=params_d3,
-            hf_key=i,
-            output_l_marker="D3_",
-            optimizer_func=src.jeff.optimization_d3,
-            compute_int_energy_stats_func=src.jeff.compute_error_stats_d3,
-            opt_type="Powell",
-        )
-        print("D4")
-        src.optimization.opt_cross_val(
-            df,
-            nfolds=5,
-            start_params=params,
-            hf_key=i,
-            output_l_marker="G_",
-            optimizer_func=src.optimization.optimization,
-        )
-        src.optimization.opt_cross_val(
-            df,
-            nfolds=5,
-            start_params=params,
-            hf_key=i,
-            output_l_marker="least",
-            optimizer_func=src.optimization.optimization_least_squares,
-        )
     return
 
 

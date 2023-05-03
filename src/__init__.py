@@ -9,3 +9,5 @@ from . import harvest
 from . import saptdft
 from . import stats
 from . import r4r2
+from . import plotting
+from . import paramsTable
