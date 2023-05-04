@@ -149,7 +149,7 @@ def plots(df) -> None:
     df["adz_diff_d3"] = df["SAPT0-D3/aug-cc-pVDZ"] - df["Benchmark"]
     print(df["adz_diff_d3"].describe())
     print(df["adz_diff_d4"].describe())
-    src.plotting.plot_dbs(df, "adz_diff", "SAPT0-D4/aug-cc-pVDZ", "adz_diff")
+    src.plotting.plot_dbs(df, "adz_diff_d4", "SAPT0-D4/aug-cc-pVDZ", "adz_diff_d4")
     src.plotting.plot_dbs(df, "HF_adz_diff", "HF/aug-cc-pVDZ", "HF_adz_diff")
     src.plotting.plot_dbs_d3_d4(
         df,
@@ -176,6 +176,8 @@ def main():
     params_d4 = params_dict["sadz"][1:]
     params_d3 = params_dict["sdadz"][1:]
     undamped = params_dict["undamped"][1:]
+    plots(df)
+    return
     # print(params_d3)
     # print(params_d4)
     # df = compute_D3_D4_values_for_params(df, params_d3, params_d4, "adz")

@@ -63,7 +63,24 @@ def plot_dbs(df, df_col, title_name, pfn) -> None:
         xs_error,
         [1 for i in range(len(xs_error))],
         "k--",
-        label="1 kcal/mol",
+        label="+-1 kcal/mol",
+        zorder=0,
+    )
+    ax.plot(
+        xs_error,
+        [0 for i in range(len(xs_error))],
+        "k--",
+        alpha=0.5,
+        linewidth=0.5,
+        label="0 kcal/mol",
+        zorder=0,
+    )
+    ax.plot(
+        xs_error,
+        [-1 for i in range(len(xs_error))],
+        "k--",
+        label="+-1 kcal/mol",
+        zorder=0,
     )
     ax.set_xticks(xs)
     plt.setp(ax.set_xticklabels(vLabels), rotation=30, fontsize="6")
@@ -116,7 +133,24 @@ def plot_dbs_d3_d4(df, c1, c2, l1, l2, title_name, pfn) -> None:
         xs_error,
         [1 for i in range(len(xs_error))],
         "k--",
-        label="1 kcal/mol",
+        label="+-1 kcal/mol",
+        zorder=0,
+    )
+    ax.plot(
+        xs_error,
+        [0 for i in range(len(xs_error))],
+        "k--",
+        linewidth=0.5,
+        alpha=0.5,
+        label="0 kcal/mol",
+        zorder=0,
+    )
+    ax.plot(
+        xs_error,
+        [-1 for i in range(len(xs_error))],
+        "k--",
+        label="+-1 kcal/mol",
+        zorder=0,
     )
     ax.set_xticks(xs)
     plt.setp(ax.set_xticklabels(vLabels), rotation=30, fontsize="6")
