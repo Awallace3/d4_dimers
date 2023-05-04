@@ -255,6 +255,7 @@ def compute_int_energy_least_squares(
     rmse = (df["diff"] ** 2).mean() ** 0.5
     print("%.8f\t" % rmse, params.tolist())
     return df["diff"].tolist()
+    # return rmse
 
 
 def compute_int_energy(
@@ -379,7 +380,7 @@ def optimization_least_squares(
         # method="lm",
     )
     print("\nResults\n")
-    out_params = ret.x
+    out_params = ret.x[0]
     print(f"{out_params = }")
     mae, rmse, max_e, mad, mean_diff = compute_int_energy_stats(out_params, df, hf_key)
     # return out_params, mae, rmse, max_e
