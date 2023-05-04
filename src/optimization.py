@@ -108,7 +108,8 @@ def find_max_e(
     rmse = (df["diff"] ** 2).mean() ** 0.5
     df["diff_abs"] = df["diff"].abs()
     max_e = df["diff_abs"].max()
-    mad = df["diff"].mad()
+    # mad = df["diff"].mad()
+    mad = abs(df['diff'] - df['diff'].mean()).mean()
     df = df.sort_values(by=["diff_abs"], ascending=False)
     df = df.reset_index(drop=False)
     print("        1. MAE  = %.4f" % mae)
@@ -195,6 +196,7 @@ def compute_int_energy_stats(
     assert t == 0, f"The HF_col provided has np.nan values present, {t}"
     diff = np.zeros(len(df))
     r4r2_ls = r4r2.r4r2_vals_ls()
+    print(f"{params = }")
     df["d4"] = df.apply(
         lambda row: compute_bj_from_dimer_AB_all_C6s(
             params,
@@ -224,16 +226,16 @@ def compute_int_energy_least_squares(
     params: [float],
     df: pd.DataFrame,
     hf_key: str = "HF INTERACTION ENERGY",
-    ban_neg_params: bool = False,
+    # ban_neg_params: bool = False,
 ):
     """
     compute_int_energy is used to optimize paramaters for damping function in dftd4
     """
     rmse = 0
-    if ban_neg_params:
-        for i in params:
-            if i < 0:
-                return [10 for i in range(len(df))]
+    # if ban_neg_params:
+    #     for i in params:
+    #         if i < 0:
+    #             return [10 for i in range(len(df))]
     r4r2_ls = r4r2.r4r2_vals_ls()
     df["d4"] = df.apply(
         lambda row: compute_bj_from_dimer_AB_all_C6s(
@@ -378,8 +380,10 @@ def optimization_least_squares(
     )
     print("\nResults\n")
     out_params = ret.x
+    print(f"{out_params = }")
     mae, rmse, max_e, mad, mean_diff = compute_int_energy_stats(out_params, df, hf_key)
     # return out_params, mae, rmse, max_e
+    print(out_params)
     return out_params, mae, rmse, max_e, mad, mean_diff
 
 
@@ -428,6 +432,7 @@ def opt_cross_val(
     stats_np = np.zeros((nfolds, 4))
     p_out = np.zeros((nfolds, len(start_params)))
     # mp, mmae, mrmse, mmax_e, mmad, mmean_diff = optimization(df, start_params, hf_key)
+    print(start_params)
     mp = optimizer_func(df, start_params, hf_key)
     mmae, mrmse, mmax_e, mmad, mmean_diff = compute_int_energy_stats_func(
         mp, df, hf_key

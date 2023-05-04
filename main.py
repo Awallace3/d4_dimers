@@ -66,6 +66,7 @@ def optimize_paramaters(df, bases) -> None:
     adz_opt_params = [0.829861, 0.706055, 1.123903]
     params = [1.61679827, 0.44959224, 3.35743605]
     params_d3 = [0.7683276390453782, 0.09699087897359535, 3.6407701963142745]
+    params = src.paramsTable.paramsDict()["HF"][1:]
     for i in bases:
         print(i)
         # print("D3")
@@ -141,28 +142,37 @@ def main():
     print(df.columns)
     params_dict = src.paramsTable.paramsDict()
     params_d4 = params_dict["sadz"][1:]
-
     params_d3 = params_dict["sdadz"][1:]
-    print(params_d3)
-    print(params_d4)
-    df = compute_D3_D4_values_for_params(df, params_d3, params_d4, "adz")
-    print(df)
-    print(df.columns)
-    df.to_pickle(pkl_name)
-    return
+    # print(params_d3)
+    # print(params_d4)
+    # df = compute_D3_D4_values_for_params(df, params_d3, params_d4, "adz")
+    # df.to_pickle(pkl_name)
     df["SAPT0-D4/aug-cc-pVDZ"] = df.apply(
         lambda row: row["HF_adz"] + row["-D4 (adz)"],
         axis=1,
     )
-
-    df["adz_diff"] = df["SAPT0-D4/aug-cc-pVDZ"] - df["Benchmark"]
+    df["SAPT0-D3/aug-cc-pVDZ"] = df.apply(
+        lambda row: row["HF_adz"] + row["-D3 (adz)"],
+        axis=1,
+    )
     df["HF_adz_diff"] = df["HF_adz"] - df["Benchmark"]
-    print(df["adz_diff"].describe())
-    print(df["HF_adz_diff"].describe())
-    src.plotting.plot_dbs(df, "adz_diff", "SAPT0-D4/aug-cc-pVDZ", "adz_diff")
-    src.plotting.plot_dbs(df, "HF_adz_diff", "HF/aug-cc-pVDZ", "HF_adz_diff")
 
-    """
+    df["adz_diff_d4"] = df["SAPT0-D4/aug-cc-pVDZ"] - df["Benchmark"]
+    df["adz_diff_d3"] = df["SAPT0-D3/aug-cc-pVDZ"] - df["Benchmark"]
+    # print(df["adz_diff_d3"].describe())
+    # print(df["adz_diff_d4"].describe())
+    # src.plotting.plot_dbs(df, "adz_diff", "SAPT0-D4/aug-cc-pVDZ", "adz_diff")
+    # src.plotting.plot_dbs(df, "HF_adz_diff", "HF/aug-cc-pVDZ", "HF_adz_diff")
+    # src.plotting.plot_dbs_d3_d4(
+    #     df,
+    #     "adz_diff_d3",
+    #     "adz_diff_d4",
+    #     "D3",
+    #     "D4",
+    #     "SAPT0-D/aug-cc-pVDZ",
+    #     "adz_diff_d3_d4",
+    # )
+
     df_saptdft = df[~df["pbe0_adz_saptdft"].isna()].copy()
     k = qcel.constants.conversion_factor("hartree", "kcal / mol")
     df_saptdft["pbe0_adz_saptdft_ndisp"] = df_saptdft.apply(
@@ -174,7 +184,6 @@ def main():
         axis=1,
     )
     print(df_saptdft[["Benchmark", "pbe0_adz_saptdft_ndisp", "pbe0_adz_saptdft_sum", "HF_adz"]])
-    """
 
     bases = [
         # "HF_dz",
@@ -190,7 +199,7 @@ def main():
         # "HF_qz_conv_e_4",
         "pbe0_adz_saptdft_ndisp",
     ]
-    # optimize_paramaters(df_saptdft, bases)
+    optimize_paramaters(df_saptdft, bases)
     # print(df.iloc[0]["pbe0_adz_saptdft"] * 627.509)
 
     # src.setup.gather_data6(
