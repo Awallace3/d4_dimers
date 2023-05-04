@@ -25,7 +25,7 @@ def correlation_plot(df_subset, pfn="plots/correlation.png") -> None:
     return
 
 
-def plot_dbs(df, df_col, title_name, pfn) -> None:
+def plot_dbs(df, df_col, title_name, pfn, color="blue") -> None:
     """
     plot_dbs
     """
@@ -37,7 +37,7 @@ def plot_dbs(df, df_col, title_name, pfn) -> None:
         vData.append(df2[df_col].to_list())
         vLabels.append(d)
 
-    fig = plt.figure(dpi=400)
+    fig = plt.figure(dpi=800)
     ax = plt.subplot(111)
     vplot = ax.violinplot(vData, showmeans=True, showmedians=False)
     # for partname in ('cbars', 'cmins', 'cmaxes', 'cmeans', 'cmedians'):
@@ -49,9 +49,9 @@ def plot_dbs(df, df_col, title_name, pfn) -> None:
 
     for n, pc in enumerate(vplot["bodies"], 1):
         if n%2 != 0:
-            pc.set_facecolor("blue")
+            pc.set_facecolor(color)
         else:
-            pc.set_facecolor("blue")
+            pc.set_facecolor(color)
         pc.set_alpha(0.5)
         # pc.set_edgecolor("black")
 
@@ -63,7 +63,9 @@ def plot_dbs(df, df_col, title_name, pfn) -> None:
         xs_error,
         [1 for i in range(len(xs_error))],
         "k--",
-        label="+-1 kcal/mol",
+        # label="+-1 kcal/mol",
+        linewidth=0.8,
+        label=r"$\pm$1 kcal/mol",
         zorder=0,
     )
     ax.plot(
@@ -79,16 +81,17 @@ def plot_dbs(df, df_col, title_name, pfn) -> None:
         xs_error,
         [-1 for i in range(len(xs_error))],
         "k--",
-        label="+-1 kcal/mol",
+        linewidth=0.8,
+        # label="+-1 kcal/mol",
         zorder=0,
     )
     ax.set_xticks(xs)
-    plt.setp(ax.set_xticklabels(vLabels), rotation=30, fontsize="6")
+    plt.setp(ax.set_xticklabels(vLabels), rotation=45, fontsize="5")
     ax.set_xlim((0, len(vLabels)))
     ax.legend(loc="upper left")
     ax.set_xlabel("Database")
     ax.set_ylabel("Error (kcal/mol)")
-    plt.title(f"{title_name} DBs Violin")
+    plt.title(f"{title_name}")
     plt.savefig(f"plots/{pfn}_dbs_violin.png")
     plt.clf()
     return
@@ -107,7 +110,7 @@ def plot_dbs_d3_d4(df, c1, c2, l1, l2, title_name, pfn) -> None:
         vLabels.append(f"{d} - {l1}")
         vLabels.append(f"{d} - {l2}")
 
-    fig = plt.figure(dpi=400)
+    fig = plt.figure(dpi=800)
     ax = plt.subplot(111)
     vplot = ax.violinplot(vData, showmeans=True, showmedians=False)
     # for partname in ('cbars', 'cmins', 'cmaxes', 'cmeans', 'cmedians'):
@@ -133,7 +136,7 @@ def plot_dbs_d3_d4(df, c1, c2, l1, l2, title_name, pfn) -> None:
         xs_error,
         [1 for i in range(len(xs_error))],
         "k--",
-        label="+-1 kcal/mol",
+        label=r"$\pm$1 kcal/mol",
         zorder=0,
     )
     ax.plot(
@@ -149,15 +152,21 @@ def plot_dbs_d3_d4(df, c1, c2, l1, l2, title_name, pfn) -> None:
         xs_error,
         [-1 for i in range(len(xs_error))],
         "k--",
-        label="+-1 kcal/mol",
+        # label="+-1 kcal/mol",
         zorder=0,
     )
     ax.set_xticks(xs)
-    plt.setp(ax.set_xticklabels(vLabels), rotation=30, fontsize="6")
+    plt.setp(ax.set_xticklabels(vLabels), rotation=60, fontsize="5")
     ax.set_xlim((0, len(vLabels)))
     ax.legend(loc="upper left")
     ax.set_xlabel("Database")
     ax.set_ylabel("Error (kcal/mol)")
+    for n, xtick in enumerate(ax.get_xticklabels()):
+
+        if n%2 != 0:
+            xtick.set_color("blue")
+        else:
+            xtick.set_color("red")
     plt.title(f"{title_name} DBs Violin")
     # plt.show()
     plt.savefig(f"plots/{pfn}_dbs_violin.png")
