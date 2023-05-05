@@ -19,7 +19,7 @@ def run_parallel() -> None:
 
     if rank == 0:
         con, cur = hrcl_jobs.sqlt.establish_connection(DB_PATH)
-        id_list = hrcl_jobs.sqlt.return_id_list_full_table(cur, "main", "main_id")
+        id_list = hrcl_jobs.sqlt.return_id_list(cur, "SAPT0_adz", "main", "main_id", ["NULL"])
         print(f"{id_list = }")
 
     level_theory = ["SAPT0/aug-cc-pVDZ"]
