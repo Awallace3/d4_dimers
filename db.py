@@ -6,7 +6,7 @@ import hrcl_jobs_psi4
 
 DB_PATH = "db/schr.db"
 
-def run_parallel(id_list=range(1, 181)) -> None:
+def run_parallel() -> None:
     """
     run_parallel
     """
@@ -15,8 +15,11 @@ def run_parallel(id_list=range(1, 181)) -> None:
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
     n_procs = comm.Get_size()
+    id_list = []
 
     if rank == 0:
+        con, cur = hrcl_jobs.sqlt.establish_connection(DB_PATH)
+        id_list = hrcl_jobs.sqlt.return_id_list_full_table(cur, "main", "main_id")
         print(f"{id_list = }")
 
     level_theory = ["SAPT0/aug-cc-pVDZ"]
@@ -39,9 +42,7 @@ def run_parallel(id_list=range(1, 181)) -> None:
     return
 
 def main():
-    con, cur = hrcl_jobs.sqlt.establish_connection(DB_PATH)
-    id_list = hrcl_jobs.sqlt.return_id_list_full_table(cur, "main", "main_id")
-    run_parallel(id_list)
+    run_parallel()
     return
 
 
