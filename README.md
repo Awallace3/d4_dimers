@@ -1,5 +1,24 @@
 # d4_dimers
 
+## Objective
+- The repository provides code for optimizing -D3 and -D4 paramters with python3
+- Helper functions can be found in the `src` directory for constructing pandas
+  dataframes for with -D4 C6's for monomers and dimers along with plotting
+  results.
+- Currently two forms of five-fold crosss validation optimization procedures
+  are implemented: Powell Algorithm and Levenberg-Marquardt least-squares
+  fitting.  
+
+## Installation
+1. Recommended installation is to create a conda environment using the
+   `environment.yml` file provided.
+```bash
+conda env create -f environment.yml
+```
+2. The DFTD4 binary must be compiled from [this forked
+   repository](https://github.com/Awallace3/dftd4) to acquire C6's and pass the
+   pytests.
+
 ## Usage
-You must use the Awallace3/dftd4 fork for building dftd4 for the scripts in
-this repository to work correctly
+The `main.py` python script is not meant to be statically used, but rather
+serve as a place to use the functions in the `src` directory.
