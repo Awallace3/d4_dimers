@@ -207,34 +207,34 @@ def plots(df) -> None:
     #     "",
     #     "adz_d3_d4_total",
     # )
-    src.plotting.plot_dbs_d3_d4(
-        df,
-        "adz_diff_d3",
-        "adz_diff_d4",
-        "D3",
-        "D4",
-        "SAPT0-D/aug-cc-pVDZ Compared With CCSD(T)/CBS",
-        "adz_diff_d3_d4",
-    )
-    src.plotting.plot_dbs_d3_d4_two(
-        df,
-        "adz_diff_d3",
-        "adz_diff_d4",
-        "D3",
-        "D4",
-        "1: SAPT0-D/aug-cc-pVDZ Compared With CCSD(T)/CBS",
-        "adz_diff_d3_d4_first",
-    )
-    src.plotting.plot_dbs_d3_d4_two(
-        df,
-        "adz_diff_d3",
-        "adz_diff_d4",
-        "D3",
-        "D4",
-        "2: SAPT0-D/aug-cc-pVDZ Compared With CCSD(T)/CBS",
-        "adz_diff_d3_d4_second",
-        False,
-    )
+    # src.plotting.plot_dbs_d3_d4(
+    #     df,
+    #     "adz_diff_d3",
+    #     "adz_diff_d4",
+    #     "D3",
+    #     "D4",
+    #     "SAPT0-D/aug-cc-pVDZ Compared With CCSD(T)/CBS",
+    #     "adz_diff_d3_d4",
+    # )
+    # src.plotting.plot_dbs_d3_d4_two(
+    #     df,
+    #     "adz_diff_d3",
+    #     "adz_diff_d4",
+    #     "D3",
+    #     "D4",
+    #     "1: SAPT0-D/aug-cc-pVDZ Compared With CCSD(T)/CBS",
+    #     "adz_diff_d3_d4_first",
+    # )
+    # src.plotting.plot_dbs_d3_d4_two(
+    #     df,
+    #     "adz_diff_d3",
+    #     "adz_diff_d4",
+    #     "D3",
+    #     "D4",
+    #     "2: SAPT0-D/aug-cc-pVDZ Compared With CCSD(T)/CBS",
+    #     "adz_diff_d3_d4_second",
+    #     False,
+    # )
     return
 
 

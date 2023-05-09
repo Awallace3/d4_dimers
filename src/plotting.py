@@ -95,7 +95,15 @@ def plot_dbs(df, df_col, title_name, pfn, color="blue") -> None:
     plt.clf()
     return
 
-def plot_dbs_d3_d4_two(df, c1, c2, l1, l2, title_name, pfn, first=True) -> None:
+
+def plot_dbs_d3_d4_two(df,
+                       c1,
+                       c2,
+                       l1,
+                       l2,
+                       title_name,
+                       pfn,
+                       first=True) -> None:
     """
     """
     kcal_per_mol = "$kcal\cdot mol^{-1}$"
@@ -104,9 +112,9 @@ def plot_dbs_d3_d4_two(df, c1, c2, l1, l2, title_name, pfn, first=True) -> None:
     vLabels, vData = [], []
     if first:
         # dbs = [dbs[i] for i in range(len(dbs)//2)]
-        dbs = dbs[:len(dbs)//2]
+        dbs = dbs[:len(dbs) // 2]
     else:
-        dbs = dbs[len(dbs)//2:]
+        dbs = dbs[len(dbs) // 2:]
     print(dbs)
 
     for d in dbs:
@@ -163,7 +171,7 @@ def plot_dbs_d3_d4_two(df, c1, c2, l1, l2, title_name, pfn, first=True) -> None:
     ax.set_xticks(xs)
     plt.setp(ax.set_xticklabels(vLabels), rotation=50, fontsize="7")
     ax.set_xlim((0, len(vLabels)))
-    ax.set_ylim((-12,6))
+    ax.set_ylim((-12, 6))
     ax.legend(loc="upper left")
     ax.set_xlabel("Database")
     ax.set_ylabel(r"Error ($kcal\cdot mol^{-1}$)")
@@ -182,6 +190,7 @@ def plot_dbs_d3_d4_two(df, c1, c2, l1, l2, title_name, pfn, first=True) -> None:
     plt.savefig(f"plots/{pfn}_dbs_violin.png")
     plt.clf()
     return
+
 
 def plot_dbs_d3_d4(df, c1, c2, l1, l2, title_name, pfn) -> None:
     """
@@ -363,6 +372,7 @@ def plot_violin_d3_d4_total(
         vData.append(df[c1s[i]].to_list())
         vLabels.append(f"{l1s[i]}")
 
+    # transparent figure
     fig = plt.figure(dpi=800)
     ax = plt.subplot(111)
     vplot = ax.violinplot(vData, showmeans=True, showmedians=False)
@@ -379,8 +389,8 @@ def plot_violin_d3_d4_total(
         #     pc.set_facecolor("blue")
         # else:
         #     pc.set_facecolor("red")
-        pc.set_facecolor(colors[n-1])
-        pc.set_alpha(0.5)
+        pc.set_facecolor(colors[n - 1])
+        pc.set_alpha(0.6)
         # pc.set_edgecolor("black")
 
     vLabels.insert(0, "")
@@ -409,14 +419,19 @@ def plot_violin_d3_d4_total(
         # label="+-1 kcal/mol",
         zorder=0,
     )
+    navy_blue = (0.0, 0.32, 0.96)
     ax.set_xticks(xs)
     plt.setp(ax.set_xticklabels(vLabels), rotation=15, fontsize="9")
     ax.set_xlim((0, len(vLabels)))
-    ax.legend(loc="upper left")
+    lg = ax.legend(loc="upper left", edgecolor='black')
+    lg.get_frame().set_alpha(None)
+    lg.get_frame().set_facecolor((1, 1, 1, 0.0))
+
+
     # set yaxis as log
     # ax.set_yscale("log")
-    ax.set_xlabel("Level of Theory")
-    ax.set_ylabel(r"Error ($kcal\cdot mol^{-1}$)")
+    ax.set_xlabel("Level of Theory", color='k')
+    ax.set_ylabel(r"Error ($kcal\cdot mol^{-1}$)", color='k')
     # ax.set_ylabel(r"Error ($\frac{kcal}{mol}$)")
     ax.grid(color='gray', which="major", linewidth=0.5, alpha=0.3)
     ax.grid(color='gray', which="minor", linewidth=0.5, alpha=0.3)
@@ -426,14 +441,17 @@ def plot_violin_d3_d4_total(
         #     xtick.set_color("blue")
         # else:
         #     xtick.set_color("red")
-        xtick.set_color(colors[n-1])
+        # xtick.set_color(colors[n - 1])
+        # navy blue
+        xtick.set_color('k')
 
     plt.title(f"{title_name}")
     fig.subplots_adjust(bottom=0.2)
     # plt.show()
-    plt.savefig(f"plots/{pfn}_dbs_violin.png")
+    plt.savefig(f"plots/{pfn}_dbs_violin.png", transparent=True)
     plt.clf()
     return
+
 
 def plot_dbs_d3_d4(df, df2, c1s, c2s, l1s, l2s, title_name, pfn) -> None:
     """
@@ -459,13 +477,12 @@ def plot_dbs_d3_d4(df, df2, c1s, c2s, l1s, l2s, title_name, pfn) -> None:
         vp.set_alpha(1)
 
     for n, pc in enumerate(vplot["bodies"], 1):
-        if n%2 != 0:
+        if n % 2 != 0:
             pc.set_facecolor("blue")
         else:
             pc.set_facecolor("red")
         pc.set_alpha(0.5)
         # pc.set_edgecolor("black")
-
 
     vLabels.insert(0, "")
     xs = [i for i in range(len(vLabels))]
@@ -501,7 +518,7 @@ def plot_dbs_d3_d4(df, df2, c1s, c2s, l1s, l2s, title_name, pfn) -> None:
     ax.set_ylabel("Error (kcal/mol)")
     for n, xtick in enumerate(ax.get_xticklabels()):
 
-        if n%2 != 0:
+        if n % 2 != 0:
             xtick.set_color("blue")
         else:
             xtick.set_color("red")
