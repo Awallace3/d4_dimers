@@ -11,5 +11,5 @@ rotate x, 65
 set ray_opaque_background, off
 set opaque_background, off
 
-ray 2000,2000
+ray 1000,1000
 png co2_-_pah_2.xyz.png

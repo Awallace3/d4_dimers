@@ -11,5 +11,5 @@ rotate x, 65
 set ray_opaque_background, off
 set opaque_background, off
 
-ray 2000,2000
+ray 1000,1000
 png s66by10_2.xyz.png
