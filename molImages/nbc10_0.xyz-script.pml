@@ -12,4 +12,4 @@ set ray_opaque_background, off
 set opaque_background, off
 
 ray 2000,2000
-png nbc10_0.xyz.png dpi=200
+png nbc10_0.xyz.png, dpi=200

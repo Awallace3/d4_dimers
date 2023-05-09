@@ -12,4 +12,4 @@ set ray_opaque_background, off
 set opaque_background, off
 
 ray 2000,2000
-png bbi_3.xyz.png dpi=200
+png bbi_3.xyz.png, dpi=200
