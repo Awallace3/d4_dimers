@@ -5,7 +5,7 @@ hide spheres,*
 show stick,*
 set_bond stick_radius, 0.2, v.
 set stick_h_scale,1
-zoom center,5
+zoom center,6
 center v.
 rotate x, 65
 set ray_opaque_background, off
