@@ -15,12 +15,10 @@ def molecule_figures(df):
     for d in dbs:
         df2 = df[df['DB'] == d]
         g = df2.iloc[loc]['Geometry']
-        gs = tools.print_cartesians_pos_carts(g[:,0], g[:,1:])
         fd = d.lower().replace(" ", "_")
         fname = f"molImages/{fd}_{loc}.xyz"
-        with open(fname, "w") as f:
-            f.write(f"{len(g)}\n\n")
-            f.write(gs)
+        print(fname)
+        gs = tools.write_cartesians_to_xyz(g[:,0], g[:,1:], fname)
     return
 
 def main():

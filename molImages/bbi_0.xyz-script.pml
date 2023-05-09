@@ -9,6 +9,4 @@ zoom center,5
 center v.
 bg white
 
-ray 2000,2000
-png bbi_0.xyz.png
 

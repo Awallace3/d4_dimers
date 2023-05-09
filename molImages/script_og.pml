@@ -1,4 +1,4 @@
-load methane_-_pah_0.xyz
+load INSERT
 
 color grey, elem c
 hide spheres,*
@@ -9,4 +9,6 @@ zoom center,5
 center v.
 bg white
 
+ray 2000,2000
+png INSERT.png
 

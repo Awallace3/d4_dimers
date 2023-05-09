@@ -9,6 +9,4 @@ zoom center,5
 center v.
 bg white
 
-ray 2000,2000
-png c2h4_-_nt_0.xyz.png
 
