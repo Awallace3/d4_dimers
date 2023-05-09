@@ -11,14 +11,15 @@ def molecule_figures(df):
     dbs = list(set(df["DB"].to_list()))
     dbs = sorted(dbs, key=lambda x: x.lower())
     vLabels, vData = [], []
-    loc = 0
+    loc = range(5)
     for d in dbs:
         df2 = df[df['DB'] == d]
-        g = df2.iloc[loc]['Geometry']
-        fd = d.lower().replace(" ", "_")
-        fname = f"molImages/{fd}_{loc}.xyz"
-        print(fname)
-        gs = tools.write_cartesians_to_xyz(g[:,0], g[:,1:], fname)
+        for i in loc:
+            g = df2.iloc[i]['Geometry']
+            fd = d.lower().replace(" ", "_")
+            fname = f"molImages/{fd}_{i}.xyz"
+            print(fname)
+            gs = tools.write_cartesians_to_xyz(g[:,0], g[:,1:], fname)
     return
 
 def main():
