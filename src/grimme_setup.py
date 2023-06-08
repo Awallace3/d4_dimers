@@ -40,6 +40,7 @@ def gather_BLIND_geoms() -> None:
     """
     el_dc = create_pt_dict()
     df = pd.read_csv("./data/Grimme/NCIBLIND10/data.csv", delimiter="\t")
+    print(df)
     with open("./data/Grimme/NCIBLIND10/geometries.txt", "r") as f:
         data = f.readlines()
     stat = 0

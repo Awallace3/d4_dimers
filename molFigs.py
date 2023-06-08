@@ -3,6 +3,7 @@ import pandas as pd
 import pickle
 from pprint import pprint as pp
 from qm_tools_aw import tools
+import pymol
 
 def molecule_figures(df):
     """
