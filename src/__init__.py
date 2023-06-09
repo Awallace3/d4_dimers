@@ -12,4 +12,4 @@ from . import r4r2
 from . import plotting
 from . import paramsTable
 from . import locald4
-from . import data
+from . import water_data

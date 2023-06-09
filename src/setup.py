@@ -16,74 +16,34 @@ import psi4
 from qcelemental import constants
 import qcelemental as qcel
 
+ang_to_bohr = Constants().g_aatoau()
+
 
 def inpsect_master_regen():
-    # pd.set_option("display.max_columns", None)
-    # pd.set_option("display.max_rows", None)
+    pd.set_option("display.max_columns", None)
+    pd.set_option("display.max_rows", None)
     pkl_path = "master-regen.pkl"
-    ms = pd.read_pickle(pkl_path)
-    # ms = ms[ms["DB"] != "PCONF"]
-    # ms = ms[ms["DB"] != "SCONF"]
-    # ms = ms[ms["DB"] != "ACONF"]
-    # ms = ms[ms["DB"] != "CYCONF"]
-    # for i in ms.columns.values:
-    #     print(i)
-    # ms = ms[ms["DB"] == "SSI"]
-    # for idx, i in ms.iterrows():
-    #     if int(ms.loc[idx, "R"]) != 1:
-    #         print(ms.loc[idx])
-    print(ms.columns.values)
-    # for i in ms.columns.values:
-    #     if "disp" in i.lower():
-    #         print(i, 'NaNs =', ms[i].isna().sum())
-    #         ms["t"] = ms.apply(
-    #             lambda r: abs(r["Benchmark"] - (r["HF INTERACTION ENERGY"] + r[i])),
-    #             axis=1,
-    #         )
-    #         print(i, ms["t"].mean(), (ms["t"] ** 2).mean() ** 0.5, ms["t"].max())
-    return ms
-
-
-def gather_data(
-    pkl_path: str = "master-regen.pkl",
-    csv_path: str = "SAPT-D3-Refit-Data.csv",
-    out_pkl: str = "data.pkl",
-):
-    """
-    gather_data collects pkl data
-
-    use gather_data3 for best output data from master-regen for other functions
-    """
     ms = pd.read_pickle(pkl_path)
     ms = ms[ms["DB"] != "PCONF"]
     ms = ms[ms["DB"] != "SCONF"]
     ms = ms[ms["DB"] != "ACONF"]
     ms = ms[ms["DB"] != "CYCONF"]
-
-    df = pd.read_csv("SAPT-D3-Refit-Data.csv")
-    out_df = ms[["Benchmark", "HF INTERACTION ENERGY", "Geometry"]]
-    energies = ms[["Benchmark", "HF INTERACTION ENERGY"]].to_numpy()
-    carts = ms["Geometry"].to_list()
-    atom_order = [np.array(i[:, 0]) for i in carts]
-    carts = [i[:, 1:] for i in carts]
-
-    data = [energies, atom_order, carts]
-    C6s, C8s, Qs = [], [], []
-    for i in tqdm(
-        range(len(data[0])),
-        desc="DFTD4 Props",
-        ascii=True,
-        bar_format="{l_bar}{bar:10}{r_bar}{bar:-10b}",
-    ):
-        C6, Q = calc_dftd4_props(data[1][i], data[2][i])
-        C6s.append(C6)
-        Qs.append(Q)
-    C6s = C6s
-    Qs = Qs
-    d4_vals = d4_values(C6s, Qs, C8s)
-    data_out = mols_data(energies, atom_order, carts, d4_vals)
-    write_pickle(data_out, out_pkl)
-    return data_out
+    for i in ms.columns.values:
+        print(i)
+    ms = ms[ms["DB"] == "SSI"]
+    for idx, i in ms.iterrows():
+        if int(ms.loc[idx, "R"]) != 1:
+            print(ms.loc[idx])
+    print(ms.columns.values)
+    for i in ms.columns.values:
+        if "disp" in i.lower():
+            print(i, "NaNs =", ms[i].isna().sum())
+            ms["t"] = ms.apply(
+                lambda r: abs(r["Benchmark"] - (r["HF INTERACTION ENERGY"] + r[i])),
+                axis=1,
+            )
+            print(i, ms["t"].mean(), (ms["t"] ** 2).mean() ** 0.5, ms["t"].max())
+    return ms
 
 
 def write_xyz_from_np(atom_numbers, carts, outfile="dat.xyz", charges=[0, 1]) -> None:
@@ -98,24 +58,6 @@ def write_xyz_from_np(atom_numbers, carts, outfile="dat.xyz", charges=[0, 1]) ->
             line = "%s    %s\n" % (el, v)
             f.write(line)
     return
-
-
-def mol_testing(mol):
-    params = [1.61679827, 0.44959224, 3.35743605]
-    geom = mol["Geometry"]
-    Ma = mol["monAs"]
-    Mb = mol["monBs"]
-
-    atoms = geom[:, 0]
-    carts = geom[:, 1:]
-    C6s, C8s = calc_dftd4_props(atoms, carts)
-    print(np.array_equal(C6s, mol["C6s"]))
-    print(C6s[0])
-    print(mol["C6s"][0])
-    energy = compute_bj_pairs(params, atoms, carts, Ma, Mb, C6s)
-    print("HF_jdz", mol["HF_jdz"])
-    print("pairs =", energy)
-    print("EI =", mol["HF_jdz"] + energy)
 
 
 def compute_pairwise_dispersion(m):
@@ -133,10 +75,6 @@ def compute_pairwise_dispersion(m):
     bp = pairs_b.sum()
     disp = dp - (ap + bp)
     print(m["main_id"], disp, m["dftd4_disp_ie_grimme_params"], m["Benchmark"])
-    # print("dp:", dp)
-    # print("ap:", ap)
-    # print("bp:", bp)
-    # print("disp:", disp)
     return pairs, pairs_a, pairs_b, disp
 
 
@@ -238,6 +176,68 @@ def calc_dftd4_props_params(
     if output_json != "":
         os.remove(input_xyz)
     return C6s, C8s, e
+
+
+def calc_dftd4_c6_c8_pairDisp(
+    atom_numbers: np.array,
+    carts: np.array,
+    charges: np.array,
+    input_xyz: str = "dat.xyz",
+    dftd4_bin: str = "/theoryfs2/ds/amwalla3/.local/bin/dftd4",
+    p: [] = [1.0, 1.61679827, 0.44959224, 3.35743605],
+):
+    """
+    Ensure that dftd4 binary is from compiling git@github.com:Awallace3/dftd4
+        - this is used to generate more decimal places on values for c6, c8,
+          and pairDisp2
+    """
+
+    write_xyz_from_np(
+        atom_numbers,
+        carts,
+        outfile=input_xyz,
+        charges=charges,
+    )
+    args = [
+        dftd4_bin,
+        input_xyz,
+        "--property",
+        "--param",
+        str(p[0]),
+        str(p[1]),
+        str(p[2]),
+        str(p[3]),
+        "--mbdscale",
+        "0.0",
+        "-c",
+        str(charges[0]),
+        "--pair-resolved",
+    ]
+    print(" ".join(args))
+    subprocess.call(
+        # cmd,
+        # shell=True,
+        args=args,
+        shell=False,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.STDOUT,
+    )
+    output_json = "C_n.json"
+    with open(output_json) as f:
+        cs = json.load(f)
+    C6s = np.array(cs["c6"], dtype=np.float64)
+    C8s = np.array(cs["c8"], dtype=np.float64)
+    output_json = "pairs.json"
+    with open(output_json) as f:
+        pairs = json.load(f)
+        pairs = np.array(pairs["pairs2"])
+    with open(".EDISP", "r") as f:
+        e = float(f.read())
+    # os.remove(input_xyz)
+    # os.remove("C_n.json")
+    # os.remove("pairs.json")
+    # subprocess.call(["cp",".EDISP", ".EDISP.d4fork"])
+    return C6s, C8s, pairs, e
 
 
 def calc_dftd4_c6_c8_pairDisp2(
@@ -382,23 +382,6 @@ def calc_dftd4_props(
     if output_json != "":
         os.remove(input_xyz)
     return C6s, C8s
-
-
-def read_master_regen(
-    pkl_path: str = "master-regen.pkl",
-    csv_path: str = "SAPT-D3-Refit-Data.csv",
-    out_pkl: str = "data.pkl",
-):
-    ms = pd.read_pickle(pkl_path)
-    ms = ms[ms["DB"] != "PCONF"]
-    ms = ms[ms["DB"] != "SCONF"]
-    ms = ms[ms["DB"] != "ACONF"]
-    ms = ms[ms["DB"] != "CYCONF"]
-    print(ms["Name"])
-    for i in ms.columns.values:
-        print(i)
-        # print(ms[i])
-    return
 
 
 def databases_dimers():
@@ -663,58 +646,6 @@ def distance_3d(r1, r2):
     return np.linalg.norm(r1 - r2)
 
 
-def target_C8_AA() -> None:
-    """
-    target_C8_AA
-    """
-    return [
-        666.6492,
-        726.1834,
-        683.1565,
-        680.7375,
-        721.4485,
-        680.8078,
-        671.4554,
-        734.7153,
-        670.8260,
-        17.2193,
-        760.6473,
-        8.7298,
-        8.6837,
-        19.0139,
-        10.5469,
-        655.3271,
-        607.8381,
-        643.4876,
-        681.1332,
-        897.9817,
-        834.4209,
-        9.9954,
-        414.9061,
-        768.0699,
-        9.1092,
-        9.8194,
-        19.2866,
-        18.7959,
-    ]
-
-
-def print_C6s_C8s(
-    C6s,
-    C8s,
-    M_tot,
-    pos,
-) -> None:
-    """
-    print_C6s_C8s prints C6s and C8s next to target diagonals
-    """
-    print("Z     C6s\tC8s\t\tC8_target")
-    t_C8 = target_C8_AA()
-    for i in range(M_tot):
-        l = "%d     %.4f\t%.4f\t\t%.4f" % (int(pos[i]), C6s[i, i], C8s[i, i], t_C8[i])
-        print(l)
-
-
 def compute_bj_opt(
     params: [],
     pos: np.array,
@@ -764,11 +695,6 @@ def create_mon_geom(
     """
     create_mon_geom creates pos and carts from dimer
     """
-    # mon_carts = np.zeros((len(M), 3))
-    # mon_pos = np.zeros(len(M))
-    # for n, i in enumerate(M):
-    #     mon_carts[n] = carts[i]
-    #     mon_pos[n] = pos[i]
     mon_carts = carts[M]
     mon_pos = pos[M]
     return mon_pos, mon_carts
@@ -1201,93 +1127,6 @@ def compute_psi4_d4(geom, Ma, Mb, memory: str = "4 GB", basis="jun-cc-pvdz"):
     return
 
 
-def compute_bj_from_dimer_AB_with_C6s(
-    params,
-    pos,
-    carts,
-    Ma,
-    Mb,
-    C6s,
-    mult_out=constants.conversion_factor("hartree", "kcal / mol"),
-) -> float:
-    """
-    compute_bj_from_dimer_AB_with_C6s computes dftd4 for dimer and each monomer and returns
-    subtraction after running dftd4 on monomers
-    """
-    C6_n, n, e = calc_dftd4_props_params(pos, carts, p=params)
-    f90 = compute_bj_f90(params, pos, carts, C6s)
-    print(f90, e, f90 - e)
-
-    mon_carts = np.zeros((len(Ma), 3))
-    mon_pos = np.zeros(len(Ma))
-    for n, i in enumerate(Ma):
-        mon_carts[n] = carts[i]
-        mon_pos[n] = pos[i]
-
-    C6_a, n, e = calc_dftd4_props_params(mon_pos, mon_carts, p=params)
-    monA = compute_bj_f90(params, mon_pos, mon_carts, C6_a)
-    print(monA, e, monA - e)
-
-    mon_carts = np.zeros((len(Mb), 3))
-    mon_pos = np.zeros(len(Mb))
-    for n, i in enumerate(Mb):
-        mon_carts[n] = carts[i]
-        mon_pos[n] = pos[i]
-
-    C6_b, n, e = calc_dftd4_props_params(mon_pos, mon_carts, p=params)
-    monB = compute_bj_f90(params, mon_pos, mon_carts, C6_b)
-
-    v, C6a = compute_bj_mons(params, pos, carts, Ma, C6s)
-    # v, C6b = compute_bj_mons(params, pos, carts, Mb, C6s)
-    # print("monA")
-    # print(C6_a[-1])
-    # print(C6a[-1])
-    # TODO: just tally C6s for monomers as well
-
-    # print(np.subtract(C6_a[0], C6a[0]))
-
-    # print(np.subtract(C6_b, C6b))
-
-    print(monB, e, monB - e)
-    AB = monA + monB
-    disp = f90 - (AB)
-    return disp * mult_out
-    # return f90* mult_out
-
-
-def compute_bj_from_dimer_AB_all_C6s_OG(
-    params,
-    pos,
-    carts,
-    Ma,
-    Mb,
-    C6s,
-    C6_A,
-    C6_B,
-    mult_out=constants.conversion_factor("hartree", "kcal / mol"),
-) -> float:
-    """
-    compute_bj_from_dimer_AB computes dftd4 for dimer and each monomer and
-    returns subtraction. From original dftd4 optimization
-    """
-    f90 = compute_bj_f90(params, pos, carts, C6s)
-    # print_cartesians_pos_carts(pos, carts)
-
-    mon_pa, mon_ca = create_mon_geom(pos, carts, Ma)
-    monA = compute_bj_f90(params, mon_pa, mon_ca, C6_A)
-
-    mon_pb, mon_cb = create_mon_geom(pos, carts, Mb)
-    monB = compute_bj_f90(params, mon_pb, mon_cb, C6_B)
-
-    AB = monA + monB
-    disp = f90 - (AB)
-    print(f"{monA * mult_out = }")
-    print(f"{monB * mult_out = }")
-    print(f"{f90  * mult_out= }")
-    return disp * mult_out
-    # return f90 * mult_out
-
-
 def compute_bj_from_dimer_AB_all_C6s(
     params,
     pos,
@@ -1311,7 +1150,6 @@ def compute_bj_from_dimer_AB_all_C6s(
         C6s=C6s,
         r4r2_ls=r4r2_ls,
     )
-    # print_cartesians_pos_carts(pos, carts)
 
     mon_pa, mon_ca = create_mon_geom(pos, carts, Ma)
     monA = compute_bj_f90_simplified(
@@ -1333,9 +1171,6 @@ def compute_bj_from_dimer_AB_all_C6s(
 
     AB = monA + monB
     disp = f90 - (AB)
-    # print(f"{monA * mult_out = }")
-    # print(f"{monB * mult_out = }")
-    # print(f"{f90  * mult_out= }")
     return disp * mult_out
 
 
@@ -1355,19 +1190,8 @@ def compute_bj_from_dimer_AB_all_C6s_dimer_only(
     subtraction.
     """
     f90 = compute_bj_f90(params, pos, carts, C6s)
-    # print_cartesians_pos_carts(pos, carts)
-
-    # mon_pa, mon_ca = create_mon_geom(pos, carts, Ma)
-    # monA = compute_bj_f90(params, mon_pa, mon_ca, C6_A)
-    #
-    # mon_pb, mon_cb = create_mon_geom(pos, carts, Mb)
-    # monB = compute_bj_f90(params, mon_pb, mon_cb, C6_B)
-    #
-    # AB = monA + monB
-    # disp = f90 - (AB)
     print(f"{f90  * mult_out= }")
     return f90 * mult_out
-    # return f90 * mult_out
 
 
 def compute_bj_from_dimer_AB_all_C6s_NO_DAMPING(
@@ -1421,135 +1245,6 @@ def compute_bj_from_dimer_AB(
     AB = monA + monB
     disp = f90 - (AB)
     return disp * mult_out
-    # return f90* mult_out
-
-
-# self :     -26.86350371919017
-# DFTD4 2b : -26.86350371919017
-
-
-def gather_data2_testing_mol(mol):
-    params = [1.61679827, 0.44959224, 3.35743605]
-    print(params)
-    g3 = mol["Geometry"]
-    Ma, Mb = mol["monAs"], mol["monBs"]
-    pos = g3[:, 0]
-    carts = g3[:, 1:]
-    HF_jdz = mol["HF_jdz"]
-    C6s, C8s = calc_dftd4_props(pos, carts)
-    pairs = compute_bj_pairs(params, pos, carts, Ma, Mb, C6s)
-    alt = compute_bj_alt(params, pos, carts, Ma, Mb, C6s)
-    f90 = compute_bj_f90(params, pos, carts, C6s)
-    monA, C6 = compute_bj_mons(params, pos, carts, Ma, C6s)
-    monB, C6 = compute_bj_mons(params, pos, carts, Mb, C6s)
-    d_ab = compute_bj_from_dimer_AB(params, pos, carts, Ma, Mb, C6s)
-    AB = monA + monB
-    conv = constants.conversion_factor("hartree", "kcal / mol")
-
-    energy, e_2b = compute_bj_dftd4(params, pos, carts)
-    print("DFTD4 full:", energy)
-    print("pairs     :", pairs)
-    print("f90       :", f90)
-    print("DFTD4 2b  :", e_2b)
-    print("alt       :", alt)
-    print("f90  - DFTD4 2b = ", f90 - e_2b)
-    print("alt  - DFTD4 2b = ", alt - e_2b)
-    print("monA :", monA)
-    print("monB :", monB)
-    print("AB:", AB)
-    print("f90 - AB =", f90 - AB)
-    print("HF_jdz = ", HF_jdz)
-    print("BM     = ", mol["Benchmark"])
-    d4_1 = f90 - (AB)
-    ie1 = HF_jdz + d4_1 * conv
-    d4_2 = alt - (AB)
-    ie2 = HF_jdz + d4_2 * conv
-    ie3 = HF_jdz + d_ab
-    d4 = pairs
-    ie4 = HF_jdz + d4 * conv
-    print("DISP (f90 )  =", d4_1 * conv)
-    print("DISP (alt )  =", d4_2 * conv)
-    print("DISP (d_ab ) =", d_ab)
-    print("DISP (pairs) =", pairs * conv)
-    print("IE (f90 )    =", ie1)
-    print("IE (alt )    =", ie2)
-    print("IE (d_ab )   =", ie3)
-    print("IE (pairs)   =", ie4)
-    print(Ma, Mb)
-    print_cartesians(g3)
-    return
-
-
-def gather_data2_testing(
-    condensed_path="condensed.pkl",
-):
-    params = [1.0000, 0.9, 0.4, 5.0]
-    el_dc = create_pt_dict()
-    df = pd.read_pickle(condensed_path)
-    xyzs = df[["xyz1", "xyz2", "xyz_d"]].to_numpy()
-    for sys in xyzs[:1]:
-        g1, g2, g3 = sys[0], sys[1], sys[2]
-        g1 = read_xyz(g1, el_dc)
-        g2 = read_xyz(g2, el_dc)
-        gt = np.vstack((g1, g2))
-        g3 = read_xyz(g3, el_dc)
-        if not np.all((gt == g3) == True):
-            print("not a match")
-            continue
-        pos = g3[:, 0]
-        carts = g3[:, 1:]
-        C6s, C8s = calc_dftd4_props(pos, carts)
-        Ma, Mb = len(g1), len(g2)
-        pairs = compute_bj_alt(params, pos, carts, Ma, Mb, C6s)
-        print("pairs     :", pairs)
-        energy = compute_bj_f90(params, pos, carts, C6s)
-        print("self :", energy)
-        energy, e_2b = compute_bj_dftd4(params, pos, carts)
-        print("DFTD4 full:", energy)
-        print("DFTD4 2b  :", e_2b)
-        print("pairs - DFTD4 2b = ", pairs - e_2b)
-        print()
-    return
-
-
-"""
-self : -0.03421315617528683
-DFTD4 full: -0.0338246418555
-self :      -0.03421315617528684
-DFTD4 2b  : -0.03421315617528684
-"""
-
-
-def gather_data2(condensed_path="condensed.pkl", output_path="opt2.pkl"):
-    """
-    use gather_data3 for best output data from master-regen for other functions
-    """
-    params = [0.9, 0.5, 5.0]
-    el_dc = create_pt_dict()
-    df = pd.read_pickle(condensed_path)
-    xyzs = df["xyz_d"].to_numpy()
-    C6s = [i for i in range(len(xyzs))]
-    C8s = [i for i in range(len(xyzs))]
-
-    for n, g3 in enumerate(tqdm(xyzs[:1], desc="DFTD4 Props", ascii=True)):
-        g3 = read_xyz(g3, el_dc)
-        pos = g3[:, 0]
-        carts = g3[:, 1:]
-        C6, C8 = calc_dftd4_props(pos, carts)
-        C6s[n] = C6
-        C8s[n] = C8
-    df["C6s"] = C6s
-    df["C8s"] = C6s
-    df.to_pickle(output_path)
-    return
-
-
-class FailedToSplit(Exception):
-    """DID NOT BREAK INTO DIMER"""
-
-    def __init__(self, position):
-        self.position
-        super().__init__(self.message)
 
 
 def split_Hs_carts(
@@ -1671,187 +1366,6 @@ def expand_opt_df(
     for i in columns_to_add:
         if i not in df:
             df[i] = np.nan
-    # print(df.columns.values)
-    return df
-
-
-def gather_data3(
-    master_path="master-regen.pkl",
-    output_path="opt3.pkl",
-    verbose=False,
-    HF_columns=[
-        "HF_dz",
-        "HF_adz",
-        "HF_atz",
-        "HF_tz",
-        "HF_jtz",
-    ],
-    from_master: bool = True,
-):
-    """
-    **NOTE** This damages ordering of geometries for C6s causing incorrect results.
-    collects data from master-regen.pkl from jeffschriber's scripts for D3
-    (https://aip.scitation.org/doi/full/10.1063/5.0049745)
-    """
-    if from_master:
-        df = pd.read_pickle(master_path)
-        df["SAPT0"] = df["SAPT0 TOTAL ENERGY"]
-        df["SAPT"] = df["SAPT TOTAL ENERGY"]
-        df = df[
-            [
-                "DB",
-                "System",
-                "System #",
-                "Benchmark",
-                "HF INTERACTION ENERGY",
-                "Geometry",
-                "SAPT0",
-                "SAPT",
-            ]
-        ]
-        df = replace_hf_int_HF_jdz(df)
-        xyzs = df["Geometry"].to_list()
-        C6s = [np.array([]) for i in range(len(xyzs))]
-        C8s = [np.array([]) for i in range(len(xyzs))]
-        monAs = [np.nan for i in range(len(xyzs))]
-        monBs = [np.nan for i in range(len(xyzs))]
-
-        ones, twos, clear = [], [], []
-        for n, c in enumerate(tqdm(xyzs[:], desc="DFTD4 Props", ascii=True)):
-            g3 = np.array(c)
-            pos = g3[:, 0]
-            carts = g3[:, 1:]
-            C6, C8 = calc_dftd4_props(pos, carts)
-            C6s[n] = C6
-            C8s[n] = C8
-            frags = BFS(carts, pos, bond_threshold=0.4)
-            if len(frags) > 2:
-                ones.append(n)
-            elif len(frags) == 1:
-                twos.append(n)
-                # monAs[n] = np.array(frags[0])
-            else:
-                monAs[n] = np.array(frags[0])
-                monBs[n] = np.array(frags[1])
-                clear.append(n)
-
-        print("total =", len(xyzs))
-        print("ones =", len(ones))
-        print("twos =", len(twos))
-        print("clear =", len(clear))
-        df["C6s"] = C6s
-        df["C8s"] = C8s
-        df["monAs"] = monAs
-        df["monBs"] = monBs
-        df = df.reset_index(drop=True)
-        df.to_pickle(output_path)
-        df, inds = gather_data3_dimer_splits(df)
-        df = expand_opt_df(df, HF_columns)
-        df = ssi_bfdb_data(df)
-    else:
-        df = pd.read_pickle(output_path)
-        df = expand_opt_df(df, HF_columns)
-    for i in HF_columns:
-        df = harvest_data(df, i.split("_")[-1])
-    df.to_pickle(output_path)
-    return df
-
-
-def reorganize_carts_to_split_middle(geoms: [], mAs: [], mBs: []) -> []:
-    """
-    reorganize_carts_to_split_middle
-    """
-    for n, g in enumerate(geoms):
-        print(f"Mol {n}\n")
-        ma, mb = mAs[n], mBs[n]
-        print(ma, mb)
-
-
-def gather_data4(
-    master_path="master-regen.pkl",
-    output_path="opt4.pkl",
-    verbose=False,
-    HF_columns=[
-        "HF_dz",
-        "HF_adz",
-        "HF_atz",
-        "HF_tz",
-        "HF_jtz",
-    ],
-    from_master: bool = True,
-):
-    """
-    collects data from master-regen.pkl from jeffschriber's scripts for D3
-    (https://aip.scitation.org/doi/full/10.1063/5.0049745)
-    """
-    if from_master:
-        df = pd.read_pickle(master_path)
-        df["SAPT0"] = df["SAPT0 TOTAL ENERGY"]
-        df["SAPT"] = df["SAPT TOTAL ENERGY"]
-        df = df[
-            [
-                "DB",
-                "System",
-                "System #",
-                "Benchmark",
-                "HF INTERACTION ENERGY",
-                "Geometry",
-                "SAPT0",
-                "SAPT",
-            ]
-        ]
-        df = replace_hf_int_HF_jdz(df)
-        xyzs = df["Geometry"].to_list()
-        monAs = [np.nan for i in range(len(xyzs))]
-        monBs = [np.nan for i in range(len(xyzs))]
-
-        ones, twos, clear = [], [], []
-        for n, c in enumerate(tqdm(xyzs[:], desc="Dimer Splits", ascii=True)):
-            g3 = np.array(c)
-            pos = g3[:, 0]
-            carts = g3[:, 1:]
-            frags = BFS(carts, pos, bond_threshold=0.4)
-            if len(frags) > 2:
-                ones.append(n)
-            elif len(frags) == 1:
-                twos.append(n)
-                # monAs[n] = np.array(frags[0])
-            else:
-                monAs[n] = np.array(frags[0])
-                monBs[n] = np.array(frags[1])
-                clear.append(n)
-        print("total =", len(xyzs))
-        print("ones =", len(ones))
-        print("twos =", len(twos))
-        print("clear =", len(clear))
-        df["monAs"] = monAs
-        df["monBs"] = monBs
-        df = df.reset_index(drop=True)
-        df, inds = gather_data3_dimer_splits(df)
-        df = df.reset_index(drop=True)
-        # TODO: possibly add check to ensure geoms are splitted in carts before C6s
-
-        xyzs = df["Geometry"].to_list()
-        C6s = [np.array([]) for i in range(len(xyzs))]
-        C8s = [np.array([]) for i in range(len(xyzs))]
-        for n, c in enumerate(tqdm(xyzs[:], desc="DFTD4 Props", ascii=True)):
-            g3 = np.array(c)
-            pos = g3[:, 0]
-            carts = g3[:, 1:]
-            C6, C8 = calc_dftd4_props(pos, carts)
-            C6s[n] = C6
-            C8s[n] = C8
-        df["C6s"] = C6s
-        df["C8s"] = C8s
-        df.to_pickle(output_path)
-        df = expand_opt_df(df, HF_columns)
-        df = ssi_bfdb_data(df)
-    else:
-        df = pd.read_pickle(output_path)
-        df = expand_opt_df(df, HF_columns)
-    for i in HF_columns:
-        df = harvest_data(df, i.split("_")[-1])
-    df.to_pickle(output_path)
     return df
 
 
@@ -1878,11 +1392,6 @@ def assign_charge_single(mol, path_SSI="data/SSI_xyzfiles/combined/") -> pd.Data
         c_B = f.readlines()[1].rstrip()
         c_B = [int(i) for i in c_B.split()]
     charge = np.array([c_d, c_A, c_B])
-    print(sys)
-    print(f_d)
-    print(f_A)
-    print(f_B)
-    print(charge)
     return charge
 
 
@@ -1907,11 +1416,6 @@ def assign_charges(df, path_SSI="data/SSI_xyzfiles/combined/") -> pd.DataFrame:
             c_B = f.readlines()[1].rstrip()
             c_B = [int(i) for i in c_B.split()]
         charge = np.array([c_d, c_A, c_B])
-        # print(sys)
-        # print(f_d)
-        # print(f_A)
-        # print(f_B)
-        # print(charge)
         charges[i] = charge
     df["charges"] = charges
     return df
@@ -2084,78 +1588,6 @@ def calc_c6s_c8s_pairDisp2_for_df(xyzs, monAs, monBs, charges) -> ([], [], []):
     return C6s, C6_A, C6_B, C8s, C8_A, C8_B, disp_d, disp_a, disp_b
 
 
-def gather_data5(
-    master_path="master-regen.pkl",
-    output_path="opt5.pkl",
-    verbose=False,
-    HF_columns=[
-        "HF_dz",
-        "HF_adz",
-        "HF_atz",
-        "HF_tz",
-    ],
-    from_master: bool = True,
-    overwrite: bool = False,
-    replace_hf: bool = False,
-):
-    """
-    collects data from master-regen.pkl from jeffschriber's scripts for D3
-    (https://aip.scitation.org/doi/full/10.1063/5.0049745)
-    """
-    if from_master:
-        df = pd.read_pickle(master_path)
-        df["SAPT0"] = df["SAPT0 TOTAL ENERGY"]
-        df["SAPT"] = df["SAPT TOTAL ENERGY"]
-        df = df[
-            [
-                "DB",
-                "System",
-                "System #",
-                "Benchmark",
-                "HF INTERACTION ENERGY",
-                "Geometry",
-                "SAPT0",
-                "SAPT",
-                "Disp20",
-                "SAPT DISP ENERGY",
-            ]
-        ]
-
-        if replace_hf:
-            df = replace_hf_int_HF_jdz(df)
-        xyzs = df["Geometry"].to_list()
-        monAs, monBs = split_mons(xyzs)
-        df["monAs"] = monAs
-        df["monBs"] = monBs
-        df = df.reset_index(drop=True)
-        df, inds = gather_data3_dimer_splits(df)
-        monAs = df["monAs"].to_list()
-        monBs = df["monBs"].to_list()
-        # t = [x for x in monAs if type(x) != type(np.array)]
-        df = df.reset_index(drop=True)
-        xyzs = df["Geometry"].to_list()
-        df = assign_charges(df)
-        charges = df["charges"]
-        C6s, C6_A, C6_B, pds, pas, pbs = calc_c6s_for_df(xyzs, monAs, monBs, charges)
-        df["C6s"] = C6s
-        df["C6_A"] = C6_A
-        df["C6_B"] = C6_B
-        df["pds"] = pds
-        df["pas"] = pas
-        df["pbs"] = pbs
-        df.to_pickle(output_path)
-        df = expand_opt_df(df, HF_columns)
-        df = ssi_bfdb_data(df)
-        df.to_pickle(output_path)
-    else:
-        df = pd.read_pickle(output_path)
-        df = expand_opt_df(df, HF_columns)
-    for i in HF_columns:
-        df = harvest_data(df, i.split("_")[-1], overwrite=overwrite)
-    df.to_pickle(output_path)
-    return df
-
-
 def r_z_tq_to_mol(r, tq, mult) -> qcel.models.Molecule:
     """
     r_z_tq_to_mol takes in carts, charges, and total charge
@@ -2244,7 +1676,7 @@ def ram_data():
 
 
 def gather_data6(
-    master_path="master-regen.pkl",
+    master_path="data/master-regen.pkl",
     output_path="opt5.pkl",
     verbose=False,
     HF_columns=[
@@ -2282,6 +1714,7 @@ def gather_data6(
                 "D3Data",
             ]
         ]
+        df["Geometry_bohr"] = df.apply(lambda x: ang_to_bohr * x["Geometry"], axis=1)
         if replace_hf:
             df = replace_hf_int_HF_jdz(df)
         xyzs = df["Geometry"].to_list()

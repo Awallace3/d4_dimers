@@ -41,7 +41,7 @@ def test_d4_energies_damped() -> None:
     """
 
     params = [1, 1.61679827, 0.44959224, 3.35743605]
-    pos, carts = src.data.water_geom()
+    pos, carts = src.water_data.water_geom()
     charges = [0, 1]
     d4C6s, d4C8s, pairs, d4e = src.locald4.calc_dftd4_c6_c8_pairDisp2(
         pos, carts, charges, dftd4_bin=dftd4_bin, p=params
@@ -67,7 +67,7 @@ def test_d4_energies_undamped() -> None:
     """
 
     params = [1.0, 1.0, 0.0, 0.0]
-    pos, carts = src.data.water_geom()
+    pos, carts = src.water_data.water_geom()
     charges = [0, 1]
     d4C6s, d4C8s, pairs, d4e = src.locald4.calc_dftd4_c6_c8_pairDisp2(
         pos, carts, charges, dftd4_bin=dftd4_bin, p=params
@@ -93,7 +93,7 @@ def test_d4_energies_damped_simplified() -> None:
     """
 
     params = [1, 1.61679827, 0.44959224, 3.35743605]
-    pos, carts = src.data.water_geom()
+    pos, carts = src.water_data.water_geom()
     charges = [0, 1]
     d4C6s, d4C8s, pairs, d4e = src.locald4.calc_dftd4_c6_c8_pairDisp2(
         pos, carts, charges, dftd4_bin=dftd4_bin, p=params
@@ -120,7 +120,7 @@ def test_dispersion_interaction_energy() -> None:
     p = params.copy()
     p.pop(0)
 
-    num, coords = src.data.water_geom()
+    num, coords = src.water_data.water_geom()
     tools.print_cartesians_pos_carts(num, coords)
     coords = ang_to_bohr * np.array(coords, copy=True)
     charges = [0, 1]
