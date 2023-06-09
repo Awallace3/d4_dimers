@@ -1,7 +1,6 @@
 from .setup import (
     create_pt_dict,
     compute_bj_opt,
-    gather_data3,
     compute_bj_pairs,
     compute_bj_from_dimer_AB,
     calc_dftd4_props,
@@ -379,7 +378,6 @@ def opt_cross_val(
 ) -> None:
     """
     opt_cross_val performs n-fold cross validation on opt*.pkl df from
-    gather_data3
     """
     nans = df[hf_key].isna().sum()
     inds = df.index[df[hf_key].isna()]

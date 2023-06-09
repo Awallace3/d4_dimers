@@ -107,7 +107,6 @@ def gather_BLIND_geoms() -> None:
     bases = ["dz", "tz"]
     df = expand_opt_df(df, bases, prefix="HF_", replace_HF=False)
     df.to_pickle("grimme.pkl")
-
     return df
 
 

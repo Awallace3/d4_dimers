@@ -6,6 +6,7 @@ import os
 import json
 from . import r4r2
 from .constants import Constants
+from qcelemental import constants
 
 
 def write_xyz_from_np(atom_numbers, carts, outfile="dat.xyz", charges=[0, 1]) -> None:
@@ -96,6 +97,7 @@ def compute_bj_f90(
     carts: np.array,
     C6s: np.array,
     params: [] = [1.61679827, 0.44959224, 3.35743605],
+    r4r2_ls = r4r2.r4r2_vals_ls()
 ) -> float:
     """
     compute_bj_f90 computes energy from C6s, cartesian coordinates, and dimer sizes.
@@ -107,7 +109,6 @@ def compute_bj_f90(
     energies = np.zeros(M_tot)
     lattice_points = 1
     cs = carts
-    r4r2_ls = r4r2.r4r2_vals_ls()
 
     for i in range(M_tot):
         el1 = int(pos[i])
@@ -165,7 +166,8 @@ def compute_bj_dimer_f90(
         r4r2_ls=r4r2_ls,
     )
 
-    mon_pa, mon_ca = create_mon_geom(pos, carts, Ma)
+    mon_ca = carts[Ma]
+    mon_pa = pos[Ma]
     monA = compute_bj_f90(
         params=params,
         pos=mon_pa,
@@ -174,7 +176,8 @@ def compute_bj_dimer_f90(
         r4r2_ls=r4r2_ls,
     )
 
-    mon_pb, mon_cb = create_mon_geom(pos, carts, Mb)
+    mon_cb = carts[Mb]
+    mon_pb = pos[Mb]
     monB = compute_bj_f90(
         params=params,
         pos=mon_pb,

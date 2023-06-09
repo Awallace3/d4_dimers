@@ -39,7 +39,7 @@ def optimize_paramaters(
             src.optimization.opt_cross_val(
                 df,
                 nfolds=5,
-                start_params=params_d3,
+                start_params=start_params_d3,
                 hf_key=i,
                 output_l_marker="D3_",
                 optimizer_func=src.jeff.optimization_d3,
@@ -51,7 +51,7 @@ def optimize_paramaters(
             src.optimization.opt_cross_val(
                 df,
                 nfolds=5,
-                start_params=adz_opt_params,
+                start_params=params,
                 hf_key=i,
                 output_l_marker="G_",
                 optimizer_func=src.optimization.optimization,
@@ -88,10 +88,13 @@ def total_bases():
 
 def main():
     # gather_data()
+    df = pd.read_pickle("data/d4.pkl")
     adz_opt_params = [0.829861, 0.706055, 1.123903]
     bases = [
-        "TAG",
+        # "TAG",
+        "HF_adz",
     ]
+    optimize_paramaters(df, bases, start_params_d4_key="sadz", D3={"powell": False}, D4={"powell": True, "least_squares": False})
 
     return
 
