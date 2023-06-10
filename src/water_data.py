@@ -1,6 +1,7 @@
 import qcelemental as qcel
 import numpy as np
 
+
 def water_geom():
     coords = np.array(
         [
@@ -14,5 +15,21 @@ def water_geom():
     )
     num = coords[:, 0]
     ang_to_bohr = qcel.constants.conversion_factor("angstrom", "bohr")
-    coords = coords[:, 1:] # * ang_to_bohr
+    coords = coords[:, 1:]  # * ang_to_bohr
+    return num, coords
+
+
+def water_geom2():
+    coords = np.array(
+        [
+            [8.0, 0.01665435, 0.0, -0.0643079],
+            [1.0, -0.07455903, -0.76693494, 0.52522351],
+            [1.0, -0.18975762, 0.76693494, 0.49538957],
+            [8.0, -0.04347863, 0.00992732, 2.59125275],
+            [1.0, 0.41075455, 0.681702, 3.12646051],
+            [1.0, 0.27928295, -0.8392558, 2.93588204],
+        ]
+    )
+    num = coords[:, 0]
+    coords = coords[:, 1:]  # * ang_to_bohr
     return num, coords

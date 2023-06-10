@@ -94,7 +94,7 @@ def main():
         # "TAG",
         "HF_adz",
     ]
-    optimize_paramaters(df, bases, start_params_d4_key="sadz", D3={"powell": False}, D4={"powell": True, "least_squares": False})
+    optimize_paramaters(df, bases, start_params_d4_key="HF", D3={"powell": False}, D4={"powell": True, "least_squares": False})
 
     return
 

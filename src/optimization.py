@@ -4,6 +4,7 @@ from .setup import (
     compute_bj_pairs,
     compute_bj_from_dimer_AB,
     calc_dftd4_props,
+    compute_bj_from_dimer_AB_all_C6s,
     compute_bj_from_dimer_AB_all_C6s_NO_DAMPING,
     calc_dftd4_props_params,
 )
@@ -235,6 +236,7 @@ def compute_int_energy(
     diff = np.zeros(len(df))
     r4r2_ls = r4r2.r4r2_vals_ls()
     df["d4"] = df.apply(
+        # lambda row: locald4.compute_bj_dimer_f90(
         lambda row: locald4.compute_bj_dimer_f90(
             params,
             row["Geometry_bohr"][:, 0],  # pos
@@ -249,10 +251,9 @@ def compute_int_energy(
         axis=1,
     )
     df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
+    print(f"difference = {df['diff'].tolist()[0]} = {df['Benchmark'].tolist()[0]} - ({df[hf_key].tolist()[0]} + {df['d4'].tolist()[0]})")
     rmse = (df["diff"] ** 2).mean() ** 0.5
     print("%.8f\t" % rmse, params.tolist())
-    # df["diff"] = 0
-    # print(df)
     return rmse
 
 

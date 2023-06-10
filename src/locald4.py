@@ -58,7 +58,7 @@ def calc_dftd4_c6_c8_pairDisp2(
         str(charges[0]),
         "--pair-resolved",
     ]
-    print(" ".join(args))
+    # print(" ".join(args))
     subprocess.call(
         # cmd,
         # shell=True,
@@ -97,7 +97,7 @@ def compute_bj_f90(
     carts: np.array,
     C6s: np.array,
     params: [] = [1.61679827, 0.44959224, 3.35743605],
-    r4r2_ls = r4r2.r4r2_vals_ls()
+    r4r2_ls=r4r2.r4r2_vals_ls(),
 ) -> float:
     """
     compute_bj_f90 computes energy from C6s, cartesian coordinates, and dimer sizes.
@@ -108,7 +108,6 @@ def compute_bj_f90(
     M_tot = len(carts)
     energies = np.zeros(M_tot)
     lattice_points = 1
-    cs = carts
 
     for i in range(M_tot):
         el1 = int(pos[i])
@@ -124,7 +123,7 @@ def compute_bj_f90(
                 r0ij = a1 * np.sqrt(rrij) + a2
                 C6ij = C6s[i, j]
 
-                r1, r2 = cs[i, :], cs[j, :]
+                r1, r2 = carts[i, :], carts[j, :]
                 r2 = np.subtract(r1, r2)
                 r2 = np.sum(np.multiply(r2, r2))
 
@@ -159,33 +158,84 @@ def compute_bj_dimer_f90(
     subtraction.
     """
     f90 = compute_bj_f90(
-        params=params,
         pos=pos,
         carts=carts,
         C6s=C6s,
         r4r2_ls=r4r2_ls,
+        params=params,
     )
 
     mon_ca = carts[Ma]
     mon_pa = pos[Ma]
-    monA = compute_bj_f90(
-        params=params,
+    A = compute_bj_f90(
         pos=mon_pa,
         carts=mon_ca,
         C6s=C6_A,
+        params=params,
         r4r2_ls=r4r2_ls,
     )
 
     mon_cb = carts[Mb]
     mon_pb = pos[Mb]
-    monB = compute_bj_f90(
-        params=params,
+    B = compute_bj_f90(
         pos=mon_pb,
         carts=mon_cb,
         C6s=C6_B,
+        params=params,
         r4r2_ls=r4r2_ls,
     )
 
-    AB = monA + monB
-    disp = f90 - (AB)
-    return disp * mult_out
+    print(f"dimer: \n{pos}]\n{carts}")
+    print(f"A: \n{mon_pa}]\n{mon_ca}")
+    print(f"B: \n{mon_pb}]\n{mon_cb}")
+
+
+
+    AB = A + B
+    print(f"disp       = {f90} - ({AB}) = {f90} - ({A} + {B})")
+
+    disp = (f90 - (AB)) * mult_out
+    return disp
+
+
+def compute_bj_dimer_DFTD4(
+    params,
+    pos,
+    carts,
+    Ma,
+    Mb,
+    charges,
+    mult_out=constants.conversion_factor("hartree", "kcal / mol"),
+) -> float:
+    """
+    computes dftd4 for dimer and each monomer and returns subtraction.
+    """
+    _, _, _, d = calc_dftd4_c6_c8_pairDisp2(
+        pos,
+        carts,
+        charges[0],
+        p=params,
+    )
+
+    mon_ca = carts[Ma]
+    mon_pa = pos[Ma]
+    _, _, _, A = calc_dftd4_c6_c8_pairDisp2(
+        mon_pa,
+        mon_ca,
+        charges[1],
+        p=params,
+    )
+
+    mon_cb = carts[Mb]
+    mon_pb = pos[Mb]
+    _, _, _, B = calc_dftd4_c6_c8_pairDisp2(
+        mon_pb,
+        mon_cb,
+        charges[2],
+        p=params,
+    )
+
+    AB = A + B
+    print(f"disp dftd4 = {d} - ({AB}) = {d} - ({A} + {B})")
+    disp = (d - (AB)) * mult_out
+    return disp
