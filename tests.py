@@ -297,7 +297,7 @@ def test_dispersion_interaction_energy3() -> None:
 
 def test_compute_bj_f90():
     df = pd.read_pickle("data/d4.pkl")
-    id_list = [0, 500, 2700, 4992]
+    id_list = [0, 500, 2700, 4926]
     params = src.paramsTable.paramsDict()["HF"]
     p = params[1:]
     print(params, p)

@@ -111,7 +111,7 @@ def make_bohr(geometry):
 
 def main():
     # gather_data()
-    df = df_names(2)
+    df = df_names(0)
 
     def opt():
         adz_opt_params = [0.829861, 0.706055, 1.123903]
@@ -131,7 +131,7 @@ def main():
             D4={"powell": True, "least_squares": False},
         )
 
-    opt()
+    # opt()
     return
 
 
