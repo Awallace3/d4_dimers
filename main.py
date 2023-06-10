@@ -1,26 +1,31 @@
 import numpy as np
 import pandas as pd
 import src
+import qcelemental as qcel
 
 ang_to_bohr = src.constants.Constants().g_aatoau()
+hartree_to_kcal_mol = qcel.constants.conversion_factor("hartree", "kcal / mol")
 
 
-def gather_data():
+def gather_data(version="schr"):
     # Gather data
-    src.setup.gather_data6(
-        output_path="data/d4.pkl",
-        from_master=True,
-        HF_columns=[
-            "HF_dz",
-            "HF_jdz",
-            "HF_adz",
-            "HF_tz",
-            "HF_jdz_dftd4",
-            "HF_atz",
-            "HF_jtz",
-        ],
-        overwrite=True,
-    )
+    if version == "schr":
+        src.setup.gather_data6(
+            output_path="data/d4.pkl",
+            from_master=True,
+            HF_columns=[
+                "HF_dz",
+                "HF_jdz",
+                "HF_adz",
+                "HF_tz",
+                "HF_jdz_dftd4",
+                "HF_atz",
+                "HF_jtz",
+            ],
+            overwrite=True,
+        )
+    elif version == "grimmme":
+        src.grimme_setup.gather_grimme_from_db()
     return
 
 
@@ -33,7 +38,8 @@ def optimize_paramaters(
     D4={"powell": True, "least_squares": True},
 ) -> None:
     # Optimize parameters through 5-fold cross validation
-    params = src.paramsTable.paramsDict()[start_params_d4_key][1:]
+    # params = src.paramsTable.paramsDict()[start_params_d4_key][1:]
+    params = src.paramsTable.paramsDict()[start_params_d4_key]
     for i in bases:
         print(i)
         if D3["powell"]:
@@ -88,7 +94,16 @@ def total_bases():
     ]
 
 
+def df_names(i):
+    names = ["data/d4.pkl", "data/grimme_fitset_db3.pkl", "data/schr_dft.pkl"]
+    selected = names[i]
+    print(f"Selected: {selected} for df")
+    df = pd.read_pickle(selected)
+    return df
+
+
 def make_bohr(geometry):
+    # df["Geometry_bohr"] = df.apply(lambda x: make_bohr(x["Geometry"]), axis=1)
     return np.hstack(
         (np.reshape(geometry[:, 0], (-1, 1)), ang_to_bohr * geometry[:, 1:])
     )
@@ -96,19 +111,27 @@ def make_bohr(geometry):
 
 def main():
     # gather_data()
-    df = pd.read_pickle("data/d4.pkl")
-    adz_opt_params = [0.829861, 0.706055, 1.123903]
-    bases = [
-        # "TAG",
-        "HF_adz",
-    ]
-    optimize_paramaters(
-        df,
-        bases,
-        start_params_d4_key="sadz",
-        D3={"powell": False},
-        D4={"powell": True, "least_squares": False},
-    )
+    df = df_names(2)
+
+    def opt():
+        adz_opt_params = [0.829861, 0.706055, 1.123903]
+        bases = [
+            # "TAG",
+            # "HF_adz",
+            # "HF_jdz",
+            # "HF_qz"
+            "pbe0_adz_saptdft_ndisp",
+        ]
+        optimize_paramaters(
+            df,
+            bases,
+            # start_params_d4_key="sadz",
+            start_params_d4_key="sadz",
+            D3={"powell": False},
+            D4={"powell": True, "least_squares": False},
+        )
+
+    opt()
     return
 
 
