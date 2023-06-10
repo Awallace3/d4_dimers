@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 import src
 
+ang_to_bohr = src.constants.Constants().g_aatoau()
+
 
 def gather_data():
     # Gather data
@@ -86,6 +88,12 @@ def total_bases():
     ]
 
 
+def make_bohr(geometry):
+    return np.hstack(
+        (np.reshape(geometry[:, 0], (-1, 1)), ang_to_bohr * geometry[:, 1:])
+    )
+
+
 def main():
     # gather_data()
     df = pd.read_pickle("data/d4.pkl")
@@ -94,8 +102,13 @@ def main():
         # "TAG",
         "HF_adz",
     ]
-    optimize_paramaters(df, bases, start_params_d4_key="HF", D3={"powell": False}, D4={"powell": True, "least_squares": False})
-
+    optimize_paramaters(
+        df,
+        bases,
+        start_params_d4_key="sadz",
+        D3={"powell": False},
+        D4={"powell": True, "least_squares": False},
+    )
     return
 
 

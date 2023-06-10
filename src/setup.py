@@ -1714,7 +1714,12 @@ def gather_data6(
                 "D3Data",
             ]
         ]
-        df["Geometry_bohr"] = df.apply(lambda x: ang_to_bohr * x["Geometry"], axis=1)
+        df["Geometry_bohr"] = df.apply(
+            lambda x: np.concatenate(
+                (x["Geometry"][:, 0], ang_to_bohr * x["Geometry"][:, 1:])
+            ),
+            axis=1,
+        )
         if replace_hf:
             df = replace_hf_int_HF_jdz(df)
         xyzs = df["Geometry"].to_list()

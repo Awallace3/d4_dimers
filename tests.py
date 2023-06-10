@@ -218,7 +218,7 @@ def test_stored_C6s():
 
     for n, i in enumerate(id_list):
         row = df.iloc[i]
-        pos = row["Geometry"][:,0]
+        pos = row["Geometry"][:, 0]
         carts = row["Geometry"][:, 1:]
         charges = row["charges"]
         Ma, Mb = row["monAs"], row["monBs"]
@@ -255,40 +255,63 @@ def test_stored_C6s():
         assert np.allclose(C6_Bs, row["C6_B"], rtol=1e-14)
 
 
+def test_dispersion_interaction_energy3() -> None:
+    """
+    test_dispersion_interaction_energy
+    """
+    # TODO: make dftd4 api use correct params
+    params = [1, 1.61679827, 0.44959224, 3.35743605]
+    p = params.copy()
+    p.pop(0)
+    df = pd.read_pickle("data/d4.pkl")
+    r = df.iloc[2700]
+    num, coords = r["Geometry_bohr"][:, 0], r["Geometry_bohr"][:, 1:]
+    charges = r["charges"]
+    monAs, monBs = r["monAs"], r["monBs"]
+    charges = r["charges"]
+    print(num, coords)
+    tools.print_cartesians_pos_carts(num, coords)
+
+    e_d = src.locald4.compute_bj_f90(num, coords, r["C6s"], params=p)
+
+    n1, p1 = num[monAs], coords[monAs, :]
+    e_1 = src.locald4.compute_bj_f90(n1, p1, r["C6_A"], params=p)
+
+    n2, p2 = num[monBs], coords[monBs, :]
+    e_2 = src.locald4.compute_bj_f90(n2, p2, r["C6_B"], params=p)
+
+    e_total = (e_d - (e_1 + e_2)) * hartree_to_kcalmol
+
+    num, coords = r["Geometry"][:, 0], r["Geometry"][:, 1:]
+    dftd4 = src.locald4.compute_bj_dimer_DFTD4(
+        params, num, coords, monAs, monBs, charges
+    )
+
+    print(f"{e_d = }")
+    print(f"{e_1 = }")
+    print(f"{e_2 = }")
+    print(f"{e_total = }")
+    print(f"{dftd4 = }")
+    assert abs(e_total - dftd4) < 1e-12
+
 
 def test_compute_bj_f90():
     df = pd.read_pickle("data/d4.pkl")
-    id_list = [2700]
+    id_list = [0, 500, 2700, 4992]
     params = src.paramsTable.paramsDict()["HF"]
-    print(params)
+    p = params[1:]
+    print(params, p)
     energies = np.zeros((len(id_list), 2))
-    r4r2_ls = src.r4r2.r4r2_ls()
+    r4r2_ls = src.r4r2.r4r2_vals_ls()
     for n, i in enumerate(id_list):
         print(i)
         row = df.iloc[i]
         print(row["Geometry_bohr"])
         d4_local = src.locald4.compute_bj_dimer_f90(
-            params[1:],
-            row["Geometry_bohr"][:, 0],  # pos
-            row["Geometry_bohr"][:, 1:],  # carts
-            row["monAs"],
-            row["monBs"],
-            row["C6s"],
-            C6_A=row["C6_A"],
-            C6_B=row["C6_B"],
+            p,
+            row,
             r4r2_ls=r4r2_ls,
         )
-        # d4_local = src.setup.compute_bj_from_dimer_AB_all_C6s(
-        #     params[1:],
-        #     row["Geometry"][:, 0],  # pos
-        #     row["Geometry"][:, 1:],  # carts
-        #     row["monAs"],
-        #     row["monBs"],
-        #     row["C6s"],
-        #     C6_A=row["C6_A"],
-        #     C6_B=row["C6_B"],
-        #     r4r2_ls=r4r2_ls,
-        # )
         dftd4 = src.locald4.compute_bj_dimer_DFTD4(
             params,
             row["Geometry"][:, 0],  # pos
@@ -300,4 +323,4 @@ def test_compute_bj_f90():
         energies[n, 0] = d4_local
         energies[n, 1] = dftd4
     print(energies)
-    assert np.allclose(energies[:, 0], energies[:, 1], atol=1e-12)
+    assert np.allclose(energies[:, 0], energies[:, 1], atol=1e-14)

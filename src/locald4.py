@@ -7,6 +7,9 @@ import json
 from . import r4r2
 from .constants import Constants
 from qcelemental import constants
+from qm_tools_aw import tools
+
+hartree_to_kcalmol = qcel.constants.conversion_factor("hartree", "kcal/mol")
 
 
 def write_xyz_from_np(atom_numbers, carts, outfile="dat.xyz", charges=[0, 1]) -> None:
@@ -143,59 +146,81 @@ def compute_bj_f90(
 
 def compute_bj_dimer_f90(
     params,
-    pos,
-    carts,
-    Ma,
-    Mb,
-    C6s,
-    C6_A,
-    C6_B,
-    mult_out=constants.conversion_factor("hartree", "kcal / mol"),
-    r4r2_ls: [] = r4r2.r4r2_vals_ls(),
-) -> float:
-    """
-    compute_bj_from_dimer_AB computes dftd4 for dimer and each monomer and returns
-    subtraction.
-    """
-    f90 = compute_bj_f90(
-        pos=pos,
-        carts=carts,
-        C6s=C6s,
-        r4r2_ls=r4r2_ls,
-        params=params,
-    )
+    r,
+    r4r2_ls=r4r2.r4r2_vals_ls(),
+):
+    num, coords = r["Geometry_bohr"][:, 0], r["Geometry_bohr"][:, 1:]
+    charges = r["charges"]
+    monAs, monBs = r["monAs"], r["monBs"]
+    charges = r["charges"]
 
-    mon_ca = carts[Ma]
-    mon_pa = pos[Ma]
-    A = compute_bj_f90(
-        pos=mon_pa,
-        carts=mon_ca,
-        C6s=C6_A,
-        params=params,
-        r4r2_ls=r4r2_ls,
-    )
+    # tools.print_cartesians_pos_carts(num, coords)
 
-    mon_cb = carts[Mb]
-    mon_pb = pos[Mb]
-    B = compute_bj_f90(
-        pos=mon_pb,
-        carts=mon_cb,
-        C6s=C6_B,
-        params=params,
-        r4r2_ls=r4r2_ls,
-    )
+    e_d = compute_bj_f90(num, coords, r["C6s"], params, r4r2_ls)
 
-    print(f"dimer: \n{pos}]\n{carts}")
-    print(f"A: \n{mon_pa}]\n{mon_ca}")
-    print(f"B: \n{mon_pb}]\n{mon_cb}")
+    n1, p1 = num[monAs], coords[monAs, :]
+    e_1 = compute_bj_f90(n1, p1, r["C6_A"], params, r4r2_ls)
+
+    n2, p2 = num[monBs], coords[monBs, :]
+    e_2 = compute_bj_f90(n2, p2, r["C6_B"], params, r4r2_ls)
+
+    e_total = (e_d - (e_1 + e_2)) * hartree_to_kcalmol
+    return e_total
 
 
-
-    AB = A + B
-    print(f"disp       = {f90} - ({AB}) = {f90} - ({A} + {B})")
-
-    disp = (f90 - (AB)) * mult_out
-    return disp
+# def compute_bj_dimer_f90(
+#     params,
+#     pos,
+#     carts,
+#     Ma,
+#     Mb,
+#     C6s,
+#     C6_A,
+#     C6_B,
+#     mult_out=constants.conversion_factor("hartree", "kcal / mol"),
+#     r4r2_ls: [] = r4r2.r4r2_vals_ls(),
+# ) -> float:
+#     """
+#     compute_bj_from_dimer_AB computes dftd4 for dimer and each monomer and returns
+#     subtraction.
+#     """
+#     f90 = compute_bj_f90(
+#         pos=pos,
+#         carts=carts,
+#         C6s=C6s,
+#         r4r2_ls=r4r2_ls,
+#         params=params,
+#     )
+#
+#     mon_pa = pos[Ma]
+#     mon_ca = carts[Ma]
+#     A = compute_bj_f90(
+#         pos=mon_pa,
+#         carts=mon_ca,
+#         C6s=C6_A,
+#         params=params,
+#         r4r2_ls=r4r2_ls,
+#     )
+#
+#     mon_pb = pos[Mb]
+#     mon_cb = carts[Mb]
+#     B = compute_bj_f90(
+#         pos=mon_pb,
+#         carts=mon_cb,
+#         C6s=C6_B,
+#         params=params,
+#         r4r2_ls=r4r2_ls,
+#     )
+#
+#     print(f"dimer: \n{pos}]\n{carts}")
+#     print(f"A: \n{mon_pa}]\n{mon_ca}")
+#     print(f"B: \n{mon_pb}]\n{mon_cb}")
+#
+#     AB = A + B
+#     print(f"disp       = {f90} - ({AB}) = {f90} - ({A} + {B})")
+#
+#     disp = (f90 - (AB)) * mult_out
+#     return disp
 
 
 def compute_bj_dimer_DFTD4(

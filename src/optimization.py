@@ -53,13 +53,7 @@ def find_max_e(
     df["d4"] = df.apply(
         lambda row: locald4.compute_bj_dimer_f90(
             params,
-            row["Geometry_bohr"][:, 0],  # pos
-            row["Geometry_bohr"][:, 1:],  # carts
-            row["monAs"],
-            row["monBs"],
-            row["C6s"],
-            row["C6_A"],
-            row["C6_B"],
+            row,
             r4r2_ls = r4r2_ls,
         ),
         axis=1,
@@ -122,21 +116,8 @@ def compute_int_energy_stats_dftd4_key(
     df[f"{hf_key}_d4"] = df.apply(
         lambda row: locald4.compute_bj_dimer_f90(
             params,
-            row["Geometry_bohr"][:, 0],  # pos
-            row["Geometry_bohr"][:, 1:],  # carts
-            row["monAs"],
-            row["monBs"],
-            row["C6s"],
-            C6_A=row["C6_A"],
-            C6_B=row["C6_B"],
+            row,
             r4r2_ls = r4r2_ls,
-            # lambda row: compute_bj_pairs(
-            #     params,
-            #     row["Geometry"][:, 0],  # pos
-            #     row["Geometry"][:, 1:],  # carts
-            #     row["monAs"],
-            #     row["monBs"],
-            #     row["C6s"],
         ),
         axis=1,
     )
@@ -161,13 +142,7 @@ def compute_int_energy_stats(
     df["d4"] = df.apply(
         lambda row: locald4.compute_bj_dimer_f90(
             params,
-            row["Geometry_bohr"][:, 0],  # pos
-            row["Geometry_bohr"][:, 1:],  # carts
-            row["monAs"],
-            row["monBs"],
-            row["C6s"],
-            C6_A=row["C6_A"],
-            C6_B=row["C6_B"],
+            row,
             r4r2_ls = r4r2_ls,
         ),
         axis=1,
@@ -199,15 +174,20 @@ def compute_int_energy_least_squares(
     #             return [10 for i in range(len(df))]
     r4r2_ls = r4r2.r4r2_vals_ls()
     df["d4"] = df.apply(
+        # lambda row: locald4.compute_bj_dimer_f90(
+        #     params,
+        #     row["Geometry_bohr"][:, 0],  # pos
+        #     row["Geometry_bohr"][:, 1:],  # carts
+        #     row["monAs"],
+        #     row["monBs"],
+        #     row["C6s"],
+        #     C6_A=row["C6_A"],
+        #     C6_B=row["C6_B"],
+        #     r4r2_ls = r4r2_ls,
+        # ),
         lambda row: locald4.compute_bj_dimer_f90(
             params,
-            row["Geometry_bohr"][:, 0],  # pos
-            row["Geometry_bohr"][:, 1:],  # carts
-            row["monAs"],
-            row["monBs"],
-            row["C6s"],
-            C6_A=row["C6_A"],
-            C6_B=row["C6_B"],
+            row,
             r4r2_ls = r4r2_ls,
         ),
         axis=1,
@@ -237,21 +217,24 @@ def compute_int_energy(
     r4r2_ls = r4r2.r4r2_vals_ls()
     df["d4"] = df.apply(
         # lambda row: locald4.compute_bj_dimer_f90(
+        #     params,
+        #     row["Geometry_bohr"][:, 0],  # pos
+        #     row["Geometry_bohr"][:, 1:],  # carts
+        #     row["monAs"],
+        #     row["monBs"],
+        #     row["C6s"],
+        #     C6_A=row["C6_A"],
+        #     C6_B=row["C6_B"],
+        #     r4r2_ls = r4r2_ls,
+        # ),
         lambda row: locald4.compute_bj_dimer_f90(
             params,
-            row["Geometry_bohr"][:, 0],  # pos
-            row["Geometry_bohr"][:, 1:],  # carts
-            row["monAs"],
-            row["monBs"],
-            row["C6s"],
-            C6_A=row["C6_A"],
-            C6_B=row["C6_B"],
+            row,
             r4r2_ls = r4r2_ls,
         ),
         axis=1,
     )
     df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
-    print(f"difference = {df['diff'].tolist()[0]} = {df['Benchmark'].tolist()[0]} - ({df[hf_key].tolist()[0]} + {df['d4'].tolist()[0]})")
     rmse = (df["diff"] ** 2).mean() ** 0.5
     print("%.8f\t" % rmse, params.tolist())
     return rmse
