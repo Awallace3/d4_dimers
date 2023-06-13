@@ -359,23 +359,24 @@ def gather_grimme_from_db():
 
 def combine_data_with_new_df():
     # create_grimme_s22s66blind()
-    df = pd.read_pickle("data/grimme_fitset_db.pkl")
+    df = pd.read_pickle("data/grimme_fitset_total.pkl")
+    # geoms = df["Geometry"].tolist()
+    # monAs, monBs = split_mons(geoms)
+    # df["monAs"] = monAs
+    # df["monBs"] = monBs
+    # df["charges"] = df.apply(lambda r: np.array([[0, 1], [0, 1], [0, 1]]), axis=1)
+    # C6s, C6_A, C6_B, d4Ds, d4As, d4Bs = calc_c6s_for_df(
+    #     geoms, monAs, monBs, df["charges"].to_list()
+    # )
+    # df['d4Ds'] = d4Ds
+    # df['d4As'] = d4As
+    # df['d4Bs'] = d4Bs
+    # df.to_pickle("data/grimme_fitset_total.pkl")
     df2 = pd.read_pickle("data/grimme_fitset_test.pkl")
+    df2['main_id'] = df2.index
     print(df.columns)
     print(df2.columns)
-    df["m_geom"] = df.apply(
-        lambda r: tools.print_cartesians_pos_carts(
-            r["Geometry"][:, 0], r["Geometry"][:, 1:], True
-        ),
-        axis=1,
-    )
-    df2["m_geom"] = df.apply(
-        lambda r: tools.print_cartesians_pos_carts(
-            r["Geometry"][:, 0], r["Geometry"][:, 1:], True
-        ),
-        axis=1,
-    )
-    df = pd.merge(df, df2, on=["m_geom"], how="inner", suffixes=("", "_y"))
+    df = pd.merge(df, df2, on=["main_id"], how="inner", suffixes=("", "_y"))
     print(df)
     df.to_pickle("data/grimme_fitset_test2.pkl")
     return df2

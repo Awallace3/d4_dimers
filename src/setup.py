@@ -18,6 +18,7 @@ import qcelemental as qcel
 from . import locald4
 
 ang_to_bohr = Constants().g_aatoau()
+hartree_to_kcal_mol = qcel.constants.conversion_factor("hartree", "kcal / mol")
 
 
 def inpsect_master_regen():
@@ -1489,7 +1490,7 @@ def calc_c6s_for_df(xyzs, monAs, monBs, charges) -> ([], [], []):
             s9=1.0,
         )
         C6s[n] = C6
-        d4Ds[n] = e
+        d4Ds[n] = e * hartree_to_kcal_mol
 
         Ma = monAs[n]
         mon_pa, mon_ca = create_mon_geom(pos, carts, Ma)
@@ -1501,7 +1502,7 @@ def calc_c6s_for_df(xyzs, monAs, monBs, charges) -> ([], [], []):
             s9=1.0,
         )
         C6_A[n] = C6a
-        d4As[n] = e
+        d4As[n] = e * hartree_to_kcal_mol
 
         Mb = monBs[n]
         mon_pb, mon_cb = create_mon_geom(pos, carts, Mb)
@@ -1513,7 +1514,7 @@ def calc_c6s_for_df(xyzs, monAs, monBs, charges) -> ([], [], []):
             s9=1.0,
         )
         C6_B[n] = C6b
-        d4Bs[n] = e
+        d4Bs[n] = e * hartree_to_kcal_mol
     return C6s, C6_A, C6_B, d4Ds, d4As, d4Bs
 
 

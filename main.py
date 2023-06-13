@@ -102,7 +102,7 @@ def df_names(i):
         "data/d4.pkl",
         "data/grimme_fitset_db3.pkl",
         "data/schr_dft.pkl",
-        "data/grimme_fitset_test2.pkl",
+        "data/grimme_fitset_total.pkl",
     ]
     selected = names[i]
     print(f"Selected: {selected} for df")
@@ -126,17 +126,22 @@ def grimme_test_atm() -> None:
         lambda r: r["Benchmark"] - (r["HF_qz"] + r["dftd4_disp_ie_grimme_params_ATM"]),
         axis=1,
     )
-    print(df["diff"].describe())
+    print(df[['diff', 'Benchmark', "HF_qz", "dftd4_disp_ie_grimme_params_ATM"]].describe())
+    # root mean square error of diff
+    RMSE = np.sqrt(np.mean(df["diff"] ** 2))
+    print(f"{RMSE = }\n\n")
 
-    df = df_names(3)
-    print(df.columns)
-    df['HF_qz'].dropna(inplace=True)
-    print(len(df))
+    df = df_names(4)
+    df["HF_qz"].dropna(inplace=True)
+    df['dftd4_ie'] = df.apply(lambda r: r['d4Ds'] - r['d4As'] - r['d4Bs'], axis=1)
     df["diff"] = df.apply(
-        lambda r: r["Benchmark"] - (r["HF_qz"] + (r["d4Ds"] - r["d4As"] - r["d4Bs"])),
+        lambda r: r["Benchmark"] - (r["HF_qz"] + r['dftd4_ie']),
         axis=1,
     )
-    print(df["diff"].describe())
+    print(df[['diff', 'Benchmark', "HF_qz", "dftd4_ie"]].describe())
+    # root mean square error of diff
+    RMSE = np.sqrt(np.mean(df["diff"] ** 2))
+    print(f"{RMSE = }\n\n")
     return
 
 
