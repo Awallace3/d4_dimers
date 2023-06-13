@@ -24,8 +24,11 @@ def gather_data(version="schr"):
             ],
             overwrite=True,
         )
-    elif version == "grimmme":
-        src.grimme_setup.gather_grimme_from_db()
+    elif version == "grimme":
+        # src.grimme_setup.create_grimme_s22s66blind()
+        src.grimme_setup.combine_data_with_new_df()
+        # src.grimme_setup.gather_grimme_from_db()
+
     return
 
 
@@ -95,7 +98,12 @@ def total_bases():
 
 
 def df_names(i):
-    names = ["data/d4.pkl", "data/grimme_fitset_db3.pkl", "data/schr_dft.pkl"]
+    names = [
+        "data/d4.pkl",
+        "data/grimme_fitset_db3.pkl",
+        "data/schr_dft.pkl",
+        "data/grimme_fitset_test2.pkl",
+    ]
     selected = names[i]
     print(f"Selected: {selected} for df")
     df = pd.read_pickle(selected)
@@ -109,8 +117,31 @@ def make_bohr(geometry):
     )
 
 
+def grimme_test_atm() -> None:
+    """
+    grimme_test_atm
+    """
+    df = df_names(1)
+    df["diff"] = df.apply(
+        lambda r: r["Benchmark"] - (r["HF_qz"] + r["dftd4_disp_ie_grimme_params_ATM"]),
+        axis=1,
+    )
+    print(df["diff"].describe())
+
+    df = df_names(3)
+    print(df.columns)
+    df['HF_qz'].dropna(inplace=True)
+    print(len(df))
+    df["diff"] = df.apply(
+        lambda r: r["Benchmark"] - (r["HF_qz"] + (r["d4Ds"] - r["d4As"] - r["d4Bs"])),
+        axis=1,
+    )
+    print(df["diff"].describe())
+    return
+
+
 def main():
-    # gather_data()
+    # gather_data("grimme")
     df = df_names(0)
 
     def opt():
@@ -132,6 +163,7 @@ def main():
         )
 
     # opt()
+    grimme_test_atm()
     return
 
 

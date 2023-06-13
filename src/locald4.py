@@ -33,6 +33,7 @@ def calc_dftd4_c6_c8_pairDisp2(
     input_xyz: str = "dat.xyz",
     dftd4_bin: str = "/theoryfs2/ds/amwalla3/.local/bin/dftd4",
     p: [] = [1.0, 1.61679827, 0.44959224, 3.35743605],
+    s9 = 0.0,
 ):
     """
     Ensure that dftd4 binary is from compiling git@github.com:Awallace3/dftd4
@@ -56,7 +57,7 @@ def calc_dftd4_c6_c8_pairDisp2(
         str(p[2]),
         str(p[3]),
         "--mbdscale",
-        "0.0",
+        f"{s9}",
         "-c",
         str(charges[0]),
         "--pair-resolved",

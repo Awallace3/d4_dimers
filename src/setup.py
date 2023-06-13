@@ -15,6 +15,7 @@ from .harvest import ssi_bfdb_data, harvest_data
 import psi4
 from qcelemental import constants
 import qcelemental as qcel
+from . import locald4
 
 ang_to_bohr = Constants().g_aatoau()
 
@@ -1463,9 +1464,11 @@ def calc_c6s_for_df(xyzs, monAs, monBs, charges) -> ([], [], []):
     C6s = [np.array([]) for i in range(len(xyzs))]
     C6_A = [np.array([]) for i in range(len(xyzs))]
     C6_B = [np.array([]) for i in range(len(xyzs))]
-    pas = [np.array([]) for i in range(len(xyzs))]
-    pbs = [np.array([]) for i in range(len(xyzs))]
-    pds = [np.array([]) for i in range(len(xyzs))]
+    d4As = [np.array([]) for i in range(len(xyzs))]
+    d4Bs = [np.array([]) for i in range(len(xyzs))]
+    d4Ds = [np.array([]) for i in range(len(xyzs))]
+    # if charges is None:
+    #     charges = [np.array([[0,1] for i in range(3)]) for j in range(len(xyzs))]
     for n, c in enumerate(
         tqdm(
             xyzs[:],
@@ -1479,24 +1482,39 @@ def calc_c6s_for_df(xyzs, monAs, monBs, charges) -> ([], [], []):
         carts = g3[:, 1:]
         c = charges[n]
         # C6, na = calc_dftd4_props(pos, carts)
-        C6, pd = calc_dftd4_props_psi4_dftd4(pos, carts, c[0])
+        C6, _, _, e = locald4.calc_dftd4_c6_c8_pairDisp2(
+            pos,
+            carts,
+            c[0],
+            s9=1.0,
+        )
         C6s[n] = C6
-        pds[n] = pd
+        d4Ds[n] = e
 
         Ma = monAs[n]
         mon_pa, mon_ca = create_mon_geom(pos, carts, Ma)
         # C6a, na = calc_dftd4_props(mon_pa, mon_ca)
-        C6a, pa = calc_dftd4_props_psi4_dftd4(mon_pa, mon_ca, c[1])
+        C6a, _, _, e = locald4.calc_dftd4_c6_c8_pairDisp2(
+            mon_pa,
+            mon_ca,
+            c[1],
+            s9=1.0,
+        )
         C6_A[n] = C6a
-        pas[n] = pa
+        d4As[n] = e
 
         Mb = monBs[n]
         mon_pb, mon_cb = create_mon_geom(pos, carts, Mb)
         # C6b, na = calc_dftd4_props(mon_pb, mon_cb)
-        C6b, pb = calc_dftd4_props_psi4_dftd4(mon_pb, mon_cb, c[2])
+        C6b, _, _, e = locald4.calc_dftd4_c6_c8_pairDisp2(
+            mon_pb,
+            mon_cb,
+            c[2],
+            s9=1.0,
+        )
         C6_B[n] = C6b
-        pbs[n] = pb
-    return C6s, C6_A, C6_B, pds, pas, pbs
+        d4Bs[n] = e
+    return C6s, C6_A, C6_B, d4Ds, d4As, d4Bs
 
 
 def calc_c6_c8_pairs_for_df(xyzs, monAs, monBs, charges) -> ([], [], []):
@@ -1543,9 +1561,7 @@ def calc_c6_c8_pairs_for_df(xyzs, monAs, monBs, charges) -> ([], [], []):
 
 
 def calc_c6s_c8s_pairDisp2_for_df(xyzs, monAs, monBs, charges) -> ([], [], []):
-    """
-    calc_c6s_for_df
-    """
+    """ """
     C6s = [np.array([]) for i in range(len(xyzs))]
     C6_A = [np.array([]) for i in range(len(xyzs))]
     C6_B = [np.array([]) for i in range(len(xyzs))]

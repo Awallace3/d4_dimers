@@ -17,6 +17,7 @@ import numpy as np
 import psi4
 from qcelemental import constants
 from psi4.driver.qcdb.bfs import BFS
+from qm_tools_aw import tools
 
 """
 From Grimme's first citation...
@@ -328,13 +329,19 @@ def create_grimme_s22s66blind() -> None:
         monAs, monBs = split_mons(geoms)
         df["monAs"] = monAs
         df["monBs"] = monBs
-        C6s, C6_A, C6_B = calc_c6s_for_df(geoms, monAs, monBs)
+        df["charges"] = df.apply(lambda r: np.array([[0, 1], [0, 1], [0, 1]]), axis=1)
+        C6s, C6_A, C6_B, d4Ds, d4As, d4Bs = calc_c6s_for_df(
+            geoms, monAs, monBs, df["charges"].to_list()
+        )
         df["C6s"] = C6s
         df["C6_A"] = C6_A
         df["C6_B"] = C6_B
+        df["d4Ds"] = d4Ds
+        df["d4As"] = d4As
+        df["d4Bs"] = d4Bs
         frames.append(df)
     df = pd.concat(frames)
-    df.to_pickle("data/grimme_fitset.pkl")
+    df.to_pickle("data/grimme_fitset_test.pkl")
     # for i in HF_columns:
     #     df = harvest_data(df, i.split("_")[-1], overwrite=overwrite)
     return
@@ -346,8 +353,29 @@ def gather_grimme_from_db():
     df = expand_opt_df(df)
     print(df.columns)
     df = harvest_data(df, "jdz_dftd4", data_dir="calcgrimme", overwrite=True)
-    df.to_pickle("data/grimme_fitset_db.pkl")
+    # df.to_pickle("data/grimme_fitset_db.pkl")
     return df
 
 
-
+def combine_data_with_new_df():
+    # create_grimme_s22s66blind()
+    df = pd.read_pickle("data/grimme_fitset_db.pkl")
+    df2 = pd.read_pickle("data/grimme_fitset_test.pkl")
+    print(df.columns)
+    print(df2.columns)
+    df["m_geom"] = df.apply(
+        lambda r: tools.print_cartesians_pos_carts(
+            r["Geometry"][:, 0], r["Geometry"][:, 1:], True
+        ),
+        axis=1,
+    )
+    df2["m_geom"] = df.apply(
+        lambda r: tools.print_cartesians_pos_carts(
+            r["Geometry"][:, 0], r["Geometry"][:, 1:], True
+        ),
+        axis=1,
+    )
+    df = pd.merge(df, df2, on=["m_geom"], how="inner", suffixes=("", "_y"))
+    print(df)
+    df.to_pickle("data/grimme_fitset_test2.pkl")
+    return df2
