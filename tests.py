@@ -296,6 +296,9 @@ def test_dispersion_interaction_energy3() -> None:
 
 
 def test_compute_bj_f90():
+    """
+    ensures that the fortran and python versions of the bj dispersion energy are the same
+    """
     df = pd.read_pickle("data/d4.pkl")
     id_list = [0, 500, 2700, 4926]
     params = src.paramsTable.paramsDict()["HF"]
@@ -324,3 +327,53 @@ def test_compute_bj_f90():
         energies[n, 1] = dftd4
     print(energies)
     assert np.allclose(energies[:, 0], energies[:, 1], atol=1e-14)
+
+
+def test_charged_dftd4():
+    """
+    Ensures energy computed through dftd4 is different for neutral and charged
+    """
+    pos, carts = src.water_data.water_geom()
+    pos = pos[:3]
+    carts = carts[:3, :]
+    params = src.paramsTable.paramsDict()["HF"]
+    _, _, _, neutral = src.locald4.calc_dftd4_c6_c8_pairDisp2(
+        pos,
+        carts,
+        [0],
+        p=params,
+    )
+    _, _, _, cation = src.locald4.calc_dftd4_c6_c8_pairDisp2(
+        pos,
+        carts,
+        [1],
+        p=params,
+    )
+    assert neutral != cation
+
+
+def test_charged_C6s_in_df():
+    """
+    Ensures that the C6's pre-computed in df are correctly charged
+    """
+    params = src.paramsTable.paramsDict()["HF"]
+    df = pd.read_pickle("data/d4.pkl")
+    id_list = [4926]
+    for n, i in enumerate(id_list):
+        print(i)
+        row = df.iloc[i]
+        charges = row["charges"]
+        print(charges)
+        C6s_df_c, _, _, df_c_e = src.locald4.calc_dftd4_c6_c8_pairDisp2(
+            row["Geometry"][:, 0],
+            row["Geometry"][:, 1:],
+            charges[0],
+            p=params,
+        )
+        C6s_c, _, _, df = src.locald4.calc_dftd4_c6_c8_pairDisp2(
+            row["Geometry"][:, 0],
+            row["Geometry"][:, 1:],
+            [0, 1],
+            p=params,
+        )
+        assert not np.all(C6s_df_c == C6s_c)

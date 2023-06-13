@@ -131,7 +131,7 @@ def grimme_test_atm() -> None:
     RMSE = np.sqrt(np.mean(df["diff"] ** 2))
     print(f"{RMSE = }\n\n")
 
-    df = df_names(4)
+    df = df_names(3)
     df["HF_qz"].dropna(inplace=True)
     df['dftd4_ie'] = df.apply(lambda r: r['d4Ds'] - r['d4As'] - r['d4Bs'], axis=1)
     df["diff"] = df.apply(
