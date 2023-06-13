@@ -129,6 +129,28 @@ def compute_D3_D4_values_for_params(
         ),
         axis=1,
     )
+    df["SAPT0-D4/aug-cc-pVDZ"] = df.apply(
+        lambda row: row["HF_adz"] + row["-D4 (adz)"],
+        axis=1,
+    )
+    df["SAPT0-D3/aug-cc-pVDZ"] = df.apply(
+        lambda row: row["HF_adz"] + row["-D3 (adz)"],
+        axis=1,
+    )
+    df["SAPT0-D4/jun-cc-pVDZ"] = df.apply(
+        lambda row: row["HF_jdz"] + row["-D4 (adz)"],
+        axis=1,
+    )
+    df["SAPT0-D3/jun-cc-pVDZ"] = df.apply(
+        lambda row: row["HF_jdz"] + row["-D3 (adz)"],
+        axis=1,
+    )
+    df["HF_adz_diff"] = df["HF_adz"] - df["Benchmark"]
+
+    df["adz_diff_d4"] = df["Benchmark"] - df["SAPT0-D4/aug-cc-pVDZ"]
+    df["adz_diff_d3"] = df["Benchmark"] - df["SAPT0-D3/aug-cc-pVDZ"]
+    df["jdz_diff_d4"] = df["Benchmark"] - df["SAPT0-D4/jun-cc-pVDZ"]
+    df["jdz_diff_d3"] = df["Benchmark"] - df["SAPT0-D3/jun-cc-pVDZ"]
     return df
 
 
@@ -154,89 +176,33 @@ def plots(df) -> None:
     )
     df["HF_adz_diff"] = df["HF_adz"] - df["Benchmark"]
 
-    df["adz_diff_d4"] = df["Benchmark"]- df["SAPT0-D4/aug-cc-pVDZ"]
-    df["adz_diff_d3"] = df["Benchmark"]- df["SAPT0-D3/aug-cc-pVDZ"]
-    df["jdz_diff_d4"] = df["Benchmark"]- df["SAPT0-D4/jun-cc-pVDZ"]
-    df["jdz_diff_d3"] = df["Benchmark"]- df["SAPT0-D3/jun-cc-pVDZ"]
+    df["adz_diff_d4"] = df["Benchmark"] - df["SAPT0-D4/aug-cc-pVDZ"]
+    df["adz_diff_d3"] = df["Benchmark"] - df["SAPT0-D3/aug-cc-pVDZ"]
+    df["jdz_diff_d4"] = df["Benchmark"] - df["SAPT0-D4/jun-cc-pVDZ"]
+    df["jdz_diff_d3"] = df["Benchmark"] - df["SAPT0-D3/jun-cc-pVDZ"]
     print(df["adz_diff_d3"].describe())
     print(df["adz_diff_d4"].describe())
     print(df["jdz_diff_d3"].describe())
     print(df["jdz_diff_d4"].describe())
 
-    df["SAPT0_jdz_diff"] =  df["Benchmark"]- df["SAPT0"]
+    df["SAPT0_jdz_diff"] = df["Benchmark"] - df["SAPT0"]
     print(df["SAPT0_jdz_diff"].describe())
-    # src.plotting.plot_dbs(
-    #     df,
-    #     "adz_diff_d4",
-    #     "SAPT0-D4/aug-cc-pVDZ vs. CCSD(T)/CBS",
-    #     "adz_diff_d4",
-    # )
-    # src.plotting.plot_dbs(
-    #     df,
-    #     "adz_diff_d3",
-    #     "SAPT0-D3/aug-cc-pVDZ vs. CCSD(T)/CBS",
-    #     "adz_diff_d3",
-    #     color="red",
-    # )
-    # src.plotting.plot_dbs(df, "HF_adz_diff", "HF/aug-cc-pVDZ", "HF_adz_diff")
     src.plotting.plot_violin_d3_d4_total(
         df,
         [
             "adz_diff_d3",
             "adz_diff_d4",
-            # "jdz_diff_d3",
-            # "jdz_diff_d4",
             "SAPT0_jdz_diff",
         ],
         [
             "SAPT0-D3/aug-cc-pVDZ",
             "SAPT0-D4/aug-cc-pVDZ",
-            # "SAPT0-D3/jun-cc-pVDZ",
-            # "SAPT0-D4/jun-cc-pVDZ",
             "SAPT0/jun-cc-pVDZ",
         ],
         "",
         "adz_d3_d4_total_sapt0",
     )
-    # src.plotting.plot_violin_d3_d4_total(
-    #     df,
-    #     "adz_diff_d3",
-    #     "adz_diff_d4",
-    #     "SAPT0-D3/aug-cc-pVDZ",
-    #     "SAPT0-D4/aug-cc-pVDZ",
-    #     "",
-    #     "adz_d3_d4_total",
-    # )
-    # src.plotting.plot_dbs_d3_d4(
-    #     df,
-    #     "adz_diff_d3",
-    #     "adz_diff_d4",
-    #     "D3",
-    #     "D4",
-    #     "SAPT0-D/aug-cc-pVDZ Compared With CCSD(T)/CBS",
-    #     "adz_diff_d3_d4",
-    # )
-    # src.plotting.plot_dbs_d3_d4_two(
-    #     df,
-    #     "adz_diff_d3",
-    #     "adz_diff_d4",
-    #     "D3",
-    #     "D4",
-    #     "1: SAPT0-D/aug-cc-pVDZ Compared With CCSD(T)/CBS",
-    #     "adz_diff_d3_d4_first",
-    # )
-    # src.plotting.plot_dbs_d3_d4_two(
-    #     df,
-    #     "adz_diff_d3",
-    #     "adz_diff_d4",
-    #     "D3",
-    #     "D4",
-    #     "2: SAPT0-D/aug-cc-pVDZ Compared With CCSD(T)/CBS",
-    #     "adz_diff_d3_d4_second",
-    #     False,
-    # )
     return
-
 
 
 def main():
@@ -265,44 +231,56 @@ def main():
     df_saptdft = df[~df["pbe0_adz_saptdft"].isna()].copy()
     k = qcel.constants.conversion_factor("hartree", "kcal / mol")
     df_saptdft["pbe0_adz_saptdft_ndisp"] = df_saptdft.apply(
-        lambda r:
-        (sum(r["pbe0_adz_saptdft"][:2]) + r["pbe0_adz_saptdft"][3]) * k,
+        lambda r: (sum(r["pbe0_adz_saptdft"][:2]) + r["pbe0_adz_saptdft"][3]) * k,
         axis=1,
     )
     df_saptdft["pbe0_adz_saptdft_sum"] = df_saptdft.apply(
         lambda r: (sum(r["pbe0_adz_saptdft"][:4])) * k,
         axis=1,
     )
-    print(df_saptdft[[
-        "Benchmark", "pbe0_adz_saptdft_ndisp", "pbe0_adz_saptdft_sum", "HF_adz"
-    ]])
+    print(
+        df_saptdft[
+            ["Benchmark", "pbe0_adz_saptdft_ndisp", "pbe0_adz_saptdft_sum", "HF_adz"]
+        ]
+    )
 
     df_saptdft["SAPT0-D4/aug-cc-pVDZ"] = df_saptdft.apply(
         lambda row: row["HF_adz"] + row["-D4 (adz)"],
         axis=1,
     )
-    df_saptdft["adz_diff_d4"] = (df_saptdft["SAPT0-D4/aug-cc-pVDZ"] -
-                                 df_saptdft["Benchmark"])
+    df_saptdft["adz_diff_d4"] = (
+        df_saptdft["SAPT0-D4/aug-cc-pVDZ"] - df_saptdft["Benchmark"]
+    )
 
-    df_saptdft["pbe0_adz_d4_adz"] = (df_saptdft["pbe0_adz_saptdft_ndisp"] +
-                                     df_saptdft["-D4 (adz)"])
+    df_saptdft["pbe0_adz_d4_adz"] = (
+        df_saptdft["pbe0_adz_saptdft_ndisp"] + df_saptdft["-D4 (adz)"]
+    )
     df_saptdft["pbe0_adz_d4_undamped"] = (
-        df_saptdft["pbe0_adz_saptdft_ndisp"] + df_saptdft["-D4 (undamped)"])
+        df_saptdft["pbe0_adz_saptdft_ndisp"] + df_saptdft["-D4 (undamped)"]
+    )
     df_saptdft["pbe0_adz_d3_undamped"] = (
-        df_saptdft["pbe0_adz_saptdft_ndisp"] + df_saptdft["-D3 (undamped)"])
-    df_saptdft["pbe0_adz_d4_adz_diff"] = (df_saptdft["pbe0_adz_d4_adz"] -
-                                          df_saptdft["Benchmark"])
+        df_saptdft["pbe0_adz_saptdft_ndisp"] + df_saptdft["-D3 (undamped)"]
+    )
+    df_saptdft["pbe0_adz_d4_adz_diff"] = (
+        df_saptdft["pbe0_adz_d4_adz"] - df_saptdft["Benchmark"]
+    )
     df_saptdft["pbe0_adz_d4_undamped_diff"] = (
-        df_saptdft["pbe0_adz_d4_undamped"] - df_saptdft["Benchmark"])
+        df_saptdft["pbe0_adz_d4_undamped"] - df_saptdft["Benchmark"]
+    )
     df_saptdft["pbe0_adz_d3_undamped_diff"] = (
-        df_saptdft["pbe0_adz_d3_undamped"] - df_saptdft["Benchmark"])
+        df_saptdft["pbe0_adz_d3_undamped"] - df_saptdft["Benchmark"]
+    )
 
-    print(df_saptdft[[
-        "pbe0_adz_d4_undamped_diff",
-        "pbe0_adz_d3_undamped_diff",
-        # "pbe0_adz_d4_adz_diff",
-        # "adz_diff_d4",
-    ]].describe())
+    print(
+        df_saptdft[
+            [
+                "pbe0_adz_d4_undamped_diff",
+                "pbe0_adz_d3_undamped_diff",
+                # "pbe0_adz_d4_adz_diff",
+                # "adz_diff_d4",
+            ]
+        ].describe()
+    )
 
     return
 

@@ -126,19 +126,21 @@ def grimme_test_atm() -> None:
         lambda r: r["Benchmark"] - (r["HF_qz"] + r["dftd4_disp_ie_grimme_params_ATM"]),
         axis=1,
     )
-    print(df[['diff', 'Benchmark', "HF_qz", "dftd4_disp_ie_grimme_params_ATM"]].describe())
+    print(
+        df[["diff", "Benchmark", "HF_qz", "dftd4_disp_ie_grimme_params_ATM"]].describe()
+    )
     # root mean square error of diff
     RMSE = np.sqrt(np.mean(df["diff"] ** 2))
     print(f"{RMSE = }\n\n")
 
     df = df_names(3)
     df["HF_qz"].dropna(inplace=True)
-    df['dftd4_ie'] = df.apply(lambda r: r['d4Ds'] - r['d4As'] - r['d4Bs'], axis=1)
+    df["dftd4_ie"] = df.apply(lambda r: r["d4Ds"] - r["d4As"] - r["d4Bs"], axis=1)
     df["diff"] = df.apply(
-        lambda r: r["Benchmark"] - (r["HF_qz"] + r['dftd4_ie']),
+        lambda r: r["Benchmark"] - (r["HF_qz"] + r["dftd4_ie"]),
         axis=1,
     )
-    print(df[['diff', 'Benchmark', "HF_qz", "dftd4_ie"]].describe())
+    print(df[["diff", "Benchmark", "HF_qz", "dftd4_ie"]].describe())
     # root mean square error of diff
     RMSE = np.sqrt(np.mean(df["diff"] ** 2))
     print(f"{RMSE = }\n\n")
@@ -168,7 +170,8 @@ def main():
         )
 
     # opt()
-    grimme_test_atm()
+    # grimme_test_atm()
+    src.plotting.plotting_setup(df_names(0), False)
     return
 
 
