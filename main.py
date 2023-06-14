@@ -103,6 +103,7 @@ def df_names(i):
         "data/grimme_fitset_db3.pkl",
         "data/schr_dft.pkl",
         "data/grimme_fitset_total.pkl",
+        "data/grimme_fitset_test2.pkl"
     ]
     selected = names[i]
     print(f"Selected: {selected} for df")
@@ -117,40 +118,30 @@ def make_bohr(geometry):
     )
 
 
-def grimme_test_atm() -> None:
+def grimme_test_atm(df_names_inds=[4,5]) -> None:
     """
     grimme_test_atm
     """
-    df = df_names(1)
-    df["diff"] = df.apply(
-        lambda r: r["Benchmark"] - (r["HF_qz"] + r["dftd4_disp_ie_grimme_params_ATM"]),
-        axis=1,
-    )
-    print(
-        df[["diff", "Benchmark", "HF_qz", "dftd4_disp_ie_grimme_params_ATM"]].describe()
-    )
-    # root mean square error of diff
-    RMSE = np.sqrt(np.mean(df["diff"] ** 2))
-    print(f"{RMSE = }\n\n")
 
-    df = df_names(3)
-    df["HF_qz"].dropna(inplace=True)
-    df["dftd4_ie"] = df.apply(lambda r: r["d4Ds"] - r["d4As"] - r["d4Bs"], axis=1)
-    df["diff"] = df.apply(
-        lambda r: r["Benchmark"] - (r["HF_qz"] + r["dftd4_ie"]),
-        axis=1,
-    )
-    print(df[["diff", "Benchmark", "HF_qz", "dftd4_ie"]].describe())
-    # root mean square error of diff
-    RMSE = np.sqrt(np.mean(df["diff"] ** 2))
-    print(f"{RMSE = }\n\n")
+    for i in df_names_inds:
+        df = df_names(i)
+        print(df.columns.values)
+        df["HF_qz"].dropna(inplace=True)
+        df["dftd4_ie"] = df.apply(lambda r: r["d4Ds"] - r["d4As"] - r["d4Bs"], axis=1)
+        df["diff"] = df.apply(
+            lambda r: r["Benchmark"] - (r["HF_qz"] + r["dftd4_ie"]),
+            axis=1,
+        )
+        print(df[["diff", "Benchmark", "HF_qz", "dftd4_ie"]].describe())
+        # root mean square error of diff
+        RMSE = np.sqrt(np.mean(df["diff"] ** 2))
+        print(f"{RMSE = :.4f}\n\n")
     return
 
 
 def main():
-    # gather_data("grimme")
+    gather_data("grimme")
     df = df_names(0)
-
     def opt():
         adz_opt_params = [0.829861, 0.706055, 1.123903]
         bases = [
@@ -170,8 +161,8 @@ def main():
         )
 
     # opt()
-    # grimme_test_atm()
-    src.plotting.plotting_setup(df_names(0), False)
+    grimme_test_atm()
+    # src.plotting.plotting_setup(df_names(0), False)
     return
 
 

@@ -349,7 +349,7 @@ def create_grimme_s22s66blind() -> None:
 
 def gather_grimme_from_db():
     df = pd.read_pickle("data/grimme_fitset.pkl")
-    df["DB"] = "G"
+    # df["DB"] = "G"
     df = expand_opt_df(df)
     print(df.columns)
     df = harvest_data(df, "jdz_dftd4", data_dir="calcgrimme", overwrite=True)
@@ -358,7 +358,7 @@ def gather_grimme_from_db():
 
 
 def combine_data_with_new_df():
-    # create_grimme_s22s66blind()
+    create_grimme_s22s66blind()
     df = pd.read_pickle("data/grimme_fitset_total.pkl")
     # geoms = df["Geometry"].tolist()
     # monAs, monBs = split_mons(geoms)
@@ -373,10 +373,23 @@ def combine_data_with_new_df():
     # df['d4Bs'] = d4Bs
     # df.to_pickle("data/grimme_fitset_total.pkl")
     df2 = pd.read_pickle("data/grimme_fitset_test.pkl")
-    df2['main_id'] = df2.index
+    df["m_g"] = df.apply(
+        lambda r: tools.print_cartesians_pos_carts(
+            r["Geometry"][:, 0], r["Geometry"][:, 1:], True
+        ),
+        axis=1,
+    )
+    df2["m_g"] = df.apply(
+        lambda r: tools.print_cartesians_pos_carts(
+            r["Geometry"][:, 0], r["Geometry"][:, 1:], True
+        ),
+        axis=1,
+    )
+    df2["main_id"] = df2.index
     print(df.columns)
     print(df2.columns)
-    df = pd.merge(df, df2, on=["main_id"], how="inner", suffixes=("", "_y"))
+    # df = pd.merge(df, df2, on=["main_id"], how="inner", suffixes=("", "_y"))
+    df = pd.merge(df, df2, on=["m_g"], how="inner", suffixes=("", "_y"))
     print(df)
     df.to_pickle("data/grimme_fitset_test2.pkl")
     return df2

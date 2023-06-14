@@ -1,0 +1,9 @@
+
+mol {}
+
+set {
+    e_convergence 7
+    basis def2-qzvp
+}
+
+energy('hf', bsse_type='nocp')
