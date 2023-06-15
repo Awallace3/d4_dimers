@@ -16,7 +16,6 @@ from .optimization import compute_int_energy_stats
 import numpy as np
 import psi4
 from qcelemental import constants
-from psi4.driver.qcdb.bfs import BFS
 from qm_tools_aw import tools
 
 """

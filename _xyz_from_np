@@ -144,6 +144,7 @@ def compute_bj_f90_S6_S8_A1_A2(
     return energy
 
 
+
 def compute_bj_f90(
     pos: np.array,
     carts: np.array,
@@ -253,8 +254,6 @@ def compute_bj_pairs_DIMER(
     return energy * hartree_to_kcalmol
 
 
-
-
 def compute_bj_dimer_f90(
     params,
     r,
@@ -285,7 +284,6 @@ def compute_bj_dimer_DFTD4(
     Mb,
     charges,
     mult_out=constants.conversion_factor("hartree", "kcal / mol"),
-    s9=0.0,
 ) -> float:
     """
     computes dftd4 for dimer and each monomer and returns subtraction.
@@ -295,7 +293,6 @@ def compute_bj_dimer_DFTD4(
         carts,
         charges[0],
         p=params,
-        s9=s9,
     )
 
     mon_ca = carts[Ma]
@@ -305,7 +302,6 @@ def compute_bj_dimer_DFTD4(
         mon_ca,
         charges[1],
         p=params,
-        s9=s9,
     )
 
     mon_cb = carts[Mb]
@@ -315,7 +311,6 @@ def compute_bj_dimer_DFTD4(
         mon_cb,
         charges[2],
         p=params,
-        s9=s9,
     )
 
     AB = A + B

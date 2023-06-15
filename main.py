@@ -28,7 +28,6 @@ def gather_data(version="schr"):
         # src.grimme_setup.create_grimme_s22s66blind()
         src.grimme_setup.combine_data_with_new_df()
         # src.grimme_setup.gather_grimme_from_db()
-
     return
 
 
@@ -103,7 +102,7 @@ def df_names(i):
         "data/grimme_fitset_db3.pkl",
         "data/schr_dft.pkl",
         "data/grimme_fitset_total.pkl",
-        "data/grimme_fitset_test2.pkl"
+        "data/grimme_fitset_test2.pkl",
     ]
     selected = names[i]
     print(f"Selected: {selected} for df")
@@ -118,30 +117,47 @@ def make_bohr(geometry):
     )
 
 
-def grimme_test_atm(df_names_inds=[4,5]) -> None:
+def grimme_test_atm(df_names_inds=[3, 4]) -> None:
     """
     grimme_test_atm
     """
 
-    for i in df_names_inds:
+    for n, i in enumerate(df_names_inds):
+        hf_qz_no_cp = "HF_qz_no_cp"
+        if i == 4:
+            hf_qz_no_cp = "HF_qz"
         df = df_names(i)
-        print(df.columns.values)
-        df["HF_qz"].dropna(inplace=True)
+        df[hf_qz_no_cp].dropna(inplace=True)
         df["dftd4_ie"] = df.apply(lambda r: r["d4Ds"] - r["d4As"] - r["d4Bs"], axis=1)
         df["diff"] = df.apply(
-            lambda r: r["Benchmark"] - (r["HF_qz"] + r["dftd4_ie"]),
+            lambda r: r["Benchmark"] - (r[hf_qz_no_cp] + r["dftd4_ie"]),
             axis=1,
         )
-        print(df[["diff", "Benchmark", "HF_qz", "dftd4_ie"]].describe())
+        print(df[["diff", "Benchmark", hf_qz_no_cp, "dftd4_ie"]].describe())
         # root mean square error of diff
         RMSE = np.sqrt(np.mean(df["diff"] ** 2))
         print(f"{RMSE = :.4f}\n\n")
+        if n == 0:
+            df1 = df
+        elif n == 1:
+            df2 = df
+
+    df1["diff_diff"] = df1.apply(lambda r: -(r["diff"] - df2.loc[r.name]["diff"]), axis=1)
+    df1["HF_qz_diff"] = df1.apply(
+        lambda r: r["HF_qz_no_cp"] - df2.loc[r.name]["HF_qz"], axis=1
+    )
+    print(df1[["diff_diff", "HF_qz_diff"]].describe())
+    print("HF_qz_df1\tHF_qz_df2\tHF_qz_diff")
+    for n in range(len(df1)):
+        print(df1.iloc[n]["HF_qz_no_cp"], df2.iloc[n]["HF_qz"], df1.iloc[n]["HF_qz_diff"])
+
     return
 
 
 def main():
-    gather_data("grimme")
+    # gather_data("grimme")
     df = df_names(0)
+
     def opt():
         adz_opt_params = [0.829861, 0.706055, 1.123903]
         bases = [

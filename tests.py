@@ -377,3 +377,82 @@ def test_charged_C6s_in_df():
             p=params,
         )
         assert not np.all(C6s_df_c == C6s_c)
+
+
+def test_pairwise_AB_versus_classic_IE():
+    """
+    test_pairwise_AB_versus_classic_IE ensures that the pairwise AB energy is
+    DIFFERENT from the classic IE
+    """
+    df = pd.read_pickle("data/d4.pkl")
+    id_list = [0, 500, 2700, 4926]
+    params = src.paramsTable.paramsDict()["HF"]
+    p = params[1:]
+    energies = np.zeros((len(id_list), 2))
+    r4r2_ls = src.r4r2.r4r2_vals_ls()
+    for n, i in enumerate(id_list):
+        print(n, i)
+        row = df.iloc[i]
+        d4_ie = src.locald4.compute_bj_dimer_f90(
+            p,
+            row,
+            r4r2_ls=r4r2_ls,
+        )
+        d4_pairs = src.locald4.compute_bj_pairs_DIMER(
+            params,
+            row,
+            r4r2_ls=r4r2_ls,
+        )
+        assert abs(d4_ie - d4_pairs) > 1e-6
+
+
+def test_ATM_water() -> None:
+    """
+    compares dftd4 dispersion energies with damping parameters of HF
+        HF params = [1.0, 1.61679827, 0.44959224, 3.35743605]
+                  = [s6,  s8,         a1,         a2        ]
+    """
+
+    params = [1, 1.61679827, 0.44959224, 3.35743605]
+    pos, carts = src.water_data.water_geom()
+    charges = [0, 1]
+    d4C6s, d4C8s, pairs, d4e = src.locald4.calc_dftd4_c6_c8_pairDisp2(
+        pos, carts, charges, dftd4_bin=dftd4_bin, p=params, s9=1.0
+    )
+
+    cs = ang_to_bohr * np.array(carts, copy=True)
+    l_e = src.locald4.compute_bj_f90_ATM(pos, cs, d4C6s, params=params)
+
+    print(f"{d4e = }\n{l_e = }")
+    assert abs(d4e - l_e) < 1e-14
+
+
+def test_compute_bj_dimer_f90_ATM():
+    """
+    Tests if the fortran DFTD4 ATM energy is the same as the python version
+    """
+    df = pd.read_pickle("data/d4.pkl")
+    id_list = [0, 500, 2700, 4926]
+    params = src.paramsTable.paramsDict()["HF"]
+    p = params[1:]
+    print(params, p)
+    energies = np.zeros((len(id_list), 2))
+    r4r2_ls = src.r4r2.r4r2_vals_ls()
+    for n, i in enumerate(id_list):
+        print(n, i)
+        row = df.iloc[i]
+        d4_local_ATM = src.locald4.compute_bj_dimer_f90_ATM(
+            p,
+            row,
+            r4r2_ls=r4r2_ls,
+        )
+        dftd4_ATM = src.locald4.compute_bj_dimer_DFTD4(
+            params,
+            row["Geometry"][:, 0],  # pos
+            row["Geometry"][:, 1:],  # carts
+            row["monAs"],
+            row["monBs"],
+            row["charges"],
+            s9=1.0,
+        )
+        assert abs(d4_local_ATM - dftd4_ATM) < 1e-12
