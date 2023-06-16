@@ -1,0 +1,3 @@
+[submodule "dftd4-fitdata"]
+	path = dftd4-fitdata
+	url = https://github.com/dftd4/dftd4-fitdata.git

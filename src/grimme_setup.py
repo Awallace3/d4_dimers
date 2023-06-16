@@ -15,8 +15,10 @@ from .setup import (
 from .optimization import compute_int_energy_stats
 import numpy as np
 import psi4
-from qcelemental import constants
+import qcelemental as qcel
 from qm_tools_aw import tools
+
+hartree_to_kcal_mol = qcel.constants.conversion_factor("hartree", "kcal / mol")
 
 """
 From Grimme's first citation...
@@ -281,7 +283,7 @@ def collect_atm_disp_e(atom_numbers, carts, Mas, Mbs):
     x, z, ma = calc_dftd4_props_params(atom_numbers[Mas], carts[Mas, :], s9="1.0")
     x, z, mb = calc_dftd4_props_params(atom_numbers[Mbs], carts[Mbs, :], s9="1.0")
     v = d - (ma + mb)
-    v *= constants.conversion_factor("hartree", "kcal / mol")
+    v *= hartree_to_kcal_mol
     return v
 
 
@@ -392,3 +394,68 @@ def combine_data_with_new_df():
     print(df)
     df.to_pickle("data/grimme_fitset_test2.pkl")
     return df2
+
+
+def read_grimme_dftd4_paper_HF_energies(path="dftd4-fitdata/data/hf.csv") -> None:
+    """
+    read_grimme_dftd4_paper_HF_energies
+    """
+    df = pd.read_csv(path)
+    df2 = pd.read_pickle("data/grimme_fitset_test2.pkl")
+    print(df2[["DB", "System", "HF_qz"]].head())
+    print(df.columns.values)
+    s_e_dict = {
+        "DB": [],
+        "System": [],
+        "HF_qz_dimer": [],
+        "HF_qz_monA": [],
+        "HF_qz_monB": [],
+    }
+    db_mons = {
+        "A": {"System": [], "HF_qz_monA": [], "DB": []},
+        "B": {"System": [], "HF_qz_monB": [], "DB": []},
+    }
+    for n, i in df.iterrows():
+        db, sys = i["system"].split("/")
+        # print(db, sys)
+        if "A" not in sys and "B" not in sys:
+            s_e_dict["System"].append(sys)
+            s_e_dict["HF_qz_dimer"].append(i["HF/def2-QZVP/TM"])
+            s_e_dict["DB"].append(db)
+            s_e_dict["HF_qz_monA"].append(np.nan)
+            s_e_dict["HF_qz_monB"].append(np.nan)
+
+        elif "A" in sys:
+            db_mons["A"]["System"].append(sys)
+            db_mons["A"]["HF_qz_monA"].append(i["HF/def2-QZVP/TM"])
+            db_mons["A"]["DB"].append(db)
+
+        elif "B" in sys:
+            db_mons["B"]["System"].append(sys)
+            db_mons["B"]["HF_qz_monB"].append(i["HF/def2-QZVP/TM"])
+            db_mons["B"]["DB"].append(db)
+        else:
+            print("ERROR")
+    for i in range(len(db_mons["A"]["System"])):
+        sys_name = db_mons["A"]["System"][i]
+        for n, j in enumerate(s_e_dict["System"]):
+            if db_mons["A"]["DB"][i] == s_e_dict["DB"][n]:
+                # TODO: fix matching... not working correctly
+                if sys_name[:-2] in j:
+                    print(sys_name, j)
+                    s_e_dict["HF_qz_monA"][n] = db_mons["A"]["HF_qz_monA"][i]
+                    s_e_dict["HF_qz_monB"][n] = db_mons["B"]["HF_qz_monB"][i]
+    pd.set_option("display.max_rows", None)
+    df_dimers = pd.DataFrame(s_e_dict)
+    df_dimers["HF_qz_Grimme"] = (
+        df_dimers["HF_qz_dimer"] - df_dimers["HF_qz_monA"] - df_dimers["HF_qz_monB"]
+    ) * hartree_to_kcal_mol
+    print(df_dimers)
+    print(df_dimers['HF_qz_Grimme'].describe())
+    df_dimers.to_pickle("data/grimme_paper_HF.pkl")
+
+    df_compare = pd.merge(df_dimers, df2, on=["DB", "System"], how="inner")
+    df_compare['HF_qz_dif'] = df_compare['HF_qz_Grimme'] - df_compare['HF_qz']
+    print(df_compare['HF_qz_dif'].describe())
+    print(df_compare[['HF_qz', 'HF_qz_Grimme']].head())
+    return

@@ -25,9 +25,9 @@ def gather_data(version="schr"):
             overwrite=True,
         )
     elif version == "grimme":
-        # src.grimme_setup.create_grimme_s22s66blind()
         src.grimme_setup.combine_data_with_new_df()
-        # src.grimme_setup.gather_grimme_from_db()
+    elif version == 'grimme_paper':
+        src.grimme_setup.read_grimme_dftd4_paper_HF_energies()
     return
 
 
@@ -155,8 +155,8 @@ def grimme_test_atm(df_names_inds=[3, 4]) -> None:
 
 
 def main():
-    # gather_data("grimme")
-    df = df_names(0)
+    gather_data("grimme_paper")
+    # df = df_names(0)
 
     def opt():
         adz_opt_params = [0.829861, 0.706055, 1.123903]
@@ -177,7 +177,7 @@ def main():
         )
 
     # opt()
-    grimme_test_atm()
+    # grimme_test_atm()
     # src.plotting.plotting_setup(df_names(0), False)
     return
 
