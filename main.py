@@ -28,6 +28,8 @@ def gather_data(version="schr"):
         src.grimme_setup.combine_data_with_new_df()
     elif version == 'grimme_paper':
         src.grimme_setup.read_grimme_dftd4_paper_HF_energies()
+    else:
+        raise ValueError(f"version {version} not recognized")
     return
 
 

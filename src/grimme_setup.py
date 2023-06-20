@@ -436,13 +436,14 @@ def read_grimme_dftd4_paper_HF_energies(path="dftd4-fitdata/data/hf.csv") -> Non
             db_mons["B"]["DB"].append(db)
         else:
             print("ERROR")
-    for i in range(len(db_mons["A"]["System"])):
-        sys_name = db_mons["A"]["System"][i]
-        for n, j in enumerate(s_e_dict["System"]):
+    for n, j in enumerate(s_e_dict["System"]):
+        for i in range(len(db_mons["A"]["System"])):
+            sys_name = db_mons["A"]["System"][i]
             if db_mons["A"]["DB"][i] == s_e_dict["DB"][n]:
                 # TODO: fix matching... not working correctly
-                if sys_name[:-2] in j:
-                    print(sys_name, j)
+                s_c = sys_name[:-2]
+                db_c = j[:2]
+                if s_c == db_c:
                     s_e_dict["HF_qz_monA"][n] = db_mons["A"]["HF_qz_monA"][i]
                     s_e_dict["HF_qz_monB"][n] = db_mons["B"]["HF_qz_monB"][i]
     pd.set_option("display.max_rows", None)
@@ -450,12 +451,57 @@ def read_grimme_dftd4_paper_HF_energies(path="dftd4-fitdata/data/hf.csv") -> Non
     df_dimers["HF_qz_Grimme"] = (
         df_dimers["HF_qz_dimer"] - df_dimers["HF_qz_monA"] - df_dimers["HF_qz_monB"]
     ) * hartree_to_kcal_mol
-    print(df_dimers)
-    print(df_dimers['HF_qz_Grimme'].describe())
-    df_dimers.to_pickle("data/grimme_paper_HF.pkl")
-
+    # print(df_dimers)
     df_compare = pd.merge(df_dimers, df2, on=["DB", "System"], how="inner")
-    df_compare['HF_qz_dif'] = df_compare['HF_qz_Grimme'] - df_compare['HF_qz']
-    print(df_compare['HF_qz_dif'].describe())
-    print(df_compare[['HF_qz', 'HF_qz_Grimme']].head())
+    print(df_compare.columns.values)
+    df_compare["HF_qz_dif"] = df_compare["HF_qz_Grimme"] - df_compare["HF_qz"]
+    df_compare["HF_qz_G_d4"] = -(
+        df_compare["Benchmark"]
+        - (
+            df_compare["HF_qz_Grimme"]
+            + df_compare["d4Ds"]
+            - df_compare["d4As"]
+            - df_compare["d4Bs"]
+        )
+    )
+    df_compare["HF_qz_d4"] = -(
+        df_compare["Benchmark"]
+        - (
+            df_compare["HF_qz"]
+            + df_compare["d4Ds"]
+            - df_compare["d4As"]
+            - df_compare["d4Bs"]
+        )
+    )
+    compare_cols = [
+        "HF_qz_dif",
+        "HF_qz_Grimme",
+        "HF_qz",
+        "HF_qz_d4",
+        "HF_qz_G_d4",
+    ]
+    pd.set_option("display.float_format", lambda x: "%.4f" % x)
+    print(df_compare[compare_cols].describe())
+    longest = sorted([len(i) for i in compare_cols])[-1]
+    print(longest)
+    for c in compare_cols:
+        label = c
+        if len(c) < longest:
+            label += " " * (longest - len(c))
+        RMSE = np.sqrt(np.mean(df_compare[c] ** 2))
+        MAD = abs(df_compare[c] - df_compare[c].mean()).mean()
+        print(f"{label}  {RMSE = :.4f}  {MAD = :.4f}")
+    print(
+        """
+                                      RMSE                MAD      MD
+\qz \cite{caldeweyher2019generally} & 0.4972 &          & 0.3473 & -0.0260 \\
+"""
+    )
+
+    #                                       RMSE                MAD      MD
+    # \qz \cite{caldeweyher2019generally} & 0.4972 &          & 0.3473 & -0.0260 \\
+
+    df_compare.to_pickle("data/grimme_paper_HF.pkl")
+    for n, r in df_compare.iterrows():
+        print(r['DB'], r["System"], r["HF_qz_dif"])
     return
