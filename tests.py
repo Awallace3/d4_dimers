@@ -4,6 +4,12 @@ import numpy as np
 import qcelemental as qcel
 from qm_tools_aw import tools as tools
 import pandas as pd
+from psi4.driver.wrapper_database import database
+import psi4
+
+# psi4.set_options({"basis": "STO-3g"})
+# v = database("HF", "HBC6", subset='small')
+# print(f"{v = }")
 
 ang_to_bohr_qcel = qcel.constants.conversion_factor("angstrom", "bohr")
 print(f"{ang_to_bohr_qcel = }")
@@ -12,6 +18,28 @@ print(f"{ang_to_bohr = }")
 print(f"difference: {ang_to_bohr_qcel - ang_to_bohr}")
 
 hartree_to_kcalmol = qcel.constants.conversion_factor("hartree", "kcal/mol")
+
+
+def HBC6_data():
+    return qcel.models.Molecule.from_data(
+        """
+0 1
+C        1.69147262      -0.17006280       0.00000000
+H        2.79500199      -0.28101305       0.00000000
+O        1.02814129      -1.21720864       0.00000000
+O        1.36966587       1.08860681       0.00000000
+H        0.34380745       1.18798183       0.00000000
+--
+0 1
+C       -1.69147262       0.17006280       0.00000000
+H       -2.79500199       0.28101305       0.00000000
+O       -1.02814129       1.21720864       0.00000000
+O       -1.36966587      -1.08860681       0.00000000
+H       -0.34380745      -1.18798183       0.00000000
+units angstrom
+"""
+    )
+
 
 # You will need to build https://github.com/Awallace3/dftd4 for pytest to pass
 dftd4_bin = "/theoryfs2/ds/amwalla3/.local/bin/dftd4"
@@ -413,6 +441,7 @@ def test_ATM_water() -> None:
                   = [s6,  s8,         a1,         a2        ]
     """
 
+    # TODO
     params = [1, 1.61679827, 0.44959224, 3.35743605]
     pos, carts = src.water_data.water_geom()
     charges = [0, 1]
@@ -421,7 +450,7 @@ def test_ATM_water() -> None:
     )
 
     cs = ang_to_bohr * np.array(carts, copy=True)
-    l_e = src.locald4.compute_bj_f90_ATM(pos, cs, d4C6s, params=params)
+    l_e = src.locald4.compute_bj_f90_ATM(pos, cs, d4C6s, params=params.extend(1.0))
 
     print(f"{d4e = }\n{l_e = }")
     assert abs(d4e - l_e) < 1e-14
@@ -431,9 +460,11 @@ def test_compute_bj_dimer_f90_ATM():
     """
     Tests if the fortran DFTD4 ATM energy is the same as the python version
     """
+    # TODO
     df = pd.read_pickle("data/d4.pkl")
     id_list = [0, 500, 2700, 4926]
     params = src.paramsTable.paramsDict()["HF"]
+    params.extend(1.0)
     p = params[1:]
     print(params, p)
     energies = np.zeros((len(id_list), 2))
@@ -456,3 +487,151 @@ def test_compute_bj_dimer_f90_ATM():
             s9=1.0,
         )
         assert abs(d4_local_ATM - dftd4_ATM) < 1e-12
+
+
+def test_C6s_change_dimer_to_monomer():
+    # HBC6 - doubly hydrogen bonded, grab a single monomer and see if the C6's change
+    # do dimer - monomer - monomer
+    # do only interatomic pairs
+    # These should not agree
+    # HBC6 first dimer from /theoryfs2/ds/amwalla3/gits/psi4_amw/psi4/share/psi4/databases/HBC6.py
+
+    params = src.paramsTable.paramsDict()["HF"]
+    df = pd.read_pickle("data/d4.pkl")
+    id_list = [0, 2600, 4000, 4926, 7000]
+    print(id_list)
+    for n, i in enumerate(id_list):
+        print(i)
+
+        row = df.iloc[i]
+        ma = row["monAs"]
+        mb = row["monBs"]
+        charges = row["charges"]
+        geom = row["Geometry"]
+
+        C6s_dimer, _, _, df_c_e = src.locald4.calc_dftd4_c6_c8_pairDisp2(
+            geom[:, 0],
+            geom[:, 1:],
+            charges[0],
+            p=params,
+        )
+        pA, cA = geom[ma, 0], geom[ma, 1:]
+        pB, cB = geom[mb, 0], geom[mb, 1:]
+        C6s_mA, _, _, _ = src.locald4.calc_dftd4_c6_c8_pairDisp2(
+            pA,
+            cA,
+            charges[1],
+            p=params,
+        )
+        C6s_mB, _, _, _ = src.locald4.calc_dftd4_c6_c8_pairDisp2(
+            pB,
+            cB,
+            charges[2],
+            p=params,
+        )
+
+        C6s_monA_from_dimer = src.locald4.get_monomer_C6s_from_dimer(C6s_dimer, ma)
+        print(f"{C6s_monA_from_dimer = }")
+        print(f"{C6s_mA = }")
+        print(np.shape(C6s_monA_from_dimer))
+        print(np.shape(C6s_mA))
+        diff = np.subtract(C6s_monA_from_dimer, C6s_mA)
+        assert np.all(diff < 1e-12)
+
+
+def test_C6s_change_dimer_to_monomer_HBC6():
+    # HBC6 - doubly hydrogen bonded, grab a single monomer and see if the C6's change
+    # do dimer - monomer - monomer
+    # do only interatomic pairs
+    # These should not agree
+    # HBC6 first dimer from /theoryfs2/ds/amwalla3/gits/psi4_amw/psi4/share/psi4/databases/HBC6.py
+    params = src.paramsTable.paramsDict()["HF"]
+    data = HBC6_data()
+
+    gD = data.geometry
+    pD = data.atomic_numbers
+    ma = list(data.fragments[0])
+    mb = list(data.fragments[1])
+    print(data.fragment_charges)
+    charges = np.array(
+        [
+            [int(sum(data.fragment_charges)), 1],
+            [int(data.fragment_charges[0]), 1],
+            [int(data.fragment_charges[1]), 1],
+        ]
+    )
+    print(charges)
+
+    C6s_dimer, _, _, df_c_e = src.locald4.calc_dftd4_c6_c8_pairDisp2(
+        pD,
+        gD,
+        charges[0],
+        p=params,
+    )
+    pA, cA = pD[ma], gD[ma, :]
+    pB, cB = pD[mb], gD[mb, :]
+    C6s_mA, _, _, _ = src.locald4.calc_dftd4_c6_c8_pairDisp2(
+        pA,
+        cA,
+        charges[1],
+        p=params,
+    )
+    C6s_mB, _, _, _ = src.locald4.calc_dftd4_c6_c8_pairDisp2(
+        pB,
+        cB,
+        charges[2],
+        p=params,
+    )
+
+    C6s_monA_from_dimer = src.locald4.get_monomer_C6s_from_dimer(C6s_dimer, ma)
+    print(f"{C6s_monA_from_dimer = }")
+    print(f"{C6s_mA = }")
+    print(np.shape(C6s_monA_from_dimer))
+    print(np.shape(C6s_mA))
+    diff = np.subtract(C6s_monA_from_dimer, C6s_mA)
+    assert np.all(diff < 1e-12)
+
+
+def test_C6s_change_dimer_to_monomer_HBC6_IE():
+    # HBC6 - doubly hydrogen bonded, grab a single monomer and see if the C6's change
+    # do dimer - monomer - monomer
+    # do only interatomic pairs
+    # These should not agree
+    # HBC6 first dimer from /theoryfs2/ds/amwalla3/gits/psi4_amw/psi4/share/psi4/databases/HBC6.py
+    params = src.paramsTable.paramsDict()["HF"]
+    data = HBC6_data()
+
+    cD = data.geometry
+    pD = data.atomic_numbers
+    ma = list(data.fragments[0])
+    mb = list(data.fragments[1])
+    charges = np.array(
+        [
+            [int(sum(data.fragment_charges)), 1],
+            [int(data.fragment_charges[0]), 1],
+            [int(data.fragment_charges[1]), 1],
+        ]
+    )
+    pA, cA = pD[ma], cD[ma, :]
+    pB, cB = pD[mb], cD[mb, :]
+    C6s_dimer, C6s_mA, C6s_mB = src.locald4.calc_dftd4_c6_for_d_a_b(
+        cD, pD, pA, cA, pB, cB, charges, p=params, s9=0.0
+    )
+    C6s_monA_from_dimer = src.locald4.get_monomer_C6s_from_dimer(C6s_dimer, ma)
+    C6s_monB_from_dimer = src.locald4.get_monomer_C6s_from_dimer(C6s_dimer, mb)
+    row = {
+        "Geometry_bohr":  cD * ang_to_bohr,
+        "C6s": C6s_dimer,
+        "charges": charges,
+        "monAs": ma,
+        "monBs": mb,
+        "C6_A": C6s_monA_from_dimer,
+        "C6_B": C6s_monB_from_dimer,
+    }
+    d4_local = src.locald4.compute_bj_dimer_f90(
+        params,
+        row,
+        r4r2_ls=r4r2_ls,
+    )
+
+    assert np.all(diff < 1e-12)

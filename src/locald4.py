@@ -26,6 +26,18 @@ def write_xyz_from_np(atom_numbers, carts, outfile="dat.xyz", charges=[0, 1]) ->
     return
 
 
+def get_monomer_C6s_from_dimer(C6s_dimer, monN) -> np.array:
+    C6s_monomer_from_dimer = C6s_dimer[monN].tolist()
+    for i in range(len(C6s_monomer_from_dimer)):
+        t1 = C6s_monomer_from_dimer[i]
+        t2 = []
+        for a in monN:
+            t2.append(C6s_monomer_from_dimer[a][i])
+        C6s_monomer_from_dimer[i] = t2
+    C6s_monomer_from_dimer = np.array(C6s_monomer_from_dimer)
+    return C6s_monomer_from_dimer
+
+
 def calc_dftd4_c6_c8_pairDisp2(
     atom_numbers: np.array,
     carts: np.array,
@@ -33,7 +45,7 @@ def calc_dftd4_c6_c8_pairDisp2(
     input_xyz: str = "dat.xyz",
     dftd4_bin: str = "/theoryfs2/ds/amwalla3/.local/bin/dftd4",
     p: [] = [1.0, 1.61679827, 0.44959224, 3.35743605],
-    s9 = 0.0,
+    s9=0.0,
 ):
     """
     Ensure that dftd4 binary is from compiling git@github.com:Awallace3/dftd4
@@ -88,6 +100,40 @@ def calc_dftd4_c6_c8_pairDisp2(
     return C6s, C8s, pairs, e
 
 
+def calc_dftd4_c6_for_d_a_b(
+    cD,
+    pD,
+    pA,
+    cA,
+    pB,
+    cB,
+    charges: np.array,
+    input_xyz: str = "dat.xyz",
+    dftd4_bin: str = "/theoryfs2/ds/amwalla3/.local/bin/dftd4",
+    p: [] = [1.0, 1.61679827, 0.44959224, 3.35743605],
+    s9=0.0,
+):
+    C6s_dimer, _, _, df_c_e = calc_dftd4_c6_c8_pairDisp2(
+        pD,
+        cD,
+        charges[0],
+        p=p,
+    )
+    C6s_mA, _, _, _ = calc_dftd4_c6_c8_pairDisp2(
+        pA,
+        cA,
+        charges[1],
+        p=p,
+    )
+    C6s_mB, _, _, _ = calc_dftd4_c6_c8_pairDisp2(
+        pB,
+        cB,
+        charges[2],
+        p=p,
+    )
+    return C6s_dimer, C6s_mA, C6s_mB
+
+
 def read_EDISP() -> None:
     """
     read_EDISP returns dftd4 .EDISP value
@@ -96,7 +142,7 @@ def read_EDISP() -> None:
         return float(f.read())
 
 
-def compute_bj_f90_S6_S8_A1_A2(
+def compute_bj_f90(
     pos: np.array,
     carts: np.array,
     C6s: np.array,
@@ -107,7 +153,13 @@ def compute_bj_f90_S6_S8_A1_A2(
     compute_bj_f90 computes energy from C6s, cartesian coordinates, and dimer sizes.
     """
     energy = 0
-    s6, s8, a1, a2 = params
+    if len(params) == 3:
+        s8, a1, a2 = params
+        s6 = 1.0
+    elif len(params) == 4:
+        s6, s8, a1, a2 = params
+    else:
+        raise ValueError("params must be length 3 or 4")
     M_tot = len(carts)
     energies = np.zeros(M_tot)
     lattice_points = 1
@@ -144,24 +196,19 @@ def compute_bj_f90_S6_S8_A1_A2(
     return energy
 
 
-def compute_bj_f90(
+def compute_bj_f90_ATM(
     pos: np.array,
     carts: np.array,
     C6s: np.array,
-    params: [] = [1.61679827, 0.44959224, 3.35743605],
+    params: [] = [1.61679827, 0.44959224, 3.35743605, 1.0],
+    # [s6, s8, a1, a2, s9]
     r4r2_ls=r4r2.r4r2_vals_ls(),
 ) -> float:
     """
     compute_bj_f90 computes energy from C6s, cartesian coordinates, and dimer sizes.
     """
     energy = 0
-    if len(params) == 3:
-        s8, a1, a2 = params
-        s6 = 1.0
-    elif len(params) == 4:
-        s6, s8, a1, a2 = params
-    else:
-        raise ValueError("params must be length 3 or 4")
+    s6, s8, a1, a2, s9 = params
     M_tot = len(carts)
     energies = np.zeros(M_tot)
     lattice_points = 1
@@ -175,6 +222,7 @@ def compute_bj_f90(
             Q_B = (0.5 * el2**0.5 * r4r2_ls[el2 - 1]) ** 0.5
             if i == j:
                 continue
+            # for
             for k in range(lattice_points):
                 rrij = 3 * Q_A * Q_B
                 r0ij = a1 * np.sqrt(rrij) + a2
@@ -251,8 +299,6 @@ def compute_bj_pairs_DIMER(
                     energies[j] += de
     energy = np.sum(energies)
     return energy * hartree_to_kcalmol
-
-
 
 
 def compute_bj_dimer_f90(

@@ -401,9 +401,10 @@ def read_grimme_dftd4_paper_HF_energies(path="dftd4-fitdata/data/hf.csv") -> Non
     read_grimme_dftd4_paper_HF_energies
     """
     df = pd.read_csv(path)
-    df2 = pd.read_pickle("data/grimme_fitset_test2.pkl")
-    print(df2[["DB", "System", "HF_qz"]].head())
+    df2 = pd.read_pickle("data/gf1.pkl")
     print(df.columns.values)
+    print(df2.columns.values)
+    print(df2[["DB", "System", "HF_qz_no_cp"]].head())
     s_e_dict = {
         "DB": [],
         "System": [],
@@ -454,7 +455,7 @@ def read_grimme_dftd4_paper_HF_energies(path="dftd4-fitdata/data/hf.csv") -> Non
     # print(df_dimers)
     df_compare = pd.merge(df_dimers, df2, on=["DB", "System"], how="inner")
     print(df_compare.columns.values)
-    df_compare["HF_qz_dif"] = df_compare["HF_qz_Grimme"] - df_compare["HF_qz"]
+    df_compare["HF_qz_dif"] = df_compare["HF_qz_Grimme"] - df_compare["HF_qz_no_cp"]
     df_compare["HF_qz_G_d4"] = -(
         df_compare["Benchmark"]
         - (
@@ -467,18 +468,22 @@ def read_grimme_dftd4_paper_HF_energies(path="dftd4-fitdata/data/hf.csv") -> Non
     df_compare["HF_qz_d4"] = -(
         df_compare["Benchmark"]
         - (
-            df_compare["HF_qz"]
+            df_compare["HF_qz_no_cp"]
             + df_compare["d4Ds"]
             - df_compare["d4As"]
             - df_compare["d4Bs"]
         )
     )
+    # df_compare['HF_qz_no_cp_corrected_D'] = df_compare.apply(lambda r: r['HF_qz_no_cp_D'] + r['HF_qz_no_cp_correction'], axis=1)
+    # df_compare['HF_qz_no_cp_corrected_D'] = df_compare.apply(lambda r: r['HF_qz_no_cp_D'] + r['HF_qz_no_cp_correction'], axis=1)
+    df_compare['HF_qz_no_cp_dif_D'] = df_compare.apply(lambda r: r['HF_qz_dimer'] - r['HF_qz_no_cp_D'], axis=1)
     compare_cols = [
-        "HF_qz_dif",
-        "HF_qz_Grimme",
-        "HF_qz",
+        # "HF_qz_dif",
+        # "HF_qz_Grimme",
+        # "HF_qz_no_cp",
         "HF_qz_d4",
         "HF_qz_G_d4",
+        # "HF_qz_no_cp_dif_D",
     ]
     pd.set_option("display.float_format", lambda x: "%.4f" % x)
     print(df_compare[compare_cols].describe())
@@ -494,7 +499,7 @@ def read_grimme_dftd4_paper_HF_energies(path="dftd4-fitdata/data/hf.csv") -> Non
     print(
         """
                                       RMSE                MAD      MD
-\qz \cite{caldeweyher2019generally} & 0.4972 &          & 0.3473 & -0.0260 \\
+\qz \cite{caldeweyher2019generally} & 0.49719 & -         & 0.34732 & -0.02597 \\
 """
     )
 
@@ -502,6 +507,16 @@ def read_grimme_dftd4_paper_HF_energies(path="dftd4-fitdata/data/hf.csv") -> Non
     # \qz \cite{caldeweyher2019generally} & 0.4972 &          & 0.3473 & -0.0260 \\
 
     df_compare.to_pickle("data/grimme_paper_HF.pkl")
+    print(df_compare.columns.values)
+    pd.set_option('display.float_format', '{:.10f}'.format)
     for n, r in df_compare.iterrows():
-        print(r['DB'], r["System"], r["HF_qz_dif"])
+        # print(r['DB'], r["System"], r["HF_qz_dif"])
+        # print(r['DB'], r["System"], f"{r['HF_qz_dimer']:.6f}, {r['HF_qz_no_cp_D']:.6f}")
+        # if r['id'] == 0:
+        print(n)
+        print(r)
+        print()
+        break
+    for n, r in df_compare.iterrows():
+        print(n, r['id'], r['DB'], r["System"], r["HF_qz_dif"], r['HF_qz_no_cp_dif_D'])
     return
