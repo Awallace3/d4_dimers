@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 import src
 import qcelemental as qcel
+import tqdm
+from qm_tools_aw import tools
 
 ang_to_bohr = src.constants.Constants().g_aatoau()
 hartree_to_kcal_mol = qcel.constants.conversion_factor("hartree", "kcal / mol")
@@ -105,7 +107,9 @@ def df_names(i):
         "data/schr_dft.pkl",
         "data/grimme_fitset_total.pkl",
         "data/grimme_fitset_test2.pkl",
+        "data/HBC6.pkl"
     ]
+    # NOTE: data/grimme_fitset_db3.pkl Geometry is in Angstrom!!!
     selected = names[i]
     print(f"Selected: {selected} for df")
     df = pd.read_pickle(selected)
@@ -160,8 +164,90 @@ def grimme_test_atm(df_names_inds=[3, 4]) -> None:
     return
 
 
+def compute_ie_differences(df_num=0):
+    df, selected = df_names(df_num)
+    if False:
+        d4_dimers, d4_mons = [], []
+        r4r2_ls = src.r4r2.r4r2_vals_ls()
+        for n, r in df.iterrows():
+            print(n)
+            d4_dimer, d4_mon = src.locald4.compute_bj_with_different_C6s(
+                r["Geometry_bohr"],
+                r["monAs"],
+                r["monBs"],
+                r["charges"],
+                r["C6s"],
+                r["C6_A"],
+                r["C6_B"],
+                params=src.paramsTable.get_params("HF"),
+                s9=0.0,
+                r4r2_ls=r4r2_ls,
+            )
+            d4_dimers.append(d4_dimer)
+            d4_mons.append(d4_mon)
+        df["d4_C6s_dimer"] = d4_dimers
+        df["d4_C6s_monomers"] = d4_mons
+        df["d4_C6s_diff"] = df.apply(
+            lambda r: r["d4_C6s_dimer"] - r["d4_C6s_monomers"], axis=1
+        )
+        print(df[["d4_C6s_dimer", "d4_C6s_monomers", "d4_C6s_diff"]].describe())
+        df.to_pickle(selected)
+    investigate = [
+        "d4_C6s_dimer",
+        "d4_C6s_monomers",
+        "d4_C6s_diff",
+        # "HF_adz",
+        # "Benchmark",
+        "DB",
+        # "monAs",
+        # "monBs",
+    ]
+    if True:
+        print(df[investigate].describe())
+        print()
+        df["d4_C6s_diff_abs"] = abs(df["d4_C6s_diff"])
+        df.sort_values(by="d4_C6s_diff_abs", inplace=True, ascending=False)
+
+        def print_rows(df, break_after=1000):
+            print("i", end="      ")
+            for l in investigate:
+                if len(l) > 8:
+                    print(f"{l[:8]}", end="   ")
+                else:
+                    while len(l) < 8:
+                        l += " "
+                    print(f"{l}", end="   ")
+            print()
+            cnt = 0
+            for n, r in df.iterrows():
+                print(n, end="\t")
+                for l in investigate:
+                    if type(r[l]) != float:
+                        print(f"{r[l]}   ", end="    ")
+                    else:
+                        print(f"{r[l]:.4f}", end="    ")
+                print()
+                cnt += 1
+                if cnt == break_after:
+                    return
+        print_rows(df)
+    if False:
+        indices = [
+            515,
+            500,
+            450,
+            385,
+        ]
+        for i in indices:
+            print(i, df.loc[i]['charges'][0], 'angstrom')
+            tools.print_cartesians(df.loc[i]["Geometry"], True)
+            print()
+
+    return df
+
+
 def main():
-    # gather_data("grimme_paper")
+    # gather_data("schr")
     df, selected = df_names(0)
 
     def opt():
@@ -181,27 +267,8 @@ def main():
             D4={"powell": True, "least_squares": False},
         )
 
-    def compute_ie_differences():
-        d4_dimers, d4_mons = [], []
-        for n, r in df.itterrows():
-            d4_dimer, d4_mons = src.locald4.compute_bj_with_different_C6s(
-                r["Geometry"],
-                r["monAs"],
-                r["monBs"],
-                r["charges"],
-                r["C6s"],
-                r["C6_A"],
-                r["C6_B"],
-                params=src.paramsTable.get_params("HF"),
-                s9=0.0,
-            )
-            d4_dimers.append(d4_dimer)
-            d4_mons.append(d4_mons)
-        df['d4Ds_dimer'] = d4_dimers
-        df['d4Ds_mons'] = d4_mons
-        print(df[['d4Ds_dimer', 'd4Ds_mons']].describe())
-        return df
-    print(df.columns.values)
+    compute_ie_differences(0)
+    compute_ie_differences(5)
 
     # opt()
     # grimme_test_atm()

@@ -398,18 +398,18 @@ def compute_bj_with_different_C6s(
     C6s_B,
     params,
     s9=0.0,
+    r4r2_ls=r4r2.r4r2_vals_ls(),
 ):
     C6s_monA_from_dimer = get_monomer_C6s_from_dimer(C6s, ma)
     C6s_monB_from_dimer = get_monomer_C6s_from_dimer(C6s, mb)
-    geom[:, 1:] *= constants.conversion_factor("angstrom", "bohr")
     row = {
         "Geometry_bohr": geom,
-        "C6s": C6s_dimer,
+        "C6s": C6s,
         "charges": charges,
         "monAs": ma,
         "monBs": mb,
-        "C6_A": C6s_mA,
-        "C6_B": C6s_mB,
+        "C6_A": C6s_A,
+        "C6_B": C6s_B,
     }
     d4_mons_individually = compute_bj_dimer_f90(
         params,
@@ -418,7 +418,7 @@ def compute_bj_with_different_C6s(
     )
     row = {
         "Geometry_bohr": geom,
-        "C6s": C6s_dimer,
+        "C6s": C6s,
         "charges": charges,
         "monAs": ma,
         "monBs": mb,

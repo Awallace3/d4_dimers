@@ -4,6 +4,7 @@ from periodictable import elements
 from .r4r2 import get_Q, r4r2_from_elements_call, r4r2_vals, r4r2_ls
 from . import r4r2
 from .tools import print_cartesians, print_cartesians_pos_carts, np_carts_to_string
+from qm_tools_aw import tools
 import subprocess
 import json
 import math
@@ -18,6 +19,7 @@ import qcelemental as qcel
 from . import locald4
 
 ang_to_bohr = Constants().g_aatoau()
+bohr_to_ang = Constants().g_autoaa()
 hartree_to_kcal_mol = qcel.constants.conversion_factor("hartree", "kcal / mol")
 
 
@@ -1731,12 +1733,17 @@ def gather_data6(
                 "D3Data",
             ]
         ]
+
+        def convert_coords(geom, mult):
+            g2 = geom.copy()
+            g2[:, 1:] = g2[:, 1:] * mult
+            return g2
+
         df["Geometry_bohr"] = df.apply(
-            lambda x: np.concatenate(
-                (x["Geometry"][:, 0], ang_to_bohr * x["Geometry"][:, 1:])
-            ),
+            lambda r: convert_coords(r['Geometry'], ang_to_bohr),
             axis=1,
         )
+
         if replace_hf:
             df = replace_hf_int_HF_jdz(df)
         xyzs = df["Geometry"].to_list()
