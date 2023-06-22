@@ -32,7 +32,7 @@ def get_monomer_C6s_from_dimer(C6s_dimer, monN) -> np.array:
         t1 = C6s_monomer_from_dimer[i]
         t2 = []
         for a in monN:
-            t2.append(C6s_monomer_from_dimer[a][i])
+            t2.append(t1[a])
         C6s_monomer_from_dimer[i] = t2
     C6s_monomer_from_dimer = np.array(C6s_monomer_from_dimer)
     return C6s_monomer_from_dimer
@@ -311,13 +311,31 @@ def compute_bj_dimer_f90(
     monAs, monBs = r["monAs"], r["monBs"]
     charges = r["charges"]
 
-    e_d = compute_bj_f90(num, coords, r["C6s"], params, r4r2_ls)
+    e_d = compute_bj_f90(
+        num,
+        coords,
+        r["C6s"],
+        params=params,
+        r4r2_ls=r4r2_ls,
+    )
 
     n1, p1 = num[monAs], coords[monAs, :]
-    e_1 = compute_bj_f90(n1, p1, r["C6_A"], params, r4r2_ls)
+    e_1 = compute_bj_f90(
+        n1,
+        p1,
+        r["C6_A"],
+        params=params,
+        r4r2_ls=r4r2_ls,
+    )
 
     n2, p2 = num[monBs], coords[monBs, :]
-    e_2 = compute_bj_f90(n2, p2, r["C6_B"], params, r4r2_ls)
+    e_2 = compute_bj_f90(
+        n2,
+        p2,
+        r["C6_B"],
+        params=params,
+        r4r2_ls=r4r2_ls,
+    )
 
     e_total = (e_d - (e_1 + e_2)) * hartree_to_kcalmol
     return e_total
@@ -368,3 +386,48 @@ def compute_bj_dimer_DFTD4(
     print(f"disp dftd4 = {d} - ({AB}) = {d} - ({A} + {B})")
     disp = (d - (AB)) * mult_out
     return disp
+
+
+def compute_bj_with_different_C6s(
+    geom,
+    ma,
+    mb,
+    charges,
+    C6s,
+    C6s_A,
+    C6s_B,
+    params,
+    s9=0.0,
+):
+    C6s_monA_from_dimer = get_monomer_C6s_from_dimer(C6s, ma)
+    C6s_monB_from_dimer = get_monomer_C6s_from_dimer(C6s, mb)
+    geom[:, 1:] *= constants.conversion_factor("angstrom", "bohr")
+    row = {
+        "Geometry_bohr": geom,
+        "C6s": C6s_dimer,
+        "charges": charges,
+        "monAs": ma,
+        "monBs": mb,
+        "C6_A": C6s_mA,
+        "C6_B": C6s_mB,
+    }
+    d4_mons_individually = compute_bj_dimer_f90(
+        params,
+        row,
+        r4r2_ls=r4r2_ls,
+    )
+    row = {
+        "Geometry_bohr": geom,
+        "C6s": C6s_dimer,
+        "charges": charges,
+        "monAs": ma,
+        "monBs": mb,
+        "C6_A": C6s_monA_from_dimer,
+        "C6_B": C6s_monB_from_dimer,
+    }
+    d4_dimer = compute_bj_dimer_f90(
+        params,
+        row,
+        r4r2_ls=r4r2_ls,
+    )
+    return d4_dimer, d4_mons_individually

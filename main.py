@@ -26,7 +26,7 @@ def gather_data(version="schr"):
         )
     elif version == "grimme":
         src.grimme_setup.combine_data_with_new_df()
-    elif version == 'grimme_paper':
+    elif version == "grimme_paper":
         src.grimme_setup.read_grimme_dftd4_paper_HF_energies()
     else:
         raise ValueError(f"version {version} not recognized")
@@ -109,7 +109,7 @@ def df_names(i):
     selected = names[i]
     print(f"Selected: {selected} for df")
     df = pd.read_pickle(selected)
-    return df
+    return df, selected
 
 
 def make_bohr(geometry):
@@ -128,7 +128,7 @@ def grimme_test_atm(df_names_inds=[3, 4]) -> None:
         hf_qz_no_cp = "HF_qz_no_cp"
         if i == 4:
             hf_qz_no_cp = "HF_qz"
-        df = df_names(i)
+        df, _ = df_names(i)
         df[hf_qz_no_cp].dropna(inplace=True)
         df["dftd4_ie"] = df.apply(lambda r: r["d4Ds"] - r["d4As"] - r["d4Bs"], axis=1)
         df["diff"] = df.apply(
@@ -144,26 +144,29 @@ def grimme_test_atm(df_names_inds=[3, 4]) -> None:
         elif n == 1:
             df2 = df
 
-    df1["diff_diff"] = df1.apply(lambda r: -(r["diff"] - df2.loc[r.name]["diff"]), axis=1)
+    df1["diff_diff"] = df1.apply(
+        lambda r: -(r["diff"] - df2.loc[r.name]["diff"]), axis=1
+    )
     df1["HF_qz_diff"] = df1.apply(
         lambda r: r["HF_qz_no_cp"] - df2.loc[r.name]["HF_qz"], axis=1
     )
     print(df1[["diff_diff", "HF_qz_diff"]].describe())
     print("HF_qz_df1\tHF_qz_df2\tHF_qz_diff")
     for n in range(len(df1)):
-        print(df1.iloc[n]["HF_qz_no_cp"], df2.iloc[n]["HF_qz"], df1.iloc[n]["HF_qz_diff"])
+        print(
+            df1.iloc[n]["HF_qz_no_cp"], df2.iloc[n]["HF_qz"], df1.iloc[n]["HF_qz_diff"]
+        )
 
     return
 
 
 def main():
-    gather_data("grimme_paper")
-    # df = df_names(0)
+    # gather_data("grimme_paper")
+    df, selected = df_names(0)
 
     def opt():
         adz_opt_params = [0.829861, 0.706055, 1.123903]
         bases = [
-            # "TAG",
             # "HF_adz",
             # "HF_jdz",
             # "HF_qz"
@@ -177,6 +180,28 @@ def main():
             D3={"powell": False},
             D4={"powell": True, "least_squares": False},
         )
+
+    def compute_ie_differences():
+        d4_dimers, d4_mons = [], []
+        for n, r in df.itterrows():
+            d4_dimer, d4_mons = src.locald4.compute_bj_with_different_C6s(
+                r["Geometry"],
+                r["monAs"],
+                r["monBs"],
+                r["charges"],
+                r["C6s"],
+                r["C6_A"],
+                r["C6_B"],
+                params=src.paramsTable.get_params("HF"),
+                s9=0.0,
+            )
+            d4_dimers.append(d4_dimer)
+            d4_mons.append(d4_mons)
+        df['d4Ds_dimer'] = d4_dimers
+        df['d4Ds_mons'] = d4_mons
+        print(df[['d4Ds_dimer', 'd4Ds_mons']].describe())
+        return df
+    print(df.columns.values)
 
     # opt()
     # grimme_test_atm()
