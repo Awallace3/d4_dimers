@@ -2544,12 +2544,11 @@ def HBC6_data_df():
         table['label'].append(k)
         table['id'].append(cnt)
         geom, pD, cD, ma, mb, charges = tools.mol_to_pos_carts_ma_mb(v)
+        table['Geometry_bohr'].append(geom.copy())
+        geom[:, 1:] *= ang_to_bohr
         table['Geometry'].append(geom)
         table['monAs'].append(ma)
         table['monBs'].append(mb)
-        g_bohr = geom.copy()
-        g_bohr[:, 1:] *= ang_to_bohr
-        table['Geometry_bohr'].append(g_bohr)
         pA, cA = pD[ma], cD[ma, :]
         pB, cB = pD[mb], cD[mb, :]
         C6s_dimer, C6s_mA, C6s_mB = locald4.calc_dftd4_c6_for_d_a_b(

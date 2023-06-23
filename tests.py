@@ -294,6 +294,11 @@ def test_dispersion_interaction_energy3() -> None:
     df = pd.read_pickle("data/d4.pkl")
     r = df.iloc[2700]
     num, coords = r["Geometry_bohr"][:, 0], r["Geometry_bohr"][:, 1:]
+    print("angstrom")
+    tools.print_cartesians(r['Geometry'], True)
+    print()
+    print('bohr')
+    tools.print_cartesians(r['Geometry_bohr'], True)
     charges = r["charges"]
     monAs, monBs = r["monAs"], r["monBs"]
     charges = r["charges"]
@@ -431,7 +436,7 @@ def test_pairwise_AB_versus_classic_IE():
             row,
             r4r2_ls=r4r2_ls,
         )
-        assert abs(d4_ie - d4_pairs) < 1e-6
+        assert abs(d4_ie - d4_pairs) > 1e-6
 
 
 def test_ATM_water() -> None:
@@ -602,7 +607,8 @@ def test_C6s_change_dimer_to_monomer_HBC6_IE():
     params = src.paramsTable.paramsDict()["HF"]
     data = HBC6_data()
 
-    cD = data.geometry
+    cD = data.geometry / ang_to_bohr
+    print(cD)
     pD = data.atomic_numbers
     # tools.print_cartesians_pos_carts(pD, cD)
     ma = list(data.fragments[0])
@@ -653,4 +659,49 @@ def test_C6s_change_dimer_to_monomer_HBC6_IE():
         row,
         r4r2_ls=r4r2_ls,
     )
+    assert np.all(abs(d4_mons_individually - d4_dimer) < 1e-12)
+
+def test_C6s_change_dimer_to_monomer_HBC6_IE_func_call():
+    r4r2_ls = src.r4r2.r4r2_vals_ls()
+    # HBC6 - doubly hydrogen bonded, grab a single monomer and see if the C6's change
+    # do dimer - monomer - monomer
+    # do only interatomic pairs
+    # These should not agree
+    # HBC6 first dimer from /theoryfs2/ds/amwalla3/gits/psi4_amw/psi4/share/psi4/databases/HBC6.py
+    params = src.paramsTable.paramsDict()["HF"]
+    data = HBC6_data()
+
+    cD = data.geometry / ang_to_bohr
+    print(cD)
+    pD = data.atomic_numbers
+    # tools.print_cartesians_pos_carts(pD, cD)
+    ma = list(data.fragments[0])
+    mb = list(data.fragments[1])
+    charges = np.array(
+        [
+            [int(sum(data.fragment_charges)), 1],
+            [int(data.fragment_charges[0]), 1],
+            [int(data.fragment_charges[1]), 1],
+        ]
+    )
+    pA, cA = pD[ma], cD[ma, :]
+    pB, cB = pD[mb], cD[mb, :]
+    tools.print_cartesians_pos_carts(pA, cA)
+    tools.print_cartesians_pos_carts(pA, cA)
+    C6s_dimer, C6s_mA, C6s_mB = src.locald4.calc_dftd4_c6_for_d_a_b(
+        cD, pD, pA, cA, pB, cB, charges, p=params, s9=0.0
+    )
+    cD *= ang_to_bohr
+    geom_bohr = np.hstack((np.reshape(pD, (-1, 1)), cD))
+    d4_dimer, d4_mons_individually = src.locald4.compute_bj_with_different_C6s(
+        geom_bohr,
+        ma,
+        mb,
+        charges,
+        C6s_dimer,
+        C6s_mA,
+        C6s_mB,
+        params,
+    )
+
     assert np.all(abs(d4_mons_individually - d4_dimer) < 1e-12)

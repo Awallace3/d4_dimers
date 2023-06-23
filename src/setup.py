@@ -1738,11 +1738,18 @@ def gather_data6(
             g2 = geom.copy()
             g2[:, 1:] = g2[:, 1:] * mult
             return g2
-
+        id_test = 512
+        print("Pre-manipulation")
+        tools.print_cartesians(df.iloc[id_test]['Geometry'])
+        df['Geometry'] = df.apply(lambda r: r['Geometry'].copy(), axis=1)
         df["Geometry_bohr"] = df.apply(
             lambda r: convert_coords(r['Geometry'], ang_to_bohr),
             axis=1,
         )
+        print("A")
+        tools.print_cartesians(df.iloc[id_test]['Geometry'])
+        print("Bohr")
+        tools.print_cartesians(df.iloc[id_test]['Geometry_bohr'])
 
         if replace_hf:
             df = replace_hf_int_HF_jdz(df)

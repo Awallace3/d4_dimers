@@ -116,11 +116,15 @@ def df_names(i):
     return df, selected
 
 
-def make_bohr(geometry):
-    # df["Geometry_bohr"] = df.apply(lambda x: make_bohr(x["Geometry"]), axis=1)
-    return np.hstack(
-        (np.reshape(geometry[:, 0], (-1, 1)), ang_to_bohr * geometry[:, 1:])
-    )
+def make_bohr(geometry, ang_to_bohr_convert):
+    if ang_to_bohr_convert:
+        return np.hstack(
+            (np.reshape(geometry[:, 0], (-1, 1)), ang_to_bohr * geometry[:, 1:])
+        )
+    else:
+        return np.hstack(
+            (np.reshape(geometry[:, 0], (-1, 1)), 1 / ang_to_bohr * geometry[:, 1:])
+        )
 
 
 def grimme_test_atm(df_names_inds=[3, 4]) -> None:
@@ -166,7 +170,9 @@ def grimme_test_atm(df_names_inds=[3, 4]) -> None:
 
 def compute_ie_differences(df_num=0):
     df, selected = df_names(df_num)
-    if False:
+    # df['Geometry_bohr'] = df.apply(lambda x: x['Geometry'], axis=1)
+    # df['Geometry'] = df.apply(lambda x: make_bohr(x['Geometry'], False), axis=1)
+    if True:
         d4_dimers, d4_mons = [], []
         r4r2_ls = src.r4r2.r4r2_vals_ls()
         for n, r in df.iterrows():
@@ -191,7 +197,7 @@ def compute_ie_differences(df_num=0):
             lambda r: r["d4_C6s_dimer"] - r["d4_C6s_monomers"], axis=1
         )
         print(df[["d4_C6s_dimer", "d4_C6s_monomers", "d4_C6s_diff"]].describe())
-        df.to_pickle(selected)
+        # df.to_pickle(selected)
     investigate = [
         "d4_C6s_dimer",
         "d4_C6s_monomers",
@@ -231,17 +237,21 @@ def compute_ie_differences(df_num=0):
                 if cnt == break_after:
                     return
         print_rows(df)
-    if False:
+    if True:
         indices = [
-            515,
-            500,
-            450,
-            385,
+                0,
+            # 515,
+            # 500,
+            # 450,
+            # 385,
         ]
         for i in indices:
             print(i, df.loc[i]['charges'][0], 'angstrom')
             tools.print_cartesians(df.loc[i]["Geometry"], True)
             print()
+            # print(i, df.loc[i]['charges'][0], 'bohr')
+            # tools.print_cartesians(df.loc[i]["Geometry_bohr"], True)
+            # print()
 
     return df
 
