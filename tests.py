@@ -295,10 +295,10 @@ def test_dispersion_interaction_energy3() -> None:
     r = df.iloc[2700]
     num, coords = r["Geometry_bohr"][:, 0], r["Geometry_bohr"][:, 1:]
     print("angstrom")
-    tools.print_cartesians(r['Geometry'], True)
+    tools.print_cartesians(r["Geometry"], True)
     print()
-    print('bohr')
-    tools.print_cartesians(r['Geometry_bohr'], True)
+    print("bohr")
+    tools.print_cartesians(r["Geometry_bohr"], True)
     charges = r["charges"]
     monAs, monBs = r["monAs"], r["monBs"]
     charges = r["charges"]
@@ -495,12 +495,11 @@ def test_compute_bj_dimer_f90_ATM():
 
 
 def test_C6s_change_dimer_to_monomer():
-    # HBC6 - doubly hydrogen bonded, grab a single monomer and see if the C6's change
-    # do dimer - monomer - monomer
-    # do only interatomic pairs
-    # These should not agree
-    # HBC6 first dimer from /theoryfs2/ds/amwalla3/gits/psi4_amw/psi4/share/psi4/databases/HBC6.py
-
+    """
+    Checks if the C6's change when a dimer is changed to a monomer
+    AND ensures that C6's stored in dataframe are correct for
+    each monomer
+    """
     params = src.paramsTable.paramsDict()["HF"]
     df = pd.read_pickle("data/d4.pkl")
     id_list = [0, 2600, 4000, 4926, 7000]
@@ -520,6 +519,8 @@ def test_C6s_change_dimer_to_monomer():
             charges[0],
             p=params,
         )
+        C6_diff = np.abs(np.subtract(C6s_dimer, row["C6s"]))
+        assert np.all(C6_diff < 1e-12)
         pA, cA = geom[ma, 0], geom[ma, 1:]
         pB, cB = geom[mb, 0], geom[mb, 1:]
         C6s_mA, _, _, _ = src.locald4.calc_dftd4_c6_c8_pairDisp2(
@@ -528,20 +529,61 @@ def test_C6s_change_dimer_to_monomer():
             charges[1],
             p=params,
         )
+        C6_diff = np.abs(np.subtract(C6s_mA, row["C6_A"]))
+        assert np.all(C6_diff < 1e-12)
         C6s_mB, _, _, _ = src.locald4.calc_dftd4_c6_c8_pairDisp2(
             pB,
             cB,
             charges[2],
             p=params,
         )
+        C6_diff = np.abs(np.subtract(C6s_mB, row["C6_B"]))
+        assert np.all(C6_diff < 1e-12)
 
         C6s_monA_from_dimer = src.locald4.get_monomer_C6s_from_dimer(C6s_dimer, ma)
-        print(f"{C6s_monA_from_dimer = }")
-        print(f"{C6s_mA = }")
-        print(np.shape(C6s_monA_from_dimer))
-        print(np.shape(C6s_mA))
-        diff = np.subtract(C6s_monA_from_dimer, C6s_mA)
-        assert np.all(diff < 1e-12)
+        diff = np.abs(np.subtract(C6s_monA_from_dimer, C6s_mA))
+        assert not np.all(diff < 1e-12)
+
+
+def test_C6s_change_dimer_to_monomer_IE():
+    params = src.paramsTable.paramsDict()["HF"]
+    df = pd.read_pickle("data/d4.pkl")
+    id_list = [0, 2600, 4000, 4926, 7000]
+    print(id_list)
+    for n, i in enumerate(id_list):
+        print(i)
+
+        row = df.iloc[i]
+        ma = row["monAs"]
+        mb = row["monBs"]
+        charges = row["charges"]
+        geom = row["Geometry"]
+
+        cD = geom[:, 1:]
+        print(cD)
+        pD = geom[:, 0]
+        # tools.print_cartesians_pos_carts(pD, cD)
+        pA, cA = pD[ma], cD[ma, :]
+        pB, cB = pD[mb], cD[mb, :]
+        tools.print_cartesians_pos_carts(pA, cA)
+        tools.print_cartesians_pos_carts(pA, cA)
+        C6s_dimer, C6s_mA, C6s_mB = src.locald4.calc_dftd4_c6_for_d_a_b(
+            cD, pD, pA, cA, pB, cB, charges, p=params, s9=0.0
+        )
+        cD *= ang_to_bohr
+        geom_bohr = np.hstack((np.reshape(pD, (-1, 1)), cD))
+        d4_dimer, d4_mons_individually = src.locald4.compute_bj_with_different_C6s(
+            geom_bohr,
+            ma,
+            mb,
+            charges,
+            C6s_dimer,
+            C6s_mA,
+            C6s_mB,
+            params,
+        )
+
+        assert np.all(abs(d4_mons_individually - d4_dimer) > 1e-6)
 
 
 def test_C6s_change_dimer_to_monomer_HBC6():
@@ -593,8 +635,8 @@ def test_C6s_change_dimer_to_monomer_HBC6():
     print(f"{C6s_mA = }")
     print(np.shape(C6s_monA_from_dimer))
     print(np.shape(C6s_mA))
-    diff = np.subtract(C6s_monA_from_dimer, C6s_mA)
-    assert np.all(diff < 1e-12)
+    diff = np.abs(np.subtract(C6s_monA_from_dimer, C6s_mA))
+    assert np.all(diff > 1e-6)
 
 
 def test_C6s_change_dimer_to_monomer_HBC6_IE():
@@ -659,7 +701,8 @@ def test_C6s_change_dimer_to_monomer_HBC6_IE():
         row,
         r4r2_ls=r4r2_ls,
     )
-    assert np.all(abs(d4_mons_individually - d4_dimer) < 1e-12)
+    assert np.all(abs(d4_mons_individually - d4_dimer) > 1e-6)
+
 
 def test_C6s_change_dimer_to_monomer_HBC6_IE_func_call():
     r4r2_ls = src.r4r2.r4r2_vals_ls()
@@ -704,4 +747,4 @@ def test_C6s_change_dimer_to_monomer_HBC6_IE_func_call():
         params,
     )
 
-    assert np.all(abs(d4_mons_individually - d4_dimer) < 1e-12)
+    assert np.all(abs(d4_mons_individually - d4_dimer) > 1e-6)

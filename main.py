@@ -172,7 +172,7 @@ def compute_ie_differences(df_num=0):
     df, selected = df_names(df_num)
     # df['Geometry_bohr'] = df.apply(lambda x: x['Geometry'], axis=1)
     # df['Geometry'] = df.apply(lambda x: make_bohr(x['Geometry'], False), axis=1)
-    if True:
+    if False:
         d4_dimers, d4_mons = [], []
         r4r2_ls = src.r4r2.r4r2_vals_ls()
         for n, r in df.iterrows():
@@ -197,7 +197,7 @@ def compute_ie_differences(df_num=0):
             lambda r: r["d4_C6s_dimer"] - r["d4_C6s_monomers"], axis=1
         )
         print(df[["d4_C6s_dimer", "d4_C6s_monomers", "d4_C6s_diff"]].describe())
-        # df.to_pickle(selected)
+        df.to_pickle(selected)
     investigate = [
         "d4_C6s_dimer",
         "d4_C6s_monomers",
@@ -237,21 +237,13 @@ def compute_ie_differences(df_num=0):
                 if cnt == break_after:
                     return
         print_rows(df)
-    if True:
-        indices = [
-                0,
-            # 515,
-            # 500,
-            # 450,
-            # 385,
-        ]
-        for i in indices:
-            print(i, df.loc[i]['charges'][0], 'angstrom')
-            tools.print_cartesians(df.loc[i]["Geometry"], True)
-            print()
-            # print(i, df.loc[i]['charges'][0], 'bohr')
-            # tools.print_cartesians(df.loc[i]["Geometry_bohr"], True)
-            # print()
+        cnt = 0
+        for n, r in df.iterrows():
+            print(n, r['charges'][0], 'angstrom')
+            tools.print_cartesians_dimer(r["Geometry"], r['monAs'], r['monBs'], r['charges'])
+            cnt += 1
+            if cnt > 3:
+                break
 
     return df
 
