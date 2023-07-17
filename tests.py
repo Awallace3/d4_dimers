@@ -439,6 +439,8 @@ def test_pairwise_AB_versus_classic_IE():
         assert abs(d4_ie - d4_pairs) > 1e-6
 
 
+"""
+"""
 def test_ATM_water() -> None:
     """
     compares dftd4 dispersion energies with damping parameters of HF
@@ -450,13 +452,14 @@ def test_ATM_water() -> None:
     params = [1, 1.61679827, 0.44959224, 3.35743605]
     pos, carts = src.water_data.water_geom()
     charges = [0, 1]
-    d4C6s, d4C8s, pairs, d4e = src.locald4.calc_dftd4_c6_c8_pairDisp2(
-        pos, carts, charges, dftd4_bin=dftd4_bin, p=params, s9=0.0
-    )
     d4C6s, d4C8s, pairs, d4e_ATM = src.locald4.calc_dftd4_c6_c8_pairDisp2(
         pos, carts, charges, dftd4_bin=dftd4_bin, p=params, s9=1.0
     )
-    target_ATM = d4e_ATM - d4e
+    with open(".ATM", "r") as f:
+        target_ATM = float(f.readline())
+
+    print("geom")
+    tools.print_cartesians_pos_carts(pos, carts)
 
     cs = ang_to_bohr * np.array(carts, copy=True)
     print(params)

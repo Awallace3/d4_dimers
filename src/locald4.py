@@ -74,7 +74,7 @@ def calc_dftd4_c6_c8_pairDisp2(
         str(charges[0]),
         "--pair-resolved",
     ]
-    subprocess.call(
+    v = subprocess.call(
         # cmd,
         # shell=True,
         args=args,
@@ -82,6 +82,7 @@ def calc_dftd4_c6_c8_pairDisp2(
         stdout=subprocess.DEVNULL,
         stderr=subprocess.STDOUT,
     )
+    print(v)
     output_json = "C_n.json"
     with open(output_json) as f:
         cs = json.load(f)
@@ -93,9 +94,9 @@ def calc_dftd4_c6_c8_pairDisp2(
         pairs = np.array(pairs["pairs2"])
     with open(".EDISP", "r") as f:
         e = float(f.read())
-    os.remove(input_xyz)
-    os.remove("C_n.json")
-    os.remove("pairs.json")
+    # os.remove(input_xyz)
+    # os.remove("C_n.json")
+    # os.remove("pairs.json")
     return C6s, C8s, pairs, e
 
 
@@ -219,6 +220,7 @@ def compute_bj_f90_ATM(
     params: [] = [1.61679827, 0.44959224, 3.35743605, 1.0],
     # [s6, s8, a1, a2, s9]
     r4r2_ls=r4r2.r4r2_vals_ls(),
+    alp=16.0,
 ) -> float:
     """
     compute_bj_f90 computes energy from C6s, cartesian coordinates, and dimer sizes.
@@ -232,9 +234,11 @@ def compute_bj_f90_ATM(
     )
     energy = 0
     s6, s8, a1, a2, s9 = params
+    print(params)
     M_tot = len(carts)
     energies = np.zeros((M_tot, M_tot))
     lattice_points = 1
+    e_ATM = 0
 
     for i in range(M_tot):
         el1 = int(pos[i])
@@ -243,43 +247,43 @@ def compute_bj_f90_ATM(
         for j in range(i + 1):
             el2 = int(pos[j])
             Q_B = (0.5 * el2**0.5 * r4r2_ls[el2 - 1]) ** 0.5
-            if i == j:
-                continue
+            # if i == j:
+            #     continue
             c6ij = C6s[i, j]
             r0ij = a1 * np.sqrt(3 * Q_A * Q_B) + a2
             ri, rj = carts[i, :], carts[j, :]
             r2ij = np.subtract(ri, rj)
             r2ij = np.sum(np.multiply(r2ij, r2ij))
-            # if np.all(r2ij < 1e-8):
-            #     continue
+            if np.all(r2ij < 1e-8):
+                continue
             for k in range(j + 1):
-                if j == k:
-                    continue
-                el3 = int(pos[j])
+                # if j == k:
+                #     continue
+                el3 = int(pos[k])
                 Q_C = (0.5 * el3**0.5 * r4r2_ls[el3 - 1]) ** 0.5
                 c6ik = C6s[i, k]
                 c6jk = C6s[j, k]
                 c9 = -s9 * np.sqrt(np.abs(c6ij * c6ik * c6jk))
-                r0ik = a1 * np.sqrt(3 * Q_A * Q_C) + a2
-                r0jk = a1 * np.sqrt(3 * Q_B * Q_C) + a2
+                r0ik = a1 * np.sqrt(3 * Q_C * Q_A) + a2
+                r0jk = a1 * np.sqrt(3 * Q_C * Q_B) + a2
                 r0 = r0ij * r0ik * r0jk
                 triple = triple_scale(i, j, k)
                 for ktr in range(lattice_points):
                     rk = carts[k, :]
                     r2ik = np.subtract(ri, rk)
                     r2ik = np.sum(np.multiply(r2ik, r2ik))
-                    # if np.all(r2ik < 1e-8):
-                    #     continue
+                    if np.all(r2ik < 1e-8):
+                        continue
                     r2jk = np.subtract(rj, rk)
                     r2jk = np.sum(np.multiply(r2jk, r2jk))
-                    # if np.all(r2ik < 1e-8):
-                    #     continue
-                    r2 = r2ij + r2ik + r2jk
+                    if np.all(r2jk < 1e-8):
+                        continue
+                    r2 = r2ij * r2ik * r2jk
                     r1 = np.sqrt(r2)
                     r3 = r2 * r1
                     r5 = r3 * r2
 
-                    fdmp = 1 / (1 + 6 * (r0 / r1) ** (16 / 3))
+                    fdmp = 1.0 / (1.0 + 6.0 * (r0 / r1) ** (alp / 3.0))
 
                     ang = (
                         0.375
@@ -293,6 +297,9 @@ def compute_bj_f90_ATM(
                     rr = ang * fdmp
 
                     dE = rr * c9 * triple / 6
+                    e_ATM -= dE
+                    print(i + 1, j + 1, k + 1, r0, r1, alp, fdmp)
+                    # print(i+1, j+1, k+1, r0ij, r0ik, r0jk, r0, fdmp, ang, dE)
                     energies[j, i] -= dE
                     energies[k, i] -= dE
                     energies[i, j] -= dE
