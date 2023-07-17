@@ -46,6 +46,7 @@ def calc_dftd4_c6_c8_pairDisp2(
     dftd4_bin: str = "/theoryfs2/ds/amwalla3/.local/bin/dftd4",
     p: [] = [1.0, 1.61679827, 0.44959224, 3.35743605],
     s9=0.0,
+    C6s_ATM=False,
 ):
     """
     Ensure that dftd4 binary is from compiling git@github.com:Awallace3/dftd4
@@ -97,7 +98,14 @@ def calc_dftd4_c6_c8_pairDisp2(
     # os.remove(input_xyz)
     # os.remove("C_n.json")
     # os.remove("pairs.json")
-    return C6s, C8s, pairs, e
+    if C6s_ATM:
+        with open("C_n_ATM.json") as f:
+            cs = json.load(f)
+        C6s_ATM = np.array(cs["c6_ATM"], dtype=np.float64)
+        return C6s, C8s, pairs, e, C6s_ATM
+    else:
+        return C6s, C8s, pairs, e
+
 
 
 def calc_dftd4_c6_for_d_a_b(
@@ -234,12 +242,10 @@ def compute_bj_f90_ATM(
     )
     energy = 0
     s6, s8, a1, a2, s9 = params
-    print(params)
     M_tot = len(carts)
     energies = np.zeros((M_tot, M_tot))
     lattice_points = 1
     e_ATM = 0
-
     for i in range(M_tot):
         el1 = int(pos[i])
         Q_A = (0.5 * el1**0.5 * r4r2_ls[el1 - 1]) ** 0.5
@@ -298,7 +304,7 @@ def compute_bj_f90_ATM(
 
                     dE = rr * c9 * triple / 6
                     e_ATM -= dE
-                    print(i + 1, j + 1, k + 1, r0, r1, alp, fdmp)
+                    # print(i + 1, j + 1, k + 1, c6ij, c6ik, c6jk, c9)
                     # print(i+1, j+1, k+1, r0ij, r0ik, r0jk, r0, fdmp, ang, dE)
                     energies[j, i] -= dE
                     energies[k, i] -= dE

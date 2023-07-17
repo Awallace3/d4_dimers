@@ -452,8 +452,8 @@ def test_ATM_water() -> None:
     params = [1, 1.61679827, 0.44959224, 3.35743605]
     pos, carts = src.water_data.water_geom()
     charges = [0, 1]
-    d4C6s, d4C8s, pairs, d4e_ATM = src.locald4.calc_dftd4_c6_c8_pairDisp2(
-        pos, carts, charges, dftd4_bin=dftd4_bin, p=params, s9=1.0
+    d4C6s, d4C8s, pairs, d4e_ATM, d4C6s_ATM = src.locald4.calc_dftd4_c6_c8_pairDisp2(
+        pos, carts, charges, dftd4_bin=dftd4_bin, p=params, s9=1.0, C6s_ATM=True
     )
     with open(".ATM", "r") as f:
         target_ATM = float(f.readline())
@@ -464,7 +464,7 @@ def test_ATM_water() -> None:
     cs = ang_to_bohr * np.array(carts, copy=True)
     print(params)
     params.append(1.0)
-    compute_ATM = src.locald4.compute_bj_f90_ATM(pos, cs, d4C6s, params=params)
+    compute_ATM = src.locald4.compute_bj_f90_ATM(pos, cs, d4C6s_ATM, params=params)
 
     print(f"{target_ATM= }\n{compute_ATM = }")
     assert abs(target_ATM - compute_ATM) < 1e-14
