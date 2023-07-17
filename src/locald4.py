@@ -107,7 +107,6 @@ def calc_dftd4_c6_c8_pairDisp2(
         return C6s, C8s, pairs, e
 
 
-
 def calc_dftd4_c6_for_d_a_b(
     cD,
     pD,
@@ -224,22 +223,27 @@ def triple_scale(ii, jj, kk) -> float:
 def compute_bj_f90_ATM(
     pos: np.array,
     carts: np.array,
-    C6s: np.array,
+    C6s_ATM: np.array,
     params: [] = [1.61679827, 0.44959224, 3.35743605, 1.0],
     # [s6, s8, a1, a2, s9]
     r4r2_ls=r4r2.r4r2_vals_ls(),
     alp=16.0,
+    ATM_only=False,
+    C6s: np.array = None,
 ) -> float:
     """
     compute_bj_f90 computes energy from C6s, cartesian coordinates, and dimer sizes.
     """
-    e_two_body_disp = compute_bj_f90(
-        pos,
-        carts,
-        C6s,
-        params[:4],
-        r4r2_ls=r4r2_ls,
-    )
+    if ATM_only:
+        e_two_body_disp = 0
+    else:
+        e_two_body_disp = compute_bj_f90(
+            pos,
+            carts,
+            C6s,
+            params[:4],
+            r4r2_ls=r4r2_ls,
+        )
     energy = 0
     s6, s8, a1, a2, s9 = params
     M_tot = len(carts)
@@ -249,13 +253,10 @@ def compute_bj_f90_ATM(
     for i in range(M_tot):
         el1 = int(pos[i])
         Q_A = (0.5 * el1**0.5 * r4r2_ls[el1 - 1]) ** 0.5
-
         for j in range(i + 1):
             el2 = int(pos[j])
             Q_B = (0.5 * el2**0.5 * r4r2_ls[el2 - 1]) ** 0.5
-            # if i == j:
-            #     continue
-            c6ij = C6s[i, j]
+            c6ij = C6s_ATM[i, j]
             r0ij = a1 * np.sqrt(3 * Q_A * Q_B) + a2
             ri, rj = carts[i, :], carts[j, :]
             r2ij = np.subtract(ri, rj)
@@ -263,12 +264,10 @@ def compute_bj_f90_ATM(
             if np.all(r2ij < 1e-8):
                 continue
             for k in range(j + 1):
-                # if j == k:
-                #     continue
                 el3 = int(pos[k])
                 Q_C = (0.5 * el3**0.5 * r4r2_ls[el3 - 1]) ** 0.5
-                c6ik = C6s[i, k]
-                c6jk = C6s[j, k]
+                c6ik = C6s_ATM[i, k]
+                c6jk = C6s_ATM[j, k]
                 c9 = -s9 * np.sqrt(np.abs(c6ij * c6ik * c6jk))
                 r0ik = a1 * np.sqrt(3 * Q_C * Q_A) + a2
                 r0jk = a1 * np.sqrt(3 * Q_C * Q_B) + a2
@@ -304,8 +303,6 @@ def compute_bj_f90_ATM(
 
                     dE = rr * c9 * triple / 6
                     e_ATM -= dE
-                    # print(i + 1, j + 1, k + 1, c6ij, c6ik, c6jk, c9)
-                    # print(i+1, j+1, k+1, r0ij, r0ik, r0jk, r0, fdmp, ang, dE)
                     energies[j, i] -= dE
                     energies[k, i] -= dE
                     energies[i, j] -= dE
@@ -313,6 +310,8 @@ def compute_bj_f90_ATM(
                     energies[i, k] -= dE
                     energies[j, k] -= dE
     energy = np.sum(energies)
+    if not ATM_only:
+        energy += e_two_body_disp
     return energy
 
 
