@@ -191,3 +191,4 @@ latex_outfiles/G_pbe0_adz_saptdft_ndisp_5f_P.fdb_latexmk
 db/
 plots/plot.pkl
 tcase/
+plots/plot2.pkl

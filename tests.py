@@ -451,14 +451,20 @@ def test_ATM_water() -> None:
     pos, carts = src.water_data.water_geom()
     charges = [0, 1]
     d4C6s, d4C8s, pairs, d4e = src.locald4.calc_dftd4_c6_c8_pairDisp2(
+        pos, carts, charges, dftd4_bin=dftd4_bin, p=params, s9=0.0
+    )
+    d4C6s, d4C8s, pairs, d4e_ATM = src.locald4.calc_dftd4_c6_c8_pairDisp2(
         pos, carts, charges, dftd4_bin=dftd4_bin, p=params, s9=1.0
     )
+    target_ATM = d4e_ATM - d4e
 
     cs = ang_to_bohr * np.array(carts, copy=True)
-    l_e = src.locald4.compute_bj_f90_ATM(pos, cs, d4C6s, params=params.extend(1.0))
+    print(params)
+    params.append(1.0)
+    compute_ATM = src.locald4.compute_bj_f90_ATM(pos, cs, d4C6s, params=params)
 
-    print(f"{d4e = }\n{l_e = }")
-    assert abs(d4e - l_e) < 1e-14
+    print(f"{target_ATM= }\n{compute_ATM = }")
+    assert abs(target_ATM - compute_ATM) < 1e-14
 
 
 def test_compute_bj_dimer_f90_ATM():
@@ -748,3 +754,90 @@ def test_C6s_change_dimer_to_monomer_HBC6_IE_func_call():
     )
 
     assert np.all(abs(d4_mons_individually - d4_dimer) > 1e-6)
+
+
+def test_C6s_change_dimer_to_monomer_IE():
+    """
+    Checks if IE changes between selecting monomer or dimer C6s
+    """
+    params = src.paramsTable.paramsDict()["HF"]
+    df = pd.read_pickle("data/d4.pkl")
+    id_list = [515, 0, 2600, 4000, 4926, 7000]
+    print(id_list)
+    for n, i in enumerate(id_list):
+        print(i)
+        row = df.iloc[i]
+        ma = row["monAs"]
+        mb = row["monBs"]
+        charges = row["charges"]
+        geom_bohr = row["Geometry_bohr"]
+        C6s_dimer = row["C6s"]
+        C6s_mA = row["C6_A"]
+        C6s_mB = row["C6_B"]
+
+        d4_dimer, d4_mons_individually = src.locald4.compute_bj_with_different_C6s(
+            geom_bohr,
+            ma,
+            mb,
+            charges,
+            C6s_dimer,
+            C6s_mA,
+            C6s_mB,
+            params,
+        )
+        diff = d4_dimer - d4_mons_individually
+        print(diff)
+        assert abs(d4_mons_individually - d4_dimer) < 1e-12
+
+
+def test_water_dftd4_2_body_and_ATM():
+    params = src.paramsTable.paramsDict()["pbe"]
+    print(params)
+    df = pd.read_pickle("data/d4.pkl")
+    row = df.iloc[3014]
+    charges = row["charges"]
+    geom = row["Geometry"]
+    ma = row['monAs']
+    mb = row['monBs']
+    pos, carts = geom[:, 0], geom[:, 1:]
+    d4C6s, d4C8s, pairs, d4e_dimer = src.locald4.calc_dftd4_c6_c8_pairDisp2(
+        pos, carts, charges[0], dftd4_bin=dftd4_bin, p=params
+    )
+    print(f"{d4e_dimer = }")
+    d4C6s, d4C8s, pairs, d4e_monA = src.locald4.calc_dftd4_c6_c8_pairDisp2(
+        pos[ma], carts[ma], charges[0], dftd4_bin=dftd4_bin, p=params
+    )
+    print(f"{d4e_monA = }")
+    d4C6s, d4C8s, pairs, d4e_monB = src.locald4.calc_dftd4_c6_c8_pairDisp2(
+        pos[mb], carts[mb], charges[0], dftd4_bin=dftd4_bin, p=params
+    )
+    print(f"{d4e_monB = }")
+    IE = d4e_dimer - d4e_monA - d4e_monB
+    # print(f"{IE = }")
+    ed4_2_body_IE = src.locald4.compute_bj_dimer_f90(params, row)
+    ed4_2_body_IE /= hartree_to_kcalmol
+    print(f"{ed4_2_body_IE = }")
+    d4C6s, d4C8s, pairs, d4e_dimer_ATM = src.locald4.calc_dftd4_c6_c8_pairDisp2(
+        pos, carts, charges[0], dftd4_bin=dftd4_bin, p=params, s9=1.0
+    )
+    d4C6s, d4C8s, pairs, d4e_monA_ATM = src.locald4.calc_dftd4_c6_c8_pairDisp2(
+        pos[ma], carts[ma], charges[0], dftd4_bin=dftd4_bin, p=params
+    )
+    print(f"{d4e_monA_ATM = }")
+    d4C6s, d4C8s, pairs, d4e_monB_ATM = src.locald4.calc_dftd4_c6_c8_pairDisp2(
+        pos[mb], carts[mb], charges[0], dftd4_bin=dftd4_bin, p=params
+    )
+    print(f"{d4e_monB_ATM = }")
+    IE_ATM = d4e_dimer_ATM - d4e_monA_ATM - d4e_monB_ATM
+    print(f"{IE_ATM = }")
+    print(f"{d4e_dimer_ATM = }")
+    print(f"{d4e_dimer_ATM - d4e_dimer = }")
+    IE_diff_ATM_2_body = IE_ATM - ed4_2_body_IE
+    print(f"{IE_diff_ATM_2_body = }")
+
+    assert False
+
+
+"""
+/theoryfs2/ds/amwalla3/.local/bin/dftd4 dat.xyz --property --param 1.0 1.61679827 0.44959224 3.35743605 --mbdscale 0.0 -c [0 1] --pair-resolved
+"""

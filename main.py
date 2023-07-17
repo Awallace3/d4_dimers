@@ -107,7 +107,8 @@ def df_names(i):
         "data/schr_dft.pkl",
         "data/grimme_fitset_total.pkl",
         "data/grimme_fitset_test2.pkl",
-        "data/HBC6.pkl"
+        "data/HBC6.pkl",
+        "data/schr_dft2.pkl",
     ]
     # NOTE: data/grimme_fitset_db3.pkl Geometry is in Angstrom!!!
     selected = names[i]
@@ -172,49 +173,76 @@ def compute_ie_differences(df_num=0):
     df, selected = df_names(df_num)
     # df['Geometry_bohr'] = df.apply(lambda x: x['Geometry'], axis=1)
     # df['Geometry'] = df.apply(lambda x: make_bohr(x['Geometry'], False), axis=1)
+    params = src.paramsTable.paramsDict()["HF"]
     if False:
-        d4_dimers, d4_mons = [], []
+        d4_dimers, d4_mons, d4_diffs = [], [], []
         r4r2_ls = src.r4r2.r4r2_vals_ls()
-        for n, r in df.iterrows():
+        for n, row in df.iterrows():
             print(n)
-            d4_dimer, d4_mon = src.locald4.compute_bj_with_different_C6s(
-                r["Geometry_bohr"],
-                r["monAs"],
-                r["monBs"],
-                r["charges"],
-                r["C6s"],
-                r["C6_A"],
-                r["C6_B"],
-                params=src.paramsTable.get_params("HF"),
-                s9=0.0,
-                r4r2_ls=r4r2_ls,
+            ma = row["monAs"]
+            mb = row["monBs"]
+            charges = row["charges"]
+            geom_bohr = row["Geometry_bohr"]
+            C6s_dimer = row["C6s"]
+            C6s_mA = row["C6_A"]
+            C6s_mB = row["C6_B"]
+
+            d4_dimer, d4_mons_individually = src.locald4.compute_bj_with_different_C6s(
+                geom_bohr,
+                ma,
+                mb,
+                charges,
+                C6s_dimer,
+                C6s_mA,
+                C6s_mB,
+                params,
             )
+            diff = d4_dimer - d4_mons_individually
+
             d4_dimers.append(d4_dimer)
-            d4_mons.append(d4_mon)
+            d4_mons.append(d4_mons_individually)
+            d4_diffs.append(diff)
+
         df["d4_C6s_dimer"] = d4_dimers
         df["d4_C6s_monomers"] = d4_mons
-        df["d4_C6s_diff"] = df.apply(
-            lambda r: r["d4_C6s_dimer"] - r["d4_C6s_monomers"], axis=1
+        df["d4_C6s_diff"] = d4_diffs
+        df["d4_C6s_diff_abs"] = abs(df["d4_C6s_diff"])
+        print(
+            df[
+                ["d4_C6s_dimer", "d4_C6s_monomers", "d4_C6s_diff", "d4_C6s_diff_abs"]
+            ].describe()
         )
-        print(df[["d4_C6s_dimer", "d4_C6s_monomers", "d4_C6s_diff"]].describe())
         df.to_pickle(selected)
-    investigate = [
+    df["d4_C6s_dimer_IE"] = pd.to_numeric(
+        df["Benchmark"] - (df["HF_adz"] + df["d4_C6s_dimer"])
+    )
+    df["d4_C6s_monomer_IE"] = pd.to_numeric(
+        df["Benchmark"] - (df["HF_adz"] + df["d4_C6s_monomers"])
+    )
+    print(df[["d4_C6s_dimer_IE", "d4_C6s_monomer_IE"]].describe())
+    investigate_pre = [
         "d4_C6s_dimer",
         "d4_C6s_monomers",
         "d4_C6s_diff",
-        # "HF_adz",
-        # "Benchmark",
+        "d4_C6s_diff_abs",
+        "HF_adz",
         "DB",
         # "monAs",
         # "monBs",
+        "Benchmark",
     ]
     if True:
+        investigate = []
+        for i in investigate_pre:
+            if i in df.columns.values:
+                investigate.append(i)
+
         print(df[investigate].describe())
         print()
         df["d4_C6s_diff_abs"] = abs(df["d4_C6s_diff"])
-        df.sort_values(by="d4_C6s_diff_abs", inplace=True, ascending=False)
+        df2 = df.sort_values(by="d4_C6s_diff_abs", inplace=False, ascending=False)
 
-        def print_rows(df, break_after=1000):
+        def print_rows(df, break_after=9000):
             print("i", end="      ")
             for l in investigate:
                 if len(l) > 8:
@@ -225,7 +253,7 @@ def compute_ie_differences(df_num=0):
                     print(f"{l}", end="   ")
             print()
             cnt = 0
-            for n, r in df.iterrows():
+            for n, r in df2.iterrows():
                 print(n, end="\t")
                 for l in investigate:
                     if type(r[l]) != float:
@@ -236,21 +264,57 @@ def compute_ie_differences(df_num=0):
                 cnt += 1
                 if cnt == break_after:
                     return
+
         print_rows(df)
         cnt = 0
-        for n, r in df.iterrows():
-            print(n, r['charges'][0], 'angstrom')
-            tools.print_cartesians_dimer(r["Geometry"], r['monAs'], r['monBs'], r['charges'])
+        for n, r in df2.iterrows():
+            print(n, r["charges"][0], "angstrom")
+            tools.print_cartesians_dimer(
+                r["Geometry"], r["monAs"], r["monBs"], r["charges"]
+            )
             cnt += 1
             if cnt > 3:
                 break
+    if True:
+        idx = 3014
+        r = df.iloc[idx]
+        print("FINAL:", idx)
+        print(r["charges"][0], "angstrom")
+        tools.print_cartesians_dimer(
+            r["Geometry"], r["monAs"], r["monBs"], r["charges"]
+        )
+        # print(r['charges'][0], 'bohr')
+        # tools.print_cartesians_dimer(r["Geometry_bohr"], r['monAs'], r['monBs'], r['charges'])
 
     return df
 
 
+def charge_comparison():
+    df, selected = df_names(0)
+    print(df.columns.values)
+    def_charge = [[0, 1] for i in range(3)]
+    cnt_correct = 0
+    cnt_wrong = 0
+    for n, r in df.iterrows():
+        line = f"{n} {r['charges']} {r['HF INTERACTION ENERGY']:.4f} {r['HF_jdz']:.4f}"
+        e_diff = abs(r["HF INTERACTION ENERGY"] - r["HF_jdz"])
+
+        if n < 0:
+            print(line)
+        elif not np.all(r["charges"] == def_charge):
+            if e_diff < 0.001:
+                cnt_correct += 1
+            else:
+                cnt_wrong += 1
+                print(line)
+    print(cnt_correct, cnt_wrong)
+
+
 def main():
     # gather_data("schr")
-    df, selected = df_names(0)
+    df, selected = df_names(6)
+    print(df.columns.values)
+
 
     def opt():
         adz_opt_params = [0.829861, 0.706055, 1.123903]
@@ -269,12 +333,12 @@ def main():
             D4={"powell": True, "least_squares": False},
         )
 
-    compute_ie_differences(0)
-    compute_ie_differences(5)
+    # compute_ie_differences(0)
+    # compute_ie_differences(5)
 
     # opt()
     # grimme_test_atm()
-    # src.plotting.plotting_setup(df_names(0), False)
+    src.plotting.plotting_setup(df_names(6), False, "plots/plot2.pkl")
     return
 
 

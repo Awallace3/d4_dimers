@@ -231,6 +231,7 @@ def plotting_setup(
     build_df=False,
     df_out: str = "plots/plot.pkl",
 ):
+    df, _ = df
     if build_df:
         params_dict = src.paramsTable.paramsDict()
         params_d4 = params_dict["sadz"][1:]
@@ -264,9 +265,12 @@ def plotting_setup(
         df["jdz_diff_d4"] = df["Benchmark"] - df["SAPT0-D4/jun-cc-pVDZ"]
         df["jdz_diff_d3"] = df["Benchmark"] - df["SAPT0-D3/jun-cc-pVDZ"]
         df["SAPT0_jdz_diff"] = df["Benchmark"] - df["SAPT0"]
+        df["SAPT0_jdz_diff"] = df["Benchmark"] - df["SAPT0"]
+        df["SAPT0_adz_IE"] = df.apply(lambda r: r["SAPT0_adz"][0], axis=1)
+        df['SAPT0_adz_diff'] = df.apply(lambda r: r['Benchmark'] - r['SAPT0_adz_IE'], axis=1)
         df.to_pickle(df_out)
     else:
-        df = pd.read_pickle("plots/plot.pkl")
+        df = pd.read_pickle(df_out)
     # Non charged
     df_charged = get_charged_df(df)
     plot_violin_d3_d4_total(
@@ -275,11 +279,13 @@ def plotting_setup(
             "adz_diff_d3",
             "adz_diff_d4",
             "SAPT0_jdz_diff",
+            "SAPT0_adz_diff",
         ],
         [
             "SAPT0-D3/aug-cc-pVDZ",
             "SAPT0-D4/aug-cc-pVDZ",
             "SAPT0/jun-cc-pVDZ",
+            "SAPT0/aug-cc-pVDZ",
         ],
         "All Dimers",
         "adz_d3_d4_total_sapt0",
@@ -290,11 +296,13 @@ def plotting_setup(
             "adz_diff_d3",
             "adz_diff_d4",
             "SAPT0_jdz_diff",
+            "SAPT0_adz_diff",
         ],
         [
             "SAPT0-D3/aug-cc-pVDZ",
             "SAPT0-D4/aug-cc-pVDZ",
             "SAPT0/jun-cc-pVDZ",
+            "SAPT0/aug-cc-pVDZ",
         ],
         "Charged Dimers",
         "adz_d3_d4_total_sapt0_charged",
@@ -333,7 +341,7 @@ def plot_violin_d3_d4_total(
         vp.set_linewidth(1)
         vp.set_alpha(1)
 
-    colors = ["blue", "red", "green"]
+    colors = ["blue", "red", "green", "orange"]
     for n, pc in enumerate(vplot["bodies"], 1):
         # if n % 2 != 0:
         #     pc.set_facecolor("blue")

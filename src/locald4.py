@@ -12,6 +12,18 @@ from qm_tools_aw import tools
 hartree_to_kcalmol = qcel.constants.conversion_factor("hartree", "kcal/mol")
 
 
+def get_monomer_C6s_from_dimer(C6s_dimer, monN) -> np.array:
+    C6s_monomer_from_dimer = C6s_dimer[monN].tolist()
+    for i in range(len(C6s_monomer_from_dimer)):
+        t1 = C6s_monomer_from_dimer[i]
+        t2 = []
+        for a in monN:
+            t2.append(t1[a])
+        C6s_monomer_from_dimer[i] = t2
+    C6s_monomer_from_dimer = np.array(C6s_monomer_from_dimer)
+    return C6s_monomer_from_dimer
+
+
 def write_xyz_from_np(atom_numbers, carts, outfile="dat.xyz", charges=[0, 1]) -> None:
     """
     write_xyz_from_np
@@ -26,21 +38,9 @@ def write_xyz_from_np(atom_numbers, carts, outfile="dat.xyz", charges=[0, 1]) ->
     return
 
 
-def get_monomer_C6s_from_dimer(C6s_dimer, monN) -> np.array:
-    C6s_monomer_from_dimer = C6s_dimer[monN].tolist()
-    for i in range(len(C6s_monomer_from_dimer)):
-        t1 = C6s_monomer_from_dimer[i]
-        t2 = []
-        for a in monN:
-            t2.append(t1[a])
-        C6s_monomer_from_dimer[i] = t2
-    C6s_monomer_from_dimer = np.array(C6s_monomer_from_dimer)
-    return C6s_monomer_from_dimer
-
-
 def calc_dftd4_c6_c8_pairDisp2(
     atom_numbers: np.array,
-    carts: np.array,
+    carts: np.array,  # angstroms
     charges: np.array,
     input_xyz: str = "dat.xyz",
     dftd4_bin: str = "/theoryfs2/ds/amwalla3/.local/bin/dftd4",
@@ -74,7 +74,6 @@ def calc_dftd4_c6_c8_pairDisp2(
         str(charges[0]),
         "--pair-resolved",
     ]
-    # print(" ".join(args))
     subprocess.call(
         # cmd,
         # shell=True,
@@ -196,6 +195,23 @@ def compute_bj_f90(
     return energy
 
 
+def triple_scale(ii, jj, kk) -> float:
+    """
+    triple_scale distribute a triple energy to atomwise energies
+    """
+    if ii == jj:
+        if ii == kk:
+            triple = 1 / 6
+        else:
+            triple = 0.5
+    else:
+        if ii != kk and jj != kk:
+            triple = 1
+        else:
+            triple = 0.5
+    return triple
+
+
 def compute_bj_f90_ATM(
     pos: np.array,
     carts: np.array,
@@ -207,10 +223,17 @@ def compute_bj_f90_ATM(
     """
     compute_bj_f90 computes energy from C6s, cartesian coordinates, and dimer sizes.
     """
+    e_two_body_disp = compute_bj_f90(
+        pos,
+        carts,
+        C6s,
+        params[:4],
+        r4r2_ls=r4r2_ls,
+    )
     energy = 0
     s6, s8, a1, a2, s9 = params
     M_tot = len(carts)
-    energies = np.zeros(M_tot)
+    energies = np.zeros((M_tot, M_tot))
     lattice_points = 1
 
     for i in range(M_tot):
@@ -222,26 +245,60 @@ def compute_bj_f90_ATM(
             Q_B = (0.5 * el2**0.5 * r4r2_ls[el2 - 1]) ** 0.5
             if i == j:
                 continue
-            # for
-            for k in range(lattice_points):
-                rrij = 3 * Q_A * Q_B
-                r0ij = a1 * np.sqrt(rrij) + a2
-                C6ij = C6s[i, j]
+            c6ij = C6s[i, j]
+            r0ij = a1 * np.sqrt(3 * Q_A * Q_B) + a2
+            ri, rj = carts[i, :], carts[j, :]
+            r2ij = np.subtract(ri, rj)
+            r2ij = np.sum(np.multiply(r2ij, r2ij))
+            # if np.all(r2ij < 1e-8):
+            #     continue
+            for k in range(j + 1):
+                if j == k:
+                    continue
+                el3 = int(pos[j])
+                Q_C = (0.5 * el3**0.5 * r4r2_ls[el3 - 1]) ** 0.5
+                c6ik = C6s[i, k]
+                c6jk = C6s[j, k]
+                c9 = -s9 * np.sqrt(np.abs(c6ij * c6ik * c6jk))
+                r0ik = a1 * np.sqrt(3 * Q_A * Q_C) + a2
+                r0jk = a1 * np.sqrt(3 * Q_B * Q_C) + a2
+                r0 = r0ij * r0ik * r0jk
+                triple = triple_scale(i, j, k)
+                for ktr in range(lattice_points):
+                    rk = carts[k, :]
+                    r2ik = np.subtract(ri, rk)
+                    r2ik = np.sum(np.multiply(r2ik, r2ik))
+                    # if np.all(r2ik < 1e-8):
+                    #     continue
+                    r2jk = np.subtract(rj, rk)
+                    r2jk = np.sum(np.multiply(r2jk, r2jk))
+                    # if np.all(r2ik < 1e-8):
+                    #     continue
+                    r2 = r2ij + r2ik + r2jk
+                    r1 = np.sqrt(r2)
+                    r3 = r2 * r1
+                    r5 = r3 * r2
 
-                r1, r2 = carts[i, :], carts[j, :]
-                r2 = np.subtract(r1, r2)
-                r2 = np.sum(np.multiply(r2, r2))
+                    fdmp = 1 / (1 + 6 * (r0 / r1) ** (16 / 3))
 
-                t6 = 1 / (r2**3 + r0ij**6)
-                t8 = 1 / (r2**4 + r0ij**8)
+                    ang = (
+                        0.375
+                        * (r2ij + r2jk - r2ik)
+                        * (r2ij - r2jk + r2ik)
+                        * (-r2ij + r2jk + r2ik)
+                        / r5
+                        + 1.0 / r3
+                    )
 
-                edisp = s6 * t6 + s8 * rrij * t8
+                    rr = ang * fdmp
 
-                de = -C6ij * edisp * 0.5
-                # print(i + 1, j + 1, r2, r0ij, edisp, de)
-                energies[i] += de
-                if i != j:
-                    energies[j] += de
+                    dE = rr * c9 * triple / 6
+                    energies[j, i] -= dE
+                    energies[k, i] -= dE
+                    energies[i, j] -= dE
+                    energies[k, j] -= dE
+                    energies[i, k] -= dE
+                    energies[j, k] -= dE
     energy = np.sum(energies)
     return energy
 
