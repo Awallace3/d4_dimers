@@ -479,7 +479,7 @@ def test_compute_bj_dimer_f90_ATM():
     df = pd.read_pickle("data/d4.pkl")
     id_list = [0, 500, 2700, 4926]
     params = src.paramsTable.paramsDict()["HF"]
-    params.extend(1.0)
+    params.append(1.0)
     p = params[1:]
     print(params, p)
     energies = np.zeros((len(id_list), 2))
@@ -760,7 +760,7 @@ def test_C6s_change_dimer_to_monomer_HBC6_IE_func_call():
     assert np.all(abs(d4_mons_individually - d4_dimer) > 1e-6)
 
 
-def test_C6s_change_dimer_to_monomer_IE():
+def test_C6s_change_dimer_to_monomer_IE_2():
     """
     Checks if IE changes between selecting monomer or dimer C6s
     """
@@ -791,7 +791,7 @@ def test_C6s_change_dimer_to_monomer_IE():
         )
         diff = d4_dimer - d4_mons_individually
         print(diff)
-        assert abs(d4_mons_individually - d4_dimer) < 1e-12
+        assert abs(d4_mons_individually - d4_dimer) > 1e-12
 
 
 def test_water_dftd4_2_body_and_ATM():
