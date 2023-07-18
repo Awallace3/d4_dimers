@@ -194,3 +194,5 @@ tcase/
 plots/plot2.pkl
 .ATM
 C_n_ATM.json
+Testingd4
+tests/td4.pkl

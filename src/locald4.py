@@ -410,6 +410,46 @@ def compute_bj_dimer_f90(
     return e_total
 
 
+def compute_bj_dimer_f90_ATM(
+    params,
+    r,
+    r4r2_ls=r4r2.r4r2_vals_ls(),
+):
+    num, coords = r["Geometry_bohr"][:, 0], r["Geometry_bohr"][:, 1:]
+    charges = r["charges"]
+    monAs, monBs = r["monAs"], r["monBs"]
+    charges = r["charges"]
+
+    e_d = compute_bj_f90_ATM(
+        num,
+        coords,
+        r["C6s_ATM"],
+        params=params,
+        r4r2_ls=r4r2_ls,
+    )
+
+    n1, p1 = num[monAs], coords[monAs, :]
+    e_1 = compute_bj_f90_ATM(
+        n1,
+        p1,
+        r["C6_A_ATM"],
+        params=params,
+        r4r2_ls=r4r2_ls,
+    )
+
+    n2, p2 = num[monBs], coords[monBs, :]
+    e_2 = compute_bj_f90_ATM(
+        n2,
+        p2,
+        r["C6_B_ATM"],
+        params=params,
+        r4r2_ls=r4r2_ls,
+    )
+
+    e_total = (e_d - (e_1 + e_2)) * hartree_to_kcalmol
+    return e_total
+
+
 def compute_bj_dimer_DFTD4(
     params,
     pos,
