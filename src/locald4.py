@@ -13,7 +13,6 @@ def compute_psi4_d4(geom, Ma, Mb, memory: str = "4 GB", basis="jun-cc-pvdz"):
     ma = tools.np_carts_to_string(ma)
     mb = tools.np_carts_to_string(mb)
     geom = "0 1\n%s--\n0 1\n%s" % (ma, mb)
-    # geom = '%s--\n%s' % (A, B)
     print(geom)
     psi4.geometry(geom)
     psi4.set_memory(memory)

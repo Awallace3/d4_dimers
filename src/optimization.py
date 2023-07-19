@@ -1,10 +1,5 @@
 from .setup import (
     create_pt_dict,
-    compute_bj_opt,
-    compute_bj_pairs,
-    compute_bj_from_dimer_AB,
-    calc_dftd4_props,
-    compute_bj_from_dimer_AB_all_C6s,
     compute_bj_from_dimer_AB_all_C6s_NO_DAMPING,
     calc_dftd4_props_params,
 )
