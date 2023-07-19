@@ -557,3 +557,49 @@ def compute_bj_with_different_C6s(
     return d4_dimer, d4_mons_individually
 
 
+def compute_bj_f90_NO_DAMPING(
+    pos: np.array,
+    carts: np.array,
+    C6s: np.array,
+) -> float:
+    """
+    compute_bj_f90 computes energy from C6s, cartesian coordinates, and dimer sizes.
+    """
+    energy = 0
+    M_tot = len(carts)
+    energies = np.zeros(M_tot)
+    lattice_points = 1
+    aatoau = Constants().g_aatoau()
+    cs = aatoau * np.array(carts, copy=True)
+    print()
+    print_cartesians_pos_carts(pos, cs)
+    print()
+    for i in range(M_tot):
+        el1 = int(pos[i])
+        el1_r4r2 = r4r2_vals(el1)
+        # had extra sqrt for Q_A and Q_B making smaller C8s
+        Q_A = np.sqrt(el1) * el1_r4r2
+        for j in range(i):
+            if i == j:
+                continue
+            for k in range(lattice_points):
+                el2 = int(pos[j])
+                el2_r4r2 = r4r2_vals(el2)
+                Q_B = np.sqrt(el2) * el2_r4r2
+
+                C6 = C6s[i, j]
+                C8 = 3 * C6 * np.sqrt(Q_A * Q_B)
+                r1, r2 = cs[i, :], cs[j, :]
+                r2 = np.subtract(r1, r2)
+                r2 = np.sum(np.multiply(r2, r2))
+                r2 = np.sqrt(r2)
+                print(i, j, int(pos[i]), int(pos[j]), C6, C8, r2, Q_A, Q_B)
+                R_6 = r2**6
+                R_8 = r2**8
+
+                de = C6 / R_6 + C8 / R_8
+                energies[i] += de
+                if i != j:
+                    energies[j] += de
+    energy = -np.sum(energies)
+    return energy
