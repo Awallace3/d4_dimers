@@ -1,7 +1,7 @@
 import qcelemental as qcel
 import numpy as np
 from qm_tools_aw import tools
-
+from . import locald4
 
 
 def water_geom():
@@ -19,6 +19,19 @@ def water_geom():
     ang_to_bohr = qcel.constants.conversion_factor("angstrom", "bohr")
     coords = coords[:, 1:]  # * ang_to_bohr
     return num, coords
+
+
+def water_data1_dimer():
+    pos, carts = water_geom()
+    params = [1, 1.61679827, 0.44959224, 3.35743605]
+    charges = [0, 1]
+    d4C6s, d4C8s, pairs, d4e, d4C6s_ATM = locald4.calc_dftd4_c6_c8_pairDisp2(
+        pos, carts, charges, p=params, C6s_ATM=True
+    )
+    vals = [pos, carts, d4C6s, d4C8s, pairs, d4e, d4C6s_ATM]
+    for i in vals:
+        print(f"{i = }")
+    return
 
 
 def water_geom2():
@@ -2524,6 +2537,7 @@ def HBC6_data_df():
     from . import constants
     from . import locald4
     import pandas as pd
+
     HBC6 = HBC6_data()
     table = {
         "label": [],
@@ -2541,27 +2555,26 @@ def HBC6_data_df():
     ang_to_bohr = constants.Constants().g_aatoau()
     for k, v in HBC6.items():
         print(k)
-        table['label'].append(k)
-        table['id'].append(cnt)
+        table["label"].append(k)
+        table["id"].append(cnt)
         geom, pD, cD, ma, mb, charges = tools.mol_to_pos_carts_ma_mb(v)
-        table['Geometry_bohr'].append(geom.copy())
+        table["Geometry_bohr"].append(geom.copy())
         geom[:, 1:] *= ang_to_bohr
-        table['Geometry'].append(geom)
-        table['monAs'].append(ma)
-        table['monBs'].append(mb)
+        table["Geometry"].append(geom)
+        table["monAs"].append(ma)
+        table["monBs"].append(mb)
         pA, cA = pD[ma], cD[ma, :]
         pB, cB = pD[mb], cD[mb, :]
         C6s_dimer, C6s_mA, C6s_mB = locald4.calc_dftd4_c6_for_d_a_b(
             cD, pD, pA, cA, pB, cB, charges
         )
-        table['C6s'].append(C6s_dimer)
-        table['C6_A'].append(C6s_mA)
-        table['C6_B'].append(C6s_mB)
-        table['charges'].append(charges)
+        table["C6s"].append(C6s_dimer)
+        table["C6_A"].append(C6s_mA)
+        table["C6_B"].append(C6s_mB)
+        table["charges"].append(charges)
         cnt += 1
-    table['DB'] = ["HBC6" for i in range(len(table['C6s']))]
+    table["DB"] = ["HBC6" for i in range(len(table["C6s"]))]
 
     df = pd.DataFrame(table)
     df.to_pickle("data/HBC6.pkl")
     return df
-

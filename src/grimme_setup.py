@@ -1,17 +1,13 @@
 import pandas as pd
 from tqdm import tqdm
 from .setup import (
-    create_pt_dict,
-    calc_dftd4_props,
     create_mon_geom,
     expand_opt_df,
-    calc_dftd4_props_params,
-    read_xyz,
     create_pt_dict,
     split_mons,
-    calc_c6s_for_df,
     harvest_data,
 )
+from . import locald4
 from .optimization import compute_int_energy_stats
 import numpy as np
 import psi4
@@ -34,6 +30,16 @@ interaction energies in the three investigated benchmark sets.
 
 https://aip.scitation.org/doi/10.1063/1.4993215
 """
+
+def read_xyz(xyz_path: str, el_dc: dict = create_pt_dict()) -> np.array:
+    """
+    read_xyz takes a path to xyz and returns np.array
+    """
+    with open(xyz_path, "r") as f:
+        dat = "".join(f.readlines()[2:])
+    geom = convert_str_carts_np_carts(dat, el_dc)
+    return geom
+
 
 
 def gather_BLIND_geoms() -> None:
@@ -90,18 +96,31 @@ def gather_BLIND_geoms() -> None:
         g3 = np.array(c)
         pos = g3[:, 0]
         carts = g3[:, 1:]
-        C6, na = calc_dftd4_props(pos, carts)
+        c = charges[n]
+        C6, _, dispd, C6_ATM = locald4.calc_dftd4_c6_c8_pairDisp2(
+            pos, carts, c[0], C6s_ATM=True
+        )
         C6s[n] = C6
+        C6_ATMs[n] = C6_ATM
+        disp_d[n] = dispd
 
-        Ma = MAs[n]
+        Ma = monAs[n]
         mon_pa, mon_ca = create_mon_geom(pos, carts, Ma)
-        C6a, na = calc_dftd4_props(mon_pa, mon_ca)
+        C6a, _, dispa, C6_ATMa = locald4.calc_dftd4_c6_c8_pairDisp2(
+            mon_pa, mon_ca, c[1], C6s_ATM=True
+        )
         C6_A[n] = C6a
+        C6_ATM_A[n] = C6_ATMa
+        disp_a[n] = dispa
 
-        Mb = MBs[n]
+        Mb = monBs[n]
         mon_pb, mon_cb = create_mon_geom(pos, carts, Mb)
-        C6b, na = calc_dftd4_props(mon_pb, mon_cb)
+        C6b, _, dispb, C6_ATMb = locald4.calc_dftd4_c6_c8_pairDisp2(
+            mon_pb, mon_cb, c[2], C6s_ATM=True
+        )
         C6_B[n] = C6b
+        C6_ATM_B[n] = C6_ATMb
+        disp_b[n] = dispb
 
     df["C6s"] = C6s
     df["C6_A"] = C6_A
@@ -279,10 +298,14 @@ def create_grimme_s22s66blind_self() -> None:
 
 
 def collect_atm_disp_e(atom_numbers, carts, Mas, Mbs):
-    x, z, d = calc_dftd4_props_params(atom_numbers, carts, s9="1.0")
-    x, z, ma = calc_dftd4_props_params(atom_numbers[Mas], carts[Mas, :], s9="1.0")
-    x, z, mb = calc_dftd4_props_params(atom_numbers[Mbs], carts[Mbs, :], s9="1.0")
-    v = d - (ma + mb)
+    x, y, p, d = locald4.calc_dftd4_c6_c8_pairDisp2(atoms, geom, p=params, s9=s9)
+    x, y, p, a = locald4.calc_dftd4_c6_c8_pairDisp2(
+        atoms[ma], geom[ma, :], p=params, s9=s9
+    )
+    x, y, p, b = locald4.calc_dftd4_c6_c8_pairDisp2(
+        atoms[mb], geom[mb, :], p=params, s9=s9
+    )
+    v = d - (a + b)
     v *= hartree_to_kcal_mol
     return v
 
@@ -331,9 +354,18 @@ def create_grimme_s22s66blind() -> None:
         df["monAs"] = monAs
         df["monBs"] = monBs
         df["charges"] = df.apply(lambda r: np.array([[0, 1], [0, 1], [0, 1]]), axis=1)
-        C6s, C6_A, C6_B, d4Ds, d4As, d4Bs = calc_c6s_for_df(
-            geoms, monAs, monBs, df["charges"].to_list()
-        )
+        charges = df["charges"]
+        (
+            C6s,
+            C6_A,
+            C6_B,
+            C6_ATMs,
+            C6_ATM_A,
+            C6_ATM_B,
+            disp_d,
+            disp_a,
+            disp_b,
+        ) = calc_c6s_c8s_pairDisp2_for_df(geoms, monAs, monBs, charges)
         df["C6s"] = C6s
         df["C6_A"] = C6_A
         df["C6_B"] = C6_B

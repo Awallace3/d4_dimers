@@ -7,9 +7,18 @@ from psi4.driver.qcdb.bfs import BFS
 from .harvest import ssi_bfdb_data, harvest_data
 import qcelemental as qcel
 from . import locald4
+from periodictable import elements
 
 ang_to_bohr = Constants().g_aatoau()
 
+def create_pt_dict():
+    """
+    create_pt_dict creates dictionary for string elements to atomic number.
+    """
+    el_dc = {}
+    for el in elements:
+        el_dc[el.symbol] = el.number
+    return el_dc
 
 def create_mon_geom(
     pos,

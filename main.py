@@ -311,6 +311,8 @@ def charge_comparison():
 
 
 def main():
+    src.misc.main()
+    return
     # gather_data("schr")
     df, selected = df_names(6)
     print(df.columns.values)

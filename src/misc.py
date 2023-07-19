@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from qm_tools_aw import tools
+from . import water_data
 
 
 def find_charged_systems():
@@ -20,11 +21,6 @@ def print_geom_by_id(df, id):
     tools.print_cartesians(df.loc[id]["Geometry"], symbols=True)
     return
 
-
-def main():
-    # find_charged_systems()
-    print_geom_by_id(pd.read_pickle("data/d4.pkl"), 4926)
-    return
 
 
 def test_water_dftd4_2_body_and_ATM():
@@ -73,6 +69,10 @@ def test_water_dftd4_2_body_and_ATM():
     print(f"{IE_diff_ATM_2_body = }")
 
     assert IE_ATM != IE
+
+def main():
+    water_data.water_data1_dimer()
+    return
 
 
 if __name__ == "__main__":
