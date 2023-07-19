@@ -11,3 +11,7 @@ from . import stats
 from . import r4r2
 from . import plotting
 from . import paramsTable
+from . import locald4
+from . import water_data
+from . import ssi_data
+from . import misc

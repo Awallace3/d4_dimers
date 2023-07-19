@@ -1,0 +1,13 @@
+Automatic generation of figures in pymol
+
+1. Make a new directory with these files and your xyzs
+  - script.pml   #controls pymol rendering options
+  - make-pml.sh  #makes a different pymol file for each xyz in the current directory
+  - run-pml.sh   #runs every pml file in the directory with Sherrill group's pymol
+
+2. Edit script.pml for desired pymol settings (color, background, resolution, etc)
+
+3. Run make-pml.sh
+
+4. Run run-pml.sh. After this step, pngs corresponding to each xyz will be in your directory
+

@@ -1,22 +1,20 @@
 import pandas as pd
 from tqdm import tqdm
 from .setup import (
-    create_pt_dict,
-    calc_dftd4_props,
     create_mon_geom,
     expand_opt_df,
-    calc_dftd4_props_params,
-    read_xyz,
     create_pt_dict,
     split_mons,
-    calc_c6s_for_df,
     harvest_data,
 )
+from . import locald4
 from .optimization import compute_int_energy_stats
 import numpy as np
 import psi4
-from qcelemental import constants
-from psi4.driver.qcdb.bfs import BFS
+import qcelemental as qcel
+from qm_tools_aw import tools
+
+hartree_to_kcal_mol = qcel.constants.conversion_factor("hartree", "kcal / mol")
 
 """
 From Grimme's first citation...
@@ -33,6 +31,16 @@ interaction energies in the three investigated benchmark sets.
 https://aip.scitation.org/doi/10.1063/1.4993215
 """
 
+def read_xyz(xyz_path: str, el_dc: dict = create_pt_dict()) -> np.array:
+    """
+    read_xyz takes a path to xyz and returns np.array
+    """
+    with open(xyz_path, "r") as f:
+        dat = "".join(f.readlines()[2:])
+    geom = convert_str_carts_np_carts(dat, el_dc)
+    return geom
+
+
 
 def gather_BLIND_geoms() -> None:
     """
@@ -40,6 +48,7 @@ def gather_BLIND_geoms() -> None:
     """
     el_dc = create_pt_dict()
     df = pd.read_csv("./data/Grimme/NCIBLIND10/data.csv", delimiter="\t")
+    print(df)
     with open("./data/Grimme/NCIBLIND10/geometries.txt", "r") as f:
         data = f.readlines()
     stat = 0
@@ -87,18 +96,31 @@ def gather_BLIND_geoms() -> None:
         g3 = np.array(c)
         pos = g3[:, 0]
         carts = g3[:, 1:]
-        C6, na = calc_dftd4_props(pos, carts)
+        c = charges[n]
+        C6, _, dispd, C6_ATM = locald4.calc_dftd4_c6_c8_pairDisp2(
+            pos, carts, c[0], C6s_ATM=True
+        )
         C6s[n] = C6
+        C6_ATMs[n] = C6_ATM
+        disp_d[n] = dispd
 
-        Ma = MAs[n]
+        Ma = monAs[n]
         mon_pa, mon_ca = create_mon_geom(pos, carts, Ma)
-        C6a, na = calc_dftd4_props(mon_pa, mon_ca)
+        C6a, _, dispa, C6_ATMa = locald4.calc_dftd4_c6_c8_pairDisp2(
+            mon_pa, mon_ca, c[1], C6s_ATM=True
+        )
         C6_A[n] = C6a
+        C6_ATM_A[n] = C6_ATMa
+        disp_a[n] = dispa
 
-        Mb = MBs[n]
+        Mb = monBs[n]
         mon_pb, mon_cb = create_mon_geom(pos, carts, Mb)
-        C6b, na = calc_dftd4_props(mon_pb, mon_cb)
+        C6b, _, dispb, C6_ATMb = locald4.calc_dftd4_c6_c8_pairDisp2(
+            mon_pb, mon_cb, c[2], C6s_ATM=True
+        )
         C6_B[n] = C6b
+        C6_ATM_B[n] = C6_ATMb
+        disp_b[n] = dispb
 
     df["C6s"] = C6s
     df["C6_A"] = C6_A
@@ -106,7 +128,6 @@ def gather_BLIND_geoms() -> None:
     bases = ["dz", "tz"]
     df = expand_opt_df(df, bases, prefix="HF_", replace_HF=False)
     df.to_pickle("grimme.pkl")
-
     return df
 
 
@@ -277,11 +298,15 @@ def create_grimme_s22s66blind_self() -> None:
 
 
 def collect_atm_disp_e(atom_numbers, carts, Mas, Mbs):
-    x, z, d = calc_dftd4_props_params(atom_numbers, carts, s9="1.0")
-    x, z, ma = calc_dftd4_props_params(atom_numbers[Mas], carts[Mas, :], s9="1.0")
-    x, z, mb = calc_dftd4_props_params(atom_numbers[Mbs], carts[Mbs, :], s9="1.0")
-    v = d - (ma + mb)
-    v *= constants.conversion_factor("hartree", "kcal / mol")
+    x, y, p, d = locald4.calc_dftd4_c6_c8_pairDisp2(atoms, geom, p=params, s9=s9)
+    x, y, p, a = locald4.calc_dftd4_c6_c8_pairDisp2(
+        atoms[ma], geom[ma, :], p=params, s9=s9
+    )
+    x, y, p, b = locald4.calc_dftd4_c6_c8_pairDisp2(
+        atoms[mb], geom[mb, :], p=params, s9=s9
+    )
+    v = d - (a + b)
+    v *= hartree_to_kcal_mol
     return v
 
 
@@ -328,13 +353,28 @@ def create_grimme_s22s66blind() -> None:
         monAs, monBs = split_mons(geoms)
         df["monAs"] = monAs
         df["monBs"] = monBs
-        C6s, C6_A, C6_B = calc_c6s_for_df(geoms, monAs, monBs)
+        df["charges"] = df.apply(lambda r: np.array([[0, 1], [0, 1], [0, 1]]), axis=1)
+        charges = df["charges"]
+        (
+            C6s,
+            C6_A,
+            C6_B,
+            C6_ATMs,
+            C6_ATM_A,
+            C6_ATM_B,
+            disp_d,
+            disp_a,
+            disp_b,
+        ) = calc_c6s_c8s_pairDisp2_for_df(geoms, monAs, monBs, charges)
         df["C6s"] = C6s
         df["C6_A"] = C6_A
         df["C6_B"] = C6_B
+        df["d4Ds"] = d4Ds
+        df["d4As"] = d4As
+        df["d4Bs"] = d4Bs
         frames.append(df)
     df = pd.concat(frames)
-    df.to_pickle("data/grimme_fitset.pkl")
+    df.to_pickle("data/grimme_fitset_test.pkl")
     # for i in HF_columns:
     #     df = harvest_data(df, i.split("_")[-1], overwrite=overwrite)
     return
@@ -342,12 +382,173 @@ def create_grimme_s22s66blind() -> None:
 
 def gather_grimme_from_db():
     df = pd.read_pickle("data/grimme_fitset.pkl")
-    df["DB"] = "G"
+    # df["DB"] = "G"
     df = expand_opt_df(df)
     print(df.columns)
     df = harvest_data(df, "jdz_dftd4", data_dir="calcgrimme", overwrite=True)
-    df.to_pickle("data/grimme_fitset_db.pkl")
+    # df.to_pickle("data/grimme_fitset_db.pkl")
     return df
 
 
+def combine_data_with_new_df():
+    create_grimme_s22s66blind()
+    df = pd.read_pickle("data/grimme_fitset_total.pkl")
+    # geoms = df["Geometry"].tolist()
+    # monAs, monBs = split_mons(geoms)
+    # df["monAs"] = monAs
+    # df["monBs"] = monBs
+    # df["charges"] = df.apply(lambda r: np.array([[0, 1], [0, 1], [0, 1]]), axis=1)
+    # C6s, C6_A, C6_B, d4Ds, d4As, d4Bs = calc_c6s_for_df(
+    #     geoms, monAs, monBs, df["charges"].to_list()
+    # )
+    # df['d4Ds'] = d4Ds
+    # df['d4As'] = d4As
+    # df['d4Bs'] = d4Bs
+    # df.to_pickle("data/grimme_fitset_total.pkl")
+    df2 = pd.read_pickle("data/grimme_fitset_test.pkl")
+    df["m_g"] = df.apply(
+        lambda r: tools.print_cartesians_pos_carts(
+            r["Geometry"][:, 0], r["Geometry"][:, 1:], True
+        ),
+        axis=1,
+    )
+    df2["m_g"] = df.apply(
+        lambda r: tools.print_cartesians_pos_carts(
+            r["Geometry"][:, 0], r["Geometry"][:, 1:], True
+        ),
+        axis=1,
+    )
+    df2["main_id"] = df2.index
+    print(df.columns)
+    print(df2.columns)
+    # df = pd.merge(df, df2, on=["main_id"], how="inner", suffixes=("", "_y"))
+    df = pd.merge(df, df2, on=["m_g"], how="inner", suffixes=("", "_y"))
+    print(df)
+    df.to_pickle("data/grimme_fitset_test2.pkl")
+    return df2
 
+
+def read_grimme_dftd4_paper_HF_energies(path="dftd4-fitdata/data/hf.csv") -> None:
+    """
+    read_grimme_dftd4_paper_HF_energies
+    """
+    df = pd.read_csv(path)
+    df2 = pd.read_pickle("data/gf1.pkl")
+    print(df.columns.values)
+    print(df2.columns.values)
+    print(df2[["DB", "System", "HF_qz_no_cp"]].head())
+    s_e_dict = {
+        "DB": [],
+        "System": [],
+        "HF_qz_dimer": [],
+        "HF_qz_monA": [],
+        "HF_qz_monB": [],
+    }
+    db_mons = {
+        "A": {"System": [], "HF_qz_monA": [], "DB": []},
+        "B": {"System": [], "HF_qz_monB": [], "DB": []},
+    }
+    for n, i in df.iterrows():
+        db, sys = i["system"].split("/")
+        # print(db, sys)
+        if "A" not in sys and "B" not in sys:
+            s_e_dict["System"].append(sys)
+            s_e_dict["HF_qz_dimer"].append(i["HF/def2-QZVP/TM"])
+            s_e_dict["DB"].append(db)
+            s_e_dict["HF_qz_monA"].append(np.nan)
+            s_e_dict["HF_qz_monB"].append(np.nan)
+
+        elif "A" in sys:
+            db_mons["A"]["System"].append(sys)
+            db_mons["A"]["HF_qz_monA"].append(i["HF/def2-QZVP/TM"])
+            db_mons["A"]["DB"].append(db)
+
+        elif "B" in sys:
+            db_mons["B"]["System"].append(sys)
+            db_mons["B"]["HF_qz_monB"].append(i["HF/def2-QZVP/TM"])
+            db_mons["B"]["DB"].append(db)
+        else:
+            print("ERROR")
+    for n, j in enumerate(s_e_dict["System"]):
+        for i in range(len(db_mons["A"]["System"])):
+            sys_name = db_mons["A"]["System"][i]
+            if db_mons["A"]["DB"][i] == s_e_dict["DB"][n]:
+                # TODO: fix matching... not working correctly
+                s_c = sys_name[:-2]
+                db_c = j[:2]
+                if s_c == db_c:
+                    s_e_dict["HF_qz_monA"][n] = db_mons["A"]["HF_qz_monA"][i]
+                    s_e_dict["HF_qz_monB"][n] = db_mons["B"]["HF_qz_monB"][i]
+    pd.set_option("display.max_rows", None)
+    df_dimers = pd.DataFrame(s_e_dict)
+    df_dimers["HF_qz_Grimme"] = (
+        df_dimers["HF_qz_dimer"] - df_dimers["HF_qz_monA"] - df_dimers["HF_qz_monB"]
+    ) * hartree_to_kcal_mol
+    # print(df_dimers)
+    df_compare = pd.merge(df_dimers, df2, on=["DB", "System"], how="inner")
+    print(df_compare.columns.values)
+    df_compare["HF_qz_dif"] = df_compare["HF_qz_Grimme"] - df_compare["HF_qz_no_cp"]
+    df_compare["HF_qz_G_d4"] = -(
+        df_compare["Benchmark"]
+        - (
+            df_compare["HF_qz_Grimme"]
+            + df_compare["d4Ds"]
+            - df_compare["d4As"]
+            - df_compare["d4Bs"]
+        )
+    )
+    df_compare["HF_qz_d4"] = -(
+        df_compare["Benchmark"]
+        - (
+            df_compare["HF_qz_no_cp"]
+            + df_compare["d4Ds"]
+            - df_compare["d4As"]
+            - df_compare["d4Bs"]
+        )
+    )
+    # df_compare['HF_qz_no_cp_corrected_D'] = df_compare.apply(lambda r: r['HF_qz_no_cp_D'] + r['HF_qz_no_cp_correction'], axis=1)
+    # df_compare['HF_qz_no_cp_corrected_D'] = df_compare.apply(lambda r: r['HF_qz_no_cp_D'] + r['HF_qz_no_cp_correction'], axis=1)
+    df_compare['HF_qz_no_cp_dif_D'] = df_compare.apply(lambda r: r['HF_qz_dimer'] - r['HF_qz_no_cp_D'], axis=1)
+    compare_cols = [
+        # "HF_qz_dif",
+        # "HF_qz_Grimme",
+        # "HF_qz_no_cp",
+        "HF_qz_d4",
+        "HF_qz_G_d4",
+        # "HF_qz_no_cp_dif_D",
+    ]
+    pd.set_option("display.float_format", lambda x: "%.4f" % x)
+    print(df_compare[compare_cols].describe())
+    longest = sorted([len(i) for i in compare_cols])[-1]
+    print(longest)
+    for c in compare_cols:
+        label = c
+        if len(c) < longest:
+            label += " " * (longest - len(c))
+        RMSE = np.sqrt(np.mean(df_compare[c] ** 2))
+        MAD = abs(df_compare[c] - df_compare[c].mean()).mean()
+        print(f"{label}  {RMSE = :.4f}  {MAD = :.4f}")
+    print(
+        """
+                                      RMSE                MAD      MD
+\qz \cite{caldeweyher2019generally} & 0.49719 & -         & 0.34732 & -0.02597 \\
+"""
+    )
+
+    #                                       RMSE                MAD      MD
+    # \qz \cite{caldeweyher2019generally} & 0.4972 &          & 0.3473 & -0.0260 \\
+
+    df_compare.to_pickle("data/grimme_paper_HF.pkl")
+    print(df_compare.columns.values)
+    pd.set_option('display.float_format', '{:.10f}'.format)
+    for n, r in df_compare.iterrows():
+        # print(r['DB'], r["System"], r["HF_qz_dif"])
+        # print(r['DB'], r["System"], f"{r['HF_qz_dimer']:.6f}, {r['HF_qz_no_cp_D']:.6f}")
+        # if r['id'] == 0:
+        print(n)
+        print(r)
+        print()
+        break
+    for n, r in df_compare.iterrows():
+        print(n, r['id'], r['DB'], r["System"], r["HF_qz_dif"], r['HF_qz_no_cp_dif_D'])
+    return

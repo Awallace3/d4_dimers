@@ -5,6 +5,8 @@ import os
 from tqdm import tqdm
 from .jobs import basis_labels
 import numpy as np
+from . import ssi_data
+from qm_tools_aw import tools
 
 
 def ssi_bfdb_data(df: pd.DataFrame, basis: str = "adz"):
@@ -29,6 +31,35 @@ def ssi_bfdb_data(df: pd.DataFrame, basis: str = "adz"):
         v = float(v.stdout)
         df.loc[i, "HF_%s" % basis] = v
     return df
+
+
+def acquire_ssi_charges(df: pd.DataFrame):
+    df2 = df.loc[df["DB"] == "SSI"]
+    ind1 = df.index[df["DB"] == "SSI"]
+    ssi_geoms = ssi_data.ssi_geoms()
+    charges_new = [i for i in df["charges"].to_list()]
+    for i in tqdm(ind1, ascii=True, desc="Gathering SSI Charges"):
+        s = df.loc[i, "System"]
+        s = s.replace("Residue ", "")
+        s = s.replace(" and ", "-")
+        s = s.replace(" interaction No. ", "-")
+        s = f"SSI-{s}-dimer"
+        geom = ssi_geoms[s]
+        geom, pD, cD, ma, mb, charges = tools.mol_to_pos_carts_ma_mb(geom)
+        c_old = df.loc[i, "charges"]
+        charges_new[i] = charges
+        if i == 4928:
+            print(i, c_old, charges, charges_new[i], sep="\n")
+            tools.print_cartesians(geom, True)
+            g_df = df.loc[i, "Geometry"]
+            print()
+            tools.print_cartesians(g_df, True)
+
+    df["charges_new"] = charges_new
+    for i in ind1:
+        if np.all(df.loc[i, "charges_new"] != df.loc[i, "charges"]):
+            print(i, df.loc[i, "charges_new"])
+    return
 
 
 def collect_HF_energy(
@@ -90,5 +121,5 @@ def harvest_data(
         if os.path.exists(out_p):
             HF = collect_HF_energy(out_p)
             df.loc[idx, col] = HF
-    print(df['HF_%s' % basis])
+    print(df["HF_%s" % basis])
     return df

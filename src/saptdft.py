@@ -4,12 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider
 from qcelemental import constants
 
-from .setup import (
-    compute_bj_from_dimer_AB_all_C6s_NO_DAMPING,
-    compute_bj_from_dimer_AB_all_C6s,
-    compute_bj_from_dimer_AB_all_C6s_dimer_only,
-    calc_dftd4_props_params,
-)
+from . import locald4
 
 
 def failed(
@@ -132,58 +127,4 @@ def plot_BJ_damping(
         a1_slider.reset()
 
     plt.show()
-    return
-
-
-def compute_disp_3_forms(
-    row,
-    params=[1.61679827, 0.44959224, 3.35743605],  # HF
-) -> None:
-    """
-    compute_disp_3_forms no damping, INCORRECT=>UPDATE
-    """
-    mult_out = constants.conversion_factor("hartree", "kcal / mol")
-    print("\tEnergies are in kcal/mol\n")
-    print("Params", params, "\n")
-    *_, grimme_d4_disp_e = calc_dftd4_props_params(
-        row["Geometry"][:, 0], row["Geometry"][:, 1:], p=params
-    )
-    grimme_d4_disp_e *= mult_out
-    print(f"{grimme_d4_disp_e = }")
-    disp_no_damp = compute_bj_from_dimer_AB_all_C6s_NO_DAMPING(
-        row["Geometry"][:, 0],  # pos
-        row["Geometry"][:, 1:],  # carts
-        row["monAs"],
-        row["monBs"],
-        row["C6s"],
-        C6_A=row["C6_A"],
-        C6_B=row["C6_B"],
-    )
-    print(f"{disp_no_damp = }")
-    print()
-
-    disp_damp_HF = compute_bj_from_dimer_AB_all_C6s(
-        params,
-        row["Geometry"][:, 0],  # pos
-        row["Geometry"][:, 1:],  # carts
-        row["monAs"],
-        row["monBs"],
-        row["C6s"],
-        C6_A=row["C6_A"],
-        C6_B=row["C6_B"],
-    )
-    print(f"{disp_damp_HF = }")
-    print()
-    disp_damp_HF_dimer_only = compute_bj_from_dimer_AB_all_C6s_dimer_only(
-        params,
-        row["Geometry"][:, 0],  # pos
-        row["Geometry"][:, 1:],  # carts
-        row["monAs"],
-        row["monBs"],
-        row["C6s"],
-        C6_A=row["C6_A"],
-        C6_B=row["C6_B"],
-    )
-    print(f"{disp_damp_HF_dimer_only = }")
-    print()
     return

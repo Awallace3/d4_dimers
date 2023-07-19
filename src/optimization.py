@@ -1,14 +1,4 @@
-from .setup import (
-    create_pt_dict,
-    compute_bj_opt,
-    gather_data3,
-    compute_bj_pairs,
-    compute_bj_from_dimer_AB,
-    calc_dftd4_props,
-    compute_bj_from_dimer_AB_all_C6s,
-    compute_bj_from_dimer_AB_all_C6s_NO_DAMPING,
-    calc_dftd4_props_params,
-)
+from . import locald4
 from . import r4r2
 import scipy.optimize as opt
 import time
@@ -16,9 +6,6 @@ import pandas as pd
 import numpy as np
 from .tools import print_cartesians, df_to_latex_table_round
 from qcelemental import constants
-
-
-# from scipy.metrics import mean_squared_error
 
 
 def HF_only() -> (float, float, float):
@@ -37,20 +24,6 @@ def HF_only() -> (float, float, float):
     return mae, rmse, max_e
 
 
-def SAPT0_only() -> (float, float, float):
-    """
-    SAPT0_only returns stats on just SAPT0
-    """
-    # df = pd.read_pickle("base.pkl")
-    # basis_set = "adz"
-    # HF_vals = [1.61679827, 0.44959224, 3.35743605]
-    # mae, rmse, max_e = compute_int_energy_stats(HF_vals, df, "HF_jdz")
-    # print("        1. MAE  = %.4f" % mae)
-    # print("        2. RMSE = %.4f" % rmse)
-    # print("        3. MAX  = %.4f" % max_e)
-    return
-
-
 def find_max_e(
     df: pd.DataFrame,
     params: [] = [0.5971246, 0.64577916, 1.17106229],
@@ -64,43 +37,11 @@ def find_max_e(
     diff = np.zeros(len(df))
     r4r2_ls = r4r2.r4r2_vals_ls()
     df["d4"] = df.apply(
-        lambda row: compute_bj_from_dimer_AB_all_C6s(
+        lambda row: locald4.compute_bj_dimer_f90(
             params,
-            row["Geometry"][:, 0],  # pos
-            row["Geometry"][:, 1:],  # carts
-            row["monAs"],
-            row["monBs"],
-            row["C6s"],
-            row["C6_A"],
-            row["C6_B"],
-            r4r2_ls = r4r2_ls,
+            row,
+            r4r2_ls=r4r2_ls,
         ),
-        # lambda row: compute_bj_from_dimer_AB(
-        #     params,
-        #     row["Geometry"][:, 0],  # pos
-        #     row["Geometry"][:, 1:],  # carts
-        #     row["monAs"],
-        #     row["monBs"],
-        #     row["C6s"],
-        # ),
-        # lambda row: compute_bj_pairs(
-        #     params,
-        #     row["Geometry"][:, 0],  # pos
-        #     row["Geometry"][:, 1:],  # carts
-        #     row["monAs"],
-        #     row["monBs"],
-        #     row["C6s"],
-        #     mult_out=627.509,
-        # ),
-        # lambda row: compute_bj_opt(
-        #     params,
-        #     row["Geometry"][:, 0],  # pos
-        #     row["Geometry"][:, 1:],  # carts
-        #     row["C6s"],
-        #     row["C8s"],
-        #     row["monAs"],
-        #     row["monBs"],
-        # ),
         axis=1,
     )
     df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
@@ -108,8 +49,7 @@ def find_max_e(
     rmse = (df["diff"] ** 2).mean() ** 0.5
     df["diff_abs"] = df["diff"].abs()
     max_e = df["diff_abs"].max()
-    # mad = df["diff"].mad()
-    mad = abs(df['diff'] - df['diff'].mean()).mean()
+    mad = abs(df["diff"] - df["diff"].mean()).mean()
     df = df.sort_values(by=["diff_abs"], ascending=False)
     df = df.reset_index(drop=False)
     print("        1. MAE  = %.4f" % mae)
@@ -148,34 +88,14 @@ def compute_int_energy_stats_dftd4_key(
     params = [1.61679827, 0.44959224, 3.35743605]
     t = df[hf_key].isna().sum()
     assert t == 0, f"The HF_col provided has np.nan values present, {t}"
-    # df.dropna(subset=[dftd4_key], how='all', inplace=True)
     t = df[dftd4_key].isna().sum()
     assert t == 0, f"The HF_col provided has np.nan values present, {t}"
-
-    # df = df.iloc[df.index[df[dftd4_key].isna()]]
-    # t = df[dftd4_key].isna().sum()
-    # assert t == 0, f"The dftd4_key provided has np.nan values present, {t}"
-
-    # df[f"{dftd4_key}_d4"] = df.apply(lambda r: r[hf_key] + r[dftd4_key], axis=1)
     r4r2_ls = r4r2.r4r2_vals_ls()
     df[f"{hf_key}_d4"] = df.apply(
-        lambda row: compute_bj_from_dimer_AB_all_C6s(
+        lambda row: locald4.compute_bj_dimer_f90(
             params,
-            row["Geometry"][:, 0],  # pos
-            row["Geometry"][:, 1:],  # carts
-            row["monAs"],
-            row["monBs"],
-            row["C6s"],
-            C6_A=row["C6_A"],
-            C6_B=row["C6_B"],
-            r4r2_ls = r4r2_ls,
-            # lambda row: compute_bj_pairs(
-            #     params,
-            #     row["Geometry"][:, 0],  # pos
-            #     row["Geometry"][:, 1:],  # carts
-            #     row["monAs"],
-            #     row["monBs"],
-            #     row["C6s"],
+            row,
+            r4r2_ls=r4r2_ls,
         ),
         axis=1,
     )
@@ -198,16 +118,10 @@ def compute_int_energy_stats(
     r4r2_ls = r4r2.r4r2_vals_ls()
     print(f"{params = }")
     df["d4"] = df.apply(
-        lambda row: compute_bj_from_dimer_AB_all_C6s(
+        lambda row: locald4.compute_bj_dimer_f90(
             params,
-            row["Geometry"][:, 0],  # pos
-            row["Geometry"][:, 1:],  # carts
-            row["monAs"],
-            row["monBs"],
-            row["C6s"],
-            C6_A=row["C6_A"],
-            C6_B=row["C6_B"],
-            r4r2_ls = r4r2_ls,
+            row,
+            r4r2_ls=r4r2_ls,
         ),
         axis=1,
     )
@@ -216,8 +130,7 @@ def compute_int_energy_stats(
     mae = df["diff"].abs().mean()
     rmse = (df["diff"] ** 2).mean() ** 0.5
     max_e = df["diff"].abs().max()
-    # mad = df["diff"].mad()
-    mad = abs(df['diff'] - df['diff'].mean()).mean()
+    mad = abs(df["diff"] - df["diff"].mean()).mean()
     mean_dif = df["diff"].mean()
     return mae, rmse, max_e, mad, mean_dif
 
@@ -238,16 +151,10 @@ def compute_int_energy_least_squares(
     #             return [10 for i in range(len(df))]
     r4r2_ls = r4r2.r4r2_vals_ls()
     df["d4"] = df.apply(
-        lambda row: compute_bj_from_dimer_AB_all_C6s(
+        lambda row: locald4.compute_bj_dimer_f90(
             params,
-            row["Geometry"][:, 0],  # pos
-            row["Geometry"][:, 1:],  # carts
-            row["monAs"],
-            row["monBs"],
-            row["C6s"],
-            C6_A=row["C6_A"],
-            C6_B=row["C6_B"],
-            r4r2_ls = r4r2_ls,
+            row,
+            r4r2_ls=r4r2_ls,
         ),
         axis=1,
     )
@@ -275,24 +182,16 @@ def compute_int_energy(
     diff = np.zeros(len(df))
     r4r2_ls = r4r2.r4r2_vals_ls()
     df["d4"] = df.apply(
-        lambda row: compute_bj_from_dimer_AB_all_C6s(
+        lambda row: locald4.compute_bj_dimer_f90(
             params,
-            row["Geometry"][:, 0],  # pos
-            row["Geometry"][:, 1:],  # carts
-            row["monAs"],
-            row["monBs"],
-            row["C6s"],
-            C6_A=row["C6_A"],
-            C6_B=row["C6_B"],
-            r4r2_ls = r4r2_ls,
+            row,
+            r4r2_ls=r4r2_ls,
         ),
         axis=1,
     )
     df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
     rmse = (df["diff"] ** 2).mean() ** 0.5
     print("%.8f\t" % rmse, params.tolist())
-    # df["diff"] = 0
-    # print(df)
     return rmse
 
 
@@ -306,7 +205,7 @@ def compute_int_energy_NO_DAMPING(
     rmse = 0
     diff = np.zeros(len(df))
     df["d4_NO_DAMPING"] = df.apply(
-        lambda row: compute_bj_from_dimer_AB_all_C6s_NO_DAMPING(
+        lambda row: locald4.compute_bj_from_dimer_AB_all_C6s_NO_DAMPING(
             row["Geometry"][:, 0],  # pos
             row["Geometry"][:, 1:],  # carts
             row["monAs"],
@@ -347,20 +246,15 @@ def optimization(
     params: [] = [3.02227550, 0.47396846, 4.49845309],
     hf_key: str = "HF INTERACTION ENERGY",
 ):
-    # &  s8=1.0000_wp, s8=3.02227550_wp, a1=0.47396846_wp, a2=4.49845309_wp )
     print("RMSE\t\tparams")
     ret = opt.minimize(
-        # compute_int_energy, args=(df, hf_key), x0=params, method=""
         compute_int_energy,
         args=(df, hf_key),
         x0=params,
         method="powell",
-        # method="lm",
     )
     print("\nResults\n")
     out_params = ret.x
-    # mae, rmse, max_e, mad, mean_diff = compute_int_energy_stats(out_params, df, hf_key)
-    # print("1. MAE = %.4f\n2. RMSE = %.4f\n3. MAX = %.4f" % (mae, rmse, max_e))
     return out_params
 
 
@@ -369,21 +263,17 @@ def optimization_least_squares(
     params: [] = [1.61679827, 0.44959224, 3.35743605],
     hf_key: str = "HF INTERACTION ENERGY",
 ):
-    # &  s8=1.0000_wp, s8=3.02227550_wp, a1=0.47396846_wp, a2=4.49845309_wp )
     print("RMSE\t\tparams")
     ret = opt.least_squares(
-        # compute_int_energy, args=(df, hf_key), x0=params, method=""
         compute_int_energy_least_squares,
         args=(df, hf_key),
         x0=params,
         method="lm",
-        # method="lm",
     )
     print("\nResults\n")
     out_params = ret.x[0]
     print(f"{out_params = }")
     mae, rmse, max_e, mad, mean_diff = compute_int_energy_stats(out_params, df, hf_key)
-    # return out_params, mae, rmse, max_e
     print(out_params)
     return out_params, mae, rmse, max_e, mad, mean_diff
 
@@ -402,15 +292,6 @@ def avg_matrix(
     return out
 
 
-def stats_testing_set(
-    params,
-    test,
-) -> (float, float, float):
-    """
-    stats_testing_set ...
-    """
-
-
 def opt_cross_val(
     df: pd.DataFrame,
     nfolds: int = 5,
@@ -423,7 +304,6 @@ def opt_cross_val(
 ) -> None:
     """
     opt_cross_val performs n-fold cross validation on opt*.pkl df from
-    gather_data3
     """
     nans = df[hf_key].isna().sum()
     inds = df.index[df[hf_key].isna()]
@@ -432,7 +312,6 @@ def opt_cross_val(
     folds = get_folds(nfolds, len(df))
     stats_np = np.zeros((nfolds, 4))
     p_out = np.zeros((nfolds, len(start_params)))
-    # mp, mmae, mrmse, mmax_e, mmad, mmean_diff = optimization(df, start_params, hf_key)
     print(start_params)
     mp = optimizer_func(df, start_params, hf_key)
     mmae, mrmse, mmax_e, mmad, mmean_diff = compute_int_energy_stats_func(
@@ -518,13 +397,6 @@ def opt_cross_val(
     print("        1. MAD  = %.4f" % mad)
     print("        2. RMSE = %.4f" % rmse)
     print("        3. MAX  = %.4f" % max_e)
-    #     tab = f""" table ouput
-    # | Level of Theory | s8       | a1       | a2       | MAE    | RMSE   | MAX_E  |
-    # |-----------------|----------|----------|----------|--------|--------|--------|
-    # |   {hf_key}    | {mp[0]} | {mp[1]} | {mp[2]} | {mae} | {rmse} | {max_e} |
-    # |-----------------|----------|----------|----------|--------|--------|--------|
-    # """
-    #     print(tab)
     print("Params:")
     print(mp)
     df2 = pd.DataFrame(stats)
@@ -545,9 +417,13 @@ def opt_cross_val(
 
 
 def calc_dftd4_disp_pieces(atoms, geom, ma, mb, params, s9="0.0"):
-    x, y, d = calc_dftd4_props_params(atoms, geom, p=params, s9=s9)
-    x, y, a = calc_dftd4_props_params(atoms[ma], geom[ma, :], p=params, s9=s9)
-    x, y, b = calc_dftd4_props_params(atoms[mb], geom[mb, :], p=params, s9=s9)
+    x, y, p, d = locald4.calc_dftd4_c6_c8_pairDisp2(atoms, geom, p=params, s9=s9)
+    x, y, p, a = locald4.calc_dftd4_c6_c8_pairDisp2(
+        atoms[ma], geom[ma, :], p=params, s9=s9
+    )
+    x, y, p, b = locald4.calc_dftd4_c6_c8_pairDisp2(
+        atoms[mb], geom[mb, :], p=params, s9=s9
+    )
     return d - (a + b)
 
 
@@ -625,10 +501,9 @@ def compute_stats_dftd4_values_fixed(
         cols_round={"RMSE": 4, "MAX_E": 4, "MAD": 4, "MD": 4},
         l_out=fixed_col,
     )
-    # df2.reset_index(drop=True)
     print(df2)
-
     return
+
 
 def get_params():
     return {
