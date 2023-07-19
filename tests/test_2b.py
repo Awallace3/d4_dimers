@@ -376,5 +376,4 @@ def test_C6s_Di_to_Mon_HBC6_IE_func_call():
         C6s_mB,
         params,
     )
-
     assert np.all(abs(d4_mons_individually - d4_dimer) > 1e-6)

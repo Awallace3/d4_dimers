@@ -64,328 +64,6 @@ def write_xyz_from_np(atom_numbers, carts, outfile="dat.xyz", charges=[0, 1]) ->
     return
 
 
-def compute_pairwise_dispersion(m):
-    pos = m["Geometry"][:, 0]
-    carts = m["Geometry"][:, 1:]
-    Ma = m["monAs"]
-    Mb = m["monBs"]
-    C6s, pairs, e = calc_dftd4_pair_resolved(pos, carts)
-    mon_pa, mon_ca = create_mon_geom(pos, carts, Ma)
-    C6_A, pairs_a, e = calc_dftd4_pair_resolved(mon_pa, mon_ca)
-    mon_pb, mon_cb = create_mon_geom(pos, carts, Mb)
-    C6_B, pairs_b, e = calc_dftd4_pair_resolved(mon_pb, mon_cb)
-    dp = pairs.sum()
-    ap = pairs_a.sum()
-    bp = pairs_b.sum()
-    disp = dp - (ap + bp)
-    print(m["main_id"], disp, m["dftd4_disp_ie_grimme_params"], m["Benchmark"])
-    return pairs, pairs_a, pairs_b, disp
-
-
-def calc_dftd4_pair_resolved(
-    atom_numbers: np.array,
-    carts: np.array,
-    input_xyz: str = "dat.xyz",
-    output_data: str = "dat.txt",
-    p: [] = [1.61679827, 0.44959224, 3.35743605],
-):
-    # carts = convert_geom_to_bohr(carts)
-    write_xyz_from_np(atom_numbers, carts, outfile=input_xyz)
-    args = [
-        # "dftd4",
-        "/theoryfs2/ds/amwalla3/miniconda3/bin/dftd4",
-        input_xyz,
-        "--pair-resolved",
-        "--property",
-        "--mbdscale",
-        "0.0",
-        "--param",
-        "1.0",
-        str(p[0]),
-        str(p[1]),
-        str(p[2]),
-        "--json",
-        "C_n.json",
-    ]
-    out = subprocess.run(
-        args=args,
-        shell=False,
-        capture_output=True,
-    ).stdout.decode("utf-8")
-    # print(out)
-    d = out.split("Pairwise representation")[-1]
-    d = d.split("\n")
-    clean = []
-    start = False
-    vs = []
-    for i in d[4:]:
-        if "------" in i:
-            break
-        else:
-            start = True
-        i = i.split()
-        p1, p2, e = int(i[0]), int(i[3]), float(i[-1])
-        vs.append([p1, p2, e])
-    M = vs[-1][0]
-    m = np.zeros((M, M))
-    for i in vs:
-        m[i[0] - 1, i[1] - 1] = i[2]
-    with open("C_n.json") as f:
-        dat = json.load(f)
-        # C6s = np.array(dat["c6"])
-        C6s = np.array(dat["c6 coefficients"])
-    with open(".EDISP", "r") as f:
-        e = float(f.read().rstrip())
-    os.remove("C_n.json")
-    os.remove(".EDISP")
-    return C6s, m, e
-
-
-def calc_dftd4_props_params(
-    atom_numbers: np.array,
-    carts: np.array,
-    input_xyz: str = "dat.xyz",
-    output_json: str = "",
-    p: [] = [1.61679827, 0.44959224, 3.35743605],
-    s9: str = "0.0",
-    dftd4_p: str = "/theoryfs2/ds/amwalla3/.local/bin/dftd4",
-):
-    # mult_out=constants.conversion_factor("hartree", "kcal / mol"),
-    write_xyz_from_np(atom_numbers, carts, outfile=input_xyz)
-    args = [
-        dftd4_p,
-        input_xyz,
-        "--pair-resolved",
-        "--property",
-        "--mbdscale",
-        s9,
-        "--param",
-        "1.0",
-        str(p[0]),
-        str(p[1]),
-        str(p[2]),
-    ]
-    out = subprocess.run(
-        args=args,
-        shell=False,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.STDOUT,
-    )
-    with open("C_n.json") as f:
-        dat = json.load(f)
-        C6s = np.array(dat["c6"])
-        C8s = np.array(dat["c8"])
-    with open(".EDISP") as f:
-        e = float(f.read().replace("\n", ""))
-    if output_json != "":
-        os.remove(input_xyz)
-    return C6s, C8s, e
-
-
-def calc_dftd4_c6_c8_pairDisp(
-    atom_numbers: np.array,
-    carts: np.array,
-    charges: np.array,
-    input_xyz: str = "dat.xyz",
-    dftd4_bin: str = "/theoryfs2/ds/amwalla3/.local/bin/dftd4",
-    p: [] = [1.0, 1.61679827, 0.44959224, 3.35743605],
-):
-    """
-    Ensure that dftd4 binary is from compiling git@github.com:Awallace3/dftd4
-        - this is used to generate more decimal places on values for c6, c8,
-          and pairDisp2
-    """
-
-    write_xyz_from_np(
-        atom_numbers,
-        carts,
-        outfile=input_xyz,
-        charges=charges,
-    )
-    args = [
-        dftd4_bin,
-        input_xyz,
-        "--property",
-        "--param",
-        str(p[0]),
-        str(p[1]),
-        str(p[2]),
-        str(p[3]),
-        "--mbdscale",
-        "0.0",
-        "-c",
-        str(charges[0]),
-        "--pair-resolved",
-    ]
-    print(" ".join(args))
-    subprocess.call(
-        # cmd,
-        # shell=True,
-        args=args,
-        shell=False,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.STDOUT,
-    )
-    output_json = "C_n.json"
-    with open(output_json) as f:
-        cs = json.load(f)
-    C6s = np.array(cs["c6"], dtype=np.float64)
-    C8s = np.array(cs["c8"], dtype=np.float64)
-    output_json = "pairs.json"
-    with open(output_json) as f:
-        pairs = json.load(f)
-        pairs = np.array(pairs["pairs2"])
-    with open(".EDISP", "r") as f:
-        e = float(f.read())
-    # os.remove(input_xyz)
-    # os.remove("C_n.json")
-    # os.remove("pairs.json")
-    # subprocess.call(["cp",".EDISP", ".EDISP.d4fork"])
-    return C6s, C8s, pairs, e
-
-
-def calc_dftd4_c6_c8_pairDisp2(
-    atom_numbers: np.array,
-    carts: np.array,
-    charges: np.array,
-    input_xyz: str = "dat.xyz",
-    p: [] = [1.0, 1.61679827, 0.44959224, 3.35743605],
-):
-    """
-    Ensure that dftd4 binary is from compiling git@github.com:Awallace3/dftd4
-        - this is used to generate more decimal places on values for c6, c8,
-          and pairDisp2
-    """
-
-    write_xyz_from_np(atom_numbers, carts, outfile=input_xyz, charges=charges)
-    args = [
-        "/theoryfs2/ds/amwalla3/.local/bin/dftd4",
-        input_xyz,
-        "--property",
-        "--param",
-        str(p[0]),
-        str(p[1]),
-        str(p[2]),
-        str(p[3]),
-        "--mbdscale",
-        "0.0",
-        "-c",
-        str(charges[0]),
-        "--pair-resolved",
-    ]
-    subprocess.call(
-        # cmd,
-        # shell=True,
-        args=args,
-        shell=False,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.STDOUT,
-    )
-    output_json = "C_n.json"
-    with open(output_json) as f:
-        cs = json.load(f)
-    C6s = np.array(cs["c6"])
-    C8s = np.array(cs["c8"])
-    output_json = "pairs.json"
-    with open(output_json) as f:
-        pairs = json.load(f)
-        pairs = np.array(pairs["pairs2"])
-    os.remove(input_xyz)
-    os.remove("C_n.json")
-    os.remove("pairs.json")
-    return C6s, C8s, pairs
-
-
-def calc_dftd4_props_psi4_dftd4(
-    atom_numbers: np.array,
-    carts: np.array,
-    charges: np.array,
-    input_xyz: str = "dat.xyz",
-    output_json: str = "tmp.json",
-):
-    write_xyz_from_np(atom_numbers, carts, outfile=input_xyz, charges=charges)
-    if output_json == "":
-        # args = ["dftd4", input_xyz, "--property", "--mbdscale", "0.0"]
-        args = [
-            "/theoryfs2/ds/amwalla3/miniconda3/bin/dftd4",
-            input_xyz,
-            "--property",
-            "--mbdscale",
-            "0.0",
-            "-c",
-            str(charges[0]),
-        ]
-        # cmd = "~/.local/bin/dftd4 %s --property" % (input_xyz)
-    else:
-        args = [
-            "/theoryfs2/ds/amwalla3/miniconda3/bin/dftd4",
-            input_xyz,
-            "--property",
-            "--json",
-            output_json,
-            "--mbdscale",
-            "0.0",
-            "-c",
-            str(charges[0]),
-        ]
-        # cmd = "~/.local/bin/dftd4 %s --property --json %s" % (input_xyz, output_json)
-    subprocess.call(
-        # cmd,
-        # shell=True,
-        args=args,
-        shell=False,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.STDOUT,
-    )
-    with open(output_json) as f:
-        dat = json.load(f)
-        C6s = np.array(dat["c6 coefficients"])
-        n = int(np.sqrt(len(C6s)))
-        C6s = np.reshape(C6s, (n, n))
-        polariz = np.array(dat["polarizibilities"])
-        # C8s = np.array(dat["c8"])
-    if output_json != "":
-        os.remove(input_xyz)
-    return C6s, polariz
-
-
-def calc_dftd4_props(
-    atom_numbers: np.array,
-    carts: np.array,
-    input_xyz: str = "dat.xyz",
-    output_json: str = "",
-):
-    write_xyz_from_np(atom_numbers, carts, outfile=input_xyz)
-    if output_json == "":
-        # args = ["dftd4", input_xyz, "--property", "--mbdscale", "0.0"]
-        args = ["dftd4", input_xyz, "--property", "--mbdscale", "0.0"]
-        # cmd = "~/.local/bin/dftd4 %s --property" % (input_xyz)
-    else:
-        args = [
-            "dftd4",
-            input_xyz,
-            "--property",
-            "--json",
-            output_json,
-            "--mbdscale",
-            "0.0",
-        ]
-        # cmd = "~/.local/bin/dftd4 %s --property --json %s" % (input_xyz, output_json)
-    subprocess.call(
-        # cmd,
-        # shell=True,
-        args=args,
-        shell=False,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.STDOUT,
-    )
-    with open("C_n.json") as f:
-        dat = json.load(f)
-        C6s = np.array(dat["c6"])
-        C8s = np.array(dat["c8"])
-    if output_json != "":
-        os.remove(input_xyz)
-    return C6s, C8s
 
 
 def databases_dimers():
@@ -1586,21 +1264,21 @@ def calc_c6s_c8s_pairDisp2_for_df(xyzs, monAs, monBs, charges) -> ([], [], []):
         pos = g3[:, 0]
         carts = g3[:, 1:]
         c = charges[n]
-        C6, C8, dispd = calc_dftd4_c6_c8_pairDisp2(pos, carts, c[0])
+        C6, C8, dispd = locald4.calc_dftd4_c6_c8_pairDisp2(pos, carts, c[0])
         C6s[n] = C6
         C8s[n] = C8
         disp_d[n] = dispd
 
         Ma = monAs[n]
         mon_pa, mon_ca = create_mon_geom(pos, carts, Ma)
-        C6a, C8a, dispa = calc_dftd4_c6_c8_pairDisp2(mon_pa, mon_ca, c[1])
+        C6a, C8a, dispa = locald4.calc_dftd4_c6_c8_pairDisp2(mon_pa, mon_ca, c[1])
         C6_A[n] = C6a
         C8_A[n] = C8a
         disp_a[n] = dispa
 
         Mb = monBs[n]
         mon_pb, mon_cb = create_mon_geom(pos, carts, Mb)
-        C6b, C8b, dispb = calc_dftd4_c6_c8_pairDisp2(mon_pb, mon_cb, c[2])
+        C6b, C8b, dispb = locald4.calc_dftd4_c6_c8_pairDisp2(mon_pb, mon_cb, c[2])
         C6_B[n] = C6b
         C8_B[n] = C8b
         disp_b[n] = dispb
@@ -1738,18 +1416,19 @@ def gather_data6(
             g2 = geom.copy()
             g2[:, 1:] = g2[:, 1:] * mult
             return g2
+
         id_test = 512
         print("Pre-manipulation")
-        tools.print_cartesians(df.iloc[id_test]['Geometry'])
-        df['Geometry'] = df.apply(lambda r: r['Geometry'].copy(), axis=1)
+        tools.print_cartesians(df.iloc[id_test]["Geometry"])
+        df["Geometry"] = df.apply(lambda r: r["Geometry"].copy(), axis=1)
         df["Geometry_bohr"] = df.apply(
-            lambda r: convert_coords(r['Geometry'], ang_to_bohr),
+            lambda r: convert_coords(r["Geometry"], ang_to_bohr),
             axis=1,
         )
         print("A")
-        tools.print_cartesians(df.iloc[id_test]['Geometry'])
+        tools.print_cartesians(df.iloc[id_test]["Geometry"])
         print("Bohr")
-        tools.print_cartesians(df.iloc[id_test]['Geometry_bohr'])
+        tools.print_cartesians(df.iloc[id_test]["Geometry_bohr"])
 
         if replace_hf:
             df = replace_hf_int_HF_jdz(df)
