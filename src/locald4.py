@@ -1,12 +1,9 @@
 import numpy as np
-from periodictable import elements
 import qcelemental as qcel
 import subprocess
 import os
 import json
 from . import r4r2
-from .constants import Constants
-from qcelemental import constants
 from qm_tools_aw import tools
 
 hartree_to_kcalmol = qcel.constants.conversion_factor("hartree", "kcal/mol")
@@ -476,7 +473,7 @@ def compute_bj_dimer_DFTD4(
     Ma,
     Mb,
     charges,
-    mult_out=constants.conversion_factor("hartree", "kcal / mol"),
+    mult_out=hartree_to_kcalmol,
     s9=0.0,
 ) -> float:
     """
