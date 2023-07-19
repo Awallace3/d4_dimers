@@ -98,7 +98,7 @@ def calc_dftd4_c6_c8_pairDisp2(
         stdout=subprocess.DEVNULL,
         stderr=subprocess.STDOUT,
     )
-    print(v)
+    assert v == 0
     output_json = "C_n.json"
     with open(output_json) as f:
         cs = json.load(f)
