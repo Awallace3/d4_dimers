@@ -11,6 +11,25 @@ from qm_tools_aw import tools
 
 hartree_to_kcalmol = qcel.constants.conversion_factor("hartree", "kcal/mol")
 
+def compute_psi4_d4(geom, Ma, Mb, memory: str = "4 GB", basis="jun-cc-pvdz"):
+    ma, mb = split_dimer(geom, Ma, Mb)
+    ma = tools.np_carts_to_string(ma)
+    mb = tools.np_carts_to_string(mb)
+    geom = "0 1\n%s--\n0 1\n%s" % (ma, mb)
+    # geom = '%s--\n%s' % (A, B)
+    print(geom)
+    psi4.geometry(geom)
+    psi4.set_memory(memory)
+    psi4.set_options(
+        {
+            "basis": basis,
+            "freeze_core": "true",
+            "guess": "sad",
+            "scf_type": "df",
+        }
+    )
+    v = psi4.energy("hf-d4", bsse_type="cp")
+    return
 
 def get_monomer_C6s_from_dimer(C6s_dimer, monN) -> np.array:
     C6s_monomer_from_dimer = C6s_dimer[monN].tolist()
@@ -76,8 +95,6 @@ def calc_dftd4_c6_c8_pairDisp2(
         "--pair-resolved",
     ]
     v = subprocess.call(
-        # cmd,
-        # shell=True,
         args=args,
         shell=False,
         stdout=subprocess.DEVNULL,
@@ -95,13 +112,15 @@ def calc_dftd4_c6_c8_pairDisp2(
         pairs = np.array(pairs["pairs2"])
     with open(".EDISP", "r") as f:
         e = float(f.read())
-    # os.remove(input_xyz)
-    # os.remove("C_n.json")
-    # os.remove("pairs.json")
+    os.remove(input_xyz)
+    os.remove("C_n.json")
+    os.remove("pairs.json")
+    os.remove(".EDISP")
     if C6s_ATM:
         with open("C_n_ATM.json") as f:
             cs = json.load(f)
         C6s_ATM = np.array(cs["c6_ATM"], dtype=np.float64)
+        os.remove("C_n_ATM.json")
         return C6s, C8s, pairs, e, C6s_ATM
     else:
         return C6s, C8s, pairs, e
@@ -540,3 +559,5 @@ def compute_bj_with_different_C6s(
         r4r2_ls=r4r2_ls,
     )
     return d4_dimer, d4_mons_individually
+
+
