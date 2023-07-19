@@ -1,34 +1,14 @@
 import numpy as np
 import pandas as pd
-from periodictable import elements
-from . import r4r2
 from qm_tools_aw import tools
-import subprocess
-import json
-import math
 from .constants import Constants
 from tqdm import tqdm
 from psi4.driver.qcdb.bfs import BFS
-import os
 from .harvest import ssi_bfdb_data, harvest_data
-import psi4
-from qcelemental import constants
 import qcelemental as qcel
 from . import locald4
 
 ang_to_bohr = Constants().g_aatoau()
-bohr_to_ang = Constants().g_autoaa()
-hartree_to_kcal_mol = qcel.constants.conversion_factor("hartree", "kcal / mol")
-
-
-def create_pt_dict():
-    """
-    create_pt_dict creates dictionary for string elements to atomic number.
-    """
-    el_dc = {}
-    for el in elements:
-        el_dc[el.symbol] = el.number
-    return el_dc
 
 
 def create_mon_geom(
