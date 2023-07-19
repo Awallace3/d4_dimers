@@ -1,20 +1,13 @@
 import numpy as np
 import pandas as pd
 from periodictable import elements
-from .r4r2 import get_Q, r4r2_from_elements_call, r4r2_vals, r4r2_ls
 from . import r4r2
-from .tools import print_cartesians, print_cartesians_pos_carts, np_carts_to_string
 from qm_tools_aw import tools
-import subprocess
-import json
-import math
 from .constants import Constants
 from tqdm import tqdm
 from psi4.driver.qcdb.bfs import BFS
-import os
 from .harvest import ssi_bfdb_data, harvest_data
 import psi4
-from qcelemental import constants
 import qcelemental as qcel
 from . import locald4
 
@@ -301,6 +294,7 @@ def create_mon_geom(
     pos,
     carts,
     M,
+    r4r2_ls=r4r2.r4r2_vals_ls(),
 ) -> (np.array, np.array):
     """
     create_mon_geom creates pos and carts from dimer
@@ -321,13 +315,11 @@ def compute_C8s(
     cs = aatoau * np.array(carts, copy=True)
     for i in range(N_tot):
         el1 = int(pos[i])
-        el1_r4r2 = r4r2_vals(el1)
-        Q_A = np.sqrt(el1) * el1_r4r2
+        Q_A = (0.5 * el1**0.5 * r4r2_ls[el1 - 1]) ** 0.5
         # for j in range(i):
         for j in range(N_tot):
             el2 = int(pos[j])
-            el2_r4r2 = r4r2_vals(el2)
-            Q_B = np.sqrt(el2) * el2_r4r2
+            Q_B = (0.5 * el2**0.5 * r4r2_ls[el2 - 1]) ** 0.5
             C8s[i, j] = 3 * C6s[i, j] * np.sqrt(Q_A * Q_B)
             C6 = C6s[i, j]
             C8 = C8s[i, j]
@@ -349,8 +341,8 @@ def split_dimer(geom, Ma, Mb) -> (np.array, np.array):
 
 def compute_psi4_d4(geom, Ma, Mb, memory: str = "4 GB", basis="jun-cc-pvdz"):
     ma, mb = split_dimer(geom, Ma, Mb)
-    ma = np_carts_to_string(ma)
-    mb = np_carts_to_string(mb)
+    ma = tools.np_carts_to_string(ma)
+    mb = tools.np_carts_to_string(mb)
     geom = "0 1\n%s--\n0 1\n%s" % (ma, mb)
     # geom = '%s--\n%s' % (A, B)
     print(geom)

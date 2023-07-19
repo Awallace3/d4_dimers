@@ -8,6 +8,7 @@ from qm_tools_aw import tools
 
 hartree_to_kcalmol = qcel.constants.conversion_factor("hartree", "kcal/mol")
 
+
 def compute_psi4_d4(geom, Ma, Mb, memory: str = "4 GB", basis="jun-cc-pvdz"):
     ma, mb = split_dimer(geom, Ma, Mb)
     ma = tools.np_carts_to_string(ma)
@@ -26,6 +27,7 @@ def compute_psi4_d4(geom, Ma, Mb, memory: str = "4 GB", basis="jun-cc-pvdz"):
     )
     v = psi4.energy("hf-d4", bsse_type="cp")
     return
+
 
 def get_monomer_C6s_from_dimer(C6s_dimer, monN) -> np.array:
     C6s_monomer_from_dimer = C6s_dimer[monN].tolist()
@@ -561,6 +563,7 @@ def compute_bj_f90_NO_DAMPING(
     pos: np.array,
     carts: np.array,
     C6s: np.array,
+    r4r2_ls=r4r2.r4r2_vals_ls(),
 ) -> float:
     """
     compute_bj_f90 computes energy from C6s, cartesian coordinates, and dimer sizes.
@@ -571,21 +574,15 @@ def compute_bj_f90_NO_DAMPING(
     lattice_points = 1
     aatoau = Constants().g_aatoau()
     cs = aatoau * np.array(carts, copy=True)
-    print()
-    print_cartesians_pos_carts(pos, cs)
-    print()
     for i in range(M_tot):
         el1 = int(pos[i])
-        el1_r4r2 = r4r2_vals(el1)
-        # had extra sqrt for Q_A and Q_B making smaller C8s
-        Q_A = np.sqrt(el1) * el1_r4r2
+        Q_A = (0.5 * el1**0.5 * r4r2_ls[el1 - 1]) ** 0.5
         for j in range(i):
             if i == j:
                 continue
             for k in range(lattice_points):
                 el2 = int(pos[j])
-                el2_r4r2 = r4r2_vals(el2)
-                Q_B = np.sqrt(el2) * el2_r4r2
+                Q_B = (0.5 * el2**0.5 * r4r2_ls[el2 - 1]) ** 0.5
 
                 C6 = C6s[i, j]
                 C8 = 3 * C6 * np.sqrt(Q_A * Q_B)
