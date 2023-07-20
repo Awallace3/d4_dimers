@@ -71,7 +71,7 @@ def test_water_dftd4_2_body_and_ATM():
     assert IE_ATM != IE
 
 def main():
-    water_data.water_data1_collect()
+    water_data.water_data_collect()
     return
 
 

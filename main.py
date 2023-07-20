@@ -337,7 +337,6 @@ def main():
 
     # compute_ie_differences(0)
     # compute_ie_differences(5)
-
     # opt()
     # grimme_test_atm()
     src.plotting.plotting_setup(df_names(6), False, "plots/plot2.pkl")

@@ -57,19 +57,40 @@ def test_Qa_O() -> None:
     assert abs(Q_O - 2.5936168242020377) < 1e-14
 
 
-def test_d4_energies_damped() -> None:
+@pytest.fixture
+def water1():
+    return src.water_data.water_data1()
+
+def test_d4_energies_damped(water1) -> None:
     """
     compares dftd4 dispersion energies with damping parameters of HF
         HF params = [1.0, 1.61679827, 0.44959224, 3.35743605]
                   = [s6,  s8,         a1,         a2        ]
     """
-
-    params = [1, 1.61679827, 0.44959224, 3.35743605]
-    pos, carts = src.water_data.water_geom()
-    charges = [0, 1]
-    d4C6s, d4C8s, pairs, d4e = src.locald4.calc_dftd4_c6_c8_pairDisp2(
-        pos, carts, charges, dftd4_bin=dftd4_bin, p=params
-    )
+    (
+        params,
+        pos,
+        carts,
+        d4C6s,
+        d4C8s,
+        pairs,
+        d4e,
+        d4C6s_ATM,
+        pos_A,
+        carts_A,
+        d4C6s_A,
+        d4C8s_A,
+        pairs_A,
+        d4e_A,
+        d4C6s_ATM_A,
+        pos_B,
+        carts_B,
+        d4C6s_B,
+        d4C8s_B,
+        pairs_B,
+        d4e_B,
+        d4C6s_BTM_B,
+    ) = water1
 
     params.pop(0)  # compute_bj_f90 doesn't take in s6
 
