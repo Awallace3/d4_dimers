@@ -33,30 +33,6 @@ def create_mon_geom(
     return mon_pos, mon_carts
 
 
-def compute_C6_ATMs(
-    pos: np.array,
-    carts: np.array,
-    C6s: np.array,
-) -> float:
-    C6_ATMs = np.zeros(np.shape(C6s))
-    N_tot = len(carts)
-    aatoau = Constants().g_aatoau()
-    cs = aatoau * np.array(carts, copy=True)
-    for i in range(N_tot):
-        el1 = int(pos[i])
-        el1_r4r2 = r4r2_vals(el1)
-        Q_A = np.sqrt(el1) * el1_r4r2
-        # for j in range(i):
-        for j in range(N_tot):
-            el2 = int(pos[j])
-            el2_r4r2 = r4r2_vals(el2)
-            Q_B = np.sqrt(el2) * el2_r4r2
-            C6_ATMs[i, j] = 3 * C6s[i, j] * np.sqrt(Q_A * Q_B)
-            C6 = C6s[i, j]
-            C6_ATM = C6_ATMs[i, j]
-    return C6_ATMs
-
-
 def split_dimer(geom, Ma, Mb) -> (np.array, np.array):
     """
     split_dimer
@@ -304,7 +280,7 @@ def calc_c6s_c8s_pairDisp2_for_df(xyzs, monAs, monBs, charges) -> ([], [], []):
         pos = g3[:, 0]
         carts = g3[:, 1:]
         c = charges[n]
-        C6, _, dispd, C6_ATM = locald4.calc_dftd4_c6_c8_pairDisp2(
+        C6, _, _, dispd, C6_ATM = locald4.calc_dftd4_c6_c8_pairDisp2(
             pos, carts, c[0], C6s_ATM=True
         )
         C6s[n] = C6
@@ -313,7 +289,7 @@ def calc_c6s_c8s_pairDisp2_for_df(xyzs, monAs, monBs, charges) -> ([], [], []):
 
         Ma = monAs[n]
         mon_pa, mon_ca = create_mon_geom(pos, carts, Ma)
-        C6a, _, dispa, C6_ATMa = locald4.calc_dftd4_c6_c8_pairDisp2(
+        C6a, _, _, dispa, C6_ATMa = locald4.calc_dftd4_c6_c8_pairDisp2(
             mon_pa, mon_ca, c[1], C6s_ATM=True
         )
         C6_A[n] = C6a
@@ -322,13 +298,41 @@ def calc_c6s_c8s_pairDisp2_for_df(xyzs, monAs, monBs, charges) -> ([], [], []):
 
         Mb = monBs[n]
         mon_pb, mon_cb = create_mon_geom(pos, carts, Mb)
-        C6b, _, dispb, C6_ATMb = locald4.calc_dftd4_c6_c8_pairDisp2(
+        C6b, _, _, dispb, C6_ATMb = locald4.calc_dftd4_c6_c8_pairDisp2(
             mon_pb, mon_cb, c[2], C6s_ATM=True
         )
         C6_B[n] = C6b
         C6_ATM_B[n] = C6_ATMb
         disp_b[n] = dispb
     return C6s, C6_A, C6_B, C6_ATMs, C6_ATM_A, C6_ATM_B, disp_d, disp_a, disp_b
+
+
+def generate_D4_data(df):
+    xyzs = df["Geometry"].to_list()
+    monAs = df["monAs"].to_list()
+    monBs = df["monBs"].to_list()
+    charges = df["charges"].to_list()
+    (
+        C6s,
+        C6_A,
+        C6_B,
+        C6_ATMs,
+        C6_ATM_A,
+        C6_ATM_B,
+        disp_d,
+        disp_a,
+        disp_b,
+    ) = calc_c6s_c8s_pairDisp2_for_df(xyzs, monAs, monBs, charges)
+    df["C6"] = C6s
+    df["C6_A"] = C6_A
+    df["C6_B"] = C6_B
+    df["C6_ATM"] = C6_ATMs
+    df["C6_ATM_A"] = C6_ATM_A
+    df["C6_ATM_B"] = C6_ATM_B
+    df["disp_d"] = disp_d
+    df["disp_a"] = disp_a
+    df["disp_b"] = disp_b
+    return df
 
 
 def r_z_tq_to_mol(r, tq, mult) -> qcel.models.Molecule:
@@ -482,11 +486,11 @@ def gather_data6(
         df["monBs"] = monBs
         df = df.reset_index(drop=True)
         df, inds = gather_data3_dimer_splits(df)
+        df = df.reset_index(drop=True)
+        df = assign_charges(df)
+        xyzs = df["Geometry"].to_list()
         monAs = df["monAs"].to_list()
         monBs = df["monBs"].to_list()
-        df = df.reset_index(drop=True)
-        xyzs = df["Geometry"].to_list()
-        df = assign_charges(df)
         charges = df["charges"]
         (
             C6s,

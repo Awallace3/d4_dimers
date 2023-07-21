@@ -40,8 +40,14 @@ def optimize_paramaters(
     bases,
     start_params_d3=[0.7683276390453782, 0.09699087897359535, 3.6407701963142745],
     start_params_d4_key="HF",
-    D3={"powell": True},
-    D4={"powell": True, "least_squares": True},
+    D3={
+        "powell": True,
+    },
+    D4={
+        "powell": True,
+        "least_squares": True,
+    },
+    ATM=False,
 ) -> None:
     # Optimize parameters through 5-fold cross validation
     # params = src.paramsTable.paramsDict()[start_params_d4_key][1:]
@@ -50,35 +56,52 @@ def optimize_paramaters(
         print(i)
         if D3["powell"]:
             print("D3 powell")
+            version={
+                "method": "powell",
+                "compute_energy": "jeff_d3",
+                "compute_stats": "jeff_d3",
+            }
             src.optimization.opt_cross_val(
                 df,
                 nfolds=5,
                 start_params=start_params_d3,
                 hf_key=i,
                 output_l_marker="D3_",
-                optimizer_func=src.jeff.optimization_d3,
-                compute_int_energy_stats_func=src.jeff.compute_error_stats_d3,
-                opt_type="Powell",
+                version=version,
             )
         if D4["powell"]:
             print("D4 powell")
+            if ATM:
+                compute_energy = "compute_int_energy_ATM"
+            else:
+                compute_energy = "compute_int_energy"
+            version={
+                "method": "powell",
+                "compute_energy": compute_energy,
+                "compute_stats": "compute_int_energy_stats",
+            }
             src.optimization.opt_cross_val(
                 df,
                 nfolds=5,
                 start_params=params,
                 hf_key=i,
                 output_l_marker="G_",
-                optimizer_func=src.optimization.optimization,
+                version=version,
             )
         if D4["least_squares"]:
             print("D4 least_squares")
+            version={
+                "method": "powell",
+                "compute_energy": "compute_int_energy_least_squares",
+                "compute_stats": "compute_int_energy_stats",
+            }
             src.optimization.opt_cross_val(
                 df,
                 nfolds=5,
                 start_params=params,
                 hf_key=i,
                 output_l_marker="least",
-                optimizer_func=src.optimization.optimization_least_squares,
+                version=version,
             )
     return
 
@@ -311,12 +334,11 @@ def charge_comparison():
 
 
 def main():
-    src.misc.main()
-    return
+    # src.misc.regenerate_D4_data(*df_names(6))
+    # return
     # gather_data("schr")
     df, selected = df_names(6)
     print(df.columns.values)
-
 
     def opt():
         adz_opt_params = [0.829861, 0.706055, 1.123903]

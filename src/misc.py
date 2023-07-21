@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from qm_tools_aw import tools
 from . import water_data
+from . import setup
 
 
 def find_charged_systems():
@@ -70,8 +71,13 @@ def test_water_dftd4_2_body_and_ATM():
 
     assert IE_ATM != IE
 
+def regenerate_D4_data(df, df_path):
+    df = setup.generate_D4_data(df)
+    df.to_pickle(df_path)
+    return
+
 def main():
-    water_data.water_data_collect()
+    # water_data.water_data_collect()
     return
 
 
