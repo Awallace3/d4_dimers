@@ -1,5 +1,6 @@
 from . import locald4
 from . import r4r2
+from . import jeff
 import scipy.optimize as opt
 import time
 import pandas as pd
@@ -109,9 +110,6 @@ def compute_int_energy_stats(
     df: pd.DataFrame,
     hf_key: str = "HF INTERACTION ENERGY",
 ) -> (float, float, float,):
-    """
-    compute_int_energy is used to optimize paramaters for damping function in dftd4
-    """
     t = df[hf_key].isna().sum()
     assert t == 0, f"The HF_col provided has np.nan values present, {t}"
     diff = np.zeros(len(df))
@@ -142,7 +140,7 @@ def compute_int_energy_least_squares(
     # ban_neg_params: bool = False,
 ):
     """
-    compute_int_energy is used to optimize paramaters for damping function in dftd4
+    compute_int_energy_least_squares is used to optimize paramaters for damping function in dftd4 with levenberg-Marquedt needing a difference list returned to optimizer
     """
     rmse = 0
     # if ban_neg_params:
@@ -165,6 +163,35 @@ def compute_int_energy_least_squares(
     # return rmse
 
 
+def compute_int_energy_least_squares_ATM(
+    params: [float],
+    df: pd.DataFrame,
+    hf_key: str = "HF INTERACTION ENERGY",
+    # ban_neg_params: bool = False,
+):
+    """
+    compute_int_energy_least_squares_ATM is used to optimize paramaters for damping function in dftd4 with levenberg-Marquedt needing a difference list returned to optimizer
+    """
+    rmse = 0
+    # if ban_neg_params:
+    #     for i in params:
+    #         if i < 0:
+    #             return [10 for i in range(len(df))]
+    r4r2_ls = r4r2.r4r2_vals_ls()
+    df["d4"] = df.apply(
+        lambda row: locald4.compute_bj_dimer_f90_ATM(
+            params,
+            row,
+            r4r2_ls=r4r2_ls,
+        ),
+        axis=1,
+    )
+    df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
+    rmse = (df["diff"] ** 2).mean() ** 0.5
+    print("%.8f\t" % rmse, params.tolist())
+    return df["diff"].tolist()
+
+
 def compute_int_energy(
     params: [float],
     df: pd.DataFrame,
@@ -183,6 +210,36 @@ def compute_int_energy(
     r4r2_ls = r4r2.r4r2_vals_ls()
     df["d4"] = df.apply(
         lambda row: locald4.compute_bj_dimer_f90(
+            params,
+            row,
+            r4r2_ls=r4r2_ls,
+        ),
+        axis=1,
+    )
+    df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
+    rmse = (df["diff"] ** 2).mean() ** 0.5
+    print("%.8f\t" % rmse, params.tolist())
+    return rmse
+
+
+def compute_int_energy_ATM(
+    params: [float],
+    df: pd.DataFrame,
+    hf_key: str = "HF INTERACTION ENERGY",
+    prevent_negative_params: bool = False,
+):
+    """
+    compute_int_energy is used to optimize paramaters for damping function in dftd4
+    """
+    if prevent_negative_params:
+        for i in params:
+            if i < 0:
+                return 10
+    rmse = 0
+    diff = np.zeros(len(df))
+    r4r2_ls = r4r2.r4r2_vals_ls()
+    df["d4"] = df.apply(
+        lambda row: locald4.compute_bj_dimer_f90_ATM(
             params,
             row,
             r4r2_ls=r4r2_ls,
@@ -245,13 +302,29 @@ def optimization(
     df: pd.DataFrame,
     params: [] = [3.02227550, 0.47396846, 4.49845309],
     hf_key: str = "HF INTERACTION ENERGY",
+    version={
+        "method": "powell",
+        "compute_energy": "compute_int_energy",
+    },
 ):
+    if version["compute_energy"] == "compute_int_energy":
+        compute = compute_int_energy
+    elif version["compute_energy"] == "compute_int_energy_ATM":
+        compute = compute_int_energy_ATM
+    elif version["compute_energy"] == "compute_int_energy_least_squares":
+        compute = compute_int_energy_least_squares
+    elif version["compute_energy"] == "compute_int_energy_least_squares_ATM":
+        compute = compute_int_energy_least_squares_ATM
+    elif version["compute_energy"] == "jeff_d3":
+        compute = jeff.compute_int_energy_d3
+    else:
+        raise Exception("compute_energy not defined")
     print("RMSE\t\tparams")
     ret = opt.minimize(
-        compute_int_energy,
+        compute,
         args=(df, hf_key),
         x0=params,
-        method="powell",
+        method=version["method"],
     )
     print("\nResults\n")
     out_params = ret.x
@@ -298,13 +371,24 @@ def opt_cross_val(
     start_params: [] = [3.02227550, 0.47396846, 4.49845309],
     hf_key: str = "HF INTERACTION ENERGY",
     output_l_marker: str = "G_",
-    optimizer_func=optimization,
-    compute_int_energy_stats_func=compute_int_energy_stats,
-    opt_type="Powell",
+    version={
+        "method": "powell",
+        "compute_energy": "compute_int_energy",
+        "compute_stats": "compute_int_energy_stats",
+    },
 ) -> None:
     """
     opt_cross_val performs n-fold cross validation on opt*.pkl df from
     """
+
+    if version["compute_stats"] == "compute_int_energy_stats":
+        compute_stats = compute_int_energy_stats
+    elif version["compute_stats"] == "jeff_d3":
+        compute_stats = jeff.compute_error_stats_d3
+    else:
+        raise Exception("compute_stats not defined")
+    opt_type = version["method"]
+
     nans = df[hf_key].isna().sum()
     inds = df.index[df[hf_key].isna()]
     assert nans == 0, f"The HF_col provided has np.nan values present with {inds} nans"
@@ -313,10 +397,8 @@ def opt_cross_val(
     stats_np = np.zeros((nfolds, 4))
     p_out = np.zeros((nfolds, len(start_params)))
     print(start_params)
-    mp = optimizer_func(df, start_params, hf_key)
-    mmae, mrmse, mmax_e, mmad, mmean_diff = compute_int_energy_stats_func(
-        mp, df, hf_key
-    )
+    mp = optimization(df, start_params, hf_key, version)
+    mmae, mrmse, mmax_e, mmad, mmean_diff = compute_stats(mp, df, hf_key)
     stats = {
         "method": [f"{hf_key} full"],
         "Optimization Algorithm": [opt_type],
@@ -341,7 +423,7 @@ def opt_cross_val(
         print(f"Training: {len(training)}")
         print(f"Testing: {len(testing)}")
 
-        o_params = optimizer_func(training, start_params, hf_key)
+        o_params = optimization(training, start_params, hf_key, version)
         mae, rmse, max_e, mad, mean_diff = compute_int_energy_stats_func(
             o_params, testing, hf_key
         )
