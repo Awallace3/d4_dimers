@@ -212,7 +212,6 @@ def compute_bj_f90(
                 edisp = s6 * t6 + s8 * rrij * t8
 
                 de = -C6ij * edisp * 0.5
-                # print(i + 1, j + 1, r2, r0ij, edisp, de)
                 energies[i] += de
                 if i != j:
                     energies[j] += de

@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 import qcelemental as qcel
-from qm_tools_aw import tools as tools
+from qm_tools_aw import tools
 import pandas as pd
 from psi4.driver.wrapper_database import database
 import psi4
@@ -17,6 +17,16 @@ hartree_to_kcalmol = qcel.constants.conversion_factor("hartree", "kcal/mol")
 # You will need to build https://github.com/Awallace3/dftd4 for pytest to pass
 dftd4_bin = "/theoryfs2/ds/amwalla3/.local/bin/dftd4"
 data_pkl = "/theoryfs2/ds/amwalla3/projects/d4_corrections/tests/data/test.pkl"
+
+
+@pytest.fixture
+def water1():
+    return src.water_data.water_data1()
+
+
+@pytest.fixture
+def water1_undamped():
+    return src.water_data.water_data1_undamped()
 
 
 def HBC6_data():
@@ -56,10 +66,6 @@ def test_Qa_O() -> None:
     print(f"{Q_O = }\n      2.5936168242020377")
     assert abs(Q_O - 2.5936168242020377) < 1e-14
 
-
-@pytest.fixture
-def water1():
-    return src.water_data.water_data1()
 
 def test_d4_energies_damped(water1) -> None:
     """
@@ -101,19 +107,37 @@ def test_d4_energies_damped(water1) -> None:
     assert abs(d4e - l_e) < 1e-14
 
 
-def test_d4_energies_undamped() -> None:
+def test_d4_energies_undamped(water1_undamped) -> None:
     """
     compares dftd4 dispersion energies with damping parameters of HF
         HF params = [1.0, 1.0, 0.0, 0.0]
                   = [s6,  s8,  a1,  a2 ]
     """
 
-    params = [1.0, 1.0, 0.0, 0.0]
-    pos, carts = src.water_data.water_geom()
-    charges = [0, 1]
-    d4C6s, d4C8s, pairs, d4e = src.locald4.calc_dftd4_c6_c8_pairDisp2(
-        pos, carts, charges, dftd4_bin=dftd4_bin, p=params
-    )
+    (
+        params,
+        pos,
+        carts,
+        d4C6s,
+        d4C8s,
+        pairs,
+        d4e,
+        d4C6s_ATM,
+        pos_A,
+        carts_A,
+        d4C6s_A,
+        d4C8s_A,
+        pairs_A,
+        d4e_A,
+        d4C6s_ATM_A,
+        pos_B,
+        carts_B,
+        d4C6s_B,
+        d4C8s_B,
+        pairs_B,
+        d4e_B,
+        d4C6s_BTM_B,
+    ) = water1_undamped
     params.pop(0)  # compute_bj_f90 doesn't take in s6
     cs = ang_to_bohr * np.array(carts, copy=True)
     l_e = src.locald4.compute_bj_f90(pos, cs, d4C6s, params=params)
@@ -122,98 +146,82 @@ def test_d4_energies_undamped() -> None:
     assert abs(d4e - l_e) < 1e-14
 
 
-def test_dispersion_interaction_energy() -> None:
+# # parametrize with fixture
+# @pytest.mark.parametrize(
+#     "filename,expected",
+#     [
+#         # 1. pass fixture name as a string
+#         ("test_us_csv_file_name", ("us", "20220917", "csv")),
+#         ("test_gb_csv_file_name", ("gb", "20220917", "csv")),
+#     ],
+# )
+# def test_extract_ctry_date_and_ext_from_fileanme(filename, expected, request):
+#     # 2. add 'request' fixture to the test's arguments ^^
+#
+#     # 3. convert string to fixture value
+#     filename = request.getfixturevalue(filename)
+#     assert extract_ctry_date_and_ext_from_filename(filename) == expected
+
+
+@pytest.mark.parametrize(
+    "geom",
+    [
+        ("water1"),
+        ("water2"),
+    ],
+)
+def test_dispersion_interaction_energy(geom, request) -> None:
     """
     test_dispersion_interaction_energy
     """
-    # TODO: make dftd4 api use correct params
+
     params = [1, 1.61679827, 0.44959224, 3.35743605]
-    p = params.copy()
-    p.pop(0)
-
-    num, coords = src.water_data.water_geom()
-    tools.print_cartesians_pos_carts(num, coords)
-    coords = ang_to_bohr * np.array(coords, copy=True)
     charges = [0, 1]
+    (
+        params,
+        pos,
+        carts,
+        d4C6s,
+        d4C8s,
+        pairs,
+        d4e,
+        d4C6s_ATM,
+        pos_A,
+        carts_A,
+        d4C6s_A,
+        d4C8s_A,
+        pairs_A,
+        d4e_A,
+        d4C6s_ATM_A,
+        pos_B,
+        carts_B,
+        d4C6s_B,
+        d4C8s_B,
+        pairs_B,
+        d4e_B,
+        d4C6s_BTM_B,
+    ) = request.getfixturevalue(geom)
+    p = params.copy()
+    tools.print_cartesians_pos_carts(pos, carts)
 
-    # C6s, a, cn, pcharges = src.locald4.dftd4_api(num, coords)
-    d4C6s, d4C8s, pairs, d4_e_d = src.locald4.calc_dftd4_c6_c8_pairDisp2(
-        num, coords / ang_to_bohr, charges, dftd4_bin=dftd4_bin, p=params
-    )
+    carts = np.array(carts, copy=True) * ang_to_bohr
+    e_d = src.locald4.compute_bj_f90(pos, carts, d4C6s, params)
 
-    e_d = src.locald4.compute_bj_f90(num, coords, d4C6s, params=p)
+    n1, p1 = pos[:3], carts[:3, :]
+    e_1 = src.locald4.compute_bj_f90(n1, p1, d4C6s_A, params)
 
-    n1, p1 = num[:3], coords[:3, :]
-    # C6s, a, cn, pcharges = src.locald4.dftd4_api(n1, p1)
-    d4C6s, d4C8s, pairs, d4_e_1 = src.locald4.calc_dftd4_c6_c8_pairDisp2(
-        n1, p1 / ang_to_bohr, charges, dftd4_bin=dftd4_bin, p=params
-    )
-    e_1 = src.locald4.compute_bj_f90(n1, p1, d4C6s, params=p)
-
-    n2, p2 = num[3:], coords[3:, :]
-    # C6s, a, cn, pcharges = src.locald4.dftd4_api(n2, p2)
-    d4C6s, d4C8s, pairs, d4_e_2 = src.locald4.calc_dftd4_c6_c8_pairDisp2(
-        n2, p2 / ang_to_bohr, charges, dftd4_bin=dftd4_bin, p=params
-    )
-    e_2 = src.locald4.compute_bj_f90(n2, p2, d4C6s, params=p)
+    n2, p2 = pos[3:], carts[3:, :]
+    e_2 = src.locald4.compute_bj_f90(n2, p2, d4C6s_B, params)
 
     e_total = e_d - (e_1 + e_2)
-    d4_e_total = d4_e_d - (d4_e_1 + d4_e_2)
+    d4_e_total = d4e - (d4e_A + d4e_B)
     print(f"{e_d = }")
     print(f"{e_1 = }")
     print(f"{e_2 = }")
     print(f"{e_total = }")
-    print(f"{d4_e_d = }")
-    print(f"{d4_e_1 = }")
-    print(f"{d4_e_2 = }")
-    print(f"{d4_e_total = }")
-    assert abs(d4_e_total - e_total) < 1e-14
-
-
-def test_dispersion_interaction_energy2() -> None:
-    """
-    test_dispersion_interaction_energy
-    """
-    # TODO: make dftd4 api use correct params
-    params = [1, 1.61679827, 0.44959224, 3.35743605]
-    p = params.copy()
-    p.pop(0)
-
-    num, coords = src.water_data.water_geom2()
-    tools.print_cartesians_pos_carts(num, coords)
-    coords = ang_to_bohr * np.array(coords, copy=True)
-    charges = [0, 1]
-
-    # C6s, a, cn, pcharges = src.locald4.dftd4_api(num, coords)
-    d4C6s, d4C8s, pairs, d4_e_d = src.locald4.calc_dftd4_c6_c8_pairDisp2(
-        num, coords / ang_to_bohr, charges, dftd4_bin=dftd4_bin, p=params
-    )
-
-    e_d = src.locald4.compute_bj_f90(num, coords, d4C6s, params=p)
-
-    n1, p1 = num[:3], coords[:3, :]
-    # C6s, a, cn, pcharges = src.locald4.dftd4_api(n1, p1)
-    d4C6s, d4C8s, pairs, d4_e_1 = src.locald4.calc_dftd4_c6_c8_pairDisp2(
-        n1, p1 / ang_to_bohr, charges, dftd4_bin=dftd4_bin, p=params
-    )
-    e_1 = src.locald4.compute_bj_f90(n1, p1, d4C6s, params=p)
-
-    n2, p2 = num[3:], coords[3:, :]
-    # C6s, a, cn, pcharges = src.locald4.dftd4_api(n2, p2)
-    d4C6s, d4C8s, pairs, d4_e_2 = src.locald4.calc_dftd4_c6_c8_pairDisp2(
-        n2, p2 / ang_to_bohr, charges, dftd4_bin=dftd4_bin, p=params
-    )
-    e_2 = src.locald4.compute_bj_f90(n2, p2, d4C6s, params=p)
-
-    e_total = e_d - (e_1 + e_2)
-    d4_e_total = d4_e_d - (d4_e_1 + d4_e_2)
-    print(f"{e_d = }")
-    print(f"{e_1 = }")
-    print(f"{e_2 = }")
-    print(f"{e_total = }")
-    print(f"{d4_e_d = }")
-    print(f"{d4_e_1 = }")
-    print(f"{d4_e_2 = }")
+    print(f"{d4e = }")
+    print(f"{d4e_A = }")
+    print(f"{d4e_B = }")
     print(f"{d4_e_total = }")
     assert abs(d4_e_total - e_total) < 1e-14
 
@@ -222,7 +230,7 @@ def test_charged_dftd4():
     """
     Ensures energy computed through dftd4 is different for neutral and charged
     """
-    pos, carts = src.water_data.water_geom()
+    pos, carts = src.water_data.water_geom1()
     pos = pos[:3]
     carts = carts[:3, :]
     params = src.paramsTable.paramsDict()["HF"]
