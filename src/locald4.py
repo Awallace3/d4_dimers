@@ -439,7 +439,8 @@ def compute_bj_dimer_f90_ATM(
     e_d = compute_bj_f90_ATM(
         num,
         coords,
-        r["C6s_ATM"],
+        r["C6_ATM"],
+        C6s=r["C6s"],
         params=params,
         r4r2_ls=r4r2_ls,
     )
@@ -448,7 +449,8 @@ def compute_bj_dimer_f90_ATM(
     e_1 = compute_bj_f90_ATM(
         n1,
         p1,
-        r["C6_A_ATM"],
+        r["C6_ATM_A"],
+        C6s=r["C6_A"],
         params=params,
         r4r2_ls=r4r2_ls,
     )
@@ -457,7 +459,8 @@ def compute_bj_dimer_f90_ATM(
     e_2 = compute_bj_f90_ATM(
         n2,
         p2,
-        r["C6_B_ATM"],
+        r["C6_ATM_B"],
+        C6s=r["C6_B"],
         params=params,
         r4r2_ls=r4r2_ls,
     )
@@ -467,6 +470,52 @@ def compute_bj_dimer_f90_ATM(
 
 
 def compute_bj_dimer_DFTD4(
+    params,
+    pos,
+    carts,
+    Ma,
+    Mb,
+    charges,
+    mult_out=hartree_to_kcalmol,
+    s9=0.0,
+) -> float:
+    """
+    computes dftd4 for dimer and each monomer and returns subtraction.
+    """
+    _, _, _, d = calc_dftd4_c6_c8_pairDisp2(
+        pos,
+        carts,
+        charges[0],
+        p=params,
+        s9=s9,
+    )
+
+    mon_ca = carts[Ma]
+    mon_pa = pos[Ma]
+    _, _, _, A = calc_dftd4_c6_c8_pairDisp2(
+        mon_pa,
+        mon_ca,
+        charges[1],
+        p=params,
+        s9=s9,
+    )
+
+    mon_cb = carts[Mb]
+    mon_pb = pos[Mb]
+    _, _, _, B = calc_dftd4_c6_c8_pairDisp2(
+        mon_pb,
+        mon_cb,
+        charges[2],
+        p=params,
+        s9=s9,
+    )
+
+    AB = A + B
+    print(f"disp dftd4 = {d} - ({AB}) = {d} - ({A} + {B})")
+    disp = (d - (AB)) * mult_out
+    return disp
+
+def compute_bj_dimer_DFTD4_ATM(
     params,
     pos,
     carts,

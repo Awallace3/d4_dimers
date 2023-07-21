@@ -144,6 +144,43 @@ def test_compute_bj_f90():
     assert np.allclose(energies[:, 0], energies[:, 1], atol=1e-14)
 
 
+def test_compute_bj_f90_ATM():
+    """
+    ensures that the fortran and python versions of the bj dispersion energy are the same
+    """
+    df = pd.read_pickle(data_pkl)
+    id_list = [0, 500, 2700, 4926]
+    params = src.paramsTable.paramsDict()["HF"]
+    p = params
+    p.append(1.0)
+    print(params, p)
+    energies = np.zeros((len(id_list), 2))
+    r4r2_ls = src.r4r2.r4r2_vals_ls()
+    for n, i in enumerate(id_list):
+        print(i)
+        row = df.iloc[i]
+        print(row["Geometry_bohr"])
+        print(row)
+        d4_local = src.locald4.compute_bj_dimer_f90_ATM(
+            p,
+            row,
+            r4r2_ls=r4r2_ls,
+        )
+        dftd4 = src.locald4.compute_bj_dimer_DFTD4(
+            params,
+            row["Geometry"][:, 0],  # pos
+            row["Geometry"][:, 1:],  # carts
+            row["monAs"],
+            row["monBs"],
+            row["charges"],
+            s9=1.0,
+        )
+        energies[n, 0] = d4_local
+        energies[n, 1] = dftd4
+    print(energies)
+    assert np.allclose(energies[:, 0], energies[:, 1], atol=1e-14)
+
+
 def test_charged_C6s_in_df():
     """
     Ensures that the C6's pre-computed in df are correctly charged
