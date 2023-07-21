@@ -56,7 +56,7 @@ def optimize_paramaters(
         print(i)
         if D3["powell"]:
             print("D3 powell")
-            version={
+            version = {
                 "method": "powell",
                 "compute_energy": "jeff_d3",
                 "compute_stats": "jeff_d3",
@@ -75,7 +75,7 @@ def optimize_paramaters(
                 compute_energy = "compute_int_energy_ATM"
             else:
                 compute_energy = "compute_int_energy"
-            version={
+            version = {
                 "method": "powell",
                 "compute_energy": compute_energy,
                 "compute_stats": "compute_int_energy_stats",
@@ -90,7 +90,7 @@ def optimize_paramaters(
             )
         if D4["least_squares"]:
             print("D4 least_squares")
-            version={
+            version = {
                 "method": "powell",
                 "compute_energy": "compute_int_energy_least_squares",
                 "compute_stats": "compute_int_energy_stats",
@@ -149,6 +149,17 @@ def make_bohr(geometry, ang_to_bohr_convert):
         return np.hstack(
             (np.reshape(geometry[:, 0], (-1, 1)), 1 / ang_to_bohr * geometry[:, 1:])
         )
+
+
+def make_geometry_bohr_column(i):
+    df, selected = df_names(i)
+    tools.print_cartesians(df.iloc[0]["Geometry"])
+    df["Geometry_bohr"] = df.apply(lambda x: make_bohr(x["Geometry"], True), axis=1)
+    print()
+    tools.print_cartesians(df.iloc[0]["Geometry_bohr"])
+    print(df.columns.values)
+    df.to_pickle(selected)
+    return
 
 
 def grimme_test_atm(df_names_inds=[3, 4]) -> None:
@@ -338,8 +349,8 @@ def main():
     # return
     # gather_data("schr")
     df, selected = df_names(6)
-    print(df.columns.values)
-
+    print(df.columns)
+    return
     def opt():
         adz_opt_params = [0.829861, 0.706055, 1.123903]
         bases = [
