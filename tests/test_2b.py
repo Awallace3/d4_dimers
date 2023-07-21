@@ -174,8 +174,6 @@ def test_dispersion_interaction_energy(geom, request) -> None:
     """
     test_dispersion_interaction_energy
     """
-
-    params = [1, 1.61679827, 0.44959224, 3.35743605]
     charges = [0, 1]
     (
         params,
@@ -204,14 +202,13 @@ def test_dispersion_interaction_energy(geom, request) -> None:
     p = params.copy()
     tools.print_cartesians_pos_carts(pos, carts)
 
-    carts = np.array(carts, copy=True) * ang_to_bohr
+    carts *= ang_to_bohr
+    carts_A *= ang_to_bohr
+    carts_B *= ang_to_bohr
+
     e_d = src.locald4.compute_bj_f90(pos, carts, d4C6s, params)
-
-    n1, p1 = pos[:3], carts[:3, :]
-    e_1 = src.locald4.compute_bj_f90(n1, p1, d4C6s_A, params)
-
-    n2, p2 = pos[3:], carts[3:, :]
-    e_2 = src.locald4.compute_bj_f90(n2, p2, d4C6s_B, params)
+    e_1 = src.locald4.compute_bj_f90(pos_A, carts_A, d4C6s_A, params)
+    e_2 = src.locald4.compute_bj_f90(pos_B, carts_B, d4C6s_B, params)
 
     e_total = e_d - (e_1 + e_2)
     d4_e_total = d4e - (d4e_A + d4e_B)

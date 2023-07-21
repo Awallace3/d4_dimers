@@ -18,6 +18,7 @@ hartree_to_kcalmol = qcel.constants.conversion_factor("hartree", "kcal/mol")
 dftd4_bin = "/theoryfs2/ds/amwalla3/.local/bin/dftd4"
 data_pkl = "/theoryfs2/ds/amwalla3/projects/d4_corrections/tests/data/test.pkl"
 
+
 @pytest.fixture
 def water1():
     return src.water_data.water_data1_ATM()
@@ -78,6 +79,7 @@ def test_ATM_water(geom, request) -> None:
     print(f"{target_ATM= }\n{compute_ATM = }")
     assert abs(target_ATM - compute_ATM) < 1e-14
 
+
 @pytest.mark.parametrize(
     "geom",
     [
@@ -86,7 +88,7 @@ def test_ATM_water(geom, request) -> None:
     ],
 )
 def test_ATM_water_IE(geom, request) -> None:
-    params = [1, 1.61679827, 0.44959224, 3.35743605]
+    charges = [0, 1]
     (
         params,
         pos,
@@ -109,18 +111,37 @@ def test_ATM_water_IE(geom, request) -> None:
         d4C8s_B,
         pairs_B,
         d4e_B,
-        d4C6s_BTM_B,
+        d4C6s_ATM_B,
     ) = request.getfixturevalue(geom)
-    charges = [0, 1]
-
-    cs = ang_to_bohr * np.array(carts, copy=True)
+    tools.print_cartesians_pos_carts(pos, carts)
     params.append(1.0)
-    compute_ATM = src.locald4.compute_bj_f90_ATM(
-        pos, cs, d4C6s_ATM, params=params, ATM_only=True
+    print(params)
+
+    carts *= ang_to_bohr
+    carts_A *= ang_to_bohr
+    carts_B *= ang_to_bohr
+
+    e_d = src.locald4.compute_bj_f90_ATM(
+        pos, carts, d4C6s_ATM, C6s=d4C6s, params=params, ATM_only=False
+    )
+    e_1 = src.locald4.compute_bj_f90_ATM(
+        pos_A, carts_A, d4C6s_ATM_A, C6s=d4C6s_A, params=params, ATM_only=False
+    )
+    e_2 = src.locald4.compute_bj_f90_ATM(
+        pos_B, carts_B, d4C6s_ATM_B, C6s=d4C6s_B, params=params, ATM_only=False
     )
 
-    print(f"{target_ATM= }\n{compute_ATM = }")
-    assert abs(target_ATM - compute_ATM) < 1e-14
+    e_total = e_d - (e_1 + e_2)
+    d4_e_total = d4e - (d4e_A + d4e_B)
+    print(f"{e_d = }")
+    print(f"{e_1 = }")
+    print(f"{e_2 = }")
+    print(f"{e_total = }")
+    print(f"{d4e = }")
+    print(f"{d4e_A = }")
+    print(f"{d4e_B = }")
+    print(f"{d4_e_total = }")
+    assert abs(d4_e_total - e_total) < 1e-13
 
 
 # def test_compute_bj_dimer_f90_ATM(geom, request):
