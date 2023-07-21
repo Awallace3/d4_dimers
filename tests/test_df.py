@@ -25,7 +25,7 @@ def test_stored_C6s():
     params = src.paramsTable.paramsDict()["HF"]
     print(params)
     energies = np.zeros((len(id_list), 2))
-    r4r2_ls = src.r4r2.r4r2_ls()
+    r4r2_ls = src.r4r2.r4r2_vals_ls()
 
     for n, i in enumerate(id_list):
         row = df.iloc[i]
