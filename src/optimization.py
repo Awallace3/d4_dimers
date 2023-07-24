@@ -109,20 +109,33 @@ def compute_int_energy_stats(
     params: [float],
     df: pd.DataFrame,
     hf_key: str = "HF INTERACTION ENERGY",
+    parallel=True,
 ) -> (float, float, float,):
     t = df[hf_key].isna().sum()
     assert t == 0, f"The HF_col provided has np.nan values present, {t}"
     diff = np.zeros(len(df))
     r4r2_ls = r4r2.r4r2_vals_ls()
     print(f"{params = }")
-    df["d4"] = df.apply(
-        lambda row: locald4.compute_bj_dimer_f90(
-            params,
-            row,
-            r4r2_ls=r4r2_ls,
-        ),
-        axis=1,
-    )
+    if parallel:
+        # from pandarallel import pandarallel
+        # pandarallel.initialize()
+        df["d4"] = df.apply(
+            lambda row: locald4.compute_bj_dimer_f90(
+                params,
+                row,
+                r4r2_ls=r4r2_ls,
+            ),
+            axis=1,
+        )
+    else:
+        df["d4"] = df.apply(
+            lambda row: locald4.compute_bj_dimer_f90(
+                params,
+                row,
+                r4r2_ls=r4r2_ls,
+            ),
+            axis=1,
+        )
     df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
     df["y_pred"] = df.apply(lambda r: r[hf_key] + r["d4"], axis=1)
     mae = df["diff"].abs().mean()
@@ -197,6 +210,7 @@ def compute_int_energy(
     df: pd.DataFrame,
     hf_key: str = "HF INTERACTION ENERGY",
     prevent_negative_params: bool = False,
+    parallel=True,
 ):
     """
     compute_int_energy is used to optimize paramaters for damping function in dftd4
@@ -208,14 +222,27 @@ def compute_int_energy(
     rmse = 0
     diff = np.zeros(len(df))
     r4r2_ls = r4r2.r4r2_vals_ls()
-    df["d4"] = df.apply(
-        lambda row: locald4.compute_bj_dimer_f90(
-            params,
-            row,
-            r4r2_ls=r4r2_ls,
-        ),
-        axis=1,
-    )
+    if parallel:
+        # print("parallel")
+        # from pandarallel import pandarallel
+        # pandarallel.initialize()
+        df["d4"] = df.apply(
+            lambda row: locald4.compute_bj_dimer_f90(
+                params,
+                row,
+                r4r2_ls=r4r2_ls,
+            ),
+            axis=1,
+        )
+    else:
+        df["d4"] = df.apply(
+            lambda row: locald4.compute_bj_dimer_f90(
+                params,
+                row,
+                r4r2_ls=r4r2_ls,
+            ),
+            axis=1,
+        )
     df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
     rmse = (df["diff"] ** 2).mean() ** 0.5
     print("%.8f\t" % rmse, params.tolist())
@@ -227,6 +254,7 @@ def compute_int_energy_ATM(
     df: pd.DataFrame,
     hf_key: str = "HF INTERACTION ENERGY",
     prevent_negative_params: bool = False,
+    parallel=True,
 ):
     """
     compute_int_energy is used to optimize paramaters for damping function in dftd4
@@ -238,14 +266,27 @@ def compute_int_energy_ATM(
     rmse = 0
     diff = np.zeros(len(df))
     r4r2_ls = r4r2.r4r2_vals_ls()
-    df["d4"] = df.apply(
-        lambda row: locald4.compute_bj_dimer_f90_ATM(
-            params,
-            row,
-            r4r2_ls=r4r2_ls,
-        ),
-        axis=1,
-    )
+    if parallel:
+        # print("parallel")
+        # from pandarallel import pandarallel
+        # pandarallel.initialize()
+        df["d4"] = df.apply(
+            lambda row: locald4.compute_bj_dimer_f90_ATM(
+                params,
+                row,
+                r4r2_ls=r4r2_ls,
+            ),
+            axis=1,
+        )
+    else:
+        df["d4"] = df.apply(
+            lambda row: locald4.compute_bj_dimer_f90_ATM(
+                params,
+                row,
+                r4r2_ls=r4r2_ls,
+            ),
+            axis=1,
+        )
     df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
     rmse = (df["diff"] ** 2).mean() ** 0.5
     print("%.8f\t" % rmse, params.tolist())
@@ -424,10 +465,9 @@ def opt_cross_val(
         print(f"Testing: {len(testing)}")
 
         o_params = optimization(training, start_params, hf_key, version)
-        mae, rmse, max_e, mad, mean_diff = compute_int_energy_stats_func(
+        mae, rmse, max_e, mad, mean_diff = compute_stats(
             o_params, testing, hf_key
         )
-        print("TESTING  RMSE: %.4f" % rmse)
 
         stats_np[n] = np.array([rmse, mad, mean_diff, max_e])
         p_out[n] = o_params
