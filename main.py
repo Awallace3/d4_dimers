@@ -71,21 +71,29 @@ def optimize_paramaters(
             )
         if D4["powell"]:
             print("D4 powell")
+            extra = ""
             if ATM:
                 compute_energy = "compute_int_energy_ATM"
+                params.pop(0)
+                extra = "ATM_"
+                # params.append(1.0)
             else:
                 compute_energy = "compute_int_energy"
+                params.pop(0)
+                extra = "2B_"
             version = {
                 "method": "powell",
                 "compute_energy": compute_energy,
                 "compute_stats": "compute_int_energy_stats",
             }
+
+            print(version)
             src.optimization.opt_cross_val(
                 df,
                 nfolds=5,
                 start_params=params,
                 hf_key=i,
-                output_l_marker="G_",
+                output_l_marker=f"G_{extra}",
                 version=version,
             )
         if D4["least_squares"]:
@@ -345,28 +353,35 @@ def charge_comparison():
 
 
 def main():
-    # src.misc.regenerate_D4_data(*df_names(6))
+    # src.misc.regenerate_D4_data(*df_names(4))
+    # make_geometry_bohr_column(4)
     # return
     # gather_data("schr")
-    df, selected = df_names(6)
+    df, selected = df_names(4)
+
     print(df.columns)
-    return
+
     def opt():
         adz_opt_params = [0.829861, 0.706055, 1.123903]
         bases = [
+            # "HF_dz",
             # "HF_adz",
             # "HF_jdz",
-            # "HF_qz"
-            "pbe0_adz_saptdft_ndisp",
+            "HF_qz"
+            # "pbe0_adz_saptdft_ndisp",
         ]
         optimize_paramaters(
             df,
             bases,
             # start_params_d4_key="sadz",
-            start_params_d4_key="sadz",
+            start_params_d4_key="HF",
             D3={"powell": False},
             D4={"powell": True, "least_squares": False},
+            ATM=True,
         )
+
+    opt()
+    return
 
     # compute_ie_differences(0)
     # compute_ie_differences(5)

@@ -253,15 +253,25 @@ def compute_bj_f90_ATM(
     if ATM_only:
         e_two_body_disp = 0
     else:
+        if len(params) >= 4:
+            p2b = params[:4]
+        else:
+            p2b = params[:3]
+
         e_two_body_disp = compute_bj_f90(
             pos,
             carts,
             C6s,
-            params[:4],
+            params=p2b,
             r4r2_ls=r4r2_ls,
         )
     energy = 0
-    s6, s8, a1, a2, s9 = params
+    if len(params) == 3:
+        s8, a1, a2 = params
+        s6, s9 = 1.0, 1.0
+    else:
+
+        s6, s8, a1, a2, s9 = params
     M_tot = len(carts)
     energies = np.zeros((M_tot, M_tot))
     lattice_points = 1
