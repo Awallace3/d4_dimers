@@ -142,36 +142,3 @@ def test_ATM_water_IE(geom, request) -> None:
     print(f"{d4e_B = }")
     print(f"{d4_e_total = }")
     assert abs(d4_e_total - e_total) < 1e-13
-
-
-# def test_compute_bj_dimer_f90_ATM(geom, request):
-#     """
-#     Tests if the fortran DFTD4 ATM energy is the same as the python version
-#     """
-#     # TODO
-#     df = pd.read_pickle(data_pkl)
-#     id_list = [0, 500, 2700, 4926]
-#     params = src.paramsTable.paramsDict()["HF"]
-#     params.append(1.0)
-#     p = params[1:]
-#     print(params, p)
-#     energies = np.zeros((len(id_list), 2))
-#     r4r2_ls = src.r4r2.r4r2_vals_ls()
-#     for n, i in enumerate(id_list):
-#         print(n, i)
-#         row = df.iloc[i]
-#         d4_local_ATM = src.locald4.compute_bj_dimer_f90_ATM(
-#             p,
-#             row,
-#             r4r2_ls=r4r2_ls,
-#         )
-#         dftd4_ATM = src.locald4.compute_bj_dimer_DFTD4(
-#             params,
-#             row["Geometry"][:, 0],  # pos
-#             row["Geometry"][:, 1:],  # carts
-#             row["monAs"],
-#             row["monBs"],
-#             row["charges"],
-#             s9=1.0,
-#         )
-#         assert abs(d4_local_ATM - dftd4_ATM) < 1e-12

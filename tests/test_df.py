@@ -149,7 +149,7 @@ def test_compute_bj_f90_ATM():
     ensures that the fortran and python versions of the bj dispersion energy are the same
     """
     df = pd.read_pickle(data_pkl)
-    id_list = [0, 500, 2700, 4926]
+    id_list = [0, 500, 2700, 4926, 7000, 8275]
     params = src.paramsTable.paramsDict()["HF"]
     p = params
     p.append(1.0)

@@ -73,11 +73,13 @@ def optimize_paramaters(
             print("D4 powell")
             extra = ""
             if ATM:
+                print("ATM ON")
                 compute_energy = "compute_int_energy_ATM"
                 params.pop(0)
                 extra = "ATM_"
                 # params.append(1.0)
             else:
+                print("ATM OFF")
                 compute_energy = "compute_int_energy"
                 params.pop(0)
                 extra = "2B_"
@@ -140,6 +142,7 @@ def df_names(i):
         "data/grimme_fitset_test2.pkl",
         "data/HBC6.pkl",
         "data/schr_dft2.pkl",
+        "data/schr_dft_charges.pkl",
     ]
     # NOTE: data/grimme_fitset_db3.pkl Geometry is in Angstrom!!!
     selected = names[i]
@@ -207,7 +210,6 @@ def grimme_test_atm(df_names_inds=[3, 4]) -> None:
         print(
             df1.iloc[n]["HF_qz_no_cp"], df2.iloc[n]["HF_qz"], df1.iloc[n]["HF_qz_diff"]
         )
-
     return
 
 
@@ -357,17 +359,15 @@ def main():
     # make_geometry_bohr_column(4)
     # return
     # gather_data("schr")
-    df, selected = df_names(4)
-
-    print(df.columns)
+    df, selected = df_names(7)
 
     def opt():
         adz_opt_params = [0.829861, 0.706055, 1.123903]
         bases = [
             # "HF_dz",
-            # "HF_adz",
+            "HF_adz",
             # "HF_jdz",
-            "HF_qz"
+            # "HF_qz"
             # "pbe0_adz_saptdft_ndisp",
         ]
         optimize_paramaters(
@@ -379,8 +379,8 @@ def main():
             D4={"powell": True, "least_squares": False},
             ATM=True,
         )
-    opt()
-    return
+    # opt()
+    # return
 
     # compute_ie_differences(0)
     # compute_ie_differences(5)

@@ -6,16 +6,17 @@ from . import water_data
 from . import setup
 
 
-def find_charged_systems():
-    df = pd.read_pickle("data/d4.pkl")
+def find_charged_systems(df):
     c = np.array([[0, 1] for i in range(3)])
     cnt_charged = 0
+    ids = []
     for i, r in df.iterrows():
         if not np.array_equal(r["charges"], c):
             print(i, r["charges"])
             cnt_charged += 1
+            ids.append(i)
     print(f"Found {cnt_charged} charged systems")
-    return
+    return ids
 
 
 def print_geom_by_id(df, id):
