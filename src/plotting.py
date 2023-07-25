@@ -4,35 +4,45 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 import src
+from qm_tools_aw import tools
 
 
 def compute_D3_D4_values_for_params_for_plotting(
     df: pd.DataFrame,
     params_d3: [],
     params_d4: [],
+    params_d4_ATM: [],
     label: str,
 ) -> pd.DataFrame:
     """
     compute_D3_D4_values_for_params
     """
+    r4r2_ls = src.r4r2.r4r2_vals_ls()
 
+    print(f"Computing D3 values for {label}...")
     df[f"-D3 ({label})"] = df.apply(
         lambda r: src.jeff.compute_bj(params_d3, r["D3Data"]),
         axis=1,
     )
+    print(f"Computing D4 values for {label}...")
     df[f"-D4 ({label})"] = df.apply(
-        lambda row: src.setup.compute_bj_from_dimer_AB_all_C6s(
+        lambda row: src.locald4.compute_bj_dimer_f90(
             params_d4,
-            row["Geometry"][:, 0],  # pos
-            row["Geometry"][:, 1:],  # carts
-            row["monAs"],
-            row["monBs"],
-            row["C6s"],
-            C6_A=row["C6_A"],
-            C6_B=row["C6_B"],
+            row,
+            r4r2_ls=r4r2_ls,
         ),
         axis=1,
     )
+    print(f"Computing D4-ATM values for {label}...")
+    df[f"-D4 ({label}) ATM"] = df.apply(
+        lambda row: src.locald4.compute_bj_dimer_f90_ATM(
+            params_d4_ATM,
+            row,
+            r4r2_ls=r4r2_ls,
+        ),
+        axis=1,
+    )
+
     return df
 
 
@@ -236,15 +246,20 @@ def plotting_setup(
         params_dict = src.paramsTable.paramsDict()
         params_d4 = params_dict["sadz"][1:]
         params_d3 = params_dict["sdadz"][1:]
+        params_d4_ATM = params_dict["HF_ATM"]
         undamped = params_dict["undamped"][1:]
         df = compute_D3_D4_values_for_params_for_plotting(
-            df, params_d3, params_d4, "adz"
+            df, params_d3, params_d4, params_d4_ATM, "adz"
         )
         df = compute_D3_D4_values_for_params_for_plotting(
-            df, params_d3, params_d4, "jdz"
+            df, params_d3, params_d4, params_d4_ATM, "jdz"
         )
         df["SAPT0-D4/aug-cc-pVDZ"] = df.apply(
             lambda row: row["HF_adz"] + row["-D4 (adz)"],
+            axis=1,
+        )
+        df["SAPT0-D4(ATM)/aug-cc-pVDZ"] = df.apply(
+            lambda row: row["HF_adz"] + row["-D4 (adz) ATM"],
             axis=1,
         )
         df["SAPT0-D3/aug-cc-pVDZ"] = df.apply(
@@ -252,7 +267,11 @@ def plotting_setup(
             axis=1,
         )
         df["SAPT0-D4/jun-cc-pVDZ"] = df.apply(
-            lambda row: row["HF_jdz"] + row["-D4 (adz)"],
+            lambda row: row["HF_jdz"] + row["-D4 (jdz)"],
+            axis=1,
+        )
+        df["SAPT0-D4(ATM)/jun-cc-pVDZ"] = df.apply(
+            lambda row: row["HF_jdz"] + row["-D4 (jdz) ATM"],
             axis=1,
         )
         df["SAPT0-D3/jun-cc-pVDZ"] = df.apply(
@@ -261,29 +280,46 @@ def plotting_setup(
         )
         df["HF_adz_diff"] = df["HF_adz"] - df["Benchmark"]
         df["adz_diff_d4"] = df["Benchmark"] - df["SAPT0-D4/aug-cc-pVDZ"]
+        df["adz_diff_d4_ATM"] = df["Benchmark"] - df["SAPT0-D4(ATM)/aug-cc-pVDZ"]
         df["adz_diff_d3"] = df["Benchmark"] - df["SAPT0-D3/aug-cc-pVDZ"]
         df["jdz_diff_d4"] = df["Benchmark"] - df["SAPT0-D4/jun-cc-pVDZ"]
+        df["jdz_diff_d4_ATM"] = df["Benchmark"] - df["SAPT0-D4(ATM)/jun-cc-pVDZ"]
         df["jdz_diff_d3"] = df["Benchmark"] - df["SAPT0-D3/jun-cc-pVDZ"]
         df["SAPT0_jdz_diff"] = df["Benchmark"] - df["SAPT0"]
         df["SAPT0_jdz_diff"] = df["Benchmark"] - df["SAPT0"]
         df["SAPT0_adz_IE"] = df.apply(lambda r: r["SAPT0_adz"][0], axis=1)
-        df['SAPT0_adz_diff'] = df.apply(lambda r: r['Benchmark'] - r['SAPT0_adz_IE'], axis=1)
+        df["SAPT0_adz_diff"] = df.apply(
+            lambda r: r["Benchmark"] - r["SAPT0_adz_IE"], axis=1
+        )
         df.to_pickle(df_out)
     else:
         df = pd.read_pickle(df_out)
     # Non charged
+    plot_dbs_d3_d4(
+        df,
+        "adz_diff_d4",
+        "adz_diff_d4_ATM",
+        "-D4 (2B)",
+        "-D4 (ATM)",
+        title_name="DB Breakdown SAPT0-D4/aug-cc-pVDZ",
+        pfn="db_breakdown_2B_ATM",
+    )
     df_charged = get_charged_df(df)
     plot_violin_d3_d4_total(
         df,
         [
             "adz_diff_d3",
             "adz_diff_d4",
+            "jdz_diff_d4_ATM",
+            "adz_diff_d4_ATM",
             "SAPT0_jdz_diff",
             "SAPT0_adz_diff",
         ],
         [
             "SAPT0-D3/aug-cc-pVDZ",
             "SAPT0-D4/aug-cc-pVDZ",
+            "SAPT0-D4(ATM)/jun-cc-pVDZ",
+            "SAPT0-D4(ATM)/aug-cc-pVDZ",
             "SAPT0/jun-cc-pVDZ",
             "SAPT0/aug-cc-pVDZ",
         ],
@@ -295,12 +331,16 @@ def plotting_setup(
         [
             "adz_diff_d3",
             "adz_diff_d4",
+            "jdz_diff_d4_ATM",
+            "adz_diff_d4_ATM",
             "SAPT0_jdz_diff",
             "SAPT0_adz_diff",
         ],
         [
             "SAPT0-D3/aug-cc-pVDZ",
             "SAPT0-D4/aug-cc-pVDZ",
+            "SAPT0-D4(ATM)/jun-cc-pVDZ",
+            "SAPT0-D4(ATM)/aug-cc-pVDZ",
             "SAPT0/jun-cc-pVDZ",
             "SAPT0/aug-cc-pVDZ",
         ],
@@ -341,7 +381,7 @@ def plot_violin_d3_d4_total(
         vp.set_linewidth(1)
         vp.set_alpha(1)
 
-    colors = ["blue", "red", "green", "orange"]
+    colors = ["blue", "red", "purple", "brown", "green", "orange"]
     for n, pc in enumerate(vplot["bodies"], 1):
         # if n % 2 != 0:
         #     pc.set_facecolor("blue")
@@ -410,16 +450,29 @@ def plot_violin_d3_d4_total(
     return
 
 
-def plot_dbs_d3_d4(df, c1, c2, l1, l2, title_name, pfn) -> None:
-    """ """
+def plot_dbs_d3_d4(df, c1, c2, l1, l2, title_name, pfn, outlier_cutoff=3) -> None:
     kcal_per_mol = "$kcal\cdot mol^{-1}$"
     dbs = list(set(df["DB"].to_list()))
     dbs = sorted(dbs, key=lambda x: x.lower())
-    vLabels, vData = [], []
+    vLabels, vData, vDataErrors = [], [], []
     for d in dbs:
         df2 = df[df["DB"] == d]
         vData.append(df2[c1].to_list())
         vData.append(df2[c2].to_list())
+        df3 = df2[abs(df2[c1]) > outlier_cutoff]
+        if len(df3) > 0:
+            vDataErrors.append(df3[c1].to_list())
+        else:
+            vDataErrors.append([])
+        df3 = df2[abs(df2[c2]) > outlier_cutoff]
+        if len(df3) > 0:
+            vDataErrors.append(df3[c2].to_list())
+            for n, r in df3.iterrows():
+                print(f"\n{r['DB']}, {r['System']}\nid: {r['id']}, error: {c2}={r[c2]:.2f}, {c1}={r[c1]:.2f}")
+                tools.print_cartesians(r['Geometry'])
+
+        else:
+            vDataErrors.append([])
         vLabels.append(f"{d} - {l1}")
         vLabels.append(f"{d} - {l2}")
 
@@ -440,6 +493,14 @@ def plot_dbs_d3_d4(df, c1, c2, l1, l2, title_name, pfn) -> None:
             pc.set_facecolor("red")
         pc.set_alpha(0.5)
         # pc.set_edgecolor("black")
+
+    xs, ys = [], []
+    for n, y in enumerate(vDataErrors):
+        if len(y) > 0:
+            xs.extend([n + 1 for j in range(len(y))])
+            ys.extend(y)
+    print(xs, ys)
+    ax.scatter(xs, ys, color="orange", s=8.0, label="Outliers")
 
     vLabels.insert(0, "")
     xs = [i for i in range(len(vLabels))]
@@ -468,7 +529,7 @@ def plot_dbs_d3_d4(df, c1, c2, l1, l2, title_name, pfn) -> None:
         zorder=0,
     )
     ax.set_xticks(xs)
-    plt.setp(ax.set_xticklabels(vLabels), rotation=60, fontsize="5")
+    plt.setp(ax.set_xticklabels(vLabels), rotation=90, fontsize="5")
     ax.set_xlim((0, len(vLabels)))
     ax.legend(loc="upper left")
     ax.set_xlabel("Database")
@@ -489,75 +550,75 @@ def plot_dbs_d3_d4(df, c1, c2, l1, l2, title_name, pfn) -> None:
     return
 
 
-def plot_dbs_d3_d4(df, df2, c1s, c2s, l1s, l2s, title_name, pfn) -> None:
-    """ """
-    dbs = list(set(df["DB"].to_list()))
-    dbs = sorted(dbs, key=lambda x: x.lower())
-    vLabels, vData = [], []
-    for d in dbs:
-        df2 = df[df["DB"] == d]
-        vData.append(df2[c1].to_list())
-        vData.append(df2[c2].to_list())
-        vLabels.append(f"{d} - {l1}")
-        vLabels.append(f"{d} - {l2}")
-
-    fig = plt.figure(dpi=800)
-    ax = plt.subplot(111)
-    vplot = ax.violinplot(vData, showmeans=True, showmedians=False)
-    # for partname in ('cbars', 'cmins', 'cmaxes', 'cmeans', 'cmedians'):
-    for n, partname in enumerate(["cbars", "cmins", "cmaxes", "cmeans"]):
-        vp = vplot[partname]
-        vp.set_edgecolor("black")
-        vp.set_linewidth(1)
-        vp.set_alpha(1)
-
-    for n, pc in enumerate(vplot["bodies"], 1):
-        if n % 2 != 0:
-            pc.set_facecolor("blue")
-        else:
-            pc.set_facecolor("red")
-        pc.set_alpha(0.5)
-        # pc.set_edgecolor("black")
-
-    vLabels.insert(0, "")
-    xs = [i for i in range(len(vLabels))]
-    xs_error = [i for i in range(-1, len(vLabels) + 1)]
-    ax.plot(
-        xs_error,
-        [1 for i in range(len(xs_error))],
-        "k--",
-        label=r"$\pm$1 kcal/mol",
-        zorder=0,
-    )
-    ax.plot(
-        xs_error,
-        [0 for i in range(len(xs_error))],
-        "k--",
-        linewidth=0.5,
-        alpha=0.5,
-        label="0 kcal/mol",
-        zorder=0,
-    )
-    ax.plot(
-        xs_error,
-        [-1 for i in range(len(xs_error))],
-        "k--",
-        # label="+-1 kcal/mol",
-        zorder=0,
-    )
-    ax.set_xticks(xs)
-    plt.setp(ax.set_xticklabels(vLabels), rotation=60, fontsize="5")
-    ax.set_xlim((0, len(vLabels)))
-    ax.legend(loc="upper left")
-    ax.set_xlabel("Database")
-    ax.set_ylabel("Error (kcal/mol)")
-    for n, xtick in enumerate(ax.get_xticklabels()):
-        if n % 2 != 0:
-            xtick.set_color("blue")
-        else:
-            xtick.set_color("red")
-    plt.title(f"{title_name} DBs Violin")
-    # plt.show()
-    plt.savefig(f"plots/{pfn}_dbs_violin.png")
-    plt.clf()
-    return
+# def plot_dbs_d3_d4(df, df2, c1s, c2s, l1s, l2s, title_name, pfn) -> None:
+#     """ """
+#     dbs = list(set(df["DB"].to_list()))
+#     dbs = sorted(dbs, key=lambda x: x.lower())
+#     vLabels, vData = [], []
+#     for d in dbs:
+#         df2 = df[df["DB"] == d]
+#         vData.append(df2[c1].to_list())
+#         vData.append(df2[c2].to_list())
+#         vLabels.append(f"{d} - {l1}")
+#         vLabels.append(f"{d} - {l2}")
+#
+#     fig = plt.figure(dpi=800)
+#     ax = plt.subplot(111)
+#     vplot = ax.violinplot(vData, showmeans=True, showmedians=False)
+#     # for partname in ('cbars', 'cmins', 'cmaxes', 'cmeans', 'cmedians'):
+#     for n, partname in enumerate(["cbars", "cmins", "cmaxes", "cmeans"]):
+#         vp = vplot[partname]
+#         vp.set_edgecolor("black")
+#         vp.set_linewidth(1)
+#         vp.set_alpha(1)
+#
+#     for n, pc in enumerate(vplot["bodies"], 1):
+#         if n % 2 != 0:
+#             pc.set_facecolor("blue")
+#         else:
+#             pc.set_facecolor("red")
+#         pc.set_alpha(0.5)
+#         # pc.set_edgecolor("black")
+#
+#     vLabels.insert(0, "")
+#     xs = [i for i in range(len(vLabels))]
+#     xs_error = [i for i in range(-1, len(vLabels) + 1)]
+#     ax.plot(
+#         xs_error,
+#         [1 for i in range(len(xs_error))],
+#         "k--",
+#         label=r"$\pm$1 kcal/mol",
+#         zorder=0,
+#     )
+#     ax.plot(
+#         xs_error,
+#         [0 for i in range(len(xs_error))],
+#         "k--",
+#         linewidth=0.5,
+#         alpha=0.5,
+#         label="0 kcal/mol",
+#         zorder=0,
+#     )
+#     ax.plot(
+#         xs_error,
+#         [-1 for i in range(len(xs_error))],
+#         "k--",
+#         # label="+-1 kcal/mol",
+#         zorder=0,
+#     )
+#     ax.set_xticks(xs)
+#     plt.setp(ax.set_xticklabels(vLabels), rotation=60, fontsize="5")
+#     ax.set_xlim((0, len(vLabels)))
+#     ax.legend(loc="upper left")
+#     ax.set_xlabel("Database")
+#     ax.set_ylabel("Error (kcal/mol)")
+#     for n, xtick in enumerate(ax.get_xticklabels()):
+#         if n % 2 != 0:
+#             xtick.set_color("blue")
+#         else:
+#             xtick.set_color("red")
+#     plt.title(f"{title_name} DBs Violin")
+#     # plt.show()
+#     plt.savefig(f"plots/{pfn}_dbs_violin.png")
+#     plt.clf()
+#     return

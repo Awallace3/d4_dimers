@@ -110,9 +110,15 @@ def compute_int_energy_stats(
     df: pd.DataFrame,
     hf_key: str = "HF INTERACTION ENERGY",
     parallel=True,
+    print_results=False,
+    ATM=False,
 ) -> (float, float, float,):
     t = df[hf_key].isna().sum()
     assert t == 0, f"The HF_col provided has np.nan values present, {t}"
+    compute_bj = locald4.compute_bj_dimer_f90
+    if ATM:
+        compute_bj = locald4.compute_bj_dimer_f90_ATM
+
     diff = np.zeros(len(df))
     r4r2_ls = r4r2.r4r2_vals_ls()
     print(f"{params = }")
@@ -120,7 +126,7 @@ def compute_int_energy_stats(
         # from pandarallel import pandarallel
         # pandarallel.initialize()
         df["d4"] = df.apply(
-            lambda row: locald4.compute_bj_dimer_f90(
+            lambda row: compute_bj(
                 params,
                 row,
                 r4r2_ls=r4r2_ls,
@@ -129,7 +135,7 @@ def compute_int_energy_stats(
         )
     else:
         df["d4"] = df.apply(
-            lambda row: locald4.compute_bj_dimer_f90(
+            lambda row: compute_bj(
                 params,
                 row,
                 r4r2_ls=r4r2_ls,
@@ -137,12 +143,17 @@ def compute_int_energy_stats(
             axis=1,
         )
     df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
-    df["y_pred"] = df.apply(lambda r: r[hf_key] + r["d4"], axis=1)
     mae = df["diff"].abs().mean()
     rmse = (df["diff"] ** 2).mean() ** 0.5
     max_e = df["diff"].abs().max()
     mad = abs(df["diff"] - df["diff"].mean()).mean()
     mean_dif = df["diff"].mean()
+    if print_results:
+        print("        1. MAE  = %.4f" % mae)
+        print("        2. RMSE = %.4f" % rmse)
+        print("        3. MAX  = %.4f" % max_e)
+        print("        4. MAD  = %.4f" % mad)
+        print("        4. MD   = %.4f" % mean_dif)
     return mae, rmse, max_e, mad, mean_dif
 
 
