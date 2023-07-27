@@ -131,6 +131,7 @@ def compute_int_energy_stats(
     parallel=True,
     print_results=False,
     ATM=False,
+    chunk_count=8,
 ) -> (float, float, float,):
     t = df[hf_key].isna().sum()
     assert t == 0, f"The HF_col provided has np.nan values present, {t}"
@@ -142,14 +143,18 @@ def compute_int_energy_stats(
     r4r2_ls = r4r2.r4r2_vals_ls()
     print(f"{params = }")
     if parallel:
-        df["d4"] = df.p_apply(
-            lambda row: compute_bj(
-                params,
-                row,
-                r4r2_ls=r4r2_ls,
-            ),
-            axis=1,
-        )
+        chunks = []
+        for i in chunkify(df, chunk_count):
+            c = i.parallel_apply(
+                lambda row: locald4.compute_bj_dimer_f90_ATM(
+                    params,
+                    row,
+                    r4r2_ls=r4r2_ls,
+                ),
+                axis=1,
+            )
+            chunks.append(c)
+        df = pd.concat(chunks, axis=1)
     else:
         df["d4"] = df.apply(
             lambda row: compute_bj(
@@ -239,7 +244,7 @@ def compute_int_energy(
     hf_key: str = "HF INTERACTION ENERGY",
     prevent_negative_params: bool = False,
     parallel=True,
-    chunk_count=8,
+    chunk_count=100,
 ):
     """
     compute_int_energy is used to optimize paramaters for damping function in dftd4
@@ -253,17 +258,21 @@ def compute_int_energy(
     r4r2_ls = r4r2.r4r2_vals_ls()
     if parallel:
         chunks = []
+        cnt = 0
         for i in chunkify(df, chunk_count):
+            print(f"{cnt = }")
             c = i.parallel_apply(
-                lambda row: locald4.compute_bj_dimer_f90_ATM(
+                lambda row: locald4.compute_bj_dimer_f90(
                     params,
                     row,
                     r4r2_ls=r4r2_ls,
                 ),
                 axis=1,
             )
+            cnt+=1
             chunks.append(c)
-        df = pd.concat(chunks, axis=1)
+        chunks = pd.concat(chunks, axis=0)
+        df["d4"] = chunks.to_list()
     else:
         df["d4"] = df.apply(
             lambda row: locald4.compute_bj_dimer_f90(
@@ -285,7 +294,7 @@ def compute_int_energy_ATM(
     hf_key: str = "HF INTERACTION ENERGY",
     prevent_negative_params: bool = False,
     parallel=True,
-    chunk_count=8,
+    chunk_count=1,
 ):
     """
     compute_int_energy_ATM is used to optimize paramaters for damping function in dftd4
@@ -300,7 +309,7 @@ def compute_int_energy_ATM(
     if parallel:
         chunks = []
         for i in chunkify(df, chunk_count):
-            c = i.parallel_apply(
+            i['d4'] = i.parallel_apply(
                 lambda row: locald4.compute_bj_dimer_f90_ATM(
                     params,
                     row,
@@ -308,9 +317,8 @@ def compute_int_energy_ATM(
                 ),
                 axis=1,
             )
-            chunks.append(c)
+            chunks.append(i)
         df = pd.concat(chunks, axis=1)
-
     else:
         df["d4"] = df.apply(
             lambda row: locald4.compute_bj_dimer_f90_ATM(
