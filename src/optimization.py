@@ -9,6 +9,25 @@ from .tools import print_cartesians, df_to_latex_table_round
 from qcelemental import constants
 
 
+def chunkify(df: pd.DataFrame, chunk_size: int):
+    start = 0
+    length = df.shape[0]
+
+    # If DF is smaller than the chunk, return the DF
+    if length <= chunk_size:
+        yield df[:]
+        return
+
+    # Yield individual chunks
+    while start + chunk_size <= length:
+        yield df[start : chunk_size + start]
+        start = start + chunk_size
+
+    # Yield the remainder chunk, if needed
+    if start < length:
+        yield df[start:]
+
+
 def HF_only() -> (float, float, float):
     """
     HF_only ...
@@ -123,9 +142,7 @@ def compute_int_energy_stats(
     r4r2_ls = r4r2.r4r2_vals_ls()
     print(f"{params = }")
     if parallel:
-        # from pandarallel import pandarallel
-        # pandarallel.initialize()
-        df["d4"] = df.apply(
+        df["d4"] = df.p_apply(
             lambda row: compute_bj(
                 params,
                 row,
@@ -222,6 +239,7 @@ def compute_int_energy(
     hf_key: str = "HF INTERACTION ENERGY",
     prevent_negative_params: bool = False,
     parallel=True,
+    chunk_count=8,
 ):
     """
     compute_int_energy is used to optimize paramaters for damping function in dftd4
@@ -234,17 +252,18 @@ def compute_int_energy(
     diff = np.zeros(len(df))
     r4r2_ls = r4r2.r4r2_vals_ls()
     if parallel:
-        # print("parallel")
-        # from pandarallel import pandarallel
-        # pandarallel.initialize()
-        df["d4"] = df.apply(
-            lambda row: locald4.compute_bj_dimer_f90(
-                params,
-                row,
-                r4r2_ls=r4r2_ls,
-            ),
-            axis=1,
-        )
+        chunks = []
+        for i in chunkify(df, chunk_count):
+            c = i.parallel_apply(
+                lambda row: locald4.compute_bj_dimer_f90_ATM(
+                    params,
+                    row,
+                    r4r2_ls=r4r2_ls,
+                ),
+                axis=1,
+            )
+            chunks.append(c)
+        df = pd.concat(chunks, axis=1)
     else:
         df["d4"] = df.apply(
             lambda row: locald4.compute_bj_dimer_f90(
@@ -266,9 +285,10 @@ def compute_int_energy_ATM(
     hf_key: str = "HF INTERACTION ENERGY",
     prevent_negative_params: bool = False,
     parallel=True,
+    chunk_count=8,
 ):
     """
-    compute_int_energy is used to optimize paramaters for damping function in dftd4
+    compute_int_energy_ATM is used to optimize paramaters for damping function in dftd4
     """
     if prevent_negative_params:
         for i in params:
@@ -278,17 +298,19 @@ def compute_int_energy_ATM(
     diff = np.zeros(len(df))
     r4r2_ls = r4r2.r4r2_vals_ls()
     if parallel:
-        # print("parallel")
-        # from pandarallel import pandarallel
-        # pandarallel.initialize()
-        df["d4"] = df.apply(
-            lambda row: locald4.compute_bj_dimer_f90_ATM(
-                params,
-                row,
-                r4r2_ls=r4r2_ls,
-            ),
-            axis=1,
-        )
+        chunks = []
+        for i in chunkify(df, chunk_count):
+            c = i.parallel_apply(
+                lambda row: locald4.compute_bj_dimer_f90_ATM(
+                    params,
+                    row,
+                    r4r2_ls=r4r2_ls,
+                ),
+                axis=1,
+            )
+            chunks.append(c)
+        df = pd.concat(chunks, axis=1)
+
     else:
         df["d4"] = df.apply(
             lambda row: locald4.compute_bj_dimer_f90_ATM(
@@ -309,7 +331,7 @@ def compute_int_energy_NO_DAMPING(
     hf_key: str = "HF INTERACTION ENERGY",
 ):
     """
-    compute_int_energy is used to optimize paramaters for damping function in dftd4
+    compute_int_energy_NO_DAMPING is used to optimize paramaters for damping function in dftd4
     """
     rmse = 0
     diff = np.zeros(len(df))
@@ -476,9 +498,7 @@ def opt_cross_val(
         print(f"Testing: {len(testing)}")
 
         o_params = optimization(training, start_params, hf_key, version)
-        mae, rmse, max_e, mad, mean_diff = compute_stats(
-            o_params, testing, hf_key
-        )
+        mae, rmse, max_e, mad, mean_diff = compute_stats(o_params, testing, hf_key)
 
         stats_np[n] = np.array([rmse, mad, mean_diff, max_e])
         p_out[n] = o_params
