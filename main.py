@@ -55,6 +55,7 @@ def optimize_paramaters(
         "least_squares": True,
     },
     ATM=False,
+    extra = "",
 ) -> None:
     # Optimize parameters through 5-fold cross validation
     # params = src.paramsTable.paramsDict()[start_params_d4_key][1:]
@@ -73,8 +74,7 @@ def optimize_paramaters(
             "C6_ATM_A",
             "C6_ATM_B",
             ]
-    df = df[subset]
-    print(df)
+    df = df[subset].copy()
     for i in bases:
         print(i)
         if D3["powell"]:
@@ -94,18 +94,17 @@ def optimize_paramaters(
             )
         if D4["powell"]:
             print("D4 powell")
-            extra = ""
             if ATM:
                 print("ATM ON")
                 compute_energy = "compute_int_energy_ATM"
                 params.pop(0)
-                extra = "ATM_"
+                extra += "ATM_"
                 # params.append(1.0)
             else:
                 print("ATM OFF")
                 compute_energy = "compute_int_energy"
                 params.pop(0)
-                extra = "2B_"
+                extra += "2B_"
             version = {
                 "method": "powell",
                 "compute_energy": compute_energy,
@@ -118,7 +117,7 @@ def optimize_paramaters(
                 nfolds=5,
                 start_params=params,
                 hf_key=i,
-                output_l_marker=f"G_{extra}",
+                output_l_marker=f"{extra}",
                 version=version,
             )
         if D4["least_squares"]:
@@ -382,17 +381,19 @@ def main():
     # make_geometry_bohr_column(4)
     # return
     # gather_data("schr")
-    df, selected = df_names(4)
+    df, selected = df_names(6)
+    # TODO: plot -D4 2B with Grimme parameters
+    # TODO: plot -D3 ATM
+    # TODO: check a1 and a2 separate for ATM
 
-    def opt():
-        adz_opt_params = [0.829861, 0.706055, 1.123903]
-        bases = [
-            # "HF_dz",
-            # "HF_adz",
-            # "HF_jdz",
-            "HF_qz"
-            # "pbe0_adz_saptdft_ndisp",
-        ]
+    def opt(bases):
+        # bases = [
+        #     # "HF_dz",
+        #     # "HF_adz",
+        #     # "HF_jdz",
+        #     "HF_qz"
+        #     # "pbe0_adz_saptdft_ndisp",
+        # ]
         optimize_paramaters(
             df,
             bases,
@@ -400,10 +401,12 @@ def main():
             start_params_d4_key="HF",
             D3={"powell": False},
             D4={"powell": True, "least_squares": False},
-            ATM=True,
+            ATM=False,
+            extra="_G"
         )
 
-    opt()
+    # opt(["HF_qz"])
+    opt(["HF_adz"])
     return
 
     # compute_ie_differences(0)
