@@ -4,6 +4,13 @@ import src
 import qcelemental as qcel
 import tqdm
 from qm_tools_aw import tools
+from pandarallel import pandarallel
+pandarallel.initialize(use_memory_fs=True)
+# from parallel_pandas import ParallelPandas
+#
+# ParallelPandas.initialize(
+#     n_cpu=8, split_factor=4, show_vmem=True, disable_pr_bar=False
+# )
 
 ang_to_bohr = src.constants.Constants().g_aatoau()
 hartree_to_kcal_mol = qcel.constants.conversion_factor("hartree", "kcal / mol")
@@ -52,6 +59,22 @@ def optimize_paramaters(
     # Optimize parameters through 5-fold cross validation
     # params = src.paramsTable.paramsDict()[start_params_d4_key][1:]
     params = src.paramsTable.paramsDict()[start_params_d4_key]
+    subset = [
+            "Geometry_bohr",
+            *bases,
+            "Benchmark",
+            "charges",
+            "monAs",
+            "monBs",
+            "C6s",
+            "C6_A",
+            "C6_B",
+            "C6_ATM",
+            "C6_ATM_A",
+            "C6_ATM_B",
+            ]
+    df = df[subset]
+    print(df)
     for i in bases:
         print(i)
         if D3["powell"]:
@@ -359,15 +382,15 @@ def main():
     # make_geometry_bohr_column(4)
     # return
     # gather_data("schr")
-    df, selected = df_names(7)
+    df, selected = df_names(4)
 
     def opt():
         adz_opt_params = [0.829861, 0.706055, 1.123903]
         bases = [
             # "HF_dz",
-            "HF_adz",
+            # "HF_adz",
             # "HF_jdz",
-            # "HF_qz"
+            "HF_qz"
             # "pbe0_adz_saptdft_ndisp",
         ]
         optimize_paramaters(
@@ -379,8 +402,9 @@ def main():
             D4={"powell": True, "least_squares": False},
             ATM=True,
         )
-    # opt()
-    # return
+
+    opt()
+    return
 
     # compute_ie_differences(0)
     # compute_ie_differences(5)
