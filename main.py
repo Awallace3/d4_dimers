@@ -4,10 +4,9 @@ import src
 import qcelemental as qcel
 import tqdm
 from qm_tools_aw import tools
-from pandarallel import pandarallel
-pandarallel.initialize(use_memory_fs=True)
+# from pandarallel import pandarallel
+# pandarallel.initialize(use_memory_fs=True)
 # from parallel_pandas import ParallelPandas
-#
 # ParallelPandas.initialize(
 #     n_cpu=8, split_factor=4, show_vmem=True, disable_pr_bar=False
 # )
