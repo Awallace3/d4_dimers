@@ -378,8 +378,17 @@ def charge_comparison():
 def main():
     import dispersion
     v = dispersion.add(1, 2)
-    print(v)
 
+    t = np.arange(0, 10, 0.1)
+    print(v)
+    v = dispersion.disp.np_array_sum_test(t)
+    print(v, sum(t) == v)
+    t_2d = np.array([t, t])
+    print(f"t_2d:\n{t_2d}")
+    dispersion.disp.np_array_multiply_test(t_2d, 50)
+    print(f"t_2d (updated):\n{t_2d}")
+    t_new = dispersion.disp.add_arrays(t, t)
+    print(f"t_2d_new (updated):\n{t_new}")
     return
     # src.misc.regenerate_D4_data(*df_names(4))
     # make_geometry_bohr_column(4)
