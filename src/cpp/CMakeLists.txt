@@ -14,6 +14,7 @@ if(APPLE)
         /usr/local/include/eigen3
         /usr/include
         /usr/lib
+        ./extern/pybind11/include
         )
     link_directories(/usr/local/lib
         /usr/local/include/eigen3
@@ -28,6 +29,7 @@ if(LINUX)
         /usr/include/eigen3
         /usr/include
         /usr/lib
+        ./extern/pybind11/include
         )
     link_directories(/usr/local/lib
         /usr/include/eigen3
