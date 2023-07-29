@@ -376,6 +376,11 @@ def charge_comparison():
 
 
 def main():
+    import dispersion
+    v = dispersion.add(1, 2)
+    print(v)
+
+    return
     # src.misc.regenerate_D4_data(*df_names(4))
     # make_geometry_bohr_column(4)
     # return
