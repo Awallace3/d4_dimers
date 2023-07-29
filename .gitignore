@@ -196,3 +196,6 @@ plots/plot2.pkl
 C_n_ATM.json
 Testingd4
 tests/td4.pkl
+build
+.ccls*
+compile_commands.json
