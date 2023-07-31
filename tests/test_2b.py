@@ -267,9 +267,9 @@ def test_disp_module_2B(geom, request):
     pos_A = np.array(pos_A, dtype=np.int32)
     pos_B = np.array(pos_B, dtype=np.int32)
 
-    e_d = disp.disp_2b(pos, carts, d4C6s, params)
-    e_1 = disp.disp_2b(pos_A, carts_A, d4C6s_A, params)
-    e_2 = disp.disp_2b(pos_B, carts_B, d4C6s_B, params)
+    e_d = disp.disp_2B(pos, carts, d4C6s, params)
+    e_1 = disp.disp_2B(pos_A, carts_A, d4C6s_A, params)
+    e_2 = disp.disp_2B(pos_B, carts_B, d4C6s_B, params)
 
     e_total = e_d - (e_1 + e_2)
     d4_e_total = d4e - (d4e_A + d4e_B)

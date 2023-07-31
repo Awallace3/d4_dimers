@@ -5,6 +5,7 @@ import os
 import json
 from . import r4r2
 from qm_tools_aw import tools
+from dispersion import disp
 
 hartree_to_kcalmol = qcel.constants.conversion_factor("hartree", "kcal/mol")
 
@@ -394,6 +395,66 @@ def compute_bj_pairs_DIMER(
                     energies[j] += de
     energy = np.sum(energies)
     return energy * hartree_to_kcalmol
+
+def compute_disp_2B(
+    params,
+    r,
+):
+    num, coords = np.array(r["Geometry_bohr"][:, 0], dtype=np.int32), r["Geometry_bohr"][:, 1:]
+    charges = r["charges"]
+    monAs, monBs = r["monAs"], r["monBs"]
+    charges = r["charges"]
+
+    e_d = disp.disp_2B(
+        num,
+        coords,
+        r["C6s"],
+        params,
+    )
+
+    n1, p1 = num[monAs], coords[monAs, :]
+    e_1 = disp.disp_2B(
+        n1,
+        p1,
+        r["C6_A"],
+        params,
+    )
+
+    n2, p2 = num[monBs], coords[monBs, :]
+    e_2 = disp.disp_2B(
+        n2,
+        p2,
+        r["C6_B"],
+        params,
+    )
+
+    e_total = (e_d - (e_1 + e_2)) * hartree_to_kcalmol
+    return e_total
+
+def compute_disp_2B_dimer(
+    params,
+    r,
+):
+    pos, carts = np.array(r["Geometry_bohr"][:, 0], dtype=np.int32), r["Geometry_bohr"][:, 1:]
+    charges = r["charges"]
+    monAs, monBs = r["monAs"], r["monBs"]
+    charges = r["charges"]
+    pA, cA = pos[monAs], carts[monAs, :]
+    pB, cB = pos[monBs], carts[monBs, :]
+    e_total = disp.disp_2B_dimer(
+            pos,
+            carts,
+            r["C6s"],
+            pA,
+            cA,
+            r['C6_A'],
+            pB,
+            cB,
+            r['C6_B'],
+            params
+            )
+    return e_total * hartree_to_kcalmol
+
 
 
 def compute_bj_dimer_f90(
