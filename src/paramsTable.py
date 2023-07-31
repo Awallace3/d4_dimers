@@ -1,3 +1,5 @@
+import numpy as np
+
 def paramsDict() -> {}:
     """
     abbreviation table = {
@@ -67,4 +69,4 @@ def get_params(
         "sdatz"  : "SAPT0-D3(BJ)/aug-cc-pVTZ",
     }
     """
-    return paramsDict()[params_type]
+    return np.array(paramsDict()[params_type])
