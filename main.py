@@ -396,8 +396,8 @@ def main():
     df, selected = df_names(6)
     r1 = df.iloc[0]
     params = src.paramsTable.get_params("HF")
-    row = df.iloc[i]
-    d4_local = src.locald4.compute_disp_ATM_CHG_dimer(
+    row = df.iloc[0]
+    d4_local = src.locald4.compute_disp_2B(
         params,
         row,
     )
