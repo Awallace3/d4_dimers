@@ -6,6 +6,7 @@ import json
 from . import r4r2
 from qm_tools_aw import tools
 from dispersion import disp
+from pprint import pprint as pp
 
 hartree_to_kcalmol = qcel.constants.conversion_factor("hartree", "kcal/mol")
 
@@ -408,9 +409,10 @@ def compute_disp_2B(
     e_d = disp.disp_2B(
         num,
         coords,
-        r["C6s"],
+        r['C6s'],
         params,
     )
+    print(f"e_d: {e_d}")
 
     n1, p1 = num[monAs], coords[monAs, :]
     e_1 = disp.disp_2B(
@@ -481,8 +483,9 @@ def compute_disp_ATM_CHG_dimer(
 
 
 def compute_disp_2B_BJ_ATM_CHG_dimer(
-    params,
     r,
+    params_2B,
+    params_ATM,
 ):
     pos, carts = np.array(r["Geometry_bohr"][:, 0], dtype=np.int32), r["Geometry_bohr"][:, 1:]
     charges = r["charges"]
@@ -503,7 +506,8 @@ def compute_disp_2B_BJ_ATM_CHG_dimer(
             cB,
             r["C6_B"],
             r['C6_ATM_B'],
-            params
+            params_2B,
+            params_ATM,
             )
     return e_total * hartree_to_kcalmol
 

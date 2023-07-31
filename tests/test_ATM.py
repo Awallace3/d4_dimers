@@ -202,7 +202,10 @@ def test_disp_ATM_CHG(geom, request):
         d4C6s_B,
         d4C6s_ATM_B,
         params,
-            )
+    )
+    params_2B = params.copy()[:4]
+    print(params)
+    params_ATM = params
 
     e_total = disp.disp_2B_BJ_ATM_CHG(
         pos,
@@ -217,7 +220,8 @@ def test_disp_ATM_CHG(geom, request):
         carts_B,
         d4C6s_B,
         d4C6s_ATM_B,
-        params,
+        params_2B,
+        params_ATM,
     )
 
     d4_e_total = d4e - (d4e_A + d4e_B)

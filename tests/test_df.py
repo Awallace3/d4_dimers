@@ -448,14 +448,17 @@ def test_compute_2B_BJ_ATM_CHG_dimer():
     params.append(1.0)
     params = np.array(params, dtype=np.float64)
     print(params)
+    params_2B = params[:4].copy()
+    params_ATM = params.copy()
     energies = np.zeros((len(id_list), 2))
     r4r2_ls = src.r4r2.r4r2_vals_ls()
     for n, i in enumerate(id_list):
         print(i)
         row = df.iloc[i]
         d4_local = src.locald4.compute_disp_2B_BJ_ATM_CHG_dimer(
-            params,
             row,
+            params_2B,
+            params_ATM,
         )
         dftd4 = src.locald4.compute_bj_dimer_DFTD4(
             params,

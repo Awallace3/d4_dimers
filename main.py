@@ -385,6 +385,10 @@ def main():
     print(v, sum(t) == v)
     t_2d = np.array([t, t])
     print(f"t_2d:\n{t_2d}")
+    t = dispersion.disp.add_arrays(t, t)
+    print(f"t:\n{t}")
+    dispersion.disp.add_arrays_eigen( t_2d, t_2d)
+    print(f"t_2d:\n{t_2d}")
     # dispersion.disp.np_array_multiply_test(t_2d, 50)
     # print(f"t_2d (updated):\n{t_2d}")
     # t_new = dispersion.disp.add_arrays(t, t)
@@ -396,7 +400,8 @@ def main():
     df, selected = df_names(6)
     r1 = df.iloc[0]
     params = src.paramsTable.get_params("HF")
-    row = df.iloc[0]
+    params = np.array(params, dtype=np.float64)
+    row = df.iloc[2800]
     d4_local = src.locald4.compute_disp_2B(
         params,
         row,
