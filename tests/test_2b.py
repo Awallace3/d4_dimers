@@ -223,57 +223,6 @@ def test_dispersion_interaction_energy(geom, request) -> None:
     print(f"{d4_e_total = }")
     assert abs(d4_e_total - e_total) < 1e-14
 
-@pytest.mark.parametrize(
-    "geom",
-    [
-        ("water1"),
-        ("water2"),
-    ],
-)
-def test_disp_module_2B(geom, request):
-    charges = [0, 1]
-    (
-        params,
-        pos,
-        carts,
-        d4C6s,
-        d4C8s,
-        pairs,
-        d4e,
-        d4C6s_ATM,
-        pos_A,
-        carts_A,
-        d4C6s_A,
-        d4C8s_A,
-        pairs_A,
-        d4e_A,
-        d4C6s_ATM_A,
-        pos_B,
-        carts_B,
-        d4C6s_B,
-        d4C8s_B,
-        pairs_B,
-        d4e_B,
-        d4C6s_BTM_B,
-    ) = request.getfixturevalue(geom)
-    p = params.copy()
-    tools.print_cartesians_pos_carts(pos, carts)
-    carts *= ang_to_bohr
-    carts_A *= ang_to_bohr
-    carts_B *= ang_to_bohr
-
-    params = np.array(params, dtype=np.float64)
-    pos = np.array(pos, dtype=np.int32)
-    pos_A = np.array(pos_A, dtype=np.int32)
-    pos_B = np.array(pos_B, dtype=np.int32)
-
-    e_d = disp.disp_2B(pos, carts, d4C6s, params)
-    e_1 = disp.disp_2B(pos_A, carts_A, d4C6s_A, params)
-    e_2 = disp.disp_2B(pos_B, carts_B, d4C6s_B, params)
-
-    e_total = e_d - (e_1 + e_2)
-    d4_e_total = d4e - (d4e_A + d4e_B)
-    assert abs(d4_e_total - e_total) < 1e-14
 
 def test_charged_dftd4():
     """
@@ -456,3 +405,55 @@ def test_C6s_Di_to_Mon_HBC6_IE_func_call():
     )
     assert np.all(abs(d4_mons_individually - d4_dimer) > 1e-6)
 
+
+@pytest.mark.parametrize(
+    "geom",
+    [
+        ("water1"),
+        ("water2"),
+    ],
+)
+def test_disp_module_2B(geom, request):
+    charges = [0, 1]
+    (
+        params,
+        pos,
+        carts,
+        d4C6s,
+        d4C8s,
+        pairs,
+        d4e,
+        d4C6s_ATM,
+        pos_A,
+        carts_A,
+        d4C6s_A,
+        d4C8s_A,
+        pairs_A,
+        d4e_A,
+        d4C6s_ATM_A,
+        pos_B,
+        carts_B,
+        d4C6s_B,
+        d4C8s_B,
+        pairs_B,
+        d4e_B,
+        d4C6s_BTM_B,
+    ) = request.getfixturevalue(geom)
+    p = params.copy()
+    tools.print_cartesians_pos_carts(pos, carts)
+    carts *= ang_to_bohr
+    carts_A *= ang_to_bohr
+    carts_B *= ang_to_bohr
+
+    params = np.array(params, dtype=np.float64)
+    pos = np.array(pos, dtype=np.int32)
+    pos_A = np.array(pos_A, dtype=np.int32)
+    pos_B = np.array(pos_B, dtype=np.int32)
+
+    e_d = disp.disp_2B(pos, carts, d4C6s, params)
+    e_1 = disp.disp_2B(pos_A, carts_A, d4C6s_A, params)
+    e_2 = disp.disp_2B(pos_B, carts_B, d4C6s_B, params)
+
+    e_total = e_d - (e_1 + e_2)
+    d4_e_total = d4e - (d4e_A + d4e_B)
+    assert abs(d4_e_total - e_total) < 1e-14

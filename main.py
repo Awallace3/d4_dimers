@@ -396,14 +396,11 @@ def main():
     df, selected = df_names(6)
     r1 = df.iloc[0]
     params = src.paramsTable.get_params("HF")
-    pos = np.array(r1['Geometry'][:,0], dtype=np.int32)
-    carts = np.array(r1['Geometry'][:,1:], dtype=np.float64)
-    C6s = np.array(r1['C6s'], dtype=np.float64)
-    params= np.array(params, dtype=np.float64)
-    python_2B = src.locald4.compute_bj_f90(pos, carts, C6s, params=params)
-    disp_2B = dispersion.disp.disp_2b(pos, carts, C6s, params)
-    print(python_2B, disp_2B)
-    assert abs(python_2B - disp_2B) < 1e-10
+    row = df.iloc[i]
+    d4_local = src.locald4.compute_disp_ATM_CHG_dimer(
+        params,
+        row,
+    )
     return
     # TODO: plot -D4 2B with Grimme parameters
     # TODO: plot -D3 ATM

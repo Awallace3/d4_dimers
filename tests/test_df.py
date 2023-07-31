@@ -16,7 +16,8 @@ hartree_to_kcalmol = qcel.constants.conversion_factor("hartree", "kcal/mol")
 
 # You will need to build https://github.com/Awallace3/dftd4 for pytest to pass
 dftd4_bin = "/theoryfs2/ds/amwalla3/.local/bin/dftd4"
-data_pkl = "/theoryfs2/ds/amwalla3/projects/d4_corrections/tests/data/test.pkl"
+# data_pkl = "/theoryfs2/ds/amwalla3/projects/d4_corrections/tests/data/test.pkl"
+data_pkl = "/theoryfs2/ds/amwalla3/projects/d4_corrections/tests/data/t2.pkl"
 
 
 def test_stored_C6s():
@@ -359,3 +360,117 @@ def test_C6s_change_dimer_to_monomer_IE_2():
         diff = d4_dimer - d4_mons_individually
         print(diff)
         assert abs(d4_mons_individually - d4_dimer) > 1e-12
+
+
+def test_compute_2B_dimer():
+    """
+    ensures that the fortran and python versions of the bj dispersion energy are the same
+    """
+    df = pd.read_pickle(data_pkl)
+    id_list = [0, 500, 2700, 4926, 7000, 8275]
+    params = np.array(src.paramsTable.paramsDict()["HF"], dtype=np.float64)
+    energies = np.zeros((len(id_list), 2))
+    r4r2_ls = src.r4r2.r4r2_vals_ls()
+    for n, i in enumerate(id_list):
+        print(i)
+        row = df.iloc[i]
+        print(row["Geometry_bohr"])
+        print(row)
+        d4_local = src.locald4.compute_disp_2B_dimer(
+            params,
+            row,
+        )
+        dftd4 = src.locald4.compute_bj_dimer_DFTD4(
+            params,
+            row["Geometry"][:, 0],  # pos
+            row["Geometry"][:, 1:],  # carts
+            row["monAs"],
+            row["monBs"],
+            row["charges"],
+            s9=0.0,
+        )
+        energies[n, 0] = d4_local
+        energies[n, 1] = dftd4
+    print(energies)
+    assert np.allclose(energies[:, 0], energies[:, 1], atol=1e-14)
+
+
+def test_compute_ATM_CHG_dimer():
+    """
+    ensures that the fortran and python versions of the bj dispersion energy are the same
+    """
+    df = pd.read_pickle(data_pkl)
+    id_list = [0, 500]
+    params = src.paramsTable.paramsDict()["HF"]
+    params.append(1.0)
+    params = np.array(params, dtype=np.float64)
+    print(params)
+    energies = np.zeros((len(id_list), 2))
+    r4r2_ls = src.r4r2.r4r2_vals_ls()
+    for n, i in enumerate(id_list):
+        print(i)
+        row = df.iloc[i]
+        d4_local = src.locald4.compute_disp_ATM_CHG_dimer(
+            params,
+            row,
+        )
+        dftd4 = src.locald4.compute_bj_dimer_DFTD4(
+            params,
+            row["Geometry"][:, 0],  # pos
+            row["Geometry"][:, 1:],  # carts
+            row["monAs"],
+            row["monBs"],
+            row["charges"],
+            s9=1.0,
+        )
+        dftd4 -= src.locald4.compute_bj_dimer_DFTD4(
+            params,
+            row["Geometry"][:, 0],  # pos
+            row["Geometry"][:, 1:],  # carts
+            row["monAs"],
+            row["monBs"],
+            row["charges"],
+            s9=0.0,
+        )
+        energies[n, 0] = d4_local
+        energies[n, 1] = dftd4
+    print(energies)
+    assert np.allclose(energies[:, 0], energies[:, 1], atol=1e-14)
+
+
+def test_compute_2B_BJ_ATM_CHG_dimer():
+    """
+    ensures that the fortran and python versions of the bj dispersion energy are the same
+    """
+    df = pd.read_pickle(data_pkl)
+    id_list = [0, 500]
+    params = src.paramsTable.paramsDict()["HF"]
+    params.append(1.0)
+    params = np.array(params, dtype=np.float64)
+    print(params)
+    energies = np.zeros((len(id_list), 2))
+    r4r2_ls = src.r4r2.r4r2_vals_ls()
+    for n, i in enumerate(id_list):
+        print(i)
+        row = df.iloc[i]
+        d4_local = src.locald4.compute_disp_2B_BJ_ATM_CHG_dimer(
+            params,
+            row,
+        )
+        dftd4 = src.locald4.compute_bj_dimer_DFTD4(
+            params,
+            row["Geometry"][:, 0],  # pos
+            row["Geometry"][:, 1:],  # carts
+            row["monAs"],
+            row["monBs"],
+            row["charges"],
+            s9=1.0,
+        )
+        energies[n, 0] = d4_local
+        energies[n, 1] = dftd4
+    print(energies)
+    assert np.allclose(energies[:, 0], energies[:, 1], atol=1e-14)
+
+
+
+
