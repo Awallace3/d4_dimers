@@ -36,3 +36,27 @@ def test_compute_stats(params, HF_key, target_rmse, ATM_ON):
         ATM=ATM_ON,
     )
     assert abs(rmse - target_rmse) < 1e-7
+
+
+# TODO: FIX THIS TEST BEFORE OPTIMIZIATIONS
+@pytest.mark.parametrize(
+    "params, HF_key, target_rmse, ATM_ON",
+    [
+        ([1.0, 1.61679827, 0.44959224, 3.35743605, 1.0], "HF_qz", 0.47519209, True),
+        ([1.0, 1.04488291, 0.41144968, 3.14951807, 0.0], "HF_qz", 0.45367290, False),
+    ],
+)
+def test_compute_stats_DISP(params, HF_key, target_rmse, ATM_ON):
+    df = pd.read_pickle(data_pkl_g)
+    params = [
+        np.array(params, dtype=np.float64),
+        np.array(params, dtype=np.float64),
+    ]
+    mae, rmse, max_e, mad, mean_diff = src.optimization.compute_int_energy_stats_DISP(
+        params,
+        df,
+        HF_key,
+        print_results=True,
+        ATM=ATM_ON,
+    )
+    assert abs(rmse - target_rmse) < 1e-7

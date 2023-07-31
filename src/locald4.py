@@ -400,6 +400,7 @@ def compute_bj_pairs_DIMER(
 def compute_disp_2B(
     params,
     r,
+    params_ATM=None,
 ):
     num, coords = np.array(r["Geometry_bohr"][:, 0], dtype=np.int32), r["Geometry_bohr"][:, 1:]
     charges = r["charges"]
@@ -412,8 +413,6 @@ def compute_disp_2B(
         r['C6s'],
         params,
     )
-    print(f"e_d: {e_d}")
-
     n1, p1 = num[monAs], coords[monAs, :]
     e_1 = disp.disp_2B(
         n1,

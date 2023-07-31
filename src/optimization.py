@@ -124,6 +124,61 @@ def compute_int_energy_stats_dftd4_key(
     return
 
 
+def compute_int_energy_stats_DISP(
+    params: [[float]],
+    df: pd.DataFrame,
+    hf_key: str = "HF INTERACTION ENERGY",
+    parallel=False,
+    print_results=False,
+    ATM=False,
+    chunk_count=1000,
+) -> (float, float, float,):
+    t = df[hf_key].isna().sum()
+    assert t == 0, f"The HF_col provided has np.nan values present, {t}"
+    compute_bj = locald4.compute_bj_dimer_f90
+    if ATM:
+        compute_bj = locald4.compute_bj_dimer_f90_ATM
+
+    diff = np.zeros(len(df))
+    r4r2_ls = r4r2.r4r2_vals_ls()
+    print(f"{params = }")
+    if parallel:
+        chunks = []
+        for i in chunkify(df, chunk_count):
+            c = i.p_apply(
+                lambda row: locald4.compute_disp_2B_BJ_ATM_CHG_dimer(
+                    row,
+                    params[0],
+                    params[1],
+                ),
+                axis=1,
+            )
+            chunks.append(c)
+        df = pd.concat(chunks, axis=1)
+    else:
+        df["d4"] = df.apply(
+            lambda row: locald4.compute_disp_2B_BJ_ATM_CHG_dimer(
+                row,
+                params[0],
+                params[1],
+            ),
+            axis=1,
+        )
+    df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
+    mae = df["diff"].abs().mean()
+    rmse = (df["diff"] ** 2).mean() ** 0.5
+    max_e = df["diff"].abs().max()
+    mad = abs(df["diff"] - df["diff"].mean()).mean()
+    mean_dif = df["diff"].mean()
+    if print_results:
+        print("        1. MAE  = %.4f" % mae)
+        print("        2. RMSE = %.4f" % rmse)
+        print("        3. MAX  = %.4f" % max_e)
+        print("        4. MAD  = %.4f" % mad)
+        print("        4. MD   = %.4f" % mean_dif)
+    return mae, rmse, max_e, mad, mean_dif
+
+
 def compute_int_energy_stats(
     params: [float],
     df: pd.DataFrame,
@@ -269,7 +324,7 @@ def compute_int_energy(
                 ),
                 axis=1,
             )
-            cnt+=1
+            cnt += 1
             chunks.append(c)
         chunks = pd.concat(chunks, axis=0)
         df["d4"] = chunks.to_list()
@@ -279,6 +334,56 @@ def compute_int_energy(
                 params,
                 row,
                 r4r2_ls=r4r2_ls,
+            ),
+            axis=1,
+        )
+    df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
+    rmse = (df["diff"] ** 2).mean() ** 0.5
+    print("%.8f\t" % rmse, params.tolist())
+    return rmse
+
+
+def compute_int_energy_DISP(
+    params: [[float]],
+    df: pd.DataFrame,
+    hf_key: str = "HF INTERACTION ENERGY",
+    prevent_negative_params: bool = False,
+    parallel=False,
+    chunk_count=1000,
+):
+    """
+    compute_int_energy_DISP is used to optimize paramaters for damping function in dftd4
+    """
+    if prevent_negative_params:
+        for i in params:
+            if i < 0:
+                return 10
+    rmse = 0
+    diff = np.zeros(len(df))
+    r4r2_ls = r4r2.r4r2_vals_ls()
+    if parallel:
+        chunks = []
+        cnt = 0
+        for i in chunkify(df, chunk_count):
+            print(f"{cnt = }")
+            c = i.p_apply(
+                lambda row: locald4.compute_disp_2B_BJ_ATM_CHG_dimer(
+                    row,
+                    params[0],
+                    params[1],
+                ),
+                axis=1,
+            )
+            cnt += 1
+            chunks.append(c)
+        chunks = pd.concat(chunks, axis=0)
+        df["d4"] = chunks.to_list()
+    else:
+        df["d4"] = df.apply(
+            lambda row: locald4.compute_disp_2B_BJ_ATM_CHG_dimer(
+                row,
+                params[0],
+                params[1],
             ),
             axis=1,
         )
@@ -309,7 +414,7 @@ def compute_int_energy_ATM(
     if parallel:
         chunks = []
         for i in chunkify(df, chunk_count):
-            i['d4'] = i.p_apply(
+            i["d4"] = i.p_apply(
                 lambda row: locald4.compute_bj_dimer_f90_ATM(
                     params,
                     row,
@@ -386,10 +491,12 @@ def optimization(
     hf_key: str = "HF INTERACTION ENERGY",
     version={
         "method": "powell",
-        "compute_energy": "compute_int_energy",
+        "compute_energy": "compute_int_energy_DISP",
     },
 ):
-    if version["compute_energy"] == "compute_int_energy":
+    if version["compute_energy"] == "compute_int_energy_DISP":
+        compute = compute_int_energy_DISP
+    elif version["compute_energy"] == "compute_int_energy":
         compute = compute_int_energy
     elif version["compute_energy"] == "compute_int_energy_ATM":
         compute = compute_int_energy_ATM
@@ -456,14 +563,16 @@ def opt_cross_val(
     version={
         "method": "powell",
         "compute_energy": "compute_int_energy",
-        "compute_stats": "compute_int_energy_stats",
+        "compute_stats": "compute_int_energy_stats_DISP",
     },
 ) -> None:
     """
     opt_cross_val performs n-fold cross validation on opt*.pkl df from
     """
 
-    if version["compute_stats"] == "compute_int_energy_stats":
+    if version["compute_stats"] == "compute_int_energy_stats_DISP":
+        compute_stats = compute_int_energy_stats_DISP
+    elif version["compute_stats"] == "compute_int_energy_stats":
         compute_stats = compute_int_energy_stats
     elif version["compute_stats"] == "jeff_d3":
         compute_stats = jeff.compute_error_stats_d3
