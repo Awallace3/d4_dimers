@@ -17,6 +17,8 @@ def paramsDict() -> {}:
         "sdtz"   : "SAPT0-D3(BJ)/cc-pVTZ",
         "sdatz"  : "SAPT0-D3(BJ)/aug-cc-pVTZ",
     }
+    params = [s6, s8, a1, a2, (s9 optional)]
+    params_ATM = [s6, s8, a1, a2, a1_ATM, a2_ATM, s9]
     """
     params_dict = {
         "HF": [1.0, 1.61679827, 0.44959224, 3.35743605],

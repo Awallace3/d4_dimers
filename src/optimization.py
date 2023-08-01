@@ -1,3 +1,4 @@
+import os
 from . import locald4
 from . import r4r2
 from . import jeff
@@ -125,19 +126,49 @@ def compute_int_energy_stats_dftd4_key(
 
 
 def compute_int_energy_stats_DISP(
-    params: [[float]],
+    params: [float],
     df: pd.DataFrame,
     hf_key: str = "HF INTERACTION ENERGY",
     parallel=False,
     print_results=False,
-    ATM=False,
     chunk_count=1000,
 ) -> (float, float, float,):
+    """
+    params types:
+        7 params = [s6, s8, a1, a2, a1_ATM, a2_ATM, s9],
+        6 params = [s6, s8, a1, a2, a1_ATM, a2_ATM],
+        5 params = [s6, s8, a1, a2, s9],
+        4 params = [s6, s8, a1, a2],
+        2 params = [
+                [s6, s8, a1, a2],
+                [s6, s8, a1_ATM, a2_ATM],
+        ]
+    """
     t = df[hf_key].isna().sum()
     assert t == 0, f"The HF_col provided has np.nan values present, {t}"
-    compute_bj = locald4.compute_bj_dimer_f90
-    if ATM:
-        compute_bj = locald4.compute_bj_dimer_f90_ATM
+    print(len(params))
+
+    if len(params) == 7:
+        params_2B = np.array(params[:4], dtype=np.float64)
+        params_ATM = np.array(
+            [params[0], params[1], params[4], params[5], params[6]], dtype=np.float64
+        )
+    elif len(params) == 6:
+        params_2B = np.array(params[:4], dtype=np.float64)
+        params_ATM = np.array(
+            [params[0], params[1], params[4], params[5], 1.0], dtype=np.float64
+        )
+    elif len(params) == 5:
+        params_2B = np.array(params[:4], dtype=np.float64)
+        params_ATM = np.array(params.copy(), dtype=np.float64)
+    elif len(params) == 4:
+        params_2B = params.copy()
+        params_ATM = params.copy()
+    elif len(params) == 2:
+        params_2B = np.array(params[0], dtype=np.float64)
+        params_ATM = np.array(params[1], dtype=np.float64)
+    else:
+        os.error("params not understood")
 
     diff = np.zeros(len(df))
     r4r2_ls = r4r2.r4r2_vals_ls()
@@ -148,8 +179,8 @@ def compute_int_energy_stats_DISP(
             c = i.p_apply(
                 lambda row: locald4.compute_disp_2B_BJ_ATM_CHG_dimer(
                     row,
-                    params[0],
-                    params[1],
+                    params_2B,
+                    params_ATM,
                 ),
                 axis=1,
             )
@@ -159,8 +190,8 @@ def compute_int_energy_stats_DISP(
         df["d4"] = df.apply(
             lambda row: locald4.compute_disp_2B_BJ_ATM_CHG_dimer(
                 row,
-                params[0],
-                params[1],
+                params_2B,
+                params_ATM,
             ),
             axis=1,
         )
@@ -344,7 +375,7 @@ def compute_int_energy(
 
 
 def compute_int_energy_DISP(
-    params: [[float]],
+    params,
     df: pd.DataFrame,
     hf_key: str = "HF INTERACTION ENERGY",
     prevent_negative_params: bool = False,
@@ -353,7 +384,32 @@ def compute_int_energy_DISP(
 ):
     """
     compute_int_energy_DISP is used to optimize paramaters for damping function in dftd4
+
+    params types:
+        params = [s6, s8, a1, a2, a1_ATM, a2_ATM],
+        params = [s6, s8, a1, a2],
+        params = [
+                [s6, s8, a1, a2],
+                [s6, s8, a1_ATM, a2_ATM],
+        ]
     """
+    if len(params) == 6:
+        params_2B = np.array(params[:4], dtype=np.float64)
+        params_ATM = np.array(
+            [params[0], params[1], params[4], params[5], params[6]], dtype=np.float64
+        )
+    if len(params) == 5:
+        params_2B = np.array(params[:4], dtype=np.float64)
+        params_ATM = np.array(
+            [params[0], params[1], params[4], params[5], 1.0], dtype=np.float64
+        )
+    elif len(params) == 4:
+        params_2B = params.copy()
+        params_ATM = params.copy()
+    elif len(params) == 2:
+        params_2B = np.array(params[0], dtype=np.float64)
+        params_ATM = np.array(params[1], dtype=np.float64)
+
     if prevent_negative_params:
         for i in params:
             if i < 0:
@@ -562,7 +618,7 @@ def opt_cross_val(
     output_l_marker: str = "G_",
     version={
         "method": "powell",
-        "compute_energy": "compute_int_energy",
+        "compute_energy": "compute_int_energy_DISP",
         "compute_stats": "compute_int_energy_stats_DISP",
     },
 ) -> None:
