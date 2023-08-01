@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import src
 import os
+import dispersion
 
 
 def time_2body():
@@ -54,7 +55,7 @@ def time_2body_timeit(
     print(f"Time for 2-body (python): {serial_time_py:.6f} s")
 
     serial_times_cpp = []
-    os.environ["OMP_NUM_THREADS"] = "1"
+    dispersion.omp_set_num_threads(1)
     for i in range(iter):
         start = time.time()
         d_2B = disp_func(params, r)
@@ -66,7 +67,7 @@ def time_2body_timeit(
     disp_times = [[] for i in range(len(proc_test))]
     disp_time_final = []
     for n, i in enumerate(proc_test):
-        os.environ["OMP_NUM_THREADS"] = f"{n}"
+        dispersion.omp_set_num_threads(i)
         for j in range(iter):
             start = time.time()
             d_2B = disp_func(params, r)
@@ -110,7 +111,7 @@ def time_ATM_timeit(
 
 
     serial_times_cpp = []
-    os.environ["OMP_NUM_THREADS"] = "1"
+    dispersion.omp_set_num_threads(1)
     for i in range(iter):
         start = time.time()
         d_2B_ATM = disp_func(r, params[0], params[1])
@@ -122,7 +123,7 @@ def time_ATM_timeit(
     disp_times = [[] for i in range(len(proc_test))]
     disp_time_final = []
     for n, i in enumerate(proc_test):
-        os.environ["OMP_NUM_THREADS"] = f"{n}"
+        dispersion.omp_set_num_threads(i)
         for j in range(iter):
             start = time.time()
             d_2B_ATM = disp_func(r, params[0], params[1])
@@ -143,6 +144,7 @@ def time_ATM_timeit(
 
 
 def main():
+    dispersion.omp_set_num_threads(1)
     time_ATM_timeit()
     time_2body_timeit(disp_func=src.locald4.compute_disp_2B)
     # time_2body_timeit(disp_func=src.locald4.compute_disp_2B_dimer)
