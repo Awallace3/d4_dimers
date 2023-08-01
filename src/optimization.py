@@ -146,7 +146,6 @@ def compute_int_energy_stats_DISP(
     """
     t = df[hf_key].isna().sum()
     assert t == 0, f"The HF_col provided has np.nan values present, {t}"
-    print(len(params))
 
     if len(params) == 7:
         params_2B = np.array(params[:4], dtype=np.float64)
@@ -168,7 +167,7 @@ def compute_int_energy_stats_DISP(
         params_2B = np.array(params[0], dtype=np.float64)
         params_ATM = np.array(params[1], dtype=np.float64)
     else:
-        os.error("params not understood")
+        raise ValueError("params must be of size 2, 4, 5, 6, or 7!")
 
     diff = np.zeros(len(df))
     r4r2_ls = r4r2.r4r2_vals_ls()
@@ -386,30 +385,36 @@ def compute_int_energy_DISP(
     compute_int_energy_DISP is used to optimize paramaters for damping function in dftd4
 
     params types:
-        params = [s6, s8, a1, a2, a1_ATM, a2_ATM],
-        params = [s6, s8, a1, a2],
-        params = [
+        7 params = [s6, s8, a1, a2, a1_ATM, a2_ATM, s9],
+        6 params = [s6, s8, a1, a2, a1_ATM, a2_ATM],
+        5 params = [s6, s8, a1, a2, s9],
+        4 params = [s6, s8, a1, a2],
+        2 params = [
                 [s6, s8, a1, a2],
                 [s6, s8, a1_ATM, a2_ATM],
         ]
     """
-    if len(params) == 6:
+    if len(params) == 7:
         params_2B = np.array(params[:4], dtype=np.float64)
         params_ATM = np.array(
             [params[0], params[1], params[4], params[5], params[6]], dtype=np.float64
         )
-    if len(params) == 5:
+    elif len(params) == 6:
         params_2B = np.array(params[:4], dtype=np.float64)
         params_ATM = np.array(
             [params[0], params[1], params[4], params[5], 1.0], dtype=np.float64
         )
+    elif len(params) == 5:
+        params_2B = np.array(params[:4], dtype=np.float64)
+        params_ATM = np.array(params.copy(), dtype=np.float64)
     elif len(params) == 4:
         params_2B = params.copy()
         params_ATM = params.copy()
     elif len(params) == 2:
         params_2B = np.array(params[0], dtype=np.float64)
         params_ATM = np.array(params[1], dtype=np.float64)
-
+    else:
+        raise ValueError("params must be of size 2, 4, 5, 6, or 7!")
     if prevent_negative_params:
         for i in params:
             if i < 0:
