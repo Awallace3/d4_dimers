@@ -199,3 +199,4 @@ tests/td4.pkl
 build
 .ccls*
 compile_commands.json
+.nfs*

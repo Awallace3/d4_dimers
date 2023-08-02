@@ -4,6 +4,7 @@ import src
 import qcelemental as qcel
 import tqdm
 from qm_tools_aw import tools
+import dispersion
 # from pandarallel import pandarallel
 # pandarallel.initialize(use_memory_fs=True)
 # from parallel_pandas import ParallelPandas
@@ -59,6 +60,8 @@ def optimize_paramaters(
     # Optimize parameters through 5-fold cross validation
     # params = src.paramsTable.paramsDict()[start_params_d4_key][1:]
     params = src.paramsTable.paramsDict()[start_params_d4_key]
+    dispersion.omp_set_num_threads(8)
+    print(params)
     subset = [
             "Geometry_bohr",
             *bases,
@@ -95,19 +98,18 @@ def optimize_paramaters(
             print("D4 powell")
             if ATM:
                 print("ATM ON")
-                compute_energy = "compute_int_energy_ATM"
-                params.pop(0)
+                compute_energy = "compute_int_energy_DISP"
                 extra += "ATM_"
                 # params.append(1.0)
             else:
                 print("ATM OFF")
-                compute_energy = "compute_int_energy"
-                params.pop(0)
+                # TODO: need to ensure s9 is 0.0
+                compute_energy = "compute_int_energy_DISP"
                 extra += "2B_"
             version = {
                 "method": "powell",
                 "compute_energy": compute_energy,
-                "compute_stats": "compute_int_energy_stats",
+                "compute_stats": "compute_int_energy_stats_DISP",
             }
 
             print(version)
@@ -376,37 +378,7 @@ def charge_comparison():
 
 
 def main():
-    import dispersion
-    v = dispersion.add(1, 2)
-
-    t = np.arange(0, 10, 0.1)
-    print(v)
-    v = dispersion.disp.np_array_sum_test(t)
-    print(v, sum(t) == v)
-    t_2d = np.array([t, t])
-    print(f"t_2d:\n{t_2d}")
-    t = dispersion.disp.add_arrays(t, t)
-    print(f"t:\n{t}")
-    dispersion.disp.add_arrays_eigen( t_2d, t_2d)
-    print(f"t_2d:\n{t_2d}")
-    # dispersion.disp.np_array_multiply_test(t_2d, 50)
-    # print(f"t_2d (updated):\n{t_2d}")
-    # t_new = dispersion.disp.add_arrays(t, t)
-    # print(f"t_2d_new (updated):\n{t_new}")
-    # src.misc.regenerate_D4_data(*df_names(4))
-    # make_geometry_bohr_column(4)
-    # return
-    # gather_data("schr")
     df, selected = df_names(6)
-    r1 = df.iloc[0]
-    params = src.paramsTable.get_params("HF")
-    params = np.array(params, dtype=np.float64)
-    row = df.iloc[2800]
-    d4_local = src.locald4.compute_disp_2B(
-        params,
-        row,
-    )
-    return
     # TODO: plot -D4 2B with Grimme parameters
     # TODO: plot -D3 ATM
     # TODO: check a1 and a2 separate for ATM
@@ -423,7 +395,7 @@ def main():
             df,
             bases,
             # start_params_d4_key="sadz",
-            start_params_d4_key="HF",
+            start_params_d4_key="HF_ATM_OPT_START",
             D3={"powell": False},
             D4={"powell": True, "least_squares": False},
             ATM=False,

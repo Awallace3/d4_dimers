@@ -17,8 +17,15 @@ def paramsDict() -> {}:
         "sdtz"   : "SAPT0-D3(BJ)/cc-pVTZ",
         "sdatz"  : "SAPT0-D3(BJ)/aug-cc-pVTZ",
     }
-    params = [s6, s8, a1, a2, (s9 optional)]
-    params_ATM = [s6, s8, a1, a2, a1_ATM, a2_ATM, s9]
+    params types:
+        7 params = [s6, s8, a1, a2, a1_ATM, a2_ATM, s9],
+        6 params = [s6, s8, a1, a2, a1_ATM, a2_ATM],
+        5 params = [s6, s8, a1, a2, s9] || [s8, a1, a2, a1_ATM, a2_ATM],
+        4 params = [s6, s8, a1, a2],
+        2 params = [
+                [s6, s8, a1, a2],
+                [s6, s8, a1_ATM, a2_ATM],
+        ]
     """
     params_dict = {
         "HF": [1.0, 1.61679827, 0.44959224, 3.35743605],
@@ -26,6 +33,16 @@ def paramsDict() -> {}:
             [1.0, 1.61679827, 0.44959224, 3.35743605, 1.0],
             [1.0, 1.61679827, 0.44959224, 3.35743605, 1.0],
         ],
+        "HF_ATM_OPT_START": np.array(
+            [
+                1.61679827,
+                0.44959224,
+                3.35743605,
+                0.44959224,
+                3.35743605,
+            ],
+            dtype=np.float64,
+        ),
         "undamped": [1.0, 1.0, 0.0, 0.0],
         "sddz": [1.0, 0.768328, 0.096991, 3.640770],
         "sdz": [1.0, 0.819671, 0.629414, 1.433599],
@@ -75,4 +92,53 @@ def get_params(
         "sdatz"  : "SAPT0-D3(BJ)/aug-cc-pVTZ",
     }
     """
-    return np.array(paramsDict()[params_type])
+    return np.array(paramsDict()[params_type], dtype=np.float64)
+
+
+def generate_2B_ATM_param_subsets(params):
+    """
+    params types:
+        7 params = [s6, s8, a1, a2, a1_ATM, a2_ATM, s9],
+        6 params = [s6, s8, a1, a2, a1_ATM, a2_ATM],
+        5 params = [s6, s8, a1, a2, s9] || [s8, a1, a2, a1_ATM, a2_ATM],
+        4 params = [s6, s8, a1, a2],
+        2 params = [
+                [s6, s8, a1, a2],
+                [s6, s8, a1_ATM, a2_ATM],
+        ]
+    """
+    if len(params) == 7:
+        params_2B = np.array(params[:4], dtype=np.float64)
+        params_ATM = np.array(
+            [params[0], params[1], params[4], params[5], params[6]], dtype=np.float64
+        )
+    elif len(params) == 6:
+        params_2B = np.array(params[:4], dtype=np.float64)
+        params_ATM = np.array(
+            [params[0], params[1], params[4], params[5], 1.0], dtype=np.float64
+        )
+    elif (
+        len(params) == 5
+        and abs(params[-1] - 1.0) < 1e-6
+        and abs(params[0] - 1.0) < 1e-6
+    ):
+        print("Special 5 ATM")
+        params_2B = np.array(params, dtype=np.float64)
+        params_ATM = np.array(params, dtype=np.float64)
+    elif len(params) == 5 and abs(params[-1]) < 1e-6 and abs(params[0] - 1.0) < 1e-6:
+        print("Special 5 2body")
+        params_2B = np.array(params, dtype=np.float64)
+        params_ATM = np.array(params, dtype=np.float64)
+    elif len(params) == 5:
+        params_2B = np.array(
+            [1.0, params[0], params[1], params[2], 1.0], dtype=np.float64
+        )
+        params_ATM = np.array(
+            [1.0, params[0], params[3], params[4], 1.0], dtype=np.float64
+        )
+    elif len(params) == 2:
+        params_2B = np.array(params[0], dtype=np.float64)
+        params_ATM = np.array(params[1], dtype=np.float64)
+    else:
+        raise ValueError("params must be of size 2, 5, 6, or 7!")
+    return params_2B, params_ATM
