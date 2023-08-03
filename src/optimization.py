@@ -137,6 +137,8 @@ def compute_int_energy_stats_DISP(
     t = df[hf_key].isna().sum()
     assert t == 0, f"The HF_col provided has np.nan values present, {t}"
     params_2B, params_ATM = paramsTable.generate_2B_ATM_param_subsets(params)
+    print(f"{params_2B = }")
+    print(f"{params_ATM = }")
 
     diff = np.zeros(len(df))
     r4r2_ls = r4r2.r4r2_vals_ls()
@@ -182,7 +184,7 @@ def compute_int_energy_DISP(
     params,
     df: pd.DataFrame,
     hf_key: str = "HF INTERACTION ENERGY",
-    prevent_negative_params: bool = False,
+    prevent_negative_params: bool = True,
     parallel=False,
     chunk_count=1000,
 ):

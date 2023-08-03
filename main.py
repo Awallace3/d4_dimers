@@ -56,12 +56,13 @@ def optimize_paramaters(
     },
     ATM=False,
     extra = "",
+    use_2B_C6s=False,
 ) -> None:
     # Optimize parameters through 5-fold cross validation
     # params = src.paramsTable.paramsDict()[start_params_d4_key][1:]
     params = src.paramsTable.paramsDict()[start_params_d4_key]
     dispersion.omp_set_num_threads(8)
-    print(params)
+    print(f"Starting Key: {start_params_d4_key}")
     subset = [
             "Geometry_bohr",
             *bases,
@@ -75,8 +76,14 @@ def optimize_paramaters(
             "C6_ATM",
             "C6_ATM_A",
             "C6_ATM_B",
-            ]
+    ]
     df = df[subset].copy()
+    if use_2B_C6s:
+        print("Using 2B, charge scaled C6s!")
+        df["C6_ATM"] = df["C6s"]
+        df["C6_ATM_A"] = df["C6_A"]
+        df["C6_ATM_B"] = df["C6_B"]
+
     for i in bases:
         print(i)
         if D3["powell"]:
@@ -388,18 +395,21 @@ def main():
         #     # "HF_dz",
         #     # "HF_adz",
         #     # "HF_jdz",
-        #     "HF_qz"
+            # "HF_qz"
         #     # "pbe0_adz_saptdft_ndisp",
         # ]
         optimize_paramaters(
             df,
             bases,
             # start_params_d4_key="sadz",
-            start_params_d4_key="HF_ATM_OPT_START",
+            start_params_d4_key="sadz_OPT",
+            # start_params_d4_key="HF_2B_ATM_OPT_START_s9",
+            # start_params_d4_key="HF_ATM_OPT_START",
             D3={"powell": False},
             D4={"powell": True, "least_squares": False},
             ATM=False,
-            extra="_G"
+            extra="_HF",
+            use_2B_C6s=True,
         )
 
     # opt(["HF_qz"])
