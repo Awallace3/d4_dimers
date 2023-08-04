@@ -173,6 +173,7 @@ def df_names(i):
         "data/HBC6.pkl",
         "data/schr_dft2.pkl",
         "data/schr_dft_charges.pkl",
+        "data/schr_dft2_SR.pkl",
     ]
     # NOTE: data/grimme_fitset_db3.pkl Geometry is in Angstrom!!!
     selected = names[i]
@@ -385,19 +386,19 @@ def charge_comparison():
 
 
 def main():
-    df, selected = df_names(6)
+    # df, selected = df_names(8)
     # TODO: plot -D4 2B with Grimme parameters
     # TODO: plot -D3 ATM
-    # TODO: check a1 and a2 separate for ATM
+    src.sr.generate_SR_data_ATM(*df_names(6))
 
+
+    # bases = [
+    #     # "HF_dz",
+    #     # "HF_adz",
+    #     # "HF_jdz",
+    #     # "pbe0_adz_saptdft_ndisp",
+    # ]
     def opt(bases):
-        # bases = [
-        #     # "HF_dz",
-        #     # "HF_adz",
-        #     # "HF_jdz",
-            # "HF_qz"
-        #     # "pbe0_adz_saptdft_ndisp",
-        # ]
         optimize_paramaters(
             df,
             bases,
@@ -413,7 +414,7 @@ def main():
         )
 
     # opt(["HF_qz"])
-    opt(["HF_adz"])
+    # opt(["HF_adz"])
     return
 
     # compute_ie_differences(0)

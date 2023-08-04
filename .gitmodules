@@ -5,3 +5,6 @@
 	path = src/cpp/extern/pybind11
 	url = ../../pybind/pybind11
 	branch = stable
+[submodule "symbolic_regression/PySR"]
+	path = symbolic_regression/PySR
+	url = git@github.com:Awallace3/PySR.git

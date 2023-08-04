@@ -459,6 +459,7 @@ def compute_disp_2B_dimer(
 def compute_disp_ATM_CHG_dimer(
     params,
     r,
+    mult_out = hartree_to_kcalmol,
 ):
     pos, carts = np.array(r["Geometry_bohr"][:, 0], dtype=np.int32), r["Geometry_bohr"][:, 1:]
     charges = r["charges"]
@@ -478,13 +479,14 @@ def compute_disp_ATM_CHG_dimer(
             r['C6_ATM_B'],
             params
             )
-    return e_total * hartree_to_kcalmol
+    return e_total * mult_out
 
 
 def compute_disp_2B_BJ_ATM_CHG_dimer(
     r,
     params_2B,
     params_ATM,
+    mult_out = hartree_to_kcalmol,
 ):
     pos, carts = np.array(r["Geometry_bohr"][:, 0], dtype=np.int32), r["Geometry_bohr"][:, 1:]
     charges = r["charges"]
@@ -508,7 +510,7 @@ def compute_disp_2B_BJ_ATM_CHG_dimer(
             params_2B,
             params_ATM,
             )
-    return e_total * hartree_to_kcalmol
+    return e_total * mult_out
 
 def compute_bj_dimer_f90(
     params,

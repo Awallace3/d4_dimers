@@ -29,7 +29,8 @@ def t2():
     y = 2.5382 * np.cos(X[:, 3]) + X[:, 0] ** 2 - 0.5
 
 def main():
-    t2()
+    # t2()
+    t1()
     return
 
 
