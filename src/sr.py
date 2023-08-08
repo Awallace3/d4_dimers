@@ -15,7 +15,7 @@ def build_vals(pos, carts, C6, params, cols=7, max_N=None):
     return vals
 
 
-def build_vals_molecule(r, params, max_N=None):
+def build_vals_molecule(r, params, max_N=None, cols=7):
     pos = r["Geometry_bohr"][:, 0]
     carts = r["Geometry_bohr"][:, 1:]
     monAs = r["monAs"]
@@ -28,9 +28,9 @@ def build_vals_molecule(r, params, max_N=None):
     pA, cA = pos[monAs].copy(), carts[monAs].copy()
     pB, cB = pos[monBs].copy(), carts[monBs].copy()
     # Generate ATM data for SR
-    dimer_vals = build_vals(pos, carts, C6s, params, cols=7, max_N=max_N)
-    monA_vals = build_vals(pA, cA, C6s_A, params, cols=7, max_N=max_N)
-    monB_vals = build_vals(pB, cB, C6s_B, params, cols=7, max_N=max_N)
+    dimer_vals = build_vals(pos, carts, C6s, params, cols=cols, max_N=max_N)
+    monA_vals = build_vals(pA, cA, C6s_A, params, cols=cols, max_N=max_N)
+    monB_vals = build_vals(pB, cB, C6s_B, params, cols=cols, max_N=max_N)
     # Labeling as dimer and monomers for SR subtraction to get IE
     dimer_vals[:, 0] = 1
     monA_vals[:, 0] = -1
@@ -49,15 +49,24 @@ def build_vals_molecule(r, params, max_N=None):
 def generate_SR_data_ATM(df, selected):
     r = df.iloc[0]
     params = paramsTable.get_params("HF_ATM_OPT_START")
+    cols = 7
     df["xs"] = df.apply(
         lambda r: build_vals_molecule(
             r,
             params,
+            cols=cols,
         ),
         axis=1,
     )
-    df["splits"] = df["xs"].apply(len)
-    print(df["splits"])
+    splits = []
+    end = 0
+    for i in range(len(df)):
+        size = len(df.iloc[i]["xs"])
+        start = end
+        end += size
+        splits.append([start, end])
+    df["splits"] = splits
+    print(df[["splits", "xs"]])
     df["ys"] = df["Benchmark"] / locald4.hartree_to_kcalmol
     out = selected.replace(".pkl", "_SR.pkl")
     df.to_pickle(out)

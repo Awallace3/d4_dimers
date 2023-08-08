@@ -5,6 +5,7 @@ import qcelemental as qcel
 import tqdm
 from qm_tools_aw import tools
 import dispersion
+
 # from pandarallel import pandarallel
 # pandarallel.initialize(use_memory_fs=True)
 # from parallel_pandas import ParallelPandas
@@ -55,7 +56,7 @@ def optimize_paramaters(
         "least_squares": True,
     },
     ATM=False,
-    extra = "",
+    extra="",
     use_2B_C6s=False,
 ) -> None:
     # Optimize parameters through 5-fold cross validation
@@ -64,18 +65,18 @@ def optimize_paramaters(
     dispersion.omp_set_num_threads(8)
     print(f"Starting Key: {start_params_d4_key}")
     subset = [
-            "Geometry_bohr",
-            *bases,
-            "Benchmark",
-            "charges",
-            "monAs",
-            "monBs",
-            "C6s",
-            "C6_A",
-            "C6_B",
-            "C6_ATM",
-            "C6_ATM_A",
-            "C6_ATM_B",
+        "Geometry_bohr",
+        *bases,
+        "Benchmark",
+        "charges",
+        "monAs",
+        "monBs",
+        "C6s",
+        "C6_A",
+        "C6_B",
+        "C6_ATM",
+        "C6_ATM_A",
+        "C6_ATM_B",
     ]
     df = df[subset].copy()
     if use_2B_C6s:
@@ -383,14 +384,16 @@ def charge_comparison():
                 cnt_wrong += 1
                 print(line)
     print(cnt_correct, cnt_wrong)
+    return
 
 
 def main():
     # df, selected = df_names(8)
     # TODO: plot -D4 2B with Grimme parameters
     # TODO: plot -D3 ATM
-    src.sr.generate_SR_data_ATM(*df_names(6))
-
+    # src.sr.generate_SR_data_ATM(*df_names(6))
+    # src.dftd3.compute_dftd3(*df_names(4), "Geometry", param_label="D3MBJ")
+    # src.dftd3.compute_dftd3(*df_names(4), "Geometry", param_label="D3MBJ ATM")
 
     # bases = [
     #     # "HF_dz",
@@ -415,13 +418,22 @@ def main():
 
     # opt(["HF_qz"])
     # opt(["HF_adz"])
-    return
+    # return
 
     # compute_ie_differences(0)
     # compute_ie_differences(5)
     # opt()
     # grimme_test_atm()
-    src.plotting.plotting_setup(df_names(6), False, "plots/plot2.pkl")
+    if False:
+        src.plotting.plotting_setup(
+            df_names(6),
+            False,
+            compute_d3=True,
+        )
+    src.plotting.plotting_setup_G(
+        df_names(4),
+        True,
+    )
     return
 
 

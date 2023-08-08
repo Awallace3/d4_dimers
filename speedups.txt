@@ -1,0 +1,26 @@
+Time for (2-body + ATM) (python): 0.539482 s
+Time for 2-body (cpp   ): 0.003769 s
+Time for (2-body + ATM) (OMP=1): 0.003751 s
+     Speedup (py ): 143.8379, efficiency (py ): 143.8379
+     Speedup (cpp ): 1.0050, efficiency (cpp ): 1.0050
+
+Time for (2-body + ATM) (OMP=2): 0.003404 s
+     Speedup (py ): 158.5041, efficiency (py ): 79.2520
+     Speedup (cpp ): 1.1075, efficiency (cpp ): 0.5537
+
+Time for (2-body + ATM) (OMP=4): 0.002292 s
+     Speedup (py ): 235.3925, efficiency (py ): 58.8481
+     Speedup (cpp ): 1.6447, efficiency (cpp ): 0.4112
+
+Time for (2-body + ATM) (OMP=6): 0.001750 s
+     Speedup (py ): 308.2888, efficiency (py ): 51.3815
+     Speedup (cpp ): 2.1540, efficiency (cpp ): 0.3590
+
+Time for (2-body + ATM) (OMP=8): 0.001320 s
+     Speedup (py ): 408.6194, efficiency (py ): 51.0774
+     Speedup (cpp ): 2.8551, efficiency (cpp ): 0.3569
+
+Time for (2-body + ATM) (OMP=10): 0.001089 s
+     Speedup (py ): 495.4924, efficiency (py ): 49.5492
+     Speedup (cpp ): 3.4620, efficiency (cpp ): 0.3462
+

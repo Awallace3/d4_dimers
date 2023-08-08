@@ -200,3 +200,4 @@ build
 .ccls*
 compile_commands.json
 .nfs*
+plots/*.pkl
