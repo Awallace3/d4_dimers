@@ -4,6 +4,8 @@ import src
 import qcelemental as qcel
 import tqdm
 from qm_tools_aw import tools
+import dispersion
+
 # from pandarallel import pandarallel
 # pandarallel.initialize(use_memory_fs=True)
 # from parallel_pandas import ParallelPandas
@@ -54,26 +56,35 @@ def optimize_paramaters(
         "least_squares": True,
     },
     ATM=False,
-    extra = "",
+    extra="",
+    use_2B_C6s=False,
 ) -> None:
     # Optimize parameters through 5-fold cross validation
     # params = src.paramsTable.paramsDict()[start_params_d4_key][1:]
     params = src.paramsTable.paramsDict()[start_params_d4_key]
+    dispersion.omp_set_num_threads(8)
+    print(f"Starting Key: {start_params_d4_key}")
     subset = [
-            "Geometry_bohr",
-            *bases,
-            "Benchmark",
-            "charges",
-            "monAs",
-            "monBs",
-            "C6s",
-            "C6_A",
-            "C6_B",
-            "C6_ATM",
-            "C6_ATM_A",
-            "C6_ATM_B",
-            ]
+        "Geometry_bohr",
+        *bases,
+        "Benchmark",
+        "charges",
+        "monAs",
+        "monBs",
+        "C6s",
+        "C6_A",
+        "C6_B",
+        "C6_ATM",
+        "C6_ATM_A",
+        "C6_ATM_B",
+    ]
     df = df[subset].copy()
+    if use_2B_C6s:
+        print("Using 2B, charge scaled C6s!")
+        df["C6_ATM"] = df["C6s"]
+        df["C6_ATM_A"] = df["C6_A"]
+        df["C6_ATM_B"] = df["C6_B"]
+
     for i in bases:
         print(i)
         if D3["powell"]:
@@ -95,19 +106,18 @@ def optimize_paramaters(
             print("D4 powell")
             if ATM:
                 print("ATM ON")
-                compute_energy = "compute_int_energy_ATM"
-                params.pop(0)
+                compute_energy = "compute_int_energy_DISP"
                 extra += "ATM_"
                 # params.append(1.0)
             else:
                 print("ATM OFF")
-                compute_energy = "compute_int_energy"
-                params.pop(0)
+                # TODO: need to ensure s9 is 0.0
+                compute_energy = "compute_int_energy_DISP"
                 extra += "2B_"
             version = {
                 "method": "powell",
                 "compute_energy": compute_energy,
-                "compute_stats": "compute_int_energy_stats",
+                "compute_stats": "compute_int_energy_stats_DISP",
             }
 
             print(version)
@@ -164,6 +174,7 @@ def df_names(i):
         "data/HBC6.pkl",
         "data/schr_dft2.pkl",
         "data/schr_dft_charges.pkl",
+        "data/schr_dft2_SR.pkl",
     ]
     # NOTE: data/grimme_fitset_db3.pkl Geometry is in Angstrom!!!
     selected = names[i]
@@ -373,72 +384,56 @@ def charge_comparison():
                 cnt_wrong += 1
                 print(line)
     print(cnt_correct, cnt_wrong)
+    return
 
 
 def main():
-    import dispersion
-    v = dispersion.add(1, 2)
-
-    t = np.arange(0, 10, 0.1)
-    print(v)
-    v = dispersion.disp.np_array_sum_test(t)
-    print(v, sum(t) == v)
-    t_2d = np.array([t, t])
-    print(f"t_2d:\n{t_2d}")
-    t = dispersion.disp.add_arrays(t, t)
-    print(f"t:\n{t}")
-    dispersion.disp.add_arrays_eigen( t_2d, t_2d)
-    print(f"t_2d:\n{t_2d}")
-    # dispersion.disp.np_array_multiply_test(t_2d, 50)
-    # print(f"t_2d (updated):\n{t_2d}")
-    # t_new = dispersion.disp.add_arrays(t, t)
-    # print(f"t_2d_new (updated):\n{t_new}")
-    # src.misc.regenerate_D4_data(*df_names(4))
-    # make_geometry_bohr_column(4)
-    # return
-    # gather_data("schr")
-    df, selected = df_names(6)
-    r1 = df.iloc[0]
-    params = src.paramsTable.get_params("HF")
-    params = np.array(params, dtype=np.float64)
-    row = df.iloc[2800]
-    d4_local = src.locald4.compute_disp_2B(
-        params,
-        row,
-    )
-    return
+    # df, selected = df_names(8)
     # TODO: plot -D4 2B with Grimme parameters
     # TODO: plot -D3 ATM
-    # TODO: check a1 and a2 separate for ATM
+    # src.sr.generate_SR_data_ATM(*df_names(6))
+    # src.dftd3.compute_dftd3(*df_names(4), "Geometry", param_label="D3MBJ")
+    # src.dftd3.compute_dftd3(*df_names(4), "Geometry", param_label="D3MBJ ATM")
 
+    # bases = [
+    #     # "HF_dz",
+    #     # "HF_adz",
+    #     # "HF_jdz",
+    #     # "pbe0_adz_saptdft_ndisp",
+    # ]
     def opt(bases):
-        # bases = [
-        #     # "HF_dz",
-        #     # "HF_adz",
-        #     # "HF_jdz",
-        #     "HF_qz"
-        #     # "pbe0_adz_saptdft_ndisp",
-        # ]
         optimize_paramaters(
             df,
             bases,
             # start_params_d4_key="sadz",
-            start_params_d4_key="HF",
+            start_params_d4_key="sadz_OPT",
+            # start_params_d4_key="HF_2B_ATM_OPT_START_s9",
+            # start_params_d4_key="HF_ATM_OPT_START",
             D3={"powell": False},
             D4={"powell": True, "least_squares": False},
             ATM=False,
-            extra="_G"
+            extra="_HF",
+            use_2B_C6s=True,
         )
 
     # opt(["HF_qz"])
-    opt(["HF_adz"])
-    return
+    # opt(["HF_adz"])
+    # return
 
     # compute_ie_differences(0)
     # compute_ie_differences(5)
     # opt()
     # grimme_test_atm()
-    src.plotting.plotting_setup(df_names(6), False, "plots/plot2.pkl")
+    if False:
+        src.plotting.plotting_setup(
+            df_names(6),
+            False,
+            compute_d3=True,
+        )
+    src.plotting.plotting_setup_G(
+        df_names(4),
+        True,
+    )
     return
 
 
