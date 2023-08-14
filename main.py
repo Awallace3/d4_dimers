@@ -6,6 +6,9 @@ import tqdm
 from qm_tools_aw import tools
 import dispersion
 
+# TODO: Plot Violin plots for each basis set
+#       - collect basis set
+
 # from pandarallel import pandarallel
 # pandarallel.initialize(use_memory_fs=True)
 # from parallel_pandas import ParallelPandas
@@ -387,11 +390,35 @@ def charge_comparison():
     return
 
 
+def merge_SAPT0_results_into_df():
+    df, selected = df_names(6)
+    print(df)
+    df2 = pd.read_pickle("data/schr_sapt0.pkl")
+    print(df2.columns.values)
+    copy_SAPT0_cols = [
+        "SAPT0_adz",
+        "id",
+        "SAPT0_jdz",
+        "SAPT0_aqz",
+        "SAPT0_mtz",
+        "SAPT0_jtz",
+        "SAPT0_dz",
+        "SAPT0_atz",
+    ]
+    for i in copy_SAPT0_cols:
+        df[i] = df2[i]
+    for i in copy_SAPT0_cols:
+        print(df[i])
+    df.to_pickle(selected)
+    return
+
+
 def main():
-    # df, selected = df_names(8)
     # TODO: plot -D4 2B with Grimme parameters
     # TODO: plot -D3 ATM
     # src.sr.generate_SR_data_ATM(*df_names(6))
+    # df, selected = df_names(8)
+    # src.sr.evaluate_vals(df)
     # src.dftd3.compute_dftd3(*df_names(4), "Geometry", param_label="D3MBJ")
     # src.dftd3.compute_dftd3(*df_names(4), "Geometry", param_label="D3MBJ ATM")
 
@@ -401,12 +428,15 @@ def main():
     #     # "HF_jdz",
     #     # "pbe0_adz_saptdft_ndisp",
     # ]
+    df, selected = df_names(6)
+
     def opt(bases):
         optimize_paramaters(
             df,
             bases,
             # start_params_d4_key="sadz",
-            start_params_d4_key="sadz_OPT",
+            # start_params_d4_key="sadz_OPT",
+            start_params_d4_key="HF_OPT",
             # start_params_d4_key="HF_2B_ATM_OPT_START_s9",
             # start_params_d4_key="HF_ATM_OPT_START",
             D3={"powell": False},
@@ -420,20 +450,17 @@ def main():
     # opt(["HF_adz"])
     # return
 
-    # compute_ie_differences(0)
-    # compute_ie_differences(5)
-    # opt()
-    # grimme_test_atm()
-    if False:
+    if True:
         src.plotting.plotting_setup(
             df_names(6),
-            False,
+            True,
             compute_d3=True,
         )
-    src.plotting.plotting_setup_G(
-        df_names(4),
-        True,
-    )
+    if False:
+        src.plotting.plotting_setup_G(
+            df_names(4),
+            True,
+        )
     return
 
 

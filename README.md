@@ -28,3 +28,8 @@ serve as a place to use the functions in the `src` directory.
 This project is still under development and not stable yet. If you want to use
 this codebase and would like assistance, please contact me via email at
 <a href="mailto:austinwallace196@gmail.com">austinwallace196@gmail.com</a>
+
+# Plan
+[ ] - Plot violin results for ATM and basis set individually
+[ ] - Plot close contacts and explain what is happening
+[ ] - Determine parameter sensitivity

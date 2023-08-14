@@ -272,6 +272,9 @@ def plotting_setup(df, build_df=False, df_out: str = "plots/plot.pkl", compute_d
     df_out = f"plots/{selected}.pkl"
     if build_df:
         print(df.columns.values)
+        for i in [j for j in df.columns.values if "SAPT0_" in j if j not in ["SAPT0", "SAPT0_jdz", "SAPT0_aqz"]]:
+            df[i + "_IE"] = df.apply(lambda r: r[i][0], axis=1)
+            df[i + "_diff"] = df["Benchmark"] - df[i + "_IE"]
 
         df = compute_D3_D4_values_for_params_for_plotting(df, "adz", compute_d3)
         df = compute_D3_D4_values_for_params_for_plotting(df, "jdz", compute_d3)
@@ -301,10 +304,7 @@ def plotting_setup(df, build_df=False, df_out: str = "plots/plot.pkl", compute_d
         df["jdz_diff_d4_ATM"] = df["Benchmark"] - df["SAPT0-D4(ATM)/jun-cc-pVDZ"]
         df["SAPT0_jdz_diff"] = df["Benchmark"] - df["SAPT0"]
         df["SAPT0_jdz_diff"] = df["Benchmark"] - df["SAPT0"]
-        df["SAPT0_adz_IE"] = df.apply(lambda r: r["SAPT0_adz"][0], axis=1)
-        df["SAPT0_adz_diff"] = df.apply(
-            lambda r: r["Benchmark"] - r["SAPT0_adz_IE"], axis=1
-        )
+
         if compute_d3:
             df["adz_diff_d4_2B@ATM_G"] = df["Benchmark"] - (
                 df["HF_adz"] + df["-D4 2B@ATM_params (adz) G"]
