@@ -272,7 +272,7 @@ def plotting_setup(df, build_df=False, df_out: str = "plots/plot.pkl", compute_d
     df_out = f"plots/{selected}.pkl"
     if build_df:
         print(df.columns.values)
-        for i in [j for j in df.columns.values if "SAPT0_" in j if j not in ["SAPT0", "SAPT0_jdz", "SAPT0_aqz"]]:
+        for i in [j for j in df.columns.values if "SAPT0_" in j if j not in ["SAPT0", "SAPT0_jdz", "SAPT0_aqz"] if "_IE" not in j]:
             df[i + "_IE"] = df.apply(lambda r: r[i][0], axis=1)
             df[i + "_diff"] = df["Benchmark"] - df[i + "_IE"]
 
@@ -360,6 +360,23 @@ def plotting_setup(df, build_df=False, df_out: str = "plots/plot.pkl", compute_d
         },
         f"All Dimers with SAPT0 ({selected})",
         f"{selected}_adz_d3_d4_total_sapt0",
+    )
+    # Basis Set Performance: SAPT0
+    plot_violin_d3_d4_ALL(
+        df,
+        {
+            "SAPT0-D4/cc-pVDZ": "SAPT0_dz_diff",
+            "SAPT0-D4/jun-cc-pVDZ": "jdz_diff_d4",
+            "SAPT0/jun-cc-pVDZ": "SAPT0_jdz_diff",
+            "SAPT0-D4/aug-cc-pVDZ": "adz_diff_d4",
+            "SAPT0/aug-cc-pVDZ": "SAPT0_adz_diff",
+            # "SAPT0/cc-pVTZ": "SAPT0_tz_diff",
+            "SAPT0/may-cc-pVTZ": "SAPT0_mtz_diff",
+            "SAPT0/jun-cc-pVTZ": "SAPT0_jtz_diff",
+            "SAPT0/aug-cc-pVTZ": "SAPT0_atz_diff",
+        },
+        f"All Dimers with SAPT0 ({selected})",
+        f"{selected}_basis_set",
     )
     plot_violin_d3_d4_ALL(
         df_charged,

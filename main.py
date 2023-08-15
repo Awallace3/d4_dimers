@@ -123,7 +123,6 @@ def optimize_paramaters(
                 "compute_stats": "compute_int_energy_stats_DISP",
             }
 
-            print(version)
             src.optimization.opt_cross_val(
                 df,
                 nfolds=5,
@@ -422,13 +421,28 @@ def main():
     # src.dftd3.compute_dftd3(*df_names(4), "Geometry", param_label="D3MBJ")
     # src.dftd3.compute_dftd3(*df_names(4), "Geometry", param_label="D3MBJ ATM")
 
-    # bases = [
-    #     # "HF_dz",
-    #     # "HF_adz",
-    #     # "HF_jdz",
-    #     # "pbe0_adz_saptdft_ndisp",
-    # ]
     df, selected = df_names(6)
+    for i in [
+        j
+        for j in df.columns.values
+        if "SAPT0_" in j
+        if j not in ["SAPT0", "SAPT0_jdz", "SAPT0_aqz"]
+        if "_IE" not in j
+    ]:
+        df[i + "_3_IE"] = df.apply(lambda r: sum(r[i][1:4]), axis=1)
+    # df.to_pickle(selected)
+    bases = [
+        # "HF_dz",
+        # "HF_jdz",
+        # "HF_tz",
+        "SAPT0_adz_3_IE",
+        "SAPT0_mtz_3_IE",
+        "SAPT0_jtz_3_IE",
+        "SAPT0_dz_3_IE",
+        "SAPT0_atz_3_IE",
+    ]
+    print(df[bases[0]])
+    print(df.columns.values)
 
     def opt(bases):
         optimize_paramaters(
@@ -436,24 +450,30 @@ def main():
             bases,
             # start_params_d4_key="sadz",
             # start_params_d4_key="sadz_OPT",
-            start_params_d4_key="HF_OPT",
+            start_params_d4_key="HF_OPT_2B_START",
             # start_params_d4_key="HF_2B_ATM_OPT_START_s9",
             # start_params_d4_key="HF_ATM_OPT_START",
             D3={"powell": False},
             D4={"powell": True, "least_squares": False},
             ATM=False,
-            extra="_HF",
+            extra="HF_",
             use_2B_C6s=True,
         )
+
+    # for n, r in df.iterrows():
+    #     a = r["SAPT0_adz_IE"]
+    #     b = r["HF_adz"]
+
+    opt(bases)
 
     # opt(["HF_qz"])
     # opt(["HF_adz"])
     # return
 
-    if True:
+    if False:
         src.plotting.plotting_setup(
             df_names(6),
-            True,
+            False,
             compute_d3=True,
         )
     if False:
