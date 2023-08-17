@@ -6,6 +6,7 @@ import pandas as pd
 from psi4.driver.wrapper_database import database
 import psi4
 import sys, os
+import dispersion
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ""))
 import src
@@ -18,6 +19,21 @@ hartree_to_kcalmol = qcel.constants.conversion_factor("hartree", "kcal/mol")
 dftd4_bin = "/theoryfs2/ds/amwalla3/.local/bin/dftd4"
 # data_pkl = "/theoryfs2/ds/amwalla3/projects/d4_corrections/tests/data/test.pkl"
 data_pkl = "/theoryfs2/ds/amwalla3/projects/d4_corrections/tests/data/t2.pkl"
+
+
+def test_d3_BJ():
+    df = pd.read_pickle(data_pkl)
+    id_list = [0, 500, 2700, 4992]
+    params = src.paramsTable.get_params("sdjdz")
+    params = np.array(params[1:4], dtype=np.float64)
+    for n, i in enumerate(id_list):
+        row = df.iloc[i]
+        d3data = np.array(row["D3Data"], dtype=np.float64)
+        j_e = src.jeff.compute_bj(params, d3data)
+        print("gen:", j_e)
+        cpp_e = src.jeff.compute_BJ_CPP(params, d3data)
+        print("cpp:", cpp_e)
+        assert np.allclose(j_e, cpp_e, rtol=1e-14)
 
 
 def test_stored_C6s():
@@ -473,7 +489,3 @@ def test_compute_2B_BJ_ATM_CHG_dimer():
         energies[n, 1] = dftd4
     print(energies)
     assert np.allclose(energies[:, 0], energies[:, 1], atol=1e-14)
-
-
-
-

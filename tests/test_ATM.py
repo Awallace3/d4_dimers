@@ -203,7 +203,7 @@ def test_disp_ATM_CHG(geom, request):
         d4C6s_ATM_B,
         params,
     )
-    params_2B  = params.copy()
+    params_2B = params.copy()
     params_ATM = params.copy()
     print(params_2B)
     print(params_ATM)
@@ -229,8 +229,3 @@ def test_disp_ATM_CHG(geom, request):
     print(f"Target   d4= {d4_e_total}")
     print(f"Computed d4= {e_total}")
     assert abs(d4_e_total - e_total) < 1e-13
-
-def test_ATM_energyABC():
-    t = np.zeros((int(N * (N - 1) * (N - 2) / 6), 4))
-    assert False
-

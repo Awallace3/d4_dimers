@@ -76,6 +76,44 @@ def compute_D3_D4_values_for_params_for_plotting(
     return df
 
 
+def compute_d4_from_opt_params(
+    df: pd.DataFrame,
+    bases=[
+        # "DF_col_for_IE": "PARAMS_NAME"
+        ["SAPT0_dz_IE", "SAPT0_dz_3_IE", "SAPT0_dz_3_IE_2B"],
+        ["SAPT0_jdz_IE", "SAPT0_jdz_3_IE", "SAPT0_jdz_3_IE_2B"],
+        ["SAPT0_adz_IE", "SAPT0_adz_3_IE", "SAPT0_adz_3_IE_2B"],
+        ["SAPT0_tz_IE", "SAPT0_tz_3_IE", "SAPT0_tz_3_IE_2B"],
+        ["SAPT0_mtz_IE", "SAPT0_mtz_3_IE", "SAPT0_mtz_3_IE_2B"],
+        ["SAPT0_jtz_IE", "SAPT0_jtz_3_IE", "SAPT0_jtz_3_IE_2B"],
+        ["SAPT0_atz_IE", "SAPT0_atz_3_IE", "SAPT0_atz_3_IE_2B"],
+    ],
+) -> pd.DataFrame:
+    """
+    compute_D3_D4_values_for_params
+    """
+    params_dict = src.paramsTable.paramsDict()
+    plot_vals = {}
+    for i in bases:
+        params_d4 = params_dict[i[2]]
+        params_2B, params_ATM = src.paramsTable.generate_2B_ATM_param_subsets(params_d4)
+        df[f"-D4 ({i[1]})"] = df.apply(
+            lambda row: src.locald4.compute_disp_2B_BJ_ATM_CHG_dimer(
+                row,
+                params_2B,
+                params_ATM,
+            ),
+            axis=1,
+        )
+        diff = f"{i[1]}_diff"
+        d4_diff = f"{i[1]}_d4_diff"
+        df[diff] = df["Benchmark"] - df[i[0]]
+        df[d4_diff] = df["Benchmark"] - df[i[1]] - df[f"-D4 ({i[1]})"]
+        print(f'"{diff}",')
+        print(f'"{d4_diff}",')
+    return df
+
+
 def correlation_plot(df_subset, pfn="plots/correlation.png") -> None:
     """
     correlation_plot
@@ -266,18 +304,58 @@ def get_charged_df(df) -> pd.DataFrame:
     return df
 
 
+def plot_basis_sets_d4(df, build_df=False, df_out: str = "basis.pkl"):
+    df_out = f"plots/{df_out}.pkl"
+    if build_df:
+        df = compute_d4_from_opt_params(df)
+        print(df.columns.values)
+        df.to_pickle(df_out)
+    else:
+        df = pd.read_pickle(df_out)
+    plot_violin_d3_d4_ALL(
+        df,
+        {
+            "SAPT0/cc-pVDZ": "SAPT0_dz_3_IE_diff",
+            "SAPT0-D4/cc-pVDZ": "SAPT0_dz_3_IE_d4_diff",
+            "SAPT0/jun-cc-pVDZ": "SAPT0_jdz_3_IE_diff",
+            "SAPT0-D4/jun-cc-pVDZ": "SAPT0_jdz_3_IE_d4_diff",
+            "SAPT0/aug-cc-pVDZ": "SAPT0_adz_3_IE_diff",
+            "SAPT0-D4/aug-cc-pVDZ": "SAPT0_adz_3_IE_d4_diff",
+            "SAPT0/cc-pVTZ": "SAPT0_tz_3_IE_diff",
+            "SAPT0-D4/cc-pVTZ": "SAPT0_tz_3_IE_d4_diff",
+            "SAPT0/may-cc-pVTZ": "SAPT0_mtz_3_IE_diff",
+            "SAPT0-D4/may-cc-pVTZ": "SAPT0_mtz_3_IE_d4_diff",
+            "SAPT0/jun-cc-pVTZ": "SAPT0_jtz_3_IE_diff",
+            "SAPT0-D4/jun-cc-pVTZ": "SAPT0_jtz_3_IE_d4_diff",
+            "SAPT0/aug-cc-pVTZ": "SAPT0_atz_3_IE_diff",
+            "SAPT0-D4/aug-cc-pVTZ": "SAPT0_atz_3_IE_d4_diff",
+        },
+        f"{len(df)} Dimers With Different Basis Sets",
+        f"basis_set",
+    )
+    return
+
+
 def plotting_setup(df, build_df=False, df_out: str = "plots/plot.pkl", compute_d3=True):
     df, selected = df
     selected = selected.split("/")[-1].split(".")[0]
     df_out = f"plots/{selected}.pkl"
     if build_df:
         print(df.columns.values)
-        for i in [j for j in df.columns.values if "SAPT0_" in j if j not in ["SAPT0", "SAPT0_jdz", "SAPT0_aqz"] if "_IE" not in j]:
+        for i in [
+            j
+            for j in df.columns.values
+            if "SAPT0_" in j
+            if j not in ["SAPT0", "SAPT0_jdz", "SAPT0_aqz"]
+            if "_IE" not in j
+        ]:
             df[i + "_IE"] = df.apply(lambda r: r[i][0], axis=1)
             df[i + "_diff"] = df["Benchmark"] - df[i + "_IE"]
 
-        df = compute_D3_D4_values_for_params_for_plotting(df, "adz", compute_d3)
+        # df = compute_D3_D4_values_for_params_for_plotting(df, "adz", compute_d3)
+        # df = compute_D3_D4_values_for_params_for_plotting(df, "jdz", compute_d3)
         df = compute_D3_D4_values_for_params_for_plotting(df, "jdz", compute_d3)
+        df = compute_d4_from_opt_params(df)
 
         df["SAPT0-D4/aug-cc-pVDZ"] = df.apply(
             lambda row: row["HF_adz"] + row["-D4 (adz)"],
@@ -370,7 +448,7 @@ def plotting_setup(df, build_df=False, df_out: str = "plots/plot.pkl", compute_d
             "SAPT0/jun-cc-pVDZ": "SAPT0_jdz_diff",
             "SAPT0-D4/aug-cc-pVDZ": "adz_diff_d4",
             "SAPT0/aug-cc-pVDZ": "SAPT0_adz_diff",
-            # "SAPT0/cc-pVTZ": "SAPT0_tz_diff",
+            "SAPT0/cc-pVTZ": "SAPT0_tz_diff",
             "SAPT0/may-cc-pVTZ": "SAPT0_mtz_diff",
             "SAPT0/jun-cc-pVTZ": "SAPT0_jtz_diff",
             "SAPT0/aug-cc-pVTZ": "SAPT0_atz_diff",
@@ -472,7 +550,8 @@ def plot_violin_d3_d4_ALL(
         vData.append(df[v].to_list())
         vLabels.append(k)
 
-    # print(df[vals.values()].describe(include="all"))
+    pd.set_option("display.max_columns", None)
+    print(df[vals.values()].describe(include="all"))
     # transparent figure
     fig = plt.figure(dpi=1000)
     ax = plt.subplot(111)
@@ -497,6 +576,16 @@ def plot_violin_d3_d4_ALL(
         "teal",
         "cyan",
         "navy",
+        "magenta",
+        "lime",
+        "maroon",
+        "olive",
+        "indigo",
+        "gold",
+        "orchid",
+        "salmon",
+        "tan",
+        "turquoise",
     ]
     for n, pc in enumerate(vplot["bodies"], 1):
         pc.set_facecolor(colors[n - 1])

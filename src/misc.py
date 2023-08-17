@@ -4,6 +4,9 @@ import matplotlib.pyplot as plt
 from qm_tools_aw import tools
 from . import water_data
 from . import setup
+from . import locald4
+from . import paramsTable
+from . import optimization
 
 
 def find_charged_systems(df):
@@ -22,7 +25,6 @@ def find_charged_systems(df):
 def print_geom_by_id(df, id):
     tools.print_cartesians(df.loc[id]["Geometry"], symbols=True)
     return
-
 
 
 def test_water_dftd4_2_body_and_ATM():
@@ -72,10 +74,57 @@ def test_water_dftd4_2_body_and_ATM():
 
     assert IE_ATM != IE
 
+
 def regenerate_D4_data(df, df_path):
     df = setup.generate_D4_data(df)
     df.to_pickle(df_path)
     return
+
+
+def sensitivity_analysis(df):
+    """
+    Computes the RMSE for dataset for each parameter and
+    see how sensitive these are to parameter changes by
+    orders of magnitude.
+
+    RESULT:
+    The parameters are not very sensitive to changes in the
+    parameters up to 1e-2. Hence, should report to 1e-3 to ensure
+    that RMSE stays below a change of 1e-4.
+    """
+    basis = "SAPT0_adz_3_IE"
+    params = paramsTable.get_params(basis + "_2B")[1:4]
+    print(basis, params)
+    rmse = optimization.compute_int_energy_DISP(params, df, hf_key=basis)
+    starting_rmse = rmse
+    rmse_diff = abs(starting_rmse - rmse)
+    values = [
+        1e-6,
+        -1e-6,
+        1e-5,
+        -1e-5,
+        1e-4,
+        -1e-4,
+        1e-3,
+        -1e-3,
+        1e-2,
+        -1e-2,
+        0.1,
+        -0.1,
+    ]
+    for i in range(len(params)):
+        print("\n\nNext Parameter:\n\n")
+        for v in values:
+            params = paramsTable.get_params(basis + "_2B")[1:4]
+            params[i] += v
+            rmse = optimization.compute_int_energy_DISP(params, df, hf_key=basis)
+            rmse_diff = abs(starting_rmse - rmse)
+            print(f"{i} {v} {rmse_diff}")
+            if rmse_diff > 1e-4:
+                print(f"BREAKING HERE")
+                break
+    return
+
 
 def main():
     # water_data.water_data_collect()

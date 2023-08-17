@@ -5,6 +5,7 @@ import scipy.optimize as opt
 import time
 from src.tools import print_cartesians, stats_to_latex_row
 from qcelemental import constants
+import dispersion
 
 
 def d3data_stats(df):
@@ -43,6 +44,11 @@ def compute_bj(params, d3data):
 
     energy *= -constants.conversion_factor("hartree", "kcal / mol")
     return energy
+
+def compute_BJ_CPP(params, d3data):
+    cpp_e = dispersion.d3.compute_BJ(params, d3data)
+    cpp_e *= -constants.conversion_factor("hartree", "kcal / mol")
+    return cpp_e
 
 
 def compute_error_stats_d3(

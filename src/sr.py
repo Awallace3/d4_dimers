@@ -46,40 +46,47 @@ def build_vals_molecule(r, params, max_N=None, cols=7):
     return np.concatenate((dimer_vals, monA_vals, monB_vals), axis=0)
 
 
-def generate_SR_data_ATM(df, selected, target_HF_key="HF_adz", ncols=6):
+def generate_SR_data_ATM(df, selected, target_HF_key="HF_adz", ncols=6, generate=True):
     r = df.iloc[0]
-    params = paramsTable.get_params("HF_ATM_OPT_START")
-    df["xs"] = df.apply(
-        lambda r: build_vals_molecule(
-            r,
-            params,
-            cols=ncols,
-        ),
-        axis=1,
-    )
-    df["default_xs"] = df.apply(
-        lambda r: sum(r["xs"][:, 0]) * locald4.hartree_to_kcalmol, axis=1
-    )
-    # df["xs"] = df.apply(lambda r: r["xs"][:, 1:], axis=1)
-    splits = []
-    end = 0
-    for i in range(len(df)):
-        size = len(df.iloc[i]["xs"])
-        start = end
-        end += size
-        splits.append(np.array([start, end], dtype=np.int64))
-    df["splits"] = splits
-    r1 = df.iloc[0]
-    print(r1["xs"].shape, r1["splits"].shape)
-    params_2B, params_ATM = paramsTable.generate_2B_ATM_param_subsets(params)
-    df["d4_2B"] = df.apply(
-        lambda r: locald4.compute_disp_2B_BJ_ATM_CHG_dimer(
-            r,
-            params_2B,
-            params_ATM,
-        ),
-        axis=1,
-    )
+    params = paramsTable.get_params("SAPT0_adz_3_IE_ATM")
+    if generate:
+        df["xs"] = df.apply(
+            lambda r: build_vals_molecule(
+                r,
+                params,
+                cols=ncols,
+            ),
+            axis=1,
+        )
+        for n, r in df.iterrows():
+            df.at[n, "xs"][:, 0] *= locald4.hartree_to_kcalmol
+        df["default_xs"] = df.apply(lambda r: sum(r["xs"][:, 0]), axis=1)
+        print(params)
+        # df["xs"] = df.apply(lambda r: r["xs"][:, 1:], axis=1)
+        splits = []
+        end = 0
+        for i in range(len(df)):
+            size = len(df.iloc[i]["xs"])
+            start = end
+            end += size
+            splits.append(np.array([start, end], dtype=np.int64))
+        df["splits"] = splits
+        r1 = df.iloc[0]
+        print(r1["xs"].shape, r1["splits"].shape)
+        params_2B, params_ATM = paramsTable.generate_2B_ATM_param_subsets(params)
+
+        df["d4_2B"] = df.apply(
+            lambda r: locald4.compute_disp_2B_BJ_ATM_CHG_dimer(
+                r,
+                params_2B,
+                params_ATM,
+            ),
+            axis=1,
+        )
+    else:
+        out = selected.replace(".pkl", "_SR.pkl")
+        df = pd.read_pickle(out)
+
     df["ys_no_ATM"] = df.apply(
         lambda r: (r["Benchmark"] - (r[target_HF_key] + r["d4_2B"])),
         axis=1,
@@ -89,15 +96,17 @@ def generate_SR_data_ATM(df, selected, target_HF_key="HF_adz", ncols=6):
         axis=1,
     )
     for n, r in df.iterrows():
-        line = f"{n} NO ATM: {r['ys_no_ATM']:.4f} = {r['Benchmark']:.4f} - ({r[target_HF_key]:.4f} + {r['d4_2B']:.4f})"
+        # line = f"{n} ys = {r['ys']:.4f}"
+        # print(line)
+        # line = f"{n} NO ATM: {r['ys']:.4f} = {r['Benchmark']:.4f} - ({r[target_HF_key]:.4f} + {r['d4_2B']:.4f})"
+        # print(line)
+        line = f"{n}    ATM: {r['ys']:.4f} = {r['Benchmark']:.4f} - ({r[target_HF_key]:.4f} + {r['d4_2B']:.4f}) ::: fmp * {r['default_xs']:.4f}"
         print(line)
-        line = f"{n}    ATM: {r['ys']:.4f} ::: {r['Benchmark']:.4f} - ({r[target_HF_key]:.4f} + {r['d4_2B']:.4f} + fmp * {r['default_xs']:.4f})"
-        print(line)
-        # if n == 10:
-        #     break
-    df['ys'] /= locald4.hartree_to_kcalmol
-    out = selected.replace(".pkl", "_SR.pkl")
-    df.to_pickle(out)
+    # df['ys'] /= locald4.hartree_to_kcalmol
+    print(df[["ys", 'default_xs']].describe())
+    if generate:
+        out = selected.replace(".pkl", "_SR.pkl")
+        df.to_pickle(out)
     return
 
 
