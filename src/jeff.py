@@ -55,23 +55,30 @@ def compute_error_stats_d3(
     params,
     df,
     hf_key,
+    cpp=True,
     # params=[0.713190, 0.079541, 3.627854],
 ) -> []:
     """
     compute_error_stats uses jeffs d3date to compute error
     stats from different HF_ie
     """
-    df["d3"] = df.apply(
-        lambda r: compute_bj(params, r["D3Data"]),
-        axis=1,
-    )
+    if cpp:
+        df["d3"] = df.apply(
+            lambda r: compute_BJ_CPP(params, r["D3Data"]),
+            axis=1,
+        )
+    else:
+        df["d3"] = df.apply(
+            lambda r: compute_bj(params, r["D3Data"]),
+            axis=1,
+        )
 
     df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d3"]), axis=1)
     df["y_pred"] = df.apply(lambda r: r[hf_key] + r["d3"], axis=1)
     mae = df["diff"].abs().mean()
     rmse = (df["diff"] ** 2).mean() ** 0.5
     max_e = df["diff"].abs().max()
-    mad = df["diff"].mad()
+    mad = abs(df["diff"] - df["diff"].mean()).mean()
     mean_dif = df["diff"].mean()
     return mae, rmse, max_e, mad, mean_dif
 
@@ -80,6 +87,7 @@ def compute_int_energy_d3(
     params: [float],
     df: pd.DataFrame,
     hf_key: str = "HF INTERACTION ENERGY",
+    cpp=True,
 ):
     """
     compute_int_energy_d3 is used to optimize paramaters for d3
@@ -89,10 +97,16 @@ def compute_int_energy_d3(
             return 10
     rmse = 0
     diff = np.zeros(len(df))
-    df["d3"] = df.apply(
-        lambda r: compute_bj(params, r["D3Data"]),
-        axis=1,
-    )
+    if cpp:
+        df["d3"] = df.apply(
+            lambda r: compute_BJ_CPP(params, r["D3Data"]),
+            axis=1,
+        )
+    else:
+        df["d3"] = df.apply(
+            lambda r: compute_bj(params, r["D3Data"]),
+            axis=1,
+        )
     df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d3"]), axis=1)
     rmse = (df["diff"] ** 2).mean() ** 0.5
     print("%.8f\t" % rmse, params.tolist())
