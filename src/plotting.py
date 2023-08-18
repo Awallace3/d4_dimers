@@ -634,7 +634,7 @@ def plot_violin_d3_d4_ALL(
     title_name: str,
     pfn: str,
     bottom: float = 0.4,
-    ylim=[-16, 29]
+    ylim=[-16, 35]
 ) -> None:
     """ """
     print(f"Plotting {pfn}")
@@ -645,13 +645,21 @@ def plot_violin_d3_d4_ALL(
 
     annotations = [] # [(x, y, text), ...]
     cnt = 1
+    plt.rcParams['text.usetex'] = True
     for k, v in vals.items():
         df[v] = pd.to_numeric(df[v])
         vData.append(df[v].to_list())
         vLabels.append(k)
         m = df[v].max()
         rmse = df[v].apply(lambda x: x ** 2).mean() ** 0.5
-        annotations.append((cnt, m, f"{rmse:.2f}"))
+        mae = df[v].apply(lambda x: abs(x)).mean()
+        max_error = df[v].apply(lambda x: abs(x)).max()
+        text = r"$\mathbf{%.2f}$" % mae
+        text += "\n"
+        text += r"$\mathit{%.2f}$" % rmse
+        text += "\n"
+        text += r"$\mathrm{%.2f}$" % max_error
+        annotations.append((cnt, m, text))
         cnt += 1
 
     pd.set_option("display.max_columns", None)
@@ -704,7 +712,7 @@ def plot_violin_d3_d4_ALL(
         "k--",
         linewidth=0.5,
         alpha=0.5,
-        label=r"Reference Energy",
+        # label=r"Reference Energy",
         zorder=0,
     )
     ax.plot(
@@ -724,6 +732,8 @@ def plot_violin_d3_d4_ALL(
     )
     navy_blue = (0.0, 0.32, 0.96)
     ax.set_xticks(xs)
+    minor_yticks = np.arange(ylim[0], ylim[1], 2)
+    ax.set_yticks(minor_yticks, minor=True)
     plt.setp(ax.set_xticklabels(vLabels), rotation=90, fontsize="6")
     ax.set_xlim((0, len(vLabels)))
     ax.set_ylim(ylim)
@@ -736,6 +746,7 @@ def plot_violin_d3_d4_ALL(
     ax.set_ylabel(r"Error ($kcal\cdot mol^{-1}$)", color="k")
     ax.grid(color="gray", which="major", linewidth=0.5, alpha=0.3)
     ax.grid(color="gray", which="minor", linewidth=0.5, alpha=0.3)
+
 
     # Annotations of RMSE
     for x, y, text in annotations:
@@ -842,6 +853,16 @@ def plot_dbs_d3_d4(df, c1, c2, l1, l2, title_name, pfn, outlier_cutoff=3) -> Non
         zorder=0,
     )
     ax.set_xticks(xs)
+
+    # Minor ticks
+    # ax.yaxis.set_major_locator(MultipleLocator(20))
+    # ax.yaxis.set_major_formatter('{y:.0f}')
+    # For the minor ticks, use no labels; default NullFormatter.
+    # ax.yaxis.set_minor_locator(MultipleLocator(2))
+    # ax.tick_params(which='minor', length=2, color='black', labelsize=5)
+
+
+
     plt.setp(ax.set_xticklabels(vLabels), rotation=90, fontsize="5")
     ax.set_xlim((0, len(vLabels)))
     ax.legend(loc="upper left")
@@ -855,6 +876,7 @@ def plot_dbs_d3_d4(df, c1, c2, l1, l2, title_name, pfn, outlier_cutoff=3) -> Non
         else:
             xtick.set_color("red")
 
+    plt.minorticks_on()
     plt.title(f"{title_name}")
     fig.subplots_adjust(bottom=0.2)
     plt.savefig(f"plots/{pfn}_dbs_violin.png")
