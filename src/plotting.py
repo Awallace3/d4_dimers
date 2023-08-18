@@ -304,7 +304,7 @@ def get_charged_df(df) -> pd.DataFrame:
     return df
 
 
-def plot_basis_sets_d4(df, build_df=False, df_out: str = "basis.pkl"):
+def plot_basis_sets_d4(df, build_df=False, df_out: str = "basis"):
     df_out = f"plots/{df_out}.pkl"
     if build_df:
         df = compute_d4_from_opt_params(df)
@@ -331,7 +331,79 @@ def plot_basis_sets_d4(df, build_df=False, df_out: str = "basis.pkl"):
             "SAPT0-D4/aug-cc-pVTZ": "SAPT0_atz_3_IE_d4_diff",
         },
         f"{len(df)} Dimers With Different Basis Sets",
-        f"basis_set",
+        f"basis_set_d4",
+        bottom=0.30,
+    )
+    return
+
+
+def compute_d3_from_opt_params(
+    df: pd.DataFrame,
+    bases=[
+        # "DF_col_for_IE": "PARAMS_NAME"
+        ["SAPT0_dz_IE", "SAPT0_dz_3_IE", "SAPT0_dz_3_IE_2B_D3"],
+        ["SAPT0_jdz_IE", "SAPT0_jdz_3_IE", "SAPT0_jdz_3_IE_2B_D3"],
+        ["SAPT0_adz_IE", "SAPT0_adz_3_IE", "SAPT0_adz_3_IE_2B_D3"],
+        ["SAPT0_tz_IE", "SAPT0_tz_3_IE", "SAPT0_tz_3_IE_2B_D3"],
+        ["SAPT0_mtz_IE", "SAPT0_mtz_3_IE", "SAPT0_mtz_3_IE_2B_D3"],
+        ["SAPT0_jtz_IE", "SAPT0_jtz_3_IE", "SAPT0_jtz_3_IE_2B_D3"],
+        ["SAPT0_atz_IE", "SAPT0_atz_3_IE", "SAPT0_atz_3_IE_2B_D3"],
+    ],
+) -> pd.DataFrame:
+    """
+    compute_D3_D4_values_for_params
+    """
+    params_dict = src.paramsTable.paramsDict()
+    plot_vals = {}
+    for i in bases:
+        params_d3 = params_dict[i[2]][0][1:4]
+        print(params_d3)
+        df[f"-D3 ({i[1]})"] = df.apply(
+            lambda row: src.jeff.compute_BJ_CPP(
+                params_d3,
+                row["D3Data"],
+            ),
+            axis=1,
+        )
+        print(df[f"-D3 ({i[1]})"])
+        diff = f"{i[1]}_diff"
+        d3_diff = f"{i[1]}_d3_diff"
+        df[diff] = df["Benchmark"] - df[i[0]]
+        df[d3_diff] = df["Benchmark"] - df[i[1]] - df[f"-D3 ({i[1]})"]
+        print(f'"{diff}",')
+        print(f'"{d3_diff}",')
+    return df
+
+
+def plot_basis_sets_d3(df, build_df=False, df_out: str = "basis"):
+    df_out = f"plots/{df_out}.pkl"
+    if build_df:
+        df = compute_d3_from_opt_params(df)
+        print(df.columns.values)
+        df.to_pickle(df_out)
+    else:
+        df = pd.read_pickle(df_out)
+    plot_violin_d3_d4_ALL(
+        df,
+        {
+            "SAPT0/cc-pVDZ": "SAPT0_dz_3_IE_diff",
+            "SAPT0-D3/cc-pVDZ": "SAPT0_dz_3_IE_d3_diff",
+            "SAPT0/jun-cc-pVDZ": "SAPT0_jdz_3_IE_diff",
+            "SAPT0-D3/jun-cc-pVDZ": "SAPT0_jdz_3_IE_d3_diff",
+            "SAPT0/aug-cc-pVDZ": "SAPT0_adz_3_IE_diff",
+            "SAPT0-D3/aug-cc-pVDZ": "SAPT0_adz_3_IE_d3_diff",
+            "SAPT0/cc-pVTZ": "SAPT0_tz_3_IE_diff",
+            "SAPT0-D3/cc-pVTZ": "SAPT0_tz_3_IE_d3_diff",
+            "SAPT0/may-cc-pVTZ": "SAPT0_mtz_3_IE_diff",
+            "SAPT0-D3/may-cc-pVTZ": "SAPT0_mtz_3_IE_d3_diff",
+            "SAPT0/jun-cc-pVTZ": "SAPT0_jtz_3_IE_diff",
+            "SAPT0-D3/jun-cc-pVTZ": "SAPT0_jtz_3_IE_d3_diff",
+            "SAPT0/aug-cc-pVTZ": "SAPT0_atz_3_IE_diff",
+            "SAPT0-D3/aug-cc-pVTZ": "SAPT0_atz_3_IE_d3_diff",
+        },
+        f"{len(df)} Dimers With Different Basis Sets",
+        f"basis_set_d3",
+        bottom=0.30,
     )
     return
 
@@ -537,6 +609,7 @@ def plot_violin_d3_d4_ALL(
     vals: {},
     title_name: str,
     pfn: str,
+    bottom: float = 0.4,
 ) -> None:
     """ """
     print(f"Plotting {pfn}")
@@ -545,23 +618,46 @@ def plot_violin_d3_d4_ALL(
     dbs = sorted(dbs, key=lambda x: x.lower())
     vLabels, vData = [], []
 
+    annotations = [] # [(x, y, text), ...]
+    cnt = 1
     for k, v in vals.items():
         df[v] = pd.to_numeric(df[v])
         vData.append(df[v].to_list())
         vLabels.append(k)
+        m = df[v].max()
+        rmse = df[v].apply(lambda x: x ** 2).mean() ** 0.5
+        annotations.append((cnt, m, f"{rmse:.2f}"))
+        cnt += 1
 
     pd.set_option("display.max_columns", None)
-    print(df[vals.values()].describe(include="all"))
+    # print(df[vals.values()].describe(include="all"))
     # transparent figure
     fig = plt.figure(dpi=1000)
     ax = plt.subplot(111)
-    vplot = ax.violinplot(vData, showmeans=True, showmedians=False)
+    vplot = ax.violinplot(
+        vData,
+        showmeans=True,
+        showmedians=False,
+        quantiles=[[0.05, 0.95] for i in range(len(vData))],
+        widths=0.75,
+    )
     # for partname in ('cbars', 'cmins', 'cmaxes', 'cmeans', 'cmedians'):
     for n, partname in enumerate(["cbars", "cmins", "cmaxes", "cmeans"]):
         vp = vplot[partname]
         vp.set_edgecolor("black")
         vp.set_linewidth(1)
         vp.set_alpha(1)
+    quantile_color = "blue"
+    # quantile_style = (0, (1, 1))
+    quantile_style = "-"
+    quantile_linewidth = 0.8
+    for n, partname in enumerate(["cquantiles"]):
+        vp = vplot[partname]
+        vp.set_edgecolor(quantile_color)
+        vp.set_linewidth(quantile_linewidth)
+        vp.set_linestyle(quantile_style)
+        vp.set_alpha(1)
+
 
     colors = [
         "blue",
@@ -587,9 +683,12 @@ def plot_violin_d3_d4_ALL(
         "tan",
         "turquoise",
     ]
+    colors = ["green" if i % 2 == 0 else "purple" for i in range(len(vLabels))]
     for n, pc in enumerate(vplot["bodies"], 1):
         pc.set_facecolor(colors[n - 1])
         pc.set_alpha(0.6)
+
+    print(f"{vplot = }")
 
     vLabels.insert(0, "")
     xs = [i for i in range(len(vLabels))]
@@ -600,6 +699,7 @@ def plot_violin_d3_d4_ALL(
         "k--",
         label=r"$\pm$1 $kcal\cdot mol^{-1}$",
         zorder=0,
+        linewidth=0.6,
     )
     ax.plot(
         xs_error,
@@ -607,7 +707,7 @@ def plot_violin_d3_d4_ALL(
         "k--",
         linewidth=0.5,
         alpha=0.5,
-        # label=r"0 $kcal\cdot mol^{-1}$",
+        label=r"Reference Energy",
         zorder=0,
     )
     ax.plot(
@@ -615,24 +715,49 @@ def plot_violin_d3_d4_ALL(
         [-1 for i in range(len(xs_error))],
         "k--",
         zorder=0,
+        linewidth=0.6,
+    )
+    ax.plot(
+        [],
+        [],
+        linestyle=quantile_style,
+        color=quantile_color,
+        linewidth=quantile_linewidth,
+        label=r"5-95th Percentile",
     )
     navy_blue = (0.0, 0.32, 0.96)
     ax.set_xticks(xs)
     plt.setp(ax.set_xticklabels(vLabels), rotation=90, fontsize="6")
     ax.set_xlim((0, len(vLabels)))
-    lg = ax.legend(loc="upper left", edgecolor="black")
-    lg.get_frame().set_alpha(None)
+    lg = ax.legend(loc="upper left", edgecolor="black", fontsize="8")
+    # lg.get_frame().set_alpha(None)
     lg.get_frame().set_facecolor((1, 1, 1, 0.0))
+
 
     ax.set_xlabel("Level of Theory", color="k")
     ax.set_ylabel(r"Error ($kcal\cdot mol^{-1}$)", color="k")
     ax.grid(color="gray", which="major", linewidth=0.5, alpha=0.3)
     ax.grid(color="gray", which="minor", linewidth=0.5, alpha=0.3)
+
+    # Annotations of RMSE
+    for x, y, text in annotations:
+        ax.annotate(
+            text,
+            xy=(x, y),
+            xytext=(x, y + 0.1),
+            color="black",
+            fontsize="5",
+            horizontalalignment="center",
+            verticalalignment="bottom",
+        )
+
+
     for n, xtick in enumerate(ax.get_xticklabels()):
-        xtick.set_color("k")
+        xtick.set_color(colors[n - 1])
+        xtick.set_alpha(0.8)
 
     plt.title(f"{title_name}")
-    fig.subplots_adjust(bottom=0.4)
+    fig.subplots_adjust(bottom=bottom)
     plt.savefig(f"plots/{pfn}_dbs_violin.png", transparent=False)
     plt.clf()
     return

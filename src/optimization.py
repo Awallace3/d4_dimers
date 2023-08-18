@@ -9,6 +9,7 @@ import pandas as pd
 import numpy as np
 from .tools import print_cartesians, df_to_latex_table_round
 from qcelemental import constants
+import dispersion
 
 
 def chunkify(df: pd.DataFrame, chunk_size: int):
@@ -184,6 +185,7 @@ def compute_int_energy_stats_DISP_SR(
     params: [float],
     df: pd.DataFrame,
     hf_key: str = "HF INTERACTION ENERGY",
+    SR_func=dispersion.disp.disp_SR_1,
     parallel=False,
     print_results=False,
     chunk_count=1000,
@@ -208,33 +210,60 @@ def compute_int_energy_stats_DISP_SR(
                     row,
                     params_2B,
                     params_ATM,
+                    SR_func=SR_func,
                 ),
                 axis=1,
             )
             chunks.append(c)
         df = pd.concat(chunks, axis=1)
     else:
-        df["d4"] = df.apply(
+        df["d4_ATM"] = df.apply(
             lambda row: locald4.compute_disp_2B_BJ_ATM_SR_dimer(
                 row,
                 params_2B,
                 params_ATM,
+                SR_func=SR_func,
             ),
             axis=1,
         )
+    df["d4_2B"] = df.apply(
+        lambda r: locald4.compute_disp_2B_dimer(params_2B, r), axis=1
+    )
+    df["d4"] = df.apply(lambda r: r["d4_ATM"] + r["d4_2B"], axis=1)
+
     df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
+
+    for n, r in df.iterrows():
+        line = f"{n} {r['diff']:5.4f} {r['Benchmark']:5.4f} {(r[hf_key] + r['d4']):5.4f} {r[hf_key]:5.4f} {r['d4']:5.4f} {r['d4_2B']:5.4f} {r['d4_ATM']:5.4f}"
+        print(line)
+
     mae = df["diff"].abs().mean()
     rmse = (df["diff"] ** 2).mean() ** 0.5
     max_e = df["diff"].abs().max()
     mad = abs(df["diff"] - df["diff"].mean()).mean()
     mean_dif = df["diff"].mean()
     if print_results:
+        print("SR ATM ENABLED")
+        print("        1. MAE  = %.4f" % mae)
+        print("        2. RMSE = %.4f" % rmse)
+        print("        3. MAX  = %.4f" % max_e)
+        print("        4. MAD  = %.4f" % mad)
+        print("        4. MD   = %.4f" % mean_dif)
+    df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4_2B"]), axis=1)
+    mae = df["diff"].abs().mean()
+    rmse = (df["diff"] ** 2).mean() ** 0.5
+    max_e = df["diff"].abs().max()
+    mad = abs(df["diff"] - df["diff"].mean()).mean()
+    mean_dif = df["diff"].mean()
+    if print_results:
+        print("2B ONLY")
         print("        1. MAE  = %.4f" % mae)
         print("        2. RMSE = %.4f" % rmse)
         print("        3. MAX  = %.4f" % max_e)
         print("        4. MAD  = %.4f" % mad)
         print("        4. MD   = %.4f" % mean_dif)
     return mae, rmse, max_e, mad, mean_dif
+
 
 def compute_int_energy_DISP(
     params,

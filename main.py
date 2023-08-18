@@ -180,6 +180,7 @@ def df_names(i):
         "data/schr_dft2.pkl",
         "data/schr_dft_charges.pkl",
         "data/schr_dft2_SR.pkl",
+        "plots/basis.pkl"
     ]
     # NOTE: data/grimme_fitset_db3.pkl Geometry is in Angstrom!!!
     selected = names[i]
@@ -457,15 +458,23 @@ def main():
             extra="",
             use_2B_C6s=False,
         )
-    opt(bases)
+
+    # opt(bases)
     # opt(["HF_qz"])
     # opt(["HF_adz"])
 
     def SR_testing():
+        import dispersion
+
         df, selected = df_names(6)
-        params = src.paramsTable.get_params("HF_ATM_OPT_START")
+        # params = src.paramsTable.get_params("HF_ATM_OPT_START")
+        params = src.paramsTable.get_params("SAPT0_adz_3_IE_ATM")
         src.optimization.compute_int_energy_stats_DISP_SR(
-            params, df, "SAPT0_adz_3_IE", print_results=True
+            params,
+            df,
+            "SAPT0_adz_3_IE",
+            print_results=True,
+            SR_func=dispersion.disp.disp_SR_1,
         )
 
     # SR_testing()
@@ -473,8 +482,13 @@ def main():
     # return
     # src.misc.sensitivity_analysis(df)
     if False:
-        df, _ = df_names(6)
+        df, _ = df_names(9)
         src.plotting.plot_basis_sets_d4(
+            df,
+            False,
+        )
+    if True:
+        src.plotting.plot_basis_sets_d3(
             df,
             False,
         )

@@ -516,7 +516,6 @@ def compute_disp_2B_BJ_ATM_SR_dimer(
     mult_out=hartree_to_kcalmol,
     SR_func=disp.disp_SR_1,
 ):
-    disp_2B = compute_disp_2B_dimer(params_2B, r)
     pos, carts = (
         np.array(r["Geometry_bohr"][:, 0], dtype=np.int32),
         r["Geometry_bohr"][:, 1:],
@@ -545,9 +544,7 @@ def compute_disp_2B_BJ_ATM_SR_dimer(
         params_ATM,
     )
     e_total = e_d - (e_1 + e_2)
-    print(e_total, disp_2B, e_total * mult_out)
     e_total *= mult_out
-    e_total += disp_2B
     return e_total
 
 
