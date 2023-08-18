@@ -6,6 +6,30 @@ import numpy as np
 import src
 from qm_tools_aw import tools
 
+# colors = [
+#         "blue",
+#         "red",
+#         "purple",
+#         "brown",
+#         "green",
+#         "orange",
+#         "pink",
+#         "grey",
+#         "yellow",
+#         "teal",
+#         "cyan",
+#         "navy",
+#         "magenta",
+#         "lime",
+#         "maroon",
+#         "olive",
+#         "indigo",
+#         "gold",
+#         "orchid",
+#         "salmon",
+#         "tan",
+#         "turquoise",
+#     ]
 
 def compute_D3_D4_values_for_params_for_plotting(
     df: pd.DataFrame,
@@ -330,7 +354,7 @@ def plot_basis_sets_d4(df, build_df=False, df_out: str = "basis"):
             "SAPT0/aug-cc-pVTZ": "SAPT0_atz_3_IE_diff",
             "SAPT0-D4/aug-cc-pVTZ": "SAPT0_atz_3_IE_d4_diff",
         },
-        f"{len(df)} Dimers With Different Basis Sets",
+        f"{len(df)} Dimers With Different Basis Sets (D4)",
         f"basis_set_d4",
         bottom=0.30,
     )
@@ -401,7 +425,7 @@ def plot_basis_sets_d3(df, build_df=False, df_out: str = "basis"):
             "SAPT0/aug-cc-pVTZ": "SAPT0_atz_3_IE_diff",
             "SAPT0-D3/aug-cc-pVTZ": "SAPT0_atz_3_IE_d3_diff",
         },
-        f"{len(df)} Dimers With Different Basis Sets",
+        f"{len(df)} Dimers With Different Basis Sets (D3)",
         f"basis_set_d3",
         bottom=0.30,
     )
@@ -610,6 +634,7 @@ def plot_violin_d3_d4_ALL(
     title_name: str,
     pfn: str,
     bottom: float = 0.4,
+    ylim=[-16, 29]
 ) -> None:
     """ """
     print(f"Plotting {pfn}")
@@ -647,8 +672,7 @@ def plot_violin_d3_d4_ALL(
         vp.set_edgecolor("black")
         vp.set_linewidth(1)
         vp.set_alpha(1)
-    quantile_color = "blue"
-    # quantile_style = (0, (1, 1))
+    quantile_color = "red"
     quantile_style = "-"
     quantile_linewidth = 0.8
     for n, partname in enumerate(["cquantiles"]):
@@ -658,37 +682,10 @@ def plot_violin_d3_d4_ALL(
         vp.set_linestyle(quantile_style)
         vp.set_alpha(1)
 
-
-    colors = [
-        "blue",
-        "red",
-        "purple",
-        "brown",
-        "green",
-        "orange",
-        "pink",
-        "grey",
-        "yellow",
-        "teal",
-        "cyan",
-        "navy",
-        "magenta",
-        "lime",
-        "maroon",
-        "olive",
-        "indigo",
-        "gold",
-        "orchid",
-        "salmon",
-        "tan",
-        "turquoise",
-    ]
-    colors = ["green" if i % 2 == 0 else "purple" for i in range(len(vLabels))]
+    colors = ["blue" if i % 2 == 0 else "green" for i in range(len(vLabels))]
     for n, pc in enumerate(vplot["bodies"], 1):
         pc.set_facecolor(colors[n - 1])
         pc.set_alpha(0.6)
-
-    print(f"{vplot = }")
 
     vLabels.insert(0, "")
     xs = [i for i in range(len(vLabels))]
@@ -729,6 +726,7 @@ def plot_violin_d3_d4_ALL(
     ax.set_xticks(xs)
     plt.setp(ax.set_xticklabels(vLabels), rotation=90, fontsize="6")
     ax.set_xlim((0, len(vLabels)))
+    ax.set_ylim(ylim)
     lg = ax.legend(loc="upper left", edgecolor="black", fontsize="8")
     # lg.get_frame().set_alpha(None)
     lg.get_frame().set_facecolor((1, 1, 1, 0.0))
