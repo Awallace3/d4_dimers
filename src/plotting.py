@@ -702,7 +702,7 @@ def plot_violin_d3_d4_ALL(
         xs_error,
         [1 for i in range(len(xs_error))],
         "k--",
-        label=r"$\pm$1 $kcal\cdot mol^{-1}$",
+        label=r"$\pm$1 $\mathrm{kcal\cdot mol^{-1}}$",
         zorder=0,
         linewidth=0.6,
     )
@@ -743,7 +743,7 @@ def plot_violin_d3_d4_ALL(
 
 
     ax.set_xlabel("Level of Theory", color="k")
-    ax.set_ylabel(r"Error ($kcal\cdot mol^{-1}$)", color="k")
+    ax.set_ylabel(r"Error ($\mathrm{kcal\cdot mol^{-1}}$)", color="k")
     ax.grid(color="gray", which="major", linewidth=0.5, alpha=0.3)
     ax.grid(color="gray", which="minor", linewidth=0.5, alpha=0.3)
 
