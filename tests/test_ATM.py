@@ -229,3 +229,85 @@ def test_disp_ATM_CHG(geom, request):
     print(f"Target   d4= {d4_e_total}")
     print(f"Computed d4= {e_total}")
     assert abs(d4_e_total - e_total) < 1e-13
+
+
+@pytest.mark.parametrize(
+    "geom",
+    [
+        ("water1"),
+    ],
+)
+def test_disp_ATM_TT_returns(geom, request):
+    charges = [0, 1]
+    (
+        params,
+        pos,
+        carts,
+        d4C6s,
+        d4C8s,
+        pairs,
+        d4e,
+        d4C6s_ATM,
+        pos_A,
+        carts_A,
+        d4C6s_A,
+        d4C8s_A,
+        pairs_A,
+        d4e_A,
+        d4C6s_ATM_A,
+        pos_B,
+        carts_B,
+        d4C6s_B,
+        d4C8s_B,
+        pairs_B,
+        d4e_B,
+        d4C6s_ATM_B,
+    ) = request.getfixturevalue(geom)
+    tools.print_cartesians_pos_carts(pos, carts)
+    params.append(1.0)
+    params = np.array(params, dtype=np.float64)
+    pos = np.array(pos, dtype=np.int32)
+    pos_A = np.array(pos_A, dtype=np.int32)
+    pos_B = np.array(pos_B, dtype=np.int32)
+
+    carts *= ang_to_bohr
+    carts_A *= ang_to_bohr
+    carts_B *= ang_to_bohr
+    print(
+        pos,
+        carts,
+        d4C6s,
+        d4C6s_ATM,
+        pos_A,
+        carts_A,
+        d4C6s_A,
+        d4C6s_ATM_A,
+        pos_B,
+        carts_B,
+        d4C6s_B,
+        d4C6s_ATM_B,
+        params,
+    )
+    params_2B = params.copy()
+    params_ATM = params.copy()
+    print(params_2B)
+    print(params_ATM)
+
+    e_total = disp.disp_2B_BJ_ATM_TT(
+        pos,
+        carts,
+        d4C6s,
+        d4C6s_ATM,
+        pos_A,
+        carts_A,
+        d4C6s_A,
+        d4C6s_ATM_A,
+        pos_B,
+        carts_B,
+        d4C6s_B,
+        d4C6s_ATM_B,
+        params_2B,
+        params_ATM,
+    )
+    print(f"Computed d4= {e_total}")
+    assert type(e_total) == float

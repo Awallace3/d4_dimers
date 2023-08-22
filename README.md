@@ -9,6 +9,8 @@
   are implemented: Powell Algorithm and Levenberg-Marquardt least-squares
   fitting.  
 
+[ ] - put plots into draft
+
 ## Installation
 1. Recommended installation is to create a conda environment using the
    `environment.yml` file provided.
