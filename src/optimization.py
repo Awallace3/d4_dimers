@@ -181,6 +181,46 @@ def compute_int_energy_stats_DISP(
     return mae, rmse, max_e, mad, mean_dif
 
 
+def compute_int_energy_stats_DISP_TT(
+    params: [float],
+    df: pd.DataFrame,
+    hf_key: str = "HF INTERACTION ENERGY",
+    parallel=False,
+    print_results=False,
+    chunk_count=1000,
+) -> (float, float, float,):
+    t = df[hf_key].isna().sum()
+    assert t == 0, f"The HF_col provided has np.nan values present, {t}"
+    params_2B, params_ATM = paramsTable.generate_2B_ATM_param_subsets(params)
+    print(f"{params_2B = }")
+    print(f"{params_ATM = }")
+
+    diff = np.zeros(len(df))
+    r4r2_ls = r4r2.r4r2_vals_ls()
+    print(f"{params = }")
+    df["d4"] = df.apply(
+        lambda row: locald4.compute_disp_2B_BJ_ATM_TT_dimer(
+            row,
+            params_2B,
+            params_ATM,
+        ),
+        axis=1,
+    )
+    df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
+    mae = df["diff"].abs().mean()
+    rmse = (df["diff"] ** 2).mean() ** 0.5
+    max_e = df["diff"].abs().max()
+    mad = abs(df["diff"] - df["diff"].mean()).mean()
+    mean_dif = df["diff"].mean()
+    if print_results:
+        print("        1. MAE  = %.4f" % mae)
+        print("        2. RMSE = %.4f" % rmse)
+        print("        3. MAX  = %.4f" % max_e)
+        print("        4. MAD  = %.4f" % mad)
+        print("        4. MD   = %.4f" % mean_dif)
+    return mae, rmse, max_e, mad, mean_dif
+
+
 def compute_int_energy_stats_DISP_SR(
     params: [float],
     df: pd.DataFrame,
@@ -310,6 +350,38 @@ def compute_int_energy_DISP(
             ),
             axis=1,
         )
+    df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
+    rmse = (df["diff"] ** 2).mean() ** 0.5
+    print("%.8f\t" % rmse, params.tolist())
+    return rmse
+
+def compute_int_energy_DISP_TT(
+    params,
+    df: pd.DataFrame,
+    hf_key: str = "HF INTERACTION ENERGY",
+    prevent_negative_params: bool = True,
+    parallel=False,
+    chunk_count=1000,
+):
+    """
+    compute_int_energy_DISP_TT is used to optimize paramaters for damping function in dftd4 with TT damping ATM function
+    """
+    params_2B, params_ATM = paramsTable.generate_2B_ATM_param_subsets(params)
+    if prevent_negative_params:
+        for i in params:
+            if i < 0:
+                return 10
+    rmse = 0
+    diff = np.zeros(len(df))
+    r4r2_ls = r4r2.r4r2_vals_ls()
+    df["d4"] = df.apply(
+        lambda row: locald4.compute_disp_2B_BJ_ATM_TT_dimer(
+            row,
+            params_2B,
+            params_ATM,
+        ),
+        axis=1,
+    )
     df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
     rmse = (df["diff"] ** 2).mean() ** 0.5
     print("%.8f\t" % rmse, params.tolist())
@@ -583,6 +655,8 @@ def optimization(
 ):
     if version["compute_energy"] == "compute_int_energy_DISP":
         compute = compute_int_energy_DISP
+    elif version["compute_energy"] == "compute_int_energy_DISP_TT":
+        compute = compute_int_energy_DISP_TT
     elif version["compute_energy"] == "compute_int_energy":
         compute = compute_int_energy
     elif version["compute_energy"] == "compute_int_energy_ATM":
@@ -659,6 +733,8 @@ def opt_cross_val(
 
     if version["compute_stats"] == "compute_int_energy_stats_DISP":
         compute_stats = compute_int_energy_stats_DISP
+    elif version["compute_stats"] == "compute_int_energy_stats_DISP_TT":
+        compute_stats = compute_int_energy_stats_DISP_TT
     elif version["compute_stats"] == "compute_int_energy_stats":
         compute_stats = compute_int_energy_stats
     elif version["compute_stats"] == "jeff_d3":

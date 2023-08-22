@@ -56,7 +56,8 @@ def optimize_paramaters(
     },
     D4={
         "powell": True,
-        "least_squares": True,
+        "least_squares": False,
+        "powell_ATM_TT": True,
     },
     ATM=False,
     extra="",
@@ -134,6 +135,33 @@ def optimize_paramaters(
                 output_l_marker="D4_" + extra_added,
                 version=version,
             )
+        if D4["powell_ATM_TT"]:
+            print("D4 powell")
+            if ATM:
+                print("ATM ON")
+                compute_energy = "compute_int_energy_DISP_TT"
+                extra_added += "ATM_"
+                # params.append(1.0)
+            else:
+                print("ATM OFF")
+                # TODO: need to ensure s9 is 0.0
+                compute_energy = "compute_int_energy_DISP_TT"
+                extra_added += "2B_"
+            version = {
+                "method": "powell",
+                "compute_energy": compute_energy,
+                "compute_stats": "compute_int_energy_stats_DISP",
+            }
+
+            src.optimization.opt_cross_val(
+                df,
+                nfolds=5,
+                start_params=params,
+                hf_key=i,
+                # output_l_marker=f"{extra_added}",
+                output_l_marker="TT_" + extra_added,
+                version=version,
+            )
         if D4["least_squares"]:
             print("D4 least_squares")
             version = {
@@ -180,7 +208,7 @@ def df_names(i):
         "data/schr_dft2.pkl",
         "data/schr_dft_charges.pkl",
         "data/schr_dft2_SR.pkl",
-        "plots/basis.pkl"
+        "plots/basis.pkl",
     ]
     # NOTE: data/grimme_fitset_db3.pkl Geometry is in Angstrom!!!
     selected = names[i]
@@ -452,14 +480,17 @@ def main():
             df,
             bases,
             start_params_d4_key="HF_OPT_2B_START",
-            D3={"powell": True},
-            D4={"powell": True, "least_squares": False},
-            ATM=False,
+            # D3={"powell": True},
+            # D4={"powell": True, "least_squares": False},
+            D3={"powell": False},
+            D4={"powell": False, "least_squares": False, "powell_ATM_TT": True},
+            ATM=True,
             extra="",
             use_2B_C6s=False,
         )
 
-    # opt(bases)
+    opt(bases)
+    return
     # opt(["HF_qz"])
     # opt(["HF_adz"])
 
@@ -481,13 +512,14 @@ def main():
 
     # return
     # src.misc.sensitivity_analysis(df)
-    if True:
+    if False:
         df, _ = df_names(9)
         src.plotting.plot_basis_sets_d4(
             df,
             False,
         )
-    if True:
+    if False:
+        df, _ = df_names(9)
         src.plotting.plot_basis_sets_d3(
             df,
             False,
