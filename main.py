@@ -136,21 +136,17 @@ def optimize_paramaters(
                 version=version,
             )
         if D4["powell_ATM_TT"]:
-            print("D4 powell")
+            print("D4 powell ATM TT")
             if ATM:
                 print("ATM ON")
-                compute_energy = "compute_int_energy_DISP_TT"
                 extra_added += "ATM_"
-                # params.append(1.0)
             else:
                 print("ATM OFF")
-                # TODO: need to ensure s9 is 0.0
-                compute_energy = "compute_int_energy_DISP_TT"
                 extra_added += "2B_"
             version = {
                 "method": "powell",
-                "compute_energy": compute_energy,
-                "compute_stats": "compute_int_energy_stats_DISP",
+                "compute_energy": "compute_int_energy_DISP_TT",
+                "compute_stats": "compute_int_energy_stats_DISP_TT",
             }
 
             src.optimization.opt_cross_val(
@@ -467,30 +463,29 @@ def main():
 
     bases = [
         "SAPT0_adz_3_IE",
-        "SAPT0_jdz_3_IE",
-        "SAPT0_mtz_3_IE",
-        "SAPT0_jtz_3_IE",
-        "SAPT0_dz_3_IE",
-        "SAPT0_atz_3_IE",
-        "SAPT0_tz_3_IE",
+        # "SAPT0_jdz_3_IE",
+        # "SAPT0_mtz_3_IE",
+        # "SAPT0_jtz_3_IE",
+        # "SAPT0_dz_3_IE",
+        # "SAPT0_atz_3_IE",
+        # "SAPT0_tz_3_IE",
     ]
 
     def opt(bases):
         optimize_paramaters(
             df,
             bases,
-            start_params_d4_key="HF_OPT_2B_START",
+            # start_params_d4_key="HF_OPT_2B_START",
             # D3={"powell": True},
             # D4={"powell": True, "least_squares": False},
+            start_params_d4_key="HF_ATM_TT_OPT_START",
             D3={"powell": False},
             D4={"powell": False, "least_squares": False, "powell_ATM_TT": True},
             ATM=True,
             extra="",
             use_2B_C6s=False,
         )
-
     opt(bases)
-    return
     # opt(["HF_qz"])
     # opt(["HF_adz"])
 
@@ -512,6 +507,8 @@ def main():
 
     # return
     # src.misc.sensitivity_analysis(df)
+    # src.misc.examine_ATM_TT(df)
+    return
     if False:
         df, _ = df_names(9)
         src.plotting.plot_basis_sets_d4(

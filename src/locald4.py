@@ -508,6 +508,7 @@ def compute_disp_2B_BJ_ATM_CHG_dimer(
     )
     return e_total * mult_out
 
+
 def compute_disp_2B_BJ_ATM_TT_dimer(
     r,
     params_2B,
@@ -539,6 +540,18 @@ def compute_disp_2B_BJ_ATM_TT_dimer(
         params_2B,
         params_ATM,
     )
+    # e_total = disp.disp_ATM_TT_dimer(
+    #     pos,
+    #     carts,
+    #     r["C6_ATM"],
+    #     pA,
+    #     cA,
+    #     r["C6_ATM_A"],
+    #     pB,
+    #     cB,
+    #     r["C6_ATM_B"],
+    #     params_ATM,
+    # )
     return e_total * mult_out
 
 

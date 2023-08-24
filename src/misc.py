@@ -126,6 +126,46 @@ def sensitivity_analysis(df):
     return
 
 
+def examine_ATM_TT(df):
+    params = paramsTable.get_params("SAPT0_adz_3_IE_2B")
+
+    params_2B, params_ATM = params[0], params[1]
+    # params_ATM[-1] = 1.0
+    print(params_2B)
+    print(params_ATM)
+    r = df.iloc[0]
+    # ATM = locald4.compute_disp_2B_BJ_ATM_TT_dimer(r, params_2B, params_ATM)
+    # return
+    df["d4_2B"] = df.apply(
+        lambda r: locald4.compute_disp_2B_BJ_ATM_CHG_dimer(r, params_2B, params_ATM),
+        axis=1,
+    )
+    params_ATM[-1] = 1.0
+    df["ATM_TT"] = df.apply(
+        lambda r: locald4.compute_disp_2B_BJ_ATM_TT_dimer(r, params_2B, params_ATM),
+        axis=1,
+    )
+    df["ATM_CHG"] = df.apply(
+        lambda r: locald4.compute_disp_2B_BJ_ATM_CHG_dimer(r, params_2B, params_ATM)
+        - r["d4_2B"],
+        axis=1,
+    )
+    df["ATM_diff"] = df["ATM_TT"] - df["ATM_CHG"]
+    df["target"] = df["Benchmark"] - (df["SAPT0_adz_3_IE"] + df["d4_2B"])
+    for n, r in df.iterrows():
+        line = f"{n} {r['target']:.6f} {r['ATM_TT']:.6f} {r['ATM_CHG']:.6f} {r['ATM_diff']:.6f}"
+        print(line)
+    print("CHG:")
+    optimization.compute_int_energy_stats_DISP(
+        params, df, "SAPT0_adz_3_IE", print_results=True
+    )
+    print("TT:")
+    optimization.compute_int_energy_stats_DISP_TT(
+        params, df, "SAPT0_adz_3_IE", print_results=True
+    )
+    return
+
+
 def main():
     # water_data.water_data_collect()
     return

@@ -41,6 +41,13 @@ def paramsDict() -> {}:
             ],
             dtype=np.float64,
         ),
+        "HF_ATM_TT_OPT_START": np.array(
+            [
+                0.31,
+                3.43,
+            ],
+            dtype=np.float64,
+        ),
         "HF_ATM_OPT_OUT": np.array(
             [
                 0.8304747365034967,

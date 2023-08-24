@@ -293,7 +293,7 @@ def test_disp_ATM_TT_returns(geom, request):
     print(params_2B)
     print(params_ATM)
 
-    e_total = disp.disp_2B_BJ_ATM_TT(
+    e_TT = disp.disp_2B_BJ_ATM_TT(
         pos,
         carts,
         d4C6s,
@@ -309,5 +309,25 @@ def test_disp_ATM_TT_returns(geom, request):
         params_2B,
         params_ATM,
     )
-    print(f"Computed d4= {e_total}")
-    assert type(e_total) == float
+    e_CHG  = disp.disp_2B_BJ_ATM_CHG(
+        pos,
+        carts,
+        d4C6s,
+        d4C6s_ATM,
+        pos_A,
+        carts_A,
+        d4C6s_A,
+        d4C6s_ATM_A,
+        pos_B,
+        carts_B,
+        d4C6s_B,
+        d4C6s_ATM_B,
+        params_2B,
+        params_ATM,
+    )
+    e_TT *= hartree_to_kcalmol
+    e_CHG *= hartree_to_kcalmol
+    print(f"Computed d4= {e_TT}")
+    print(f"Computed d4= {e_CHG}")
+    assert type(e_TT) == float
+    assert e_TT != e_CHG

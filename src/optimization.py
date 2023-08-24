@@ -191,7 +191,9 @@ def compute_int_energy_stats_DISP_TT(
 ) -> (float, float, float,):
     t = df[hf_key].isna().sum()
     assert t == 0, f"The HF_col provided has np.nan values present, {t}"
-    params_2B, params_ATM = paramsTable.generate_2B_ATM_param_subsets(params)
+    # params_2B, params_ATM = paramsTable.generate_2B_ATM_param_subsets(params)
+    params_2B, params_ATM = paramsTable.get_params("SAPT0_adz_3_IE_2B")
+    params_ATM = np.array([0.0, 0.0, params[0], params[1], 1.0])
     print(f"{params_2B = }")
     print(f"{params_ATM = }")
 
@@ -355,22 +357,19 @@ def compute_int_energy_DISP(
     print("%.8f\t" % rmse, params.tolist())
     return rmse
 
+
 def compute_int_energy_DISP_TT(
     params,
     df: pd.DataFrame,
     hf_key: str = "HF INTERACTION ENERGY",
-    prevent_negative_params: bool = True,
-    parallel=False,
-    chunk_count=1000,
 ):
     """
     compute_int_energy_DISP_TT is used to optimize paramaters for damping function in dftd4 with TT damping ATM function
     """
-    params_2B, params_ATM = paramsTable.generate_2B_ATM_param_subsets(params)
-    if prevent_negative_params:
-        for i in params:
-            if i < 0:
-                return 10
+    # params_2B, params_ATM = paramsTable.generate_2B_ATM_param_subsets(params)
+    params_2B, params_ATM = paramsTable.get_params("SAPT0_adz_3_IE_2B")
+    params_ATM = np.array([0.0, 0.0, params[0], params[1], 1.0])
+    params_ATM[-1] = 1.0
     rmse = 0
     diff = np.zeros(len(df))
     r4r2_ls = r4r2.r4r2_vals_ls()
@@ -383,8 +382,11 @@ def compute_int_energy_DISP_TT(
         axis=1,
     )
     df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
+    print(df['diff'])
     rmse = (df["diff"] ** 2).mean() ** 0.5
     print("%.8f\t" % rmse, params.tolist())
+    if np.isnan(rmse):
+        return 10
     return rmse
 
 
@@ -742,6 +744,8 @@ def opt_cross_val(
     else:
         raise Exception("compute_stats not defined")
     opt_type = version["method"]
+    print(f"{hf_key = }")
+    print(f"{version = }")
 
     nans = df[hf_key].isna().sum()
     inds = df.index[df[hf_key].isna()]
