@@ -184,6 +184,8 @@ def compute_bj_f90(
         s6 = 1.0
     elif len(params) == 4:
         s6, s8, a1, a2 = params
+    elif len(params) == 5:
+        s6, s8, a1, a2, s9 = params
     else:
         raise ValueError("params must be length 3 or 4")
     M_tot = len(carts)
