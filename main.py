@@ -453,7 +453,6 @@ def merge_SAPT0_results_into_df():
 def main():
     # TODO: plot -D4 2B with Grimme parameters
     # TODO: plot -D3 ATM
-    # src.sr.generate_SR_data_ATM(*df_names(6))
     # df, selected = df_names(8)
     # src.dftd3.compute_dftd3(*df_names(4), "Geometry", param_label="D3MBJ")
     # src.dftd3.compute_dftd3(*df_names(4), "Geometry", param_label="D3MBJ ATM")
@@ -486,14 +485,15 @@ def main():
             use_2B_C6s=False,
         )
     # opt(bases)
+    # return
     # opt(["HF_qz"])
     # opt(["HF_adz"])
 
+    src.sr.generate_SR_data_ATM(*df_names(6), params_key="SAPT0_adz_3_IE_ATM")
     def SR_testing():
         import dispersion
 
         df, selected = df_names(6)
-        # params = src.paramsTable.get_params("HF_ATM_OPT_START")
         params = src.paramsTable.get_params("SAPT0_adz_3_IE_ATM")
         src.optimization.compute_int_energy_stats_DISP_SR(
             params,
@@ -503,7 +503,7 @@ def main():
             SR_func=dispersion.disp.disp_SR_3,
         )
 
-    SR_testing()
+    # SR_testing()
 
     # return
     # src.misc.sensitivity_analysis(df)

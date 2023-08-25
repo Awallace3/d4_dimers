@@ -5,17 +5,17 @@ from . import paramsTable
 from . import locald4
 
 
-def build_vals(pos, carts, C6, params, cols=7, max_N=None):
+def build_vals(pos, carts, C6, params_ATM, cols=7, max_N=None):
     if max_N is None:
         max_N = len(pos)
     vals = np.zeros(
         (int(max_N * (max_N - 1) * (max_N - 2) / 6), cols), dtype=np.float64
     )
-    dispersion.disp.vals_for_SR(pos, carts, C6, params, vals)
+    dispersion.disp.vals_for_SR(pos, carts, C6, params_ATM, vals)
     return vals
 
 
-def build_vals_molecule(r, params, max_N=None, cols=7):
+def build_vals_molecule(r, params_ATM, max_N=None, cols=7):
     pos = r["Geometry_bohr"][:, 0]
     carts = r["Geometry_bohr"][:, 1:]
     monAs = r["monAs"]
@@ -28,32 +28,34 @@ def build_vals_molecule(r, params, max_N=None, cols=7):
     pA, cA = pos[monAs].copy(), carts[monAs].copy()
     pB, cB = pos[monBs].copy(), carts[monBs].copy()
     # Generate ATM data for SR
-    dimer_vals = build_vals(pos, carts, C6s, params, cols=cols, max_N=max_N)
-    monA_vals = build_vals(pA, cA, C6s_A, params, cols=cols, max_N=max_N)
-    monB_vals = build_vals(pB, cB, C6s_B, params, cols=cols, max_N=max_N)
+    dimer_vals = build_vals(pos, carts, C6s, params_ATM, cols=cols, max_N=max_N)
+    monA_vals = build_vals(pA, cA, C6s_A, params_ATM, cols=cols, max_N=max_N)
+    monB_vals = build_vals(pB, cB, C6s_B, params_ATM, cols=cols, max_N=max_N)
     # Labeling as dimer and monomers for SR subtraction to get IE
     dimer_vals[:, 0] *= 1
     monA_vals[:, 0] *= -1
     monB_vals[:, 0] *= -1
-    # params_2B, params_ATM = paramsTable.generate_2B_ATM_param_subsets(params)
-    # IE_2B = locald4.compute_disp_2B_BJ_ATM_CHG_dimer(
-    #     r,
-    #     params_2B,
-    #     params_ATM,
-    #     mult_out=1.0,
-    # )
-    # dimer_vals[0, 6] = IE_2B
     return np.concatenate((dimer_vals, monA_vals, monB_vals), axis=0)
 
 
-def generate_SR_data_ATM(df, selected, target_HF_key="HF_adz", ncols=6, generate=True):
+def generate_SR_data_ATM(
+    df,
+    selected,
+    target_HF_key="SAPT0_adz_3_IE",
+    ncols=6,
+    generate=True,
+    params_key="SAPT0_adz_3_IE_ATM",
+):
     r = df.iloc[0]
-    params = paramsTable.get_params("SAPT0_adz_3_IE_ATM")
+    params = paramsTable.get_params(params_key)
+    params_2B, params_ATM = paramsTable.generate_2B_ATM_param_subsets(params)
+    print(f"{params_2B = }")
+    print(f"{params_ATM = }")
     if generate:
         df["xs"] = df.apply(
             lambda r: build_vals_molecule(
                 r,
-                params,
+                params_ATM,
                 cols=ncols,
             ),
             axis=1,
@@ -73,8 +75,8 @@ def generate_SR_data_ATM(df, selected, target_HF_key="HF_adz", ncols=6, generate
         df["splits"] = splits
         r1 = df.iloc[0]
         print(r1["xs"].shape, r1["splits"].shape)
-        params_2B, params_ATM = paramsTable.generate_2B_ATM_param_subsets(params)
 
+        params_ATM[-1] = 0.0
         df["d4_2B"] = df.apply(
             lambda r: locald4.compute_disp_2B_BJ_ATM_CHG_dimer(
                 r,
@@ -87,6 +89,7 @@ def generate_SR_data_ATM(df, selected, target_HF_key="HF_adz", ncols=6, generate
         out = selected.replace(".pkl", "_SR.pkl")
         df = pd.read_pickle(out)
 
+
     df["ys_no_ATM"] = df.apply(
         lambda r: (r["Benchmark"] - (r[target_HF_key] + r["d4_2B"])),
         axis=1,
@@ -95,6 +98,15 @@ def generate_SR_data_ATM(df, selected, target_HF_key="HF_adz", ncols=6, generate
         lambda r: (r["Benchmark"] - (r[target_HF_key] + r["d4_2B"])),
         axis=1,
     )
+    tb_mae = df['ys_no_ATM'].abs().mean()
+    tb_mse = (df['ys_no_ATM']**2).mean()
+    tb_rmse = np.sqrt((df['ys_no_ATM']**2).mean())
+    print(f"TB MAE: {tb_mae:.4f} MSE: {tb_mse:.4f} RMSE: {tb_rmse:.4f}")
+    ta_mae = df['ys'].abs().mean()
+    ta_mse = (df['ys']**2).mean()
+    ta_rmse = np.sqrt((df['ys']**2).mean())
+    print(f"TA MAE: {ta_mae:.4f} MSE: {ta_mse:.4f} RMSE: {ta_rmse:.4f}")
+
     for n, r in df.iterrows():
         # line = f"{n} ys = {r['ys']:.4f}"
         # print(line)
@@ -103,7 +115,7 @@ def generate_SR_data_ATM(df, selected, target_HF_key="HF_adz", ncols=6, generate
         line = f"{n}    ATM: {r['ys']:.4f} = {r['Benchmark']:.4f} - ({r[target_HF_key]:.4f} + {r['d4_2B']:.4f}) ::: fmp * {r['default_xs']:.4f}"
         print(line)
     # df['ys'] /= locald4.hartree_to_kcalmol
-    print(df[["ys", 'default_xs']].describe())
+    print(df[["ys", "default_xs"]].describe())
     if generate:
         out = selected.replace(".pkl", "_SR.pkl")
         df.to_pickle(out)
