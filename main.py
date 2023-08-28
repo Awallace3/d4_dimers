@@ -498,7 +498,6 @@ def main():
 
     def SR_testing():
         import dispersion
-
         df, selected = df_names(6)
         params = src.paramsTable.get_params("SAPT0_adz_3_IE_ATM")
         src.optimization.compute_int_energy_stats_DISP_SR(
@@ -508,7 +507,7 @@ def main():
             print_results=True,
             SR_func=dispersion.disp.disp_SR_4,
         )
-
+        return
     SR_testing()
 
     # return

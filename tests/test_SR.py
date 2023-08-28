@@ -20,3 +20,17 @@ dftd4_bin = "/theoryfs2/ds/amwalla3/.local/bin/dftd4"
 data_pkl = "/theoryfs2/ds/amwalla3/projects/d4_corrections/tests/data/sr.pkl"
 
 # y_p: -0.3581934534333338, y: 1.3651143133442858
+def test_SR_4():
+    df = pd.read_pickle(data_pkl)
+    params = src.paramsTable.get_params("SAPT0_adz_3_IE_ATM")
+    params_2B, params_ATM = src.paramsTable.generate_2B_ATM_param_subsets(params)
+    y_targets = [-0.3581934534333338]
+    for i in [0]:
+        v = src.locald4.compute_disp_2B_BJ_ATM_SR_dimer(
+            df.iloc[i],
+            params_2B,
+            params_ATM,
+            mult_out=1.0,
+            SR_func=disp.disp_SR_4,
+        )
+        assert np.isclose(v, y_targets[i], atol=1.0e-5)
