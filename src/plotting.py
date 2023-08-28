@@ -31,6 +31,7 @@ from qm_tools_aw import tools
 #         "turquoise",
 #     ]
 
+
 def compute_D3_D4_values_for_params_for_plotting(
     df: pd.DataFrame,
     label: str,
@@ -438,18 +439,17 @@ def plotting_setup(df, build_df=False, df_out: str = "plots/plot.pkl", compute_d
     df_out = f"plots/{selected}.pkl"
     if build_df:
         print(df.columns.values)
-        for i in [
-            j
-            for j in df.columns.values
-            if "SAPT0_" in j
-            if j not in ["SAPT0", "SAPT0_jdz", "SAPT0_aqz"]
-            if "_IE" not in j
-        ]:
-            df[i + "_IE"] = df.apply(lambda r: r[i][0], axis=1)
-            df[i + "_diff"] = df["Benchmark"] - df[i + "_IE"]
+        # for i in [
+        #     j
+        #     for j in df.columns.values
+        #     if "SAPT0_" in j
+        #     if j not in ["SAPT0", "SAPT0_jdz", "SAPT0_aqz"]
+        #     if "_IE" not in j
+        # ]:
+        #     df[i + "_IE"] = df.apply(lambda r: r[i][0], axis=1)
+        #     df[i + "_diff"] = df["Benchmark"] - df[i + "_IE"]
 
-        # df = compute_D3_D4_values_for_params_for_plotting(df, "adz", compute_d3)
-        # df = compute_D3_D4_values_for_params_for_plotting(df, "jdz", compute_d3)
+        df = compute_D3_D4_values_for_params_for_plotting(df, "adz", compute_d3)
         df = compute_D3_D4_values_for_params_for_plotting(df, "jdz", compute_d3)
         df = compute_d4_from_opt_params(df)
 
@@ -514,7 +514,7 @@ def plotting_setup(df, build_df=False, df_out: str = "plots/plot.pkl", compute_d
         "-D4 (2B)",
         "-D4 (ATM_G)",
         title_name=f"DB Breakdown SAPT0-D4/aug-cc-pVDZ ({selected})",
-        pfn=f"{selected}_db_breakdown_2B_ATM",
+        pfn=f"db_breakdown_2B_ATM",
     )
     df_charged = get_charged_df(df)
     plot_violin_d3_d4_ALL(
@@ -532,8 +532,9 @@ def plotting_setup(df, build_df=False, df_out: str = "plots/plot.pkl", compute_d
             "/jun-cc-pVDZ": "SAPT0_jdz_diff",
             "/aug-cc-pVDZ": "SAPT0_adz_diff",
         },
-        f"All Dimers with SAPT0 ({selected})",
+        f"All Dimers with SAPT0",
         f"{selected}_adz_d3_d4_total_sapt0",
+        ylim=[-20, 25],
     )
     # Basis Set Performance: SAPT0
     plot_violin_d3_d4_ALL(
@@ -556,14 +557,17 @@ def plotting_setup(df, build_df=False, df_out: str = "plots/plot.pkl", compute_d
         df_charged,
         {
             "SAPT0-D3/aug-cc-pVDZ": "adz_diff_d3",
+            "-D3MBJ(ATM)/aug-cc-pVDZ": "adz_diff_d3mbj_atm",
             "SAPT0-D4/aug-cc-pVDZ": "adz_diff_d4",
             "SAPT0-D4(ATM)/jun-cc-pVDZ": "jdz_diff_d4_ATM",
             "SAPT0-D4(ATM)/aug-cc-pVDZ": "adz_diff_d4_ATM",
             "SAPT0/jun-cc-pVDZ": "SAPT0_jdz_diff",
             "SAPT0/aug-cc-pVDZ": "SAPT0_adz_diff",
         },
-        f"Charged Dimers ({selected})",
+        f"Charged Dimers (Totaling {len(df_charged)} Dimers)",
         f"{selected}_adz_d3_d4_total_sapt0_charged",
+        bottom=0.3,
+        ylim=[-8, 6],
     )
     return
 
@@ -634,7 +638,8 @@ def plot_violin_d3_d4_ALL(
     title_name: str,
     pfn: str,
     bottom: float = 0.4,
-    ylim=[-16, 35]
+    ylim=[-16, 35],
+    transparent=True,
 ) -> None:
     """ """
     print(f"Plotting {pfn}")
@@ -643,15 +648,15 @@ def plot_violin_d3_d4_ALL(
     dbs = sorted(dbs, key=lambda x: x.lower())
     vLabels, vData = [], []
 
-    annotations = [] # [(x, y, text), ...]
+    annotations = []  # [(x, y, text), ...]
     cnt = 1
-    plt.rcParams['text.usetex'] = True
+    plt.rcParams["text.usetex"] = True
     for k, v in vals.items():
         df[v] = pd.to_numeric(df[v])
         vData.append(df[v].to_list())
         vLabels.append(k)
         m = df[v].max()
-        rmse = df[v].apply(lambda x: x ** 2).mean() ** 0.5
+        rmse = df[v].apply(lambda x: x**2).mean() ** 0.5
         mae = df[v].apply(lambda x: abs(x)).mean()
         max_error = df[v].apply(lambda x: abs(x)).max()
         text = r"$\mathbf{%.2f}$" % mae
@@ -741,12 +746,10 @@ def plot_violin_d3_d4_ALL(
     # lg.get_frame().set_alpha(None)
     lg.get_frame().set_facecolor((1, 1, 1, 0.0))
 
-
     ax.set_xlabel("Level of Theory", color="k")
     ax.set_ylabel(r"Error ($\mathrm{kcal\cdot mol^{-1}}$)", color="k")
     ax.grid(color="gray", which="major", linewidth=0.5, alpha=0.3)
     ax.grid(color="gray", which="minor", linewidth=0.5, alpha=0.3)
-
 
     # Annotations of RMSE
     for x, y, text in annotations:
@@ -760,23 +763,34 @@ def plot_violin_d3_d4_ALL(
             verticalalignment="bottom",
         )
 
-
     for n, xtick in enumerate(ax.get_xticklabels()):
         xtick.set_color(colors[n - 1])
         xtick.set_alpha(0.8)
 
-    plt.title(f"{title_name}")
+    # plt.title(f"{title_name}")
     fig.subplots_adjust(bottom=bottom)
-    plt.savefig(f"plots/{pfn}_dbs_violin.png", transparent=False)
+    plt.savefig(f"plots/{pfn}_dbs_violin.png", transparent=transparent)
     plt.clf()
     return
 
 
-def plot_dbs_d3_d4(df, c1, c2, l1, l2, title_name, pfn, outlier_cutoff=3) -> None:
+def plot_dbs_d3_d4(
+    df,
+    c1,
+    c2,
+    l1,
+    l2,
+    title_name,
+    pfn,
+    outlier_cutoff=3,
+    bottom=0.3,
+    transparent=True,
+) -> None:
     kcal_per_mol = "$kcal\cdot mol^{-1}$"
     dbs = list(set(df["DB"].to_list()))
     dbs = sorted(dbs, key=lambda x: x.lower())
     vLabels, vData, vDataErrors = [], [], []
+    annotations = []  # [(x, y, text), ...]
     for d in dbs:
         df2 = df[df["DB"] == d]
         vData.append(df2[c1].to_list())
@@ -861,8 +875,6 @@ def plot_dbs_d3_d4(df, c1, c2, l1, l2, title_name, pfn, outlier_cutoff=3) -> Non
     # ax.yaxis.set_minor_locator(MultipleLocator(2))
     # ax.tick_params(which='minor', length=2, color='black', labelsize=5)
 
-
-
     plt.setp(ax.set_xticklabels(vLabels), rotation=90, fontsize="5")
     ax.set_xlim((0, len(vLabels)))
     ax.legend(loc="upper left")
@@ -877,8 +889,8 @@ def plot_dbs_d3_d4(df, c1, c2, l1, l2, title_name, pfn, outlier_cutoff=3) -> Non
             xtick.set_color("red")
 
     plt.minorticks_on()
-    plt.title(f"{title_name}")
-    fig.subplots_adjust(bottom=0.2)
-    plt.savefig(f"plots/{pfn}_dbs_violin.png")
+    # plt.title(f"{title_name}")
+    fig.subplots_adjust(bottom=bottom)
+    plt.savefig(f"plots/{pfn}_dbs_violin.png", transparent=transparent)
     plt.clf()
     return

@@ -4,7 +4,6 @@ import dispersion
 from . import paramsTable
 from . import locald4
 
-
 def build_vals(pos, carts, C6, params_ATM, cols=7, max_N=None):
     if max_N is None:
         max_N = len(pos)
@@ -37,7 +36,8 @@ def build_vals_molecule(r, params_ATM, max_N=None, cols=7):
     monA_vals[:, 0] *= -1
     monB_vals[:, 0] *= -1
     energies = np.array([e_d, -e_a, -e_b], dtype=np.float64)
-    return np.concatenate((dimer_vals, monA_vals, monB_vals), axis=0)
+    vals = np.concatenate((dimer_vals, monA_vals, monB_vals), axis=0)
+    return energies, vals
 
 
 def generate_SR_data_ATM(
@@ -54,13 +54,14 @@ def generate_SR_data_ATM(
     print(f"{params_2B = }")
     print(f"{params_ATM = }")
     if generate:
-        df["xs"] = df.apply(
+        df[["SR_ATM", "xs"]] = df.apply(
             lambda r: build_vals_molecule(
                 r,
                 params_ATM,
                 cols=ncols,
             ),
             axis=1,
+            result_type="expand",
         )
         # for n, r in df.iterrows():
         #     df.at[n, "xs"][:, 0] *= locald4.hartree_to_kcalmol
@@ -91,17 +92,17 @@ def generate_SR_data_ATM(
         out = selected.replace(".pkl", "_SR.pkl")
         df = pd.read_pickle(out)
 
-    df["ys_no_ATM"] = df.apply(
-        lambda r: (r["Benchmark"] - (r[target_HF_key] + r["d4_2B"])),
+    df["y_pred"] = df.apply(
+        lambda r: (r["Benchmark"] - (r[target_HF_key] + r["d4_2B"] + sum(r["SR_ATM"]))),
         axis=1,
     )
     df["ys"] = df.apply(
         lambda r: -(r["Benchmark"] - (r[target_HF_key] + r["d4_2B"])),
         axis=1,
     )
-    tb_mae = df["ys_no_ATM"].abs().mean()
-    tb_mse = (df["ys_no_ATM"] ** 2).mean()
-    tb_rmse = np.sqrt((df["ys_no_ATM"] ** 2).mean())
+    tb_mae = df["y_pred"].abs().mean()
+    tb_mse = (df["y_pred"] ** 2).mean()
+    tb_rmse = np.sqrt((df["y_pred"] ** 2).mean())
     print(f"TB MAE: {tb_mae:.4f} MSE: {tb_mse:.4f} RMSE: {tb_rmse:.4f}")
     ta_mae = df["ys"].abs().mean()
     ta_mse = (df["ys"] ** 2).mean()
@@ -109,14 +110,14 @@ def generate_SR_data_ATM(
     print(f"TA MAE: {ta_mae:.4f} MSE: {ta_mse:.4f} RMSE: {ta_rmse:.4f}")
 
     for n, r in df.iterrows():
-        # line = f"{n} ys = {r['ys']:.4f}"
-        # print(line)
-        # line = f"{n} NO ATM: {r['ys']:.4f} = {r['Benchmark']:.4f} - ({r[target_HF_key]:.4f} + {r['d4_2B']:.4f})"
-        # print(line)
         line = f"{n}    ATM: {r['ys']:.4f} = {r['Benchmark']:.4f} - ({r[target_HF_key]:.4f} + {r['d4_2B']:.4f}) ::: fmp * {r['default_xs']:.4f}"
         print(line)
+        line = f"{n}    SRP: {r['y_pred']:.4f} = {r['Benchmark']:.4f} - ({r[target_HF_key]:.4f} + {r['d4_2B']:.4f} + {sum(r['SR_ATM']):.4f})"
+        print(line)
+        if n > 500:
+            break
     # df['ys'] /= locald4.hartree_to_kcalmol
-    print(df[["ys", "default_xs"]].describe())
+    print(df[["ys", "default_xs", "y_pred"]].describe())
     if generate:
         out = selected.replace(".pkl", "_SR.pkl")
         print(f"Saving to...\n{out}")
@@ -197,39 +198,39 @@ def compute_disp_2B_BJ_ATM_SR_dimer(r, params_ATM, max_N=None, cols=7):
     return vals, energies
 
 
-def compute_disp_2B_BJ_ATM_SR_dimer(
-    r,
-    params_2B,
-    params_ATM,
-    mult_out=hartree_to_kcalmol,
-    SR_func=disp.disp_SR_1,
-):
-    pos, carts = (
-        np.array(r["Geometry_bohr"][:, 0], dtype=np.int32),
-        r["Geometry_bohr"][:, 1:],
-    )
-    charges = r["charges"]
-    monAs, monBs = r["monAs"], r["monBs"]
-    pA, cA = pos[monAs], carts[monAs, :]
-    pB, cB = pos[monBs], carts[monBs, :]
-    e_d = SR_func(
-        pos,
-        carts,
-        r["C6_ATM"],
-        params_ATM,
-    )
-    e_1 = SR_func(
-        pA,
-        cA,
-        r["C6_ATM_A"],
-        params_ATM,
-    )
-    e_2 = SR_func(
-        pB,
-        cB,
-        r["C6_ATM_B"],
-        params_ATM,
-    )
-    e_total = e_d - (e_1 + e_2)
-    e_total *= mult_out
-    return e_total
+# def compute_disp_2B_BJ_ATM_SR_dimer(
+#     r,
+#     params_2B,
+#     params_ATM,
+#     mult_out=hartree_to_kcalmol,
+#     SR_func=disp.disp_SR_1,
+# ):
+#     pos, carts = (
+#         np.array(r["Geometry_bohr"][:, 0], dtype=np.int32),
+#         r["Geometry_bohr"][:, 1:],
+#     )
+#     charges = r["charges"]
+#     monAs, monBs = r["monAs"], r["monBs"]
+#     pA, cA = pos[monAs], carts[monAs, :]
+#     pB, cB = pos[monBs], carts[monBs, :]
+#     e_d = SR_func(
+#         pos,
+#         carts,
+#         r["C6_ATM"],
+#         params_ATM,
+#     )
+#     e_1 = SR_func(
+#         pA,
+#         cA,
+#         r["C6_ATM_A"],
+#         params_ATM,
+#     )
+#     e_2 = SR_func(
+#         pB,
+#         cB,
+#         r["C6_ATM_B"],
+#         params_ATM,
+#     )
+#     e_total = e_d - (e_1 + e_2)
+#     e_total *= mult_out
+#     return e_total

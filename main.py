@@ -490,45 +490,35 @@ def main():
     # opt(["HF_qz"])
     # opt(["HF_adz"])
 
-    # src.sr.generate_SR_data_ATM(
-    #     *df_names(6),
-    #     params_key="SAPT0_adz_3_IE_ATM",
-    # )
-
-
     def SR_testing():
         import dispersion
-        df, selected = df_names(6)
-        params = src.paramsTable.get_params("SAPT0_adz_3_IE_ATM")
-        src.optimization.compute_int_energy_stats_DISP_SR(
-            params,
-            df,
-            "SAPT0_adz_3_IE",
-            print_results=True,
-            SR_func=dispersion.disp.disp_SR_4,
+
+        src.sr.generate_SR_data_ATM(
+            *df_names(6),
+            params_key="SAPT0_adz_3_IE_ATM",
         )
         return
+
     # SR_testing()
 
     # return
     # src.misc.sensitivity_analysis(df)
     # src.misc.examine_ATM_TT(df)
-    return
-    if False:
+    if True:
         df, _ = df_names(9)
         src.plotting.plot_basis_sets_d4(
             df,
             False,
         )
-    if False:
+    if True:
         df, _ = df_names(9)
         src.plotting.plot_basis_sets_d3(
             df,
             False,
         )
-    if False:
-        src.plotting.plotting_setup_G(
-            df_names(4),
+    if True:
+        src.plotting.plotting_setup(
+            df_names(9),
             True,
         )
     return
