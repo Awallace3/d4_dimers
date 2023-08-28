@@ -11,8 +11,9 @@ def build_vals(pos, carts, C6, params_ATM, cols=7, max_N=None):
     vals = np.zeros(
         (int(max_N * (max_N - 1) * (max_N - 2) / 6), cols), dtype=np.float64
     )
-    dispersion.disp.vals_for_SR(pos, carts, C6, params_ATM, vals)
-    return vals
+    # energy = dispersion.disp.vals_for_SR(pos, carts, C6, params_ATM, vals)
+    energy = dispersion.disp.disp_SR_4_vals(pos, carts, C6, params_ATM, vals)
+    return energy, vals
 
 
 def build_vals_molecule(r, params_ATM, max_N=None, cols=7):
@@ -28,13 +29,14 @@ def build_vals_molecule(r, params_ATM, max_N=None, cols=7):
     pA, cA = pos[monAs].copy(), carts[monAs].copy()
     pB, cB = pos[monBs].copy(), carts[monBs].copy()
     # Generate ATM data for SR
-    dimer_vals = build_vals(pos, carts, C6s, params_ATM, cols=cols, max_N=max_N)
-    monA_vals = build_vals(pA, cA, C6s_A, params_ATM, cols=cols, max_N=max_N)
-    monB_vals = build_vals(pB, cB, C6s_B, params_ATM, cols=cols, max_N=max_N)
+    e_d, dimer_vals = build_vals(pos, carts, C6s, params_ATM, cols=cols, max_N=max_N)
+    e_a, monA_vals = build_vals(pA, cA, C6s_A, params_ATM, cols=cols, max_N=max_N)
+    e_b, monB_vals = build_vals(pB, cB, C6s_B, params_ATM, cols=cols, max_N=max_N)
     # Labeling as dimer and monomers for SR subtraction to get IE
     dimer_vals[:, 0] *= 1
     monA_vals[:, 0] *= -1
     monB_vals[:, 0] *= -1
+    energies = np.array([e_d, -e_a, -e_b], dtype=np.float64)
     return np.concatenate((dimer_vals, monA_vals, monB_vals), axis=0)
 
 
@@ -60,8 +62,8 @@ def generate_SR_data_ATM(
             ),
             axis=1,
         )
-        for n, r in df.iterrows():
-            df.at[n, "xs"][:, 0] *= locald4.hartree_to_kcalmol
+        # for n, r in df.iterrows():
+        #     df.at[n, "xs"][:, 0] *= locald4.hartree_to_kcalmol
         df["default_xs"] = df.apply(lambda r: sum(r["xs"][:, 0]), axis=1)
         print(params)
         # df["xs"] = df.apply(lambda r: r["xs"][:, 1:], axis=1)
@@ -89,22 +91,21 @@ def generate_SR_data_ATM(
         out = selected.replace(".pkl", "_SR.pkl")
         df = pd.read_pickle(out)
 
-
     df["ys_no_ATM"] = df.apply(
         lambda r: (r["Benchmark"] - (r[target_HF_key] + r["d4_2B"])),
         axis=1,
     )
     df["ys"] = df.apply(
-        lambda r: (r["Benchmark"] - (r[target_HF_key] + r["d4_2B"])),
+        lambda r: -(r["Benchmark"] - (r[target_HF_key] + r["d4_2B"])),
         axis=1,
     )
-    tb_mae = df['ys_no_ATM'].abs().mean()
-    tb_mse = (df['ys_no_ATM']**2).mean()
-    tb_rmse = np.sqrt((df['ys_no_ATM']**2).mean())
+    tb_mae = df["ys_no_ATM"].abs().mean()
+    tb_mse = (df["ys_no_ATM"] ** 2).mean()
+    tb_rmse = np.sqrt((df["ys_no_ATM"] ** 2).mean())
     print(f"TB MAE: {tb_mae:.4f} MSE: {tb_mse:.4f} RMSE: {tb_rmse:.4f}")
-    ta_mae = df['ys'].abs().mean()
-    ta_mse = (df['ys']**2).mean()
-    ta_rmse = np.sqrt((df['ys']**2).mean())
+    ta_mae = df["ys"].abs().mean()
+    ta_mse = (df["ys"] ** 2).mean()
+    ta_rmse = np.sqrt((df["ys"] ** 2).mean())
     print(f"TA MAE: {ta_mae:.4f} MSE: {ta_mse:.4f} RMSE: {ta_rmse:.4f}")
 
     for n, r in df.iterrows():
@@ -118,6 +119,7 @@ def generate_SR_data_ATM(
     print(df[["ys", "default_xs"]].describe())
     if generate:
         out = selected.replace(".pkl", "_SR.pkl")
+        print(f"Saving to...\n{out}")
         df.to_pickle(out)
     return
 
@@ -169,3 +171,65 @@ def evaluate_vals(df):
     print(df[["SR_ys", "target", "Benchmark", "ys"]])
     print(df["results"].describe())
     return
+
+
+def compute_disp_2B_BJ_ATM_SR_dimer(r, params_ATM, max_N=None, cols=7):
+    pos = r["Geometry_bohr"][:, 0]
+    carts = r["Geometry_bohr"][:, 1:]
+    monAs = r["monAs"]
+    monBs = r["monBs"]
+    C6s = r["C6s"]
+    C6s_A = r["C6_A"]
+    C6s_B = r["C6_B"]
+
+    pos = np.array(pos, dtype=np.int32)
+    pA, cA = pos[monAs].copy(), carts[monAs].copy()
+    pB, cB = pos[monBs].copy(), carts[monBs].copy()
+    # Generate ATM data for SR
+    dimer_vals = build_vals(pos, carts, C6s, params_ATM, cols=cols, max_N=max_N)
+    monA_vals = build_vals(pA, cA, C6s_A, params_ATM, cols=cols, max_N=max_N)
+    monB_vals = build_vals(pB, cB, C6s_B, params_ATM, cols=cols, max_N=max_N)
+    # Labeling as dimer and monomers for SR subtraction to get IE
+    dimer_vals[:, 0] *= 1
+    monA_vals[:, 0] *= -1
+    monB_vals[:, 0] *= -1
+    vals = np.concatenate((dimer_vals, monA_vals, monB_vals), axis=0)
+    return vals, energies
+
+
+def compute_disp_2B_BJ_ATM_SR_dimer(
+    r,
+    params_2B,
+    params_ATM,
+    mult_out=hartree_to_kcalmol,
+    SR_func=disp.disp_SR_1,
+):
+    pos, carts = (
+        np.array(r["Geometry_bohr"][:, 0], dtype=np.int32),
+        r["Geometry_bohr"][:, 1:],
+    )
+    charges = r["charges"]
+    monAs, monBs = r["monAs"], r["monBs"]
+    pA, cA = pos[monAs], carts[monAs, :]
+    pB, cB = pos[monBs], carts[monBs, :]
+    e_d = SR_func(
+        pos,
+        carts,
+        r["C6_ATM"],
+        params_ATM,
+    )
+    e_1 = SR_func(
+        pA,
+        cA,
+        r["C6_ATM_A"],
+        params_ATM,
+    )
+    e_2 = SR_func(
+        pB,
+        cB,
+        r["C6_ATM_B"],
+        params_ATM,
+    )
+    e_total = e_d - (e_1 + e_2)
+    e_total *= mult_out
+    return e_total

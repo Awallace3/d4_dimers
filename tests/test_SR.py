@@ -31,6 +31,6 @@ def test_SR_4():
             params_2B,
             params_ATM,
             mult_out=1.0,
-            SR_func=disp.disp_SR_4,
+            SR_func=disp.disp_SR_4_vals,
         )
         assert np.isclose(v, y_targets[i], atol=1.0e-5)
