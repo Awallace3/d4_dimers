@@ -241,7 +241,6 @@ def compute_int_energy_stats_DISP_SR(
     print(f"{params_ATM = }")
 
     diff = np.zeros(len(df))
-    r4r2_ls = r4r2.r4r2_vals_ls()
     print(f"{params = }")
     df["d4_ATM"] = df.apply(
         lambda row: locald4.compute_disp_2B_BJ_ATM_SR_dimer(
@@ -259,8 +258,9 @@ def compute_int_energy_stats_DISP_SR(
 
     df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
 
+    print("Mol\tDiff\tBench\tTotal\t2B\tATM\tATM_SR")
     for n, r in df.iterrows():
-        line = f"{n} {r['diff']:5.4f} {r['Benchmark']:5.4f} {(r[hf_key] + r['d4']):5.4f} {r[hf_key]:5.4f} {r['d4']:5.4f} {r['d4_2B']:5.4f} {r['d4_ATM']:5.4f}"
+        line = f"{n} {r['diff']:5.4f} {r['Benchmark']:5.4f} {(r[hf_key] + r['d4']):5.4f} {r[hf_key]:5.4f} {r['d4']:5.4f} {r['d4_2B']:5.4f} {r['d4_ATM']:5.16f}"
         print(line)
 
     mae = df["diff"].abs().mean()
@@ -313,7 +313,6 @@ def compute_int_energy_DISP(
                 return 10
     rmse = 0
     diff = np.zeros(len(df))
-    r4r2_ls = r4r2.r4r2_vals_ls()
     if parallel:
         chunks = []
         cnt = 0
@@ -360,7 +359,6 @@ def compute_int_energy_DISP_TT(
     params_ATM[-1] = 1.0
     rmse = 0
     diff = np.zeros(len(df))
-    r4r2_ls = r4r2.r4r2_vals_ls()
     df["d4"] = df.apply(
         lambda row: locald4.compute_disp_2B_BJ_ATM_TT_dimer(
             row,

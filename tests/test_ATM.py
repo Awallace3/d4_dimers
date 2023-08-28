@@ -19,6 +19,8 @@ hartree_to_kcalmol = qcel.constants.conversion_factor("hartree", "kcal/mol")
 dftd4_bin = "/theoryfs2/ds/amwalla3/.local/bin/dftd4"
 data_pkl = "/theoryfs2/ds/amwalla3/projects/d4_corrections/tests/data/test.pkl"
 
+# y_p: -0.3581934534333338, y: 1.3651143133442858
+
 
 @pytest.fixture
 def water1():

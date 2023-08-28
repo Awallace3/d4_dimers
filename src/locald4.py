@@ -570,7 +570,6 @@ def compute_disp_2B_BJ_ATM_SR_dimer(
     )
     charges = r["charges"]
     monAs, monBs = r["monAs"], r["monBs"]
-    charges = r["charges"]
     pA, cA = pos[monAs], carts[monAs, :]
     pB, cB = pos[monBs], carts[monBs, :]
     e_d = SR_func(

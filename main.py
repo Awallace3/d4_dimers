@@ -484,12 +484,18 @@ def main():
             extra="",
             use_2B_C6s=False,
         )
+
     # opt(bases)
     # return
     # opt(["HF_qz"])
     # opt(["HF_adz"])
 
-    src.sr.generate_SR_data_ATM(*df_names(6), params_key="SAPT0_adz_3_IE_ATM")
+    # src.sr.generate_SR_data_ATM(
+    #     *df_names(6),
+    #     params_key="SAPT0_adz_3_IE_ATM",
+    # )
+
+
     def SR_testing():
         import dispersion
 
@@ -500,10 +506,10 @@ def main():
             df,
             "SAPT0_adz_3_IE",
             print_results=True,
-            SR_func=dispersion.disp.disp_SR_3,
+            SR_func=dispersion.disp.disp_SR_4,
         )
 
-    # SR_testing()
+    SR_testing()
 
     # return
     # src.misc.sensitivity_analysis(df)
