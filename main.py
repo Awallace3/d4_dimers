@@ -474,18 +474,19 @@ def main():
         optimize_paramaters(
             df,
             bases,
-            # start_params_d4_key="HF_OPT_2B_START",
+            start_params_d4_key="HF_2B_ATM_OPT_START_s9",
             # D3={"powell": True},
-            # D4={"powell": True, "least_squares": False},
-            start_params_d4_key="HF_ATM_TT_OPT_START",
+            D4={"powell": True, "least_squares": False, "powell_ATM_TT": False},
+            # start_params_d4_key="HF_ATM_TT_OPT_START",
             D3={"powell": False},
-            D4={"powell": False, "least_squares": False, "powell_ATM_TT": True},
+            # D4={"powell": False, "least_squares": False, "powell_ATM_TT": True},
             ATM=True,
-            extra="",
-            use_2B_C6s=False,
+            # extra="",
+            extra="s9_",
+            use_2B_C6s=True,
         )
 
-    # opt(bases)
+    opt(bases)
     # return
     # opt(["HF_qz"])
     # opt(["HF_adz"])
@@ -500,21 +501,20 @@ def main():
         return
 
     # SR_testing()
-
     # return
     # src.misc.sensitivity_analysis(df)
     # src.misc.examine_ATM_TT(df)
-    if True:
+    if False:
         df, _ = df_names(9)
         src.plotting.plot_basis_sets_d4(
             df,
-            False,
+            True,
         )
-    if True:
+    if False:
         df, _ = df_names(9)
         src.plotting.plot_basis_sets_d3(
             df,
-            False,
+            True,
         )
     if True:
         src.plotting.plotting_setup(

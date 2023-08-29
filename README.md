@@ -10,6 +10,12 @@
   fitting.  
 
 [ ] - put plots into draft
+[ ] - place into draft and write captions for 4 main plots
+[ ] - add d4/jdz, ATM w/ charged C6's to ATM plot
+
+```
+export OMP_NUM_THREADS=8
+```
 
 ## Installation
 1. Recommended installation is to create a conda environment using the

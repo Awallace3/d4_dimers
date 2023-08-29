@@ -48,6 +48,13 @@ def paramsDict() -> {}:
             ],
             dtype=np.float64,
         ),
+        "HF_ATM_CHG_OPT_START": np.array(
+            [
+                0.44959224,
+                3.35743605,
+            ],
+            dtype=np.float64,
+        ),
         "HF_ATM_OPT_OUT": np.array(
             [
                 0.8304747365034967,
@@ -224,7 +231,10 @@ def get_params(
     return np.array(paramsDict()[params_type], dtype=np.float64)
 
 
-def generate_2B_ATM_param_subsets(params):
+def generate_2B_ATM_param_subsets(
+    params,
+    params_2B_key="SAPT0_adz_3_IE_2B",
+):
     """
     params types:
         7 params = [s6, s8, a1, a2, a1_ATM, a2_ATM, s9],
@@ -274,9 +284,15 @@ def generate_2B_ATM_param_subsets(params):
         params_ATM = np.array(
             [1.0, params[0], params[1], params[2], 0.0], dtype=np.float64
         )
-    elif len(params) == 2:
+    elif len(params) == 2 and (
+        type(params[0]) == list or type(params[0]) == np.ndarray
+    ):
         params_2B = np.array(params[0], dtype=np.float64)
         params_ATM = np.array(params[1], dtype=np.float64)
+    elif len(params) == 2:
+        params_2B, params_ATM = get_params(params_2B_key)
+        params_ATM[2] = params[0]
+        params_ATM[3] = params[1]
     else:
         print(len(params), params)
         raise ValueError("params must be of size 2, 3, 5, 6, or 7!")

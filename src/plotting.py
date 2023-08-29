@@ -105,13 +105,13 @@ def compute_d4_from_opt_params(
     df: pd.DataFrame,
     bases=[
         # "DF_col_for_IE": "PARAMS_NAME"
-        ["SAPT0_dz_IE", "SAPT0_dz_3_IE", "SAPT0_dz_3_IE_2B"],
-        ["SAPT0_jdz_IE", "SAPT0_jdz_3_IE", "SAPT0_jdz_3_IE_2B"],
-        ["SAPT0_adz_IE", "SAPT0_adz_3_IE", "SAPT0_adz_3_IE_2B"],
-        ["SAPT0_tz_IE", "SAPT0_tz_3_IE", "SAPT0_tz_3_IE_2B"],
-        ["SAPT0_mtz_IE", "SAPT0_mtz_3_IE", "SAPT0_mtz_3_IE_2B"],
-        ["SAPT0_jtz_IE", "SAPT0_jtz_3_IE", "SAPT0_jtz_3_IE_2B"],
-        ["SAPT0_atz_IE", "SAPT0_atz_3_IE", "SAPT0_atz_3_IE_2B"],
+        ["SAPT0_dz_IE", "SAPT0_dz_3_IE", "SAPT0_dz_3_IE_2B", "SAPT0_dz_3_IE"],
+        ["SAPT0_jdz_IE", "SAPT0_jdz_3_IE", "SAPT0_jdz_3_IE_2B", "SAPT0_jdz_3_IE"],
+        ["SAPT0_adz_IE", "SAPT0_adz_3_IE", "SAPT0_adz_3_IE_2B", "SAPT0_adz_3_IE"],
+        ["SAPT0_tz_IE", "SAPT0_tz_3_IE", "SAPT0_tz_3_IE_2B", "SAPT0_tz_3_IE"],
+        ["SAPT0_mtz_IE", "SAPT0_mtz_3_IE", "SAPT0_mtz_3_IE_2B", "SAPT0_mtz_3_IE"],
+        ["SAPT0_jtz_IE", "SAPT0_jtz_3_IE", "SAPT0_jtz_3_IE_2B", "SAPT0_jtz_3_IE"],
+        ["SAPT0_atz_IE", "SAPT0_atz_3_IE", "SAPT0_atz_3_IE_2B", "SAPT0_atz_3_IE"],
     ],
 ) -> pd.DataFrame:
     """
@@ -133,7 +133,7 @@ def compute_d4_from_opt_params(
         diff = f"{i[1]}_diff"
         d4_diff = f"{i[1]}_d4_diff"
         df[diff] = df["Benchmark"] - df[i[0]]
-        df[d4_diff] = df["Benchmark"] - df[i[1]] - df[f"-D4 ({i[1]})"]
+        df[d4_diff] = df["Benchmark"] - df[i[3]] - df[f"-D4 ({i[1]})"]
         print(f'"{diff}",')
         print(f'"{d4_diff}",')
     return df
@@ -332,6 +332,54 @@ def get_charged_df(df) -> pd.DataFrame:
 def plot_basis_sets_d4(df, build_df=False, df_out: str = "basis"):
     df_out = f"plots/{df_out}.pkl"
     if build_df:
+        df = compute_d4_from_opt_params(
+            df,
+            bases=[
+                # "DF_col_for_IE": "PARAMS_NAME"
+                [
+                    "SAPT0_dz_IE",
+                    "SAPT0_dz_3_IE_ADZ",
+                    "SAPT0_adz_3_IE_2B",
+                    "SAPT0_dz_3_IE",
+                ],
+                [
+                    "SAPT0_jdz_IE",
+                    "SAPT0_jdz_3_IE_ADZ",
+                    "SAPT0_adz_3_IE_2B",
+                    "SAPT0_jdz_3_IE",
+                ],
+                [
+                    "SAPT0_adz_IE",
+                    "SAPT0_adz_3_IE_ADZ",
+                    "SAPT0_adz_3_IE_2B",
+                    "SAPT0_adz_3_IE",
+                ],
+                [
+                    "SAPT0_tz_IE",
+                    "SAPT0_tz_3_IE_ADZ",
+                    "SAPT0_adz_3_IE_2B",
+                    "SAPT0_tz_3_IE",
+                ],
+                [
+                    "SAPT0_mtz_IE",
+                    "SAPT0_mtz_3_IE_ADZ",
+                    "SAPT0_adz_3_IE_2B",
+                    "SAPT0_mtz_3_IE",
+                ],
+                [
+                    "SAPT0_jtz_IE",
+                    "SAPT0_jtz_3_IE_ADZ",
+                    "SAPT0_adz_3_IE_2B",
+                    "SAPT0_jtz_3_IE",
+                ],
+                [
+                    "SAPT0_atz_IE",
+                    "SAPT0_atz_3_IE_ADZ",
+                    "SAPT0_adz_3_IE_2B",
+                    "SAPT0_atz_3_IE",
+                ],
+            ],
+        )
         df = compute_d4_from_opt_params(df)
         print(df.columns.values)
         df.to_pickle(df_out)
@@ -359,6 +407,28 @@ def plot_basis_sets_d4(df, build_df=False, df_out: str = "basis"):
         f"basis_set_d4",
         bottom=0.30,
     )
+    plot_violin_d3_d4_ALL(
+        df,
+        {
+            "SAPT0-D4/cc-pVDZ (aDZ)": "SAPT0_dz_3_IE_ADZ_d4_diff",
+            "SAPT0-D4/cc-pVDZ (OPT)": "SAPT0_dz_3_IE_d4_diff",
+            "SAPT0-D4/jun-cc-pVDZ (aDZ)": "SAPT0_jdz_3_IE_ADZ_d4_diff",
+            "SAPT0-D4/jun-cc-pVDZ (OPT)": "SAPT0_jdz_3_IE_d4_diff",
+            "SAPT0-D4/aug-cc-pVDZ (aDZ)": "SAPT0_adz_3_IE_ADZ_d4_diff",
+            "SAPT0-D4/aug-cc-pVDZ (OPT)": "SAPT0_adz_3_IE_d4_diff",
+            "SAPT0-D4/cc-pVTZ (aDZ)": "SAPT0_tz_3_IE_ADZ_d4_diff",
+            "SAPT0-D4/cc-pVTZ (OPT)": "SAPT0_tz_3_IE_d4_diff",
+            "SAPT0-D4/may-cc-pVTZ (aDZ)": "SAPT0_mtz_3_IE_ADZ_d4_diff",
+            "SAPT0-D4/may-cc-pVTZ (OPT)": "SAPT0_mtz_3_IE_d4_diff",
+            "SAPT0-D4/jun-cc-pVTZ (aDZ)": "SAPT0_jtz_3_IE_ADZ_d4_diff",
+            "SAPT0-D4/jun-cc-pVTZ (OPT)": "SAPT0_jtz_3_IE_d4_diff",
+            "SAPT0-D4/aug-cc-pVTZ (aDZ)": "SAPT0_atz_3_IE_ADZ_d4_diff",
+            "SAPT0-D4/aug-cc-pVTZ (OPT)": "SAPT0_atz_3_IE_d4_diff",
+        },
+        f"{len(df)} Dimers With Different Basis Sets (D4)",
+        f"basis_set_d4_opt_vs_adz",
+        bottom=0.35,
+    )
     return
 
 
@@ -366,13 +436,13 @@ def compute_d3_from_opt_params(
     df: pd.DataFrame,
     bases=[
         # "DF_col_for_IE": "PARAMS_NAME"
-        ["SAPT0_dz_IE", "SAPT0_dz_3_IE", "SAPT0_dz_3_IE_2B_D3"],
-        ["SAPT0_jdz_IE", "SAPT0_jdz_3_IE", "SAPT0_jdz_3_IE_2B_D3"],
-        ["SAPT0_adz_IE", "SAPT0_adz_3_IE", "SAPT0_adz_3_IE_2B_D3"],
-        ["SAPT0_tz_IE", "SAPT0_tz_3_IE", "SAPT0_tz_3_IE_2B_D3"],
-        ["SAPT0_mtz_IE", "SAPT0_mtz_3_IE", "SAPT0_mtz_3_IE_2B_D3"],
-        ["SAPT0_jtz_IE", "SAPT0_jtz_3_IE", "SAPT0_jtz_3_IE_2B_D3"],
-        ["SAPT0_atz_IE", "SAPT0_atz_3_IE", "SAPT0_atz_3_IE_2B_D3"],
+        ["SAPT0_dz_IE",  "SAPT0_dz_3_IE", "SAPT0_dz_3_IE_2B_D3"  , "SAPT0_dz_3_IE", ],
+        ["SAPT0_jdz_IE", "SAPT0_jdz_3_IE", "SAPT0_jdz_3_IE_2B_D3", "SAPT0_jdz_3_IE",],
+        ["SAPT0_adz_IE", "SAPT0_adz_3_IE", "SAPT0_adz_3_IE_2B_D3", "SAPT0_adz_3_IE",],
+        ["SAPT0_tz_IE",  "SAPT0_tz_3_IE", "SAPT0_tz_3_IE_2B_D3"  , "SAPT0_tz_3_IE", ],
+        ["SAPT0_mtz_IE", "SAPT0_mtz_3_IE", "SAPT0_mtz_3_IE_2B_D3", "SAPT0_mtz_3_IE",],
+        ["SAPT0_jtz_IE", "SAPT0_jtz_3_IE", "SAPT0_jtz_3_IE_2B_D3", "SAPT0_jtz_3_IE",],
+        ["SAPT0_atz_IE", "SAPT0_atz_3_IE", "SAPT0_atz_3_IE_2B_D3", "SAPT0_atz_3_IE",],
     ],
 ) -> pd.DataFrame:
     """
@@ -394,7 +464,7 @@ def compute_d3_from_opt_params(
         diff = f"{i[1]}_diff"
         d3_diff = f"{i[1]}_d3_diff"
         df[diff] = df["Benchmark"] - df[i[0]]
-        df[d3_diff] = df["Benchmark"] - df[i[1]] - df[f"-D3 ({i[1]})"]
+        df[d3_diff] = df["Benchmark"] - df[i[3]] - df[f"-D3 ({i[1]})"]
         print(f'"{diff}",')
         print(f'"{d3_diff}",')
     return df
@@ -404,6 +474,18 @@ def plot_basis_sets_d3(df, build_df=False, df_out: str = "basis"):
     df_out = f"plots/{df_out}.pkl"
     if build_df:
         df = compute_d3_from_opt_params(df)
+        df = compute_d3_from_opt_params(
+            df,
+            bases=[
+                ["SAPT0_dz_IE", "SAPT0_dz_3_IE_ADZ", "SAPT0_adz_3_IE_2B_D3"  , "SAPT0_dz_3_IE",],
+                ["SAPT0_jdz_IE", "SAPT0_jdz_3_IE_ADZ", "SAPT0_adz_3_IE_2B_D3", "SAPT0_jdz_3_IE",],
+                ["SAPT0_adz_IE", "SAPT0_adz_3_IE_ADZ", "SAPT0_adz_3_IE_2B_D3", "SAPT0_adz_3_IE",],
+                ["SAPT0_tz_IE", "SAPT0_tz_3_IE_ADZ", "SAPT0_adz_3_IE_2B_D3",   "SAPT0_tz_3_IE", ],
+                ["SAPT0_mtz_IE", "SAPT0_mtz_3_IE_ADZ", "SAPT0_adz_3_IE_2B_D3", "SAPT0_mtz_3_IE",],
+                ["SAPT0_jtz_IE", "SAPT0_jtz_3_IE_ADZ", "SAPT0_adz_3_IE_2B_D3", "SAPT0_jtz_3_IE",],
+                ["SAPT0_atz_IE", "SAPT0_atz_3_IE_ADZ", "SAPT0_adz_3_IE_2B_D3", "SAPT0_atz_3_IE",],
+            ],
+        )
         print(df.columns.values)
         df.to_pickle(df_out)
     else:
@@ -430,6 +512,29 @@ def plot_basis_sets_d3(df, build_df=False, df_out: str = "basis"):
         f"basis_set_d3",
         bottom=0.30,
     )
+    plot_violin_d3_d4_ALL(
+        df,
+        {
+            "SAPT0-D3/cc-pVDZ (ADZ)": "SAPT0_dz_3_IE_ADZ_d3_diff",
+            "SAPT0-D3/cc-pVDZ (OPT)": "SAPT0_dz_3_IE_d3_diff",
+            "SAPT0-D3/jun-cc-pVDZ (ADZ)": "SAPT0_jdz_3_IE_ADZ_d3_diff",
+            "SAPT0-D3/jun-cc-pVDZ (OPT)": "SAPT0_jdz_3_IE_d3_diff",
+            "SAPT0-D3/aug-cc-pVDZ (ADZ)": "SAPT0_adz_3_IE_ADZ_d3_diff",
+            "SAPT0-D3/aug-cc-pVDZ (OPT)": "SAPT0_adz_3_IE_d3_diff",
+            "SAPT0-D3/cc-pVTZ (ADZ)": "SAPT0_tz_3_IE_ADZ_d3_diff",
+            "SAPT0-D3/cc-pVTZ (OPT)": "SAPT0_tz_3_IE_d3_diff",
+            "SAPT0-D3/may-cc-pVTZ (ADZ)": "SAPT0_mtz_3_IE_ADZ_d3_diff",
+            "SAPT0-D3/may-cc-pVTZ (OPT)": "SAPT0_mtz_3_IE_d3_diff",
+            "SAPT0-D3/jun-cc-pVTZ (ADZ)": "SAPT0_jtz_3_IE_ADZ_d3_diff",
+            "SAPT0-D3/jun-cc-pVTZ (OPT)": "SAPT0_jtz_3_IE_d3_diff",
+            "SAPT0-D3/aug-cc-pVTZ (ADZ)": "SAPT0_atz_3_IE_ADZ_d3_diff",
+            "SAPT0-D3/aug-cc-pVTZ (OPT)": "SAPT0_atz_3_IE_d3_diff",
+        },
+        f"{len(df)} Dimers With Different Basis Sets (D3)",
+        f"basis_set_d3_opt_vs_adz",
+        bottom=0.35,
+    )
+
     return
 
 
@@ -483,8 +588,11 @@ def plotting_setup(df, build_df=False, df_out: str = "plots/plot.pkl", compute_d
             df["adz_diff_d4_2B@ATM_G"] = df["Benchmark"] - (
                 df["HF_adz"] + df["-D4 2B@ATM_params (adz) G"]
             )
+            df["jdz_diff_d4_2B@ATM_G"] = df["Benchmark"] - (
+                df["HF_jdz"] + df["-D4 2B@ATM_params (adz) G"]
+            )
             df["SAPT0-D3/jun-cc-pVDZ"] = df.apply(
-                lambda row: row["HF_jdz"] + row["-D3 (adz)"],
+                lambda row: row["HF_jdz"] + row["-D3 (jdz)"],
                 axis=1,
             )
             df["SAPT0-D3/aug-cc-pVDZ"] = df.apply(
@@ -516,24 +624,22 @@ def plotting_setup(df, build_df=False, df_out: str = "plots/plot.pkl", compute_d
         title_name=f"DB Breakdown SAPT0-D4/aug-cc-pVDZ ({selected})",
         pfn=f"db_breakdown_2B_ATM",
     )
-    df_charged = get_charged_df(df)
     plot_violin_d3_d4_ALL(
         df,
         {
-            "-D3/jun-cc-pVDZ": "jdz_diff_d3",
-            "-D3MBJ(ATM)/jun-cc-pVDZ": "jdz_diff_d3mbj_atm",
-            "-D3/aug-cc-pVDZ": "adz_diff_d3",
-            "-D3MBJ(ATM)/aug-cc-pVDZ": "adz_diff_d3mbj_atm",
-            "-D4/aug-cc-pVDZ": "adz_diff_d4",
-            "-D4(ATM)/jun-cc-pVDZ": "jdz_diff_d4_ATM",
-            "-D4(ATM)/aug-cc-pVDZ": "adz_diff_d4_ATM",
-            "-D4(2B@ATM_params_G)/aug-cc-pVDZ": "adz_diff_d4_2B@ATM_G",
-            "-D4(ATM_G)/aug-cc-pVDZ": "adz_diff_d4_ATM_G",
-            "/jun-cc-pVDZ": "SAPT0_jdz_diff",
-            "/aug-cc-pVDZ": "SAPT0_adz_diff",
+            "SAPT0-D3MBJ/jun-cc-pVDZ": "jdz_diff_d3",
+            "SAPT0-D3MBJ(ATM)/jun-cc-pVDZ": "jdz_diff_d3mbj_atm",
+            "SAPT0-D3/aug-cc-pVDZ": "adz_diff_d3",
+            "SAPT0-D3MBJ(ATM)/aug-cc-pVDZ": "adz_diff_d3mbj_atm",
+            "SAPT0-D4/aug-cc-pVDZ": "adz_diff_d4",
+            "SAPT0-D4(ATM)/aug-cc-pVDZ": "adz_diff_d4_ATM",
+            "SAPT0-D4(2B@G ATM)/aug-cc-pVDZ": "adz_diff_d4_2B@ATM_G",
+            "SAPT0-D4(2B@G ATM@G)/aug-cc-pVDZ": "adz_diff_d4_ATM_G",
+            "SAPT0/jun-cc-pVDZ": "SAPT0_jdz_diff",
+            "SAPT0/aug-cc-pVDZ": "SAPT0_adz_diff",
         },
         f"All Dimers with SAPT0",
-        f"{selected}_adz_d3_d4_total_sapt0",
+        f"{selected}_ATM",
         ylim=[-20, 25],
     )
     # Basis Set Performance: SAPT0
@@ -553,20 +659,25 @@ def plotting_setup(df, build_df=False, df_out: str = "plots/plot.pkl", compute_d
         f"All Dimers with SAPT0 ({selected})",
         f"{selected}_basis_set",
     )
+    # charged
+    df_charged = get_charged_df(df)
     plot_violin_d3_d4_ALL(
         df_charged,
         {
             "SAPT0-D3/aug-cc-pVDZ": "adz_diff_d3",
             "-D3MBJ(ATM)/aug-cc-pVDZ": "adz_diff_d3mbj_atm",
+            "SAPT0-D4/jun-cc-pVDZ": "jdz_diff_d4",
             "SAPT0-D4/aug-cc-pVDZ": "adz_diff_d4",
             "SAPT0-D4(ATM)/jun-cc-pVDZ": "jdz_diff_d4_ATM",
             "SAPT0-D4(ATM)/aug-cc-pVDZ": "adz_diff_d4_ATM",
+            "SAPT0-D4(2B@G ATM)/jun-cc-pVDZ": "jdz_diff_d4_2B@ATM_G",
+            "SAPT0-D4(2B@G ATM)/aug-cc-pVDZ": "adz_diff_d4_2B@ATM_G",
             "SAPT0/jun-cc-pVDZ": "SAPT0_jdz_diff",
             "SAPT0/aug-cc-pVDZ": "SAPT0_adz_diff",
         },
         f"Charged Dimers (Totaling {len(df_charged)} Dimers)",
-        f"{selected}_adz_d3_d4_total_sapt0_charged",
-        bottom=0.3,
+        f"{selected}_charged",
+        bottom=0.35,
         ylim=[-8, 6],
     )
     return
@@ -620,7 +731,7 @@ def plotting_setup_G(
     plot_violin_d3_d4_ALL(
         df,
         {
-            "-D3MBJ(ATM)/aug-cc-pVDZ": "qz_diff_d3mbj_atm",
+            "-D3(ATM)/aug-cc-pVDZ": "qz_diff_d3mbj_atm",
             "-D4/aug-cc-pVDZ": "qz_diff_d4",
             "-D4(ATM)/aug-cc-pVDZ": "qz_diff_d4_ATM",
             "-D4(2B@ATM_params_G)/aug-cc-pVDZ": "qz_diff_d4_2B@ATM_G",
@@ -640,6 +751,7 @@ def plot_violin_d3_d4_ALL(
     bottom: float = 0.4,
     ylim=[-16, 35],
     transparent=True,
+    widths=0.75,
 ) -> None:
     """ """
     print(f"Plotting {pfn}")
@@ -659,9 +771,9 @@ def plot_violin_d3_d4_ALL(
         rmse = df[v].apply(lambda x: x**2).mean() ** 0.5
         mae = df[v].apply(lambda x: abs(x)).mean()
         max_error = df[v].apply(lambda x: abs(x)).max()
-        text = r"$\mathbf{%.2f}$" % mae
+        text = r"$\mathit{%.2f}$" % mae
         text += "\n"
-        text += r"$\mathit{%.2f}$" % rmse
+        text += r"$\mathbf{%.2f}$" % rmse
         text += "\n"
         text += r"$\mathrm{%.2f}$" % max_error
         annotations.append((cnt, m, text))
@@ -677,7 +789,7 @@ def plot_violin_d3_d4_ALL(
         showmeans=True,
         showmedians=False,
         quantiles=[[0.05, 0.95] for i in range(len(vData))],
-        widths=0.75,
+        widths=widths,
     )
     # for partname in ('cbars', 'cmins', 'cmaxes', 'cmeans', 'cmedians'):
     for n, partname in enumerate(["cbars", "cmins", "cmaxes", "cmeans"]):
