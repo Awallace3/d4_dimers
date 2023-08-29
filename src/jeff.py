@@ -87,6 +87,7 @@ def compute_int_energy_d3(
     params: [float],
     df: pd.DataFrame,
     hf_key: str = "HF INTERACTION ENERGY",
+    force_ATM_on: bool = False,
     cpp=True,
 ):
     """

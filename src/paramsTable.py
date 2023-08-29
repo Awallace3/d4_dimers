@@ -50,8 +50,8 @@ def paramsDict() -> {}:
         ),
         "HF_ATM_CHG_OPT_START": np.array(
             [
-                0.44959224,
-                3.35743605,
+                0.72859925,
+                1.36668932,
             ],
             dtype=np.float64,
         ),
@@ -83,6 +83,21 @@ def paramsDict() -> {}:
                 0.44959224,
                 3.35743605,
                 1.0,
+            ],
+            dtype=np.float64,
+        ),
+        "HF_2B_ATM_OPT_START_s9": np.array(
+            [
+                0.829861,
+                0.706055,
+                1.123903,
+            ],
+            dtype=np.float64,
+        ),
+        "HF_ATM_SHARED": np.array(
+            [
+                [1.0, 1.36216693, 0.72859925, 1.36668932, 1.0],
+                [1.0, 1.36216693, 0.72859925, 1.36668932, 1.0],
             ],
             dtype=np.float64,
         ),
@@ -233,7 +248,8 @@ def get_params(
 
 def generate_2B_ATM_param_subsets(
     params,
-    params_2B_key="SAPT0_adz_3_IE_2B",
+    params_2B_key="HF_ATM_SHARED",  # "SAPT0_adz_3_IE_2B",
+    force_ATM_on=False,
 ):
     """
     params types:
@@ -246,6 +262,9 @@ def generate_2B_ATM_param_subsets(
                 [s6, s8, a1_ATM, a2_ATM],
         ]
     """
+    s9 = 0.0
+    if force_ATM_on:
+        s9 = 1.0
     if len(params) == 7:
         params_2B = np.array(params[:4], dtype=np.float64)
         params_ATM = np.array(
@@ -272,17 +291,18 @@ def generate_2B_ATM_param_subsets(
         params_ATM = np.array(params, dtype=np.float64)
     elif len(params) == 5:
         params_2B = np.array(
-            [1.0, params[0], params[1], params[2], 1.0], dtype=np.float64
+            [1.0, params[0], params[1], params[2], s9], dtype=np.float64
         )
         params_ATM = np.array(
-            [1.0, params[0], params[3], params[4], 1.0], dtype=np.float64
+            [1.0, params[0], params[3], params[4], s9], dtype=np.float64
         )
     elif len(params) == 3:
+
         params_2B = np.array(
-            [1.0, params[0], params[1], params[2], 0.0], dtype=np.float64
+            [1.0, params[0], params[1], params[2], s9], dtype=np.float64
         )
         params_ATM = np.array(
-            [1.0, params[0], params[1], params[2], 0.0], dtype=np.float64
+            [1.0, params[0], params[1], params[2], s9], dtype=np.float64
         )
     elif len(params) == 2 and (
         type(params[0]) == list or type(params[0]) == np.ndarray
@@ -293,6 +313,7 @@ def generate_2B_ATM_param_subsets(
         params_2B, params_ATM = get_params(params_2B_key)
         params_ATM[2] = params[0]
         params_ATM[3] = params[1]
+        print(params_2B, params_ATM)
     else:
         print(len(params), params)
         raise ValueError("params must be of size 2, 3, 5, 6, or 7!")

@@ -427,6 +427,7 @@ def plot_basis_sets_d4(df, build_df=False, df_out: str = "basis"):
         },
         f"{len(df)} Dimers With Different Basis Sets (D4)",
         f"basis_set_d4_opt_vs_adz",
+        ylim=[-16, 10],
         bottom=0.35,
     )
     return
@@ -533,6 +534,7 @@ def plot_basis_sets_d3(df, build_df=False, df_out: str = "basis"):
         f"{len(df)} Dimers With Different Basis Sets (D3)",
         f"basis_set_d3_opt_vs_adz",
         bottom=0.35,
+        ylim=[-16, 15],
     )
 
     return
@@ -665,7 +667,7 @@ def plotting_setup(df, build_df=False, df_out: str = "plots/plot.pkl", compute_d
         df_charged,
         {
             "SAPT0-D3/aug-cc-pVDZ": "adz_diff_d3",
-            "-D3MBJ(ATM)/aug-cc-pVDZ": "adz_diff_d3mbj_atm",
+            "SAPT0-D3MBJ(ATM)/aug-cc-pVDZ": "adz_diff_d3mbj_atm",
             "SAPT0-D4/jun-cc-pVDZ": "jdz_diff_d4",
             "SAPT0-D4/aug-cc-pVDZ": "adz_diff_d4",
             "SAPT0-D4(ATM)/jun-cc-pVDZ": "jdz_diff_d4_ATM",
@@ -677,8 +679,8 @@ def plotting_setup(df, build_df=False, df_out: str = "plots/plot.pkl", compute_d
         },
         f"Charged Dimers (Totaling {len(df_charged)} Dimers)",
         f"{selected}_charged",
-        bottom=0.35,
-        ylim=[-8, 6],
+        bottom=0.40,
+        ylim=[-10, 10],
     )
     return
 
@@ -751,7 +753,7 @@ def plot_violin_d3_d4_ALL(
     bottom: float = 0.4,
     ylim=[-16, 35],
     transparent=True,
-    widths=0.75,
+    widths=0.85,
 ) -> None:
     """ """
     print(f"Plotting {pfn}")

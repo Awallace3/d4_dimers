@@ -4,6 +4,7 @@ import dispersion
 from . import paramsTable
 from . import locald4
 
+
 def build_vals(pos, carts, C6, params_ATM, cols=7, max_N=None):
     if max_N is None:
         max_N = len(pos)
@@ -11,7 +12,7 @@ def build_vals(pos, carts, C6, params_ATM, cols=7, max_N=None):
         (int(max_N * (max_N - 1) * (max_N - 2) / 6), cols), dtype=np.float64
     )
     # energy = dispersion.disp.vals_for_SR(pos, carts, C6, params_ATM, vals)
-    energy = dispersion.disp.disp_SR_4_vals(pos, carts, C6, params_ATM, vals)
+    energy = dispersion.disp.disp_SR_5_vals(pos, carts, C6, params_ATM, vals)
     return energy, vals
 
 
@@ -54,7 +55,7 @@ def generate_SR_data_ATM(
     print(f"{params_2B = }")
     print(f"{params_ATM = }")
     if generate:
-        df[["SR_ATM", "xs"]] = df.apply(
+        df[["SR_ATM", "xs_all"]] = df.apply(
             lambda r: build_vals_molecule(
                 r,
                 params_ATM,
@@ -63,9 +64,11 @@ def generate_SR_data_ATM(
             axis=1,
             result_type="expand",
         )
+        print(df["xs"].iloc[0])
         # for n, r in df.iterrows():
         #     df.at[n, "xs"][:, 0] *= locald4.hartree_to_kcalmol
-        df["default_xs"] = df.apply(lambda r: sum(r["xs"][:, 0]), axis=1)
+        df["d4_ATM_E"] = df.apply(lambda r: sum(r["xs_all"][:, 0]), axis=1)
+        df["xs"] = df.apply(lambda r: r["xs_all"][:, 1:], axis=1)
         print(params)
         # df["xs"] = df.apply(lambda r: r["xs"][:, 1:], axis=1)
         splits = []
@@ -119,7 +122,8 @@ def generate_SR_data_ATM(
     # df['ys'] /= locald4.hartree_to_kcalmol
     print(df[["ys", "default_xs", "y_pred"]].describe())
     if generate:
-        out = selected.replace(".pkl", "_SR.pkl")
+        # out = selected.replace(".pkl", "_SR.pkl")
+        out = "/theoryfs2/ds/amwalla3/projects/symbolic_regression/sr/data/schr_dft2_SR.pkl"
         print(f"Saving to...\n{out}")
         df.to_pickle(out)
     return
