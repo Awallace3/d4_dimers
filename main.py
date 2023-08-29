@@ -497,7 +497,7 @@ def main():
 
         src.sr.generate_SR_data_ATM(
             *df_names(6),
-            params_key="SAPT0_adz_3_IE_ATM",
+            params_key="HF_ATM_SHARED",
             ncols=5,
         )
         return

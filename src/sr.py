@@ -64,11 +64,11 @@ def generate_SR_data_ATM(
             axis=1,
             result_type="expand",
         )
-        print(df["xs"].iloc[0])
         # for n, r in df.iterrows():
         #     df.at[n, "xs"][:, 0] *= locald4.hartree_to_kcalmol
         df["d4_ATM_E"] = df.apply(lambda r: sum(r["xs_all"][:, 0]), axis=1)
         df["xs"] = df.apply(lambda r: r["xs_all"][:, 1:], axis=1)
+        print(df["xs"].iloc[0])
         print(params)
         # df["xs"] = df.apply(lambda r: r["xs"][:, 1:], axis=1)
         splits = []
