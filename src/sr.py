@@ -113,14 +113,14 @@ def generate_SR_data_ATM(
     print(f"TA MAE: {ta_mae:.4f} MSE: {ta_mse:.4f} RMSE: {ta_rmse:.4f}")
 
     for n, r in df.iterrows():
-        line = f"{n}    ATM: {r['ys']:.4f} = {r['Benchmark']:.4f} - ({r[target_HF_key]:.4f} + {r['d4_2B']:.4f}) ::: fmp * {r['default_xs']:.4f}"
+        line = f"{n}    ATM: {r['ys']:.4f} = {r['Benchmark']:.4f} - ({r[target_HF_key]:.4f} + {r['d4_2B']:.4f}) ::: fmp * {r['d4_ATM_E']:.4f}"
         print(line)
         line = f"{n}    SRP: {r['y_pred']:.4f} = {r['Benchmark']:.4f} - ({r[target_HF_key]:.4f} + {r['d4_2B']:.4f} + {sum(r['SR_ATM']):.4f})"
         print(line)
         if n > 500:
             break
     # df['ys'] /= locald4.hartree_to_kcalmol
-    print(df[["ys", "default_xs", "y_pred"]].describe())
+    print(df[["ys", "d4_ATM_E", "y_pred"]].describe())
     if generate:
         # out = selected.replace(".pkl", "_SR.pkl")
         out = "/theoryfs2/ds/amwalla3/projects/symbolic_regression/sr/data/schr_dft2_SR.pkl"

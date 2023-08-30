@@ -6,7 +6,6 @@ import src
 import os
 import dispersion
 import seaborn as sns
-from pprint import pprint as pp
 
 sns.set(style="darkgrid")
 
@@ -45,6 +44,7 @@ def time_2body_timeit(
     results = {
         "speedup_py": [],
         "speedup_cpp": [],
+        "efficiency_py": [],
         "efficiency_cpp": [],
         "num_threads": [],
     }
@@ -53,7 +53,7 @@ def time_2body_timeit(
     params_2B, params_ATM = src.paramsTable.generate_2B_ATM_param_subsets(params)
     df = pd.read_pickle("./data/schr_dft2.pkl")
     r = df.iloc[154]
-    print(len(r["Geometry"]))
+    print(len(r['Geometry']))
     serial_times = []
     for i in range(iter):
         start = time.time()
@@ -79,17 +79,28 @@ def time_2body_timeit(
     disp_times = [[] for i in range(len(proc_test))]
     disp_time_final = []
     for n, i in enumerate(proc_test):
+        sub_results = {
+            "speedup_py": [],
+            "speedup_cpp": [],
+            "efficiency_py": [],
+            "efficiency_cpp": [],
+        }
         dispersion.omp_set_num_threads(i)
         for j in range(iter):
-            start = time.time()
-            d_2B = disp_func(r, params_2B, params_ATM)
-            end = time.time()
-            disp_times[n].append(end - start)
-        disp_time_final.append(np.mean(disp_times[n]))
-        speedup = serial_time_py / disp_time_final[n]
-        efficiency = speedup / i
-        speedup_cpp = serial_time_cpp / disp_time_final[n]
-        efficiency_cpp = speedup_cpp / i
+            for j in range(iter):
+                start = time.time()
+                d_2B = disp_func(r, params_2B, params_ATM)
+                end = time.time()
+                disp_times[n].append(end - start)
+            disp_time_final.append(np.mean(disp_times[n]))
+            speedup = serial_time_py / disp_time_final[n]
+            efficiency = speedup / i
+            speedup_cpp = serial_time_cpp / disp_time_final[n]
+            efficiency_cpp = speedup_cpp / i
+            sub_results["speedup_py"].append(speedup)
+            sub_results["speedup_cpp"].append(speedup_cpp)
+            sub_results["efficiency_py"].append(efficiency)
+            sub_results["efficiency_cpp"].append(efficiency_cpp)
 
         print(f"Time for (2-body + ATM) (OMP={i}): {disp_time_final[n]:.6f} s")
         print(f"     Speedup (py ): {speedup:.4f}, efficiency (py ): {efficiency:.4f}")
@@ -97,12 +108,11 @@ def time_2body_timeit(
             f"     Speedup (cpp): {speedup_cpp:.4f}, efficiency (cpp ): {efficiency_cpp:.4f}"
         )
         print()
-        results["speedup_py"].append(speedup)
-        results["speedup_cpp"].append(speedup_cpp)
-        results["efficiency_cpp"].append(efficiency_cpp)
-
-    results["num_threads"] = proc_test
-    pp(results)
+        results["speedup_py"].append(np.mean(sub_results["speedup_py"]))
+        results["speedup_cpp"].append(np.mean(sub_results["speedup_cpp"]))
+        results["efficiency_py"].append(np.mean(sub_results["efficiency_py"]))
+        results["efficiency_cpp"].append(np.mean(sub_results["efficiency_cpp"]))
+        results["num_threads"] = proc_test
     df = pd.DataFrame(results)
     return df
 
@@ -116,6 +126,7 @@ def time_ATM_timeit(
     results = {
         "speedup_py": [],
         "speedup_cpp": [],
+        "efficiency_py": [],
         "efficiency_cpp": [],
         "num_threads": [],
     }
@@ -149,17 +160,34 @@ def time_ATM_timeit(
     disp_times = [[] for i in range(len(proc_test))]
     disp_time_final = []
     for n, i in enumerate(proc_test):
+        sub_results = {
+            "speedup_py": [],
+            "speedup_cpp": [],
+            "efficiency_py": [],
+            "efficiency_cpp": [],
+        }
         dispersion.omp_set_num_threads(i)
         for j in range(iter):
-            start = time.time()
-            d_2B_ATM = disp_func(r, params[0], params[1])
-            end = time.time()
-            disp_times[n].append(end - start)
-        disp_time_final.append(np.mean(disp_times[n]))
-        speedup = serial_time_py / disp_time_final[n]
-        efficiency = speedup / i
-        speedup_cpp = serial_time_cpp / disp_time_final[n]
-        efficiency_cpp = speedup_cpp / i
+            for j in range(iter):
+                start = time.time()
+                d_2B_ATM = disp_func(r, params[0], params[1])
+                end = time.time()
+                disp_times[n].append(end - start)
+            disp_time_final.append(np.mean(disp_times[n]))
+            speedup = serial_time_py / disp_time_final[n]
+            efficiency = speedup / i
+            speedup_cpp = serial_time_cpp / disp_time_final[n]
+            efficiency_cpp = speedup_cpp / i
+            sub_results["speedup_py"].append(speedup)
+            sub_results["speedup_cpp"].append(speedup_cpp)
+            sub_results["efficiency_py"].append(efficiency)
+            sub_results["efficiency_cpp"].append(efficiency_cpp)
+
+
+        speedup = np.mean(sub_results["speedup_py"])
+        speedup_cpp = np.mean(sub_results["speedup_cpp"])
+        efficiency = np.mean(sub_results["efficiency_py"])
+        efficiency_cpp = np.mean(sub_results["efficiency_cpp"])
 
         print(f"Time for (2-body + ATM) (OMP={i}): {disp_time_final[n]:.6f} s")
         print(f"     Speedup (py ): {speedup:.4f}, efficiency (py ): {efficiency:.4f}")
@@ -168,10 +196,12 @@ def time_ATM_timeit(
         )
         print()
         results["speedup_py"].append(speedup)
+
         results["speedup_cpp"].append(speedup_cpp)
+        results["efficiency_py"].append(efficiency)
         results["efficiency_cpp"].append(efficiency_cpp)
-    results["num_threads"] = proc_test
-    pp(results)
+        results["num_threads"] = proc_test
+
     df = pd.DataFrame(results)
     return df
 
@@ -195,18 +225,17 @@ def plot_results(iter=100):
     df2.plot(kind="bar", y="speedup_cpp", ax=ax[1, 1], legend=False)
     df2.plot(kind="bar", y="efficiency_cpp", ax=ax[1, 2], legend=False)
 
-    ax[0, 0].set_title("Speedup (vs. py N=1)")
-    ax[0, 1].set_title("Speedup (vs. cpp N=1)")
-    ax[0, 2].set_title("Efficiency (vs. cpp N=1)")
+    ax[0, 0].set_title("Speedup (vs. py)")
+    ax[0, 1].set_title("Speedup (vs. cpp)")
+    ax[0, 2].set_title("Efficiency (vs. py)")
     ax[0, 0].set_ylabel("2-body")
     ax[1, 0].set_ylabel("2-body + ATM")
     plt.tight_layout()
     plt.savefig("./plots/cpp_speedups.png", dpi=400)
-    return
 
 
 def main():
-    plot_results(150)
+    plot_results(10)
     return
 
 
