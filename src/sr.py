@@ -45,13 +45,13 @@ def generate_SR_data_ATM(
     df,
     selected,
     target_HF_key="SAPT0_adz_3_IE",
-    ncols=6,
+    ncols=8,
     generate=True,
     params_key="SAPT0_adz_3_IE_ATM",
 ):
     r = df.iloc[0]
     params = paramsTable.get_params(params_key)
-    params_2B, params_ATM = paramsTable.generate_2B_ATM_param_subsets(params)
+    params_2B, params_ATM = paramsTable.generate_2B_ATM_param_subsets(params, force_ATM_on=True)
     print(f"{params_2B = }")
     print(f"{params_ATM = }")
     if generate:
@@ -100,7 +100,7 @@ def generate_SR_data_ATM(
         axis=1,
     )
     df["ys"] = df.apply(
-        lambda r: -(r["Benchmark"] - (r[target_HF_key] + r["d4_2B"])),
+        lambda r: (r["Benchmark"] - (r[target_HF_key] + r["d4_2B"])) / r["d4_ATM_E"],
         axis=1,
     )
     tb_mae = df["y_pred"].abs().mean()
