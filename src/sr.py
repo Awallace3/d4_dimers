@@ -3,6 +3,7 @@ import pandas as pd
 import dispersion
 from . import paramsTable
 from . import locald4
+from qm_tools_aw import tools
 
 
 def build_vals(pos, carts, C6, params_ATM, cols=7, max_N=None):
@@ -13,6 +14,7 @@ def build_vals(pos, carts, C6, params_ATM, cols=7, max_N=None):
     )
     # energy = dispersion.disp.vals_for_SR(pos, carts, C6, params_ATM, vals)
     energy = dispersion.disp.disp_SR_5_vals(pos, carts, C6, params_ATM, vals)
+    # energy = dispersion.disp.disp_SR_4_vals(pos, carts, C6, params_ATM, vals)
     return energy, vals
 
 
@@ -103,29 +105,43 @@ def generate_SR_data_ATM(
         lambda r: (r["Benchmark"] - (r[target_HF_key] + r["d4_2B"])) / r["d4_ATM_E"],
         axis=1,
     )
-    tb_mae = df["y_pred"].abs().mean()
-    tb_mse = (df["y_pred"] ** 2).mean()
-    tb_rmse = np.sqrt((df["y_pred"] ** 2).mean())
-    print(f"TB MAE: {tb_mae:.4f} MSE: {tb_mse:.4f} RMSE: {tb_rmse:.4f}")
-    ta_mae = df["ys"].abs().mean()
-    ta_mse = (df["ys"] ** 2).mean()
-    ta_rmse = np.sqrt((df["ys"] ** 2).mean())
-    print(f"TA MAE: {ta_mae:.4f} MSE: {ta_mse:.4f} RMSE: {ta_rmse:.4f}")
+    df["ys_target"] = df.apply(
+        lambda r: (r["Benchmark"] - (r[target_HF_key] + r["d4_2B"])),
+        axis=1,
+    )
+    df['diff'] = df['ys_target'] - df['y_pred']
+    tb_mae = df["ys_target"].abs().mean()
+    tb_mse = (df["ys_target"] ** 2).mean()
+    tb_rmse = np.sqrt((df["ys_target"] ** 2).mean())
+    print(f"Target MAE: {tb_mae:.4f} MSE: {tb_mse:.4f} RMSE: {tb_rmse:.4f}")
+    ta_mae = df["y_pred"].abs().mean()
+    ta_mse = (df["y_pred"] ** 2).mean()
+    ta_rmse = np.sqrt((df["y_pred"] ** 2).mean())
+    print(f"SR     MAE: {ta_mae:.4f} MSE: {ta_mse:.4f} RMSE: {ta_rmse:.4f}")
+    diff_mae = df["diff"].abs().mean()
+    diff_mse = (df["diff"] ** 2).mean()
+    diff_rmse = np.sqrt((df["diff"] ** 2).mean())
+    print(f"Diff   MAE: {diff_mae:.4f} MSE: {diff_mse:.4f} RMSE: {diff_rmse:.4f}")
 
-    for n, r in df.iterrows():
-        line = f"{n}    ATM: {r['ys']:.4f} = {r['Benchmark']:.4f} - ({r[target_HF_key]:.4f} + {r['d4_2B']:.4f}) ::: fmp * {r['d4_ATM_E']:.4f}"
-        print(line)
-        line = f"{n}    SRP: {r['y_pred']:.4f} = {r['Benchmark']:.4f} - ({r[target_HF_key]:.4f} + {r['d4_2B']:.4f} + {sum(r['SR_ATM']):.4f})"
-        print(line)
-        if n > 500:
-            break
     # df['ys'] /= locald4.hartree_to_kcalmol
-    print(df[["ys", "d4_ATM_E", "y_pred"]].describe())
-    if generate:
+    print(df[["ys", "d4_ATM_E", "y_pred", "diff"]].describe())
+    if False:
         # out = selected.replace(".pkl", "_SR.pkl")
         out = "/theoryfs2/ds/amwalla3/projects/symbolic_regression/sr/data/schr_dft2_SR.pkl"
         print(f"Saving to...\n{out}")
         df.to_pickle(out)
+
+    df.sort_values("diff", inplace=True, ascending=False)
+    cnt = 0
+    for n, r in df.iterrows():
+        line = f"{n}    START: {r['ys_target']:.4f} = {r['Benchmark']:.4f} - ({r[target_HF_key]:.4f} + {r['d4_2B']:.4f}) ::: fmp * {r['d4_ATM_E']:.4f}"
+        print(line)
+        line = f"{n}    y_target: {r['ys_target']:.4f}, y_pred: {r['y_pred']:.4f}, diff: {r['ys_target'] - r['y_pred']:.4f}"
+        print(line)
+        tools.print_cartesians(r['Geometry'])
+        if cnt > 10:
+            break
+        cnt += 1
     return
 
 

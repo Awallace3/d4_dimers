@@ -138,6 +138,35 @@ def compute_d4_from_opt_params(
         print(f'"{d4_diff}",')
     return df
 
+def compute_d4_from_opt_params_TT(
+    df: pd.DataFrame,
+    bases=[
+        # "DF_col_for_IE": "PARAMS_NAME"
+        ["SAPT0_adz_IE", "SAPT0_adz_3_IE_TT", "HF_ATM_TT_OPT_START", "SAPT0_adz_3_IE"],
+        ["SAPT0_adz_IE", "SAPT0_adz_3_IE_TT_OPT", "HF_ATM_OPT_OUT", "SAPT0_adz_3_IE"],
+    ],
+) -> pd.DataFrame:
+    """
+    compute_D3_D4_values_for_params
+    """
+    params_dict = src.paramsTable.paramsDict()
+    plot_vals = {}
+    for i in bases:
+        params_d4 = params_dict[i[2]]
+        params_2B, params_ATM = src.paramsTable.generate_2B_ATM_param_subsets(params_d4)
+        df[f"-D4(ATM TT) ({i[1]})"] = df.apply(
+            lambda row: src.locald4.compute_disp_2B_BJ_ATM_TT_dimer(
+                row,
+                params_2B,
+                params_ATM,
+            ),
+            axis=1,
+        )
+        d4_diff = f"{i[1]}_d4_diff"
+        df[d4_diff] = df["Benchmark"] - df[i[3]] - df[f"-D4(ATM TT) ({i[1]})"]
+        print(f'"{d4_diff}",')
+    return df
+
 
 def correlation_plot(df_subset, pfn="plots/correlation.png") -> None:
     """
@@ -154,7 +183,7 @@ def correlation_plot(df_subset, pfn="plots/correlation.png") -> None:
         annot_kws={"size": 8},
     )
     plt.title(f"Correlation Plot")
-    plt.savefig(f"{pfn}")
+    plt.savefig(f"{pfn}", bbox_inches="tight")
     plt.clf()
     return
 
@@ -225,7 +254,7 @@ def plot_dbs(df, df_col, title_name, pfn, color="blue") -> None:
     ax.set_xlabel("Database")
     ax.set_ylabel("Error (kcal/mol)")
     plt.title(f"{title_name}")
-    plt.savefig(f"plots/{pfn}_dbs_violin.png")
+    plt.savefig(f"plots/{pfn}_dbs_violin.png", bbox_inches="tight")
     plt.clf()
     return
 
@@ -312,7 +341,7 @@ def plot_dbs_d3_d4_two(df, c1, c2, l1, l2, title_name, pfn, first=True) -> None:
     plt.title(f"{title_name}")
     fig.subplots_adjust(bottom=0.25)
     # plt.show()
-    plt.savefig(f"plots/{pfn}_dbs_violin.png")
+    plt.savefig(f"plots/{pfn}_dbs_violin.png", bbox_inches="tight")
     plt.clf()
     return
 
@@ -427,7 +456,7 @@ def plot_basis_sets_d4(df, build_df=False, df_out: str = "basis"):
         },
         f"{len(df)} Dimers With Different Basis Sets (D4)",
         f"basis_set_d4_opt_vs_adz",
-        ylim=[-16, 10],
+        ylim=[-16, 14],
         bottom=0.35,
     )
     return
@@ -491,6 +520,7 @@ def plot_basis_sets_d3(df, build_df=False, df_out: str = "basis"):
         df.to_pickle(df_out)
     else:
         df = pd.read_pickle(df_out)
+    # TODO: simplify plot labels to be like -D/adz, and rotate labels back
     plot_violin_d3_d4_ALL(
         df,
         {
@@ -559,6 +589,7 @@ def plotting_setup(df, build_df=False, df_out: str = "plots/plot.pkl", compute_d
         df = compute_D3_D4_values_for_params_for_plotting(df, "adz", compute_d3)
         df = compute_D3_D4_values_for_params_for_plotting(df, "jdz", compute_d3)
         df = compute_d4_from_opt_params(df)
+        df = compute_d4_from_opt_params_TT(df)
 
         df["SAPT0-D4/aug-cc-pVDZ"] = df.apply(
             lambda row: row["HF_adz"] + row["-D4 (adz)"],
@@ -637,6 +668,7 @@ def plotting_setup(df, build_df=False, df_out: str = "plots/plot.pkl", compute_d
             "SAPT0-D4(ATM)/aug-cc-pVDZ": "adz_diff_d4_ATM",
             "SAPT0-D4(2B@G ATM)/aug-cc-pVDZ": "adz_diff_d4_2B@ATM_G",
             "SAPT0-D4(2B@G ATM@G)/aug-cc-pVDZ": "adz_diff_d4_ATM_G",
+            "SAPT0-D4(ATM TT)/aug-cc-pVDZ": "SAPT0_adz_3_IE_TT_OPT_d4_diff",
             "SAPT0/jun-cc-pVDZ": "SAPT0_jdz_diff",
             "SAPT0/aug-cc-pVDZ": "SAPT0_adz_diff",
         },
@@ -676,6 +708,7 @@ def plotting_setup(df, build_df=False, df_out: str = "plots/plot.pkl", compute_d
             "SAPT0-D4(2B@G ATM)/aug-cc-pVDZ": "adz_diff_d4_2B@ATM_G",
             "SAPT0/jun-cc-pVDZ": "SAPT0_jdz_diff",
             "SAPT0/aug-cc-pVDZ": "SAPT0_adz_diff",
+            "SAPT0-D4(ATM TT)/aug-cc-pVDZ": "SAPT0_adz_3_IE_TT_OPT_d4_diff",
         },
         f"Charged Dimers (Totaling {len(df_charged)} Dimers)",
         f"{selected}_charged",
@@ -883,7 +916,7 @@ def plot_violin_d3_d4_ALL(
 
     # plt.title(f"{title_name}")
     fig.subplots_adjust(bottom=bottom)
-    plt.savefig(f"plots/{pfn}_dbs_violin.png", transparent=transparent)
+    plt.savefig(f"plots/{pfn}_dbs_violin.png", transparent=transparent, bbox_inches="tight")
     plt.clf()
     return
 
@@ -1005,6 +1038,6 @@ def plot_dbs_d3_d4(
     plt.minorticks_on()
     # plt.title(f"{title_name}")
     fig.subplots_adjust(bottom=bottom)
-    plt.savefig(f"plots/{pfn}_dbs_violin.png", transparent=transparent)
+    plt.savefig(f"plots/{pfn}_dbs_violin.png", transparent=transparent, bbox_inches="tight")
     plt.clf()
     return

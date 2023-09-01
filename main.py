@@ -475,15 +475,15 @@ def main():
         optimize_paramaters(
             df,
             bases,
-            start_params_d4_key="HF_ATM_CHG_OPT_START",
+            # start_params_d4_key="HF_ATM_CHG_OPT_START",
             # D3={"powell": True},
-            D4={"powell": True, "least_squares": False, "powell_ATM_TT": False},
-            # start_params_d4_key="HF_ATM_TT_OPT_START",
+            # D4={"powell": True, "least_squares": False, "powell_ATM_TT": False},
+            start_params_d4_key="HF_ATM_TT_OPT_START",
             D3={"powell": False},
-            # D4={"powell": False, "least_squares": False, "powell_ATM_TT": True},
+            D4={"powell": False, "least_squares": False, "powell_ATM_TT": True},
             ATM=True,
             # extra="",
-            extra="2B_C6s_uncharged",
+            extra="TT_",
             use_2B_C6s=False,
         )
 
@@ -497,8 +497,10 @@ def main():
 
         src.sr.generate_SR_data_ATM(
             *df_names(6),
-            params_key="HF_ATM_SHARED",
-            # params_key="SAPT0_adz_3_IE_ATM",
+            # params_key="HF_ATM_SHARED",
+            params_key="SAPT0_adz_3_IE_ATM",
+            ncols=5,
+            generate=True,
         )
         return
 
@@ -507,7 +509,7 @@ def main():
     # return
     # src.misc.sensitivity_analysis(df)
     # src.misc.examine_ATM_TT(df)
-    if True:
+    if False:
         df, _ = df_names(9)
         src.plotting.plot_basis_sets_d4(
             df,

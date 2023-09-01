@@ -197,7 +197,7 @@ def compute_int_energy_stats_DISP_TT(
     assert t == 0, f"The HF_col provided has np.nan values present, {t}"
     # params_2B, params_ATM = paramsTable.generate_2B_ATM_param_subsets(params)
     # params_2B, params_ATM = paramsTable.get_params("SAPT0_adz_3_IE_2B")
-    params_2B, params_ATM = paramsTable.get_params("HF_ATM")
+    params_2B, params_ATM = paramsTable.get_params("HF_ATM_SHARED")
     params_ATM = np.array([0.0, 0.0, params[0], params[1], 1.0])
     print(f"{params_2B = }")
     print(f"{params_ATM = }")
@@ -362,11 +362,9 @@ def compute_int_energy_DISP_TT(
     compute_int_energy_DISP_TT is used to optimize paramaters for damping function in dftd4 with TT damping ATM function
     """
     # params_2B, params_ATM = paramsTable.get_params("SAPT0_adz_3_IE_2B")
-    params_2B, params_ATM = paramsTable.get_params("HF_ATM", force_ATM_on=force_ATM_on)
+    params_2B, params_ATM = paramsTable.get_params("HF_ATM_SHARED")
     params_ATM = np.array([0.0, 0.0, params[0], params[1], 1.0])
-    params_ATM[-1] = 1.0
     rmse = 0
-    diff = np.zeros(len(df))
     df["d4"] = df.apply(
         lambda row: locald4.compute_disp_2B_BJ_ATM_TT_dimer(
             row,
@@ -756,6 +754,7 @@ def opt_cross_val(
     p_out = np.zeros((nfolds, len(start_params)))
     print(start_params)
     mp = optimization(df, start_params, hf_key, version, force_ATM_on=force_ATM_on)
+    print(f"{mp = }")
     mmae, mrmse, mmax_e, mmad, mmean_diff = compute_stats(
         mp, df, hf_key, force_ATM_on=force_ATM_on
     )
@@ -769,7 +768,7 @@ def opt_cross_val(
     }
     print("1. MAE = %.4f\n2. RMSE = %.4f\n3. MAX = %.4f" % (mmae, mrmse, mmax_e))
     # reset params to mp
-    start_params = mp
+    ff_start_params = mp.copy()
     for n, fold in enumerate(folds):
         print(f"Fold {n} Start")
         df["Fitset"] = fold
@@ -781,7 +780,7 @@ def opt_cross_val(
         print(f"Testing: {len(testing)}")
 
         o_params = optimization(
-            training, start_params, hf_key, version, force_ATM_on=force_ATM_on
+            training, ff_start_params, hf_key, version, force_ATM_on=force_ATM_on
         )
         mae, rmse, max_e, mad, mean_diff = compute_stats(
             o_params, testing, hf_key, force_ATM_on=force_ATM_on
@@ -820,7 +819,7 @@ def opt_cross_val(
     print("\nStarting Parameters\n")
     print(start_params)
     print("\nFinal Parameters for the whole data set\n")
-    params_2B, params_ATM = paramsTable.generate_2B_ATM_param_subsets(start_params)
+    params_2B, params_ATM = paramsTable.generate_2B_ATM_param_subsets(ff_start_params)
     all_params = repr(np.array([params_2B, params_ATM], np.float64))
     print(f'"{hf_key}": np.{all_params},')
     print("\nStats\n")
