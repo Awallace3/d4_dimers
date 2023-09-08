@@ -439,20 +439,20 @@ def plot_basis_sets_d4(df, build_df=False, df_out: str = "basis"):
     plot_violin_d3_d4_ALL(
         df,
         {
-            "0DZ (aDZ)": "SAPT0_dz_3_IE_ADZ_d4_diff",
-            "0DZ (OPT)": "SAPT0_dz_3_IE_d4_diff",
-            "0jDZ (aDZ)": "SAPT0_jdz_3_IE_ADZ_d4_diff",
-            "0jDZ (OPT)": "SAPT0_jdz_3_IE_d4_diff",
-            "0aDZ (aDZ)": "SAPT0_adz_3_IE_ADZ_d4_diff",
-            "0aDZ (OPT)": "SAPT0_adz_3_IE_d4_diff",
-            "0TZ (aDZ)": "SAPT0_tz_3_IE_ADZ_d4_diff",
-            "0TZ (OPT)": "SAPT0_tz_3_IE_d4_diff",
-            "0mTZ (aDZ)": "SAPT0_mtz_3_IE_ADZ_d4_diff",
-            "0mTZ (OPT)": "SAPT0_mtz_3_IE_d4_diff",
-            "0jTZ (aDZ)": "SAPT0_jtz_3_IE_ADZ_d4_diff",
-            "0jTZ (OPT)": "SAPT0_jtz_3_IE_d4_diff",
-            "0aTZ (aDZ)": "SAPT0_atz_3_IE_ADZ_d4_diff",
-            "0aTZ (OPT)": "SAPT0_atz_3_IE_d4_diff",
+            "DZ (aDZ)": "SAPT0_dz_3_IE_ADZ_d4_diff",
+            "DZ (OPT)": "SAPT0_dz_3_IE_d4_diff",
+            "jDZ (aDZ)": "SAPT0_jdz_3_IE_ADZ_d4_diff",
+            "jDZ (OPT)": "SAPT0_jdz_3_IE_d4_diff",
+            "aDZ (aDZ)": "SAPT0_adz_3_IE_ADZ_d4_diff",
+            "aDZ (OPT)": "SAPT0_adz_3_IE_d4_diff",
+            "TZ (aDZ)": "SAPT0_tz_3_IE_ADZ_d4_diff",
+            "TZ (OPT)": "SAPT0_tz_3_IE_d4_diff",
+            "mTZ (aDZ)": "SAPT0_mtz_3_IE_ADZ_d4_diff",
+            "mTZ (OPT)": "SAPT0_mtz_3_IE_d4_diff",
+            "jTZ (aDZ)": "SAPT0_jtz_3_IE_ADZ_d4_diff",
+            "jTZ (OPT)": "SAPT0_jtz_3_IE_d4_diff",
+            "aTZ (aDZ)": "SAPT0_atz_3_IE_ADZ_d4_diff",
+            "aTZ (OPT)": "SAPT0_atz_3_IE_d4_diff",
         },
         f"{len(df)} Dimers With Different Basis Sets (D4)",
         f"basis_set_d4_opt_vs_adz",
@@ -612,6 +612,9 @@ def plotting_setup(df, build_df=False, df_out: str = "plots/plot.pkl", compute_d
         df["adz_diff_d4_ATM_G"] = df["Benchmark"] - (
             df["HF_adz"] + df["-D4 (adz) ATM G"]
         )
+        df["jdz_diff_d4_ATM_G"] = df["Benchmark"] - (
+            df["HF_jdz"] + df["-D4 (jdz) ATM G"]
+        )
         df["jdz_diff_d4"] = df["Benchmark"] - df["SAPT0-D4/jun-cc-pVDZ"]
         df["jdz_diff_d4_ATM"] = df["Benchmark"] - df["SAPT0-D4(ATM)/jun-cc-pVDZ"]
         df["SAPT0_jdz_diff"] = df["Benchmark"] - df["SAPT0"]
@@ -652,17 +655,18 @@ def plotting_setup(df, build_df=False, df_out: str = "plots/plot.pkl", compute_d
         df,
         "adz_diff_d4",
         "adz_diff_d4_ATM_G",
-        "-D4 (2B)",
-        "-D4 (ATM_G)",
+        "-D4",
+        "-D4(ATM)",
+        bottom=0.35,
         title_name=f"DB Breakdown SAPT0-D4/aug-cc-pVDZ ({selected})",
         pfn=f"db_breakdown_2B_ATM",
     )
     plot_violin_d3_d4_ALL(
         df,
         {
-            "0-D3MBJ/jDZ": "jdz_diff_d3",
+            "0-D3MBJ/jDZ": "SAPT0_jdz_3_IE_d3_diff",
             "0-D3MBJ(ATM)/jDZ": "jdz_diff_d3mbj_atm",
-            "0-D3/aDZ": "adz_diff_d3",
+            "0-D3/aDZ": "SAPT0_adz_3_IE_d3_diff",
             "0-D3MBJ(ATM)/aDZ": "adz_diff_d3mbj_atm",
             "0-D4/aDZ": "adz_diff_d4",
             "0-D4(ATM)/aDZ": "adz_diff_d4_ATM",
@@ -674,6 +678,7 @@ def plotting_setup(df, build_df=False, df_out: str = "plots/plot.pkl", compute_d
         },
         f"All Dimers with SAPT0",
         f"{selected}_ATM",
+        bottom=0.45,
         ylim=[-20, 25],
     )
     # Basis Set Performance: SAPT0
@@ -698,21 +703,23 @@ def plotting_setup(df, build_df=False, df_out: str = "plots/plot.pkl", compute_d
     plot_violin_d3_d4_ALL(
         df_charged,
         {
+            "0-D3/jDZ": "jdz_diff_d3",
             "0-D3/aDZ": "adz_diff_d3",
+            "0-D3MBJ(ATM)/jDZ": "jdz_diff_d3mbj_atm",
             "0-D3MBJ(ATM)/aDZ": "adz_diff_d3mbj_atm",
             "0-D4/jVDZ": "jdz_diff_d4",
             "0-D4/aDZ": "adz_diff_d4",
-            "0-D4(ATM)/jDZ": "jdz_diff_d4_ATM",
-            "0-D4(ATM)/aDZ": "adz_diff_d4_ATM",
-            "0-D4(2B@G ATM)/jDZ": "jdz_diff_d4_2B@ATM_G",
-            "0-D4(2B@G ATM)/aDZ": "adz_diff_d4_2B@ATM_G",
+            # "0-D4(2B@G ATM)/jDZ": "jdz_diff_d4_2B@ATM_G",
+            # "0-D4(2B@G ATM)/aDZ": "adz_diff_d4_2B@ATM_G",
+            "0-D4(2B@G ATM@G)/jDZ": "jdz_diff_d4_ATM_G",
+            "0-D4(2B@G ATM@G)/aDZ": "adz_diff_d4_ATM_G",
             "0/jDZ": "SAPT0_jdz_diff",
             "0/aDZ": "SAPT0_adz_diff",
             "0-D4(ATM TT)/aDZ": "SAPT0_adz_3_IE_TT_OPT_d4_diff",
         },
         f"Charged Dimers (Totaling {len(df_charged)} Dimers)",
         f"{selected}_charged",
-        bottom=0.40,
+        bottom=0.42,
         ylim=[-10, 10],
     )
     return
@@ -960,8 +967,9 @@ def plot_dbs_d3_d4(
 
         else:
             vDataErrors.append([])
-        vLabels.append(f"{d} - {l1}")
-        vLabels.append(f"{d} - {l2}")
+        d_str = d.replace(" ", "")
+        vLabels.append(f"{d_str} -{l1}")
+        vLabels.append(f"{d_str} -{l2}")
 
     fig = plt.figure(dpi=800)
     ax = plt.subplot(111)
