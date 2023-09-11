@@ -714,6 +714,68 @@ def avg_matrix(
     out[-1] = np.amax(arr[:, -1])
     return out
 
+def opt_val_no_folds(
+    df: pd.DataFrame,
+    start_params: [] = [3.02227550, 0.47396846, 4.49845309],
+    hf_key: str = "HF INTERACTION ENERGY",
+    version={
+        "method": "powell",
+        "compute_energy": "compute_int_energy_DISP",
+        "compute_stats": "compute_int_energy_stats_DISP",
+    },
+    force_ATM_on=False,
+) -> None:
+    """
+    opt_cross_val performs n-fold cross validation on opt*.pkl df from
+    """
+    print(f"{force_ATM_on = }")
+
+    if version["compute_stats"] == "compute_int_energy_stats_DISP":
+        compute_stats = compute_int_energy_stats_DISP
+    elif version["compute_stats"] == "compute_int_energy_stats_DISP_TT":
+        compute_stats = compute_int_energy_stats_DISP_TT
+    elif version["compute_stats"] == "compute_int_energy_stats":
+        compute_stats = compute_int_energy_stats
+    elif version["compute_stats"] == "jeff_d3":
+        compute_stats = jeff.compute_error_stats_d3
+    else:
+        raise Exception("compute_stats not defined")
+    opt_type = version["method"]
+    print(f"{hf_key = }")
+    print(f"{version = }")
+
+    nans = df[hf_key].isna().sum()
+    inds = df.index[df[hf_key].isna()]
+    assert nans == 0, f"The HF_col provided has np.nan values present with {inds} nans"
+    start = time.time()
+    folds = get_folds(nfolds, len(df))
+    stats_np = np.zeros((nfolds, 4))
+    p_out = np.zeros((nfolds, len(start_params)))
+    print(start_params)
+    mp = optimization(df, start_params, hf_key, version, force_ATM_on=force_ATM_on)
+    print(f"{mp = }")
+    mmae, mrmse, mmax_e, mmad, mmean_diff = compute_stats(
+        mp, df, hf_key, force_ATM_on=force_ATM_on
+    )
+    stats = {
+        "method": [f"{hf_key} full"],
+        # "Optimization Algorithm": [opt_type],
+        "RMSE": [mrmse],
+        "MAD": [mmad],
+        "MD": [mmean_diff],
+        "MAX_E": [mmax_e],
+    }
+    total_time = (time.time() - start) / 60
+    print("\nTime = %.2f Minutes\n" % total_time)
+    print("\nStarting Parameters\n")
+    print(start_params)
+    print("\nStats")
+    print(stats)
+    print("\nFinal Parameters for the whole data set\n")
+    params_2B, params_ATM = paramsTable.generate_2B_ATM_param_subsets(ff_start_params)
+    all_params = repr(np.array([params_2B, params_ATM], np.float64))
+    print(f'"{hf_key}": np.{all_params},')
+    return
 
 def opt_cross_val(
     df: pd.DataFrame,

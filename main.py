@@ -63,6 +63,7 @@ def optimize_paramaters(
     extra="",
     use_2B_C6s=False,
     drop_na=True,
+    five_fold=True,
 ) -> None:
     # Optimize parameters through 5-fold cross validation
     # params = src.paramsTable.paramsDict()[start_params_d4_key][1:]
@@ -129,16 +130,26 @@ def optimize_paramaters(
                 "compute_stats": "compute_int_energy_stats_DISP",
             }
 
-            src.optimization.opt_cross_val(
-                df,
-                nfolds=5,
-                start_params=params,
-                hf_key=i,
-                # output_l_marker=f"{extra_added}",
-                output_l_marker="D4_" + extra_added,
-                version=version,
-                force_ATM_on=ATM,
-            )
+            if five_fold:
+                src.optimization.opt_cross_val(
+                    df,
+                    nfolds=5,
+                    start_params=params,
+                    hf_key=i,
+                    # output_l_marker=f"{extra_added}",
+                    output_l_marker="D4_" + extra_added,
+                    version=version,
+                    force_ATM_on=ATM,
+                )
+            else:
+                src.optimization.opt_val_no_folds(
+                    df,
+                    start_params=params,
+                    hf_key=i,
+                    version=version,
+                    force_ATM_on=ATM,
+                )
+
         if D4["powell_ATM_TT"]:
             print("D4 powell ATM TT")
             if ATM:
@@ -534,6 +545,7 @@ def main():
             # extra="",
             extra="SAPT_DFT_",
             use_2B_C6s=False,
+            five_fold=False,
         )
 
     opt(bases, "SAPT_DFT_OPT_START4")
