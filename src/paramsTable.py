@@ -31,6 +31,43 @@ def paramsDict() -> {}:
             [1.0, 1.61679827, 0.44959224, 3.35743605, 1.0],
         ],
         "sadz_OPT": [0.829861, 0.706055, 1.123903],
+        "SAPT_DFT_OPT_POS": np.array(
+            [
+                1.50651312e00,
+                9.77468607e-01,
+                4.37174871e-13,
+            ],
+            dtype=np.float64,
+        ),
+        "SAPT_DFT_OPT_START": np.array(
+            [
+                1.0,
+                0.8304747365034967,
+                0.7062760278861856,
+                1.1237322634625035,
+            ],
+            dtype=np.float64,
+        ),
+        "SAPT_DFT_OPT_START2": np.array(
+            [
+                1.1223852449709826,
+                1.1956254519254155,
+                -1.177877609414902,
+            ],
+            dtype=np.float64,
+        ),
+        "SAPT_DFT_OPT_START3": np.array(
+            [1.16530757, 1.2627746, -1.42162522],
+            dtype=np.float64,
+        ),
+        "SAPT_DFT_OPT_START4": np.array(
+            [1.61375333, 1.29750048, -1.36233762, 1.29750048, -1.36233762, 1.0],
+            dtype=np.float64,
+        ),
+        "SAPT_DFT_OPT_START5": np.array(
+            [1.0, 1.61375333, 1.29750048, -1.36233762, 1.29750048, -1.36233762, 1.0],
+            dtype=np.float64,
+        ),
         "HF_ATM_OPT_START": np.array(
             [
                 1.61679827,
@@ -254,6 +291,7 @@ def generate_2B_ATM_param_subsets(
     params,
     params_2B_key="HF_ATM_SHARED",  # "SAPT0_adz_3_IE_2B",
     force_ATM_on=False,
+    # SAPT_DFT=True,
 ):
     """
     params types:
@@ -299,6 +337,13 @@ def generate_2B_ATM_param_subsets(
         )
         params_ATM = np.array(
             [1.0, params[0], params[3], params[4], s9], dtype=np.float64
+        )
+    elif len(params) == 4:
+        params_2B = np.array(
+            [params[0], params[1], params[2], params[3], s9], dtype=np.float64
+        )
+        params_ATM = np.array(
+            [params[0], params[1], params[2], params[3], s9], dtype=np.float64
         )
     elif len(params) == 3:
 

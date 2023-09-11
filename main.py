@@ -420,11 +420,14 @@ def charge_comparison():
     print(cnt_correct, cnt_wrong)
     return
 
+
 def sum_IE(vals):
     if vals is not None:
         return sum(vals[1:4])
     else:
         return np.nan
+
+
 def total_IE(vals):
     if vals is not None:
         return vals[0]
@@ -515,11 +518,12 @@ def main():
         # "SAPT0_tz_3_IE",
     ]
 
-    def opt(bases):
+    def opt(bases, start_params_d4_key="SAPT_DFT_OPT_START4"):
         optimize_paramaters(
             df,
             bases,
-            start_params_d4_key="HF_OPT_2B_START",
+            start_params_d4_key=start_params_d4_key,
+            # start_params_d4_key="HF_ATM_OPT_START",
             # start_params_d4_key="HF_OPT",
             # D3={"powell": True},
             D4={"powell": True, "least_squares": False, "powell_ATM_TT": False},
@@ -528,11 +532,13 @@ def main():
             # D4={"powell": False, "least_squares": False, "powell_ATM_TT": True},
             ATM=True,
             # extra="",
-            extra="SAPT_DFT",
+            extra="SAPT_DFT_",
             use_2B_C6s=False,
         )
 
-    opt(bases)
+    opt(bases, "SAPT_DFT_OPT_START4")
+    opt(bases, "SAPT_DFT_OPT_START5")
+
     return
 
     def SR_testing():

@@ -304,7 +304,7 @@ def compute_int_energy_DISP(
     df: pd.DataFrame,
     hf_key: str = "HF INTERACTION ENERGY",
     force_ATM_on: bool = False,
-    prevent_negative_params: bool = True,
+    prevent_negative_params: bool = False,
     parallel=False,
     chunk_count=1000,
 ):
@@ -650,6 +650,7 @@ def optimization(
         "compute_energy": "compute_int_energy_DISP",
     },
     force_ATM_on=False,
+    bounds=(-3.0, 8.0),
 ):
     if version["compute_energy"] == "compute_int_energy_DISP":
         compute = compute_int_energy_DISP
@@ -673,6 +674,7 @@ def optimization(
         args=(df, hf_key, force_ATM_on),
         x0=params,
         method=version["method"],
+        bounds=[bounds for i in range(len(params))],
     )
     print("\nResults\n")
     out_params = ret.x
