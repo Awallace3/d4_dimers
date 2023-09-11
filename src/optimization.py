@@ -748,9 +748,6 @@ def opt_val_no_folds(
     inds = df.index[df[hf_key].isna()]
     assert nans == 0, f"The HF_col provided has np.nan values present with {inds} nans"
     start = time.time()
-    folds = get_folds(nfolds, len(df))
-    stats_np = np.zeros((nfolds, 4))
-    p_out = np.zeros((nfolds, len(start_params)))
     print(start_params)
     mp = optimization(df, start_params, hf_key, version, force_ATM_on=force_ATM_on)
     print(f"{mp = }")
