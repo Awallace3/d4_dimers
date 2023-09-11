@@ -760,7 +760,7 @@ def opt_cross_val(
     )
     stats = {
         "method": [f"{hf_key} full"],
-        "Optimization Algorithm": [opt_type],
+        # "Optimization Algorithm": [opt_type],
         "RMSE": [mrmse],
         "MAD": [mmad],
         "MD": [mmean_diff],
@@ -791,7 +791,7 @@ def opt_cross_val(
         print(f"Fold {n} End")
 
         stats["method"].append(f"{hf_key} fold {n+1}")
-        stats["Optimization Algorithm"].append(opt_type)
+        # stats["Optimization Algorithm"].append(opt_type)
         stats["RMSE"].append(rmse)
         stats["MAD"].append(mad)
         stats["MD"].append(mean_diff)
@@ -803,7 +803,7 @@ def opt_cross_val(
     rmse, mad, mean_diff, max_e = avg
 
     stats["method"].append(f"{hf_key}")
-    stats["Optimization Algorithm"].append(opt_type)
+    # stats["Optimization Algorithm"].append(opt_type)
     stats["RMSE"].append(rmse)
     stats["MAX_E"].append(max_e)
     stats["MAD"].append(mad)

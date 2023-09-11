@@ -592,28 +592,28 @@ def plotting_setup(df, build_df=False, df_out: str = "plots/plot.pkl", compute_d
         df = compute_d4_from_opt_params_TT(df)
 
         df["SAPT0-D4/aug-cc-pVDZ"] = df.apply(
-            lambda row: row["HF_adz"] + row["-D4 (adz)"],
+            lambda row: row["SAPT0_adz_3_IE"] + row["-D4 (adz)"],
             axis=1,
         )
         df["SAPT0-D4(ATM)/aug-cc-pVDZ"] = df.apply(
-            lambda row: row["HF_adz"] + row["-D4 (adz) ATM"],
+            lambda row: row["SAPT0_adz_3_IE"] + row["-D4 (adz) ATM"],
             axis=1,
         )
         df["SAPT0-D4/jun-cc-pVDZ"] = df.apply(
-            lambda row: row["HF_jdz"] + row["-D4 (jdz)"],
+            lambda row: row["SAPT0_jdz_3_IE"] + row["-D4 (jdz)"],
             axis=1,
         )
         df["SAPT0-D4(ATM)/jun-cc-pVDZ"] = df.apply(
-            lambda row: row["HF_jdz"] + row["-D4 (jdz) ATM"],
+            lambda row: row["SAPT0_jdz_3_IE"] + row["-D4 (jdz) ATM"],
             axis=1,
         )
         df["adz_diff_d4"] = df["Benchmark"] - df["SAPT0-D4/aug-cc-pVDZ"]
         df["adz_diff_d4_ATM"] = df["Benchmark"] - df["SAPT0-D4(ATM)/aug-cc-pVDZ"]
         df["adz_diff_d4_ATM_G"] = df["Benchmark"] - (
-            df["HF_adz"] + df["-D4 (adz) ATM G"]
+            df["SAPT0_adz_3_IE"] + df["-D4 (adz) ATM G"]
         )
         df["jdz_diff_d4_ATM_G"] = df["Benchmark"] - (
-            df["HF_jdz"] + df["-D4 (jdz) ATM G"]
+            df["SAPT0_jdz_3_IE"] + df["-D4 (jdz) ATM G"]
         )
         df["jdz_diff_d4"] = df["Benchmark"] - df["SAPT0-D4/jun-cc-pVDZ"]
         df["jdz_diff_d4_ATM"] = df["Benchmark"] - df["SAPT0-D4(ATM)/jun-cc-pVDZ"]
@@ -622,34 +622,35 @@ def plotting_setup(df, build_df=False, df_out: str = "plots/plot.pkl", compute_d
 
         if compute_d3:
             df["adz_diff_d4_2B@ATM_G"] = df["Benchmark"] - (
-                df["HF_adz"] + df["-D4 2B@ATM_params (adz) G"]
+                df["SAPT0_adz_3_IE"] + df["-D4 2B@ATM_params (adz) G"]
             )
             df["jdz_diff_d4_2B@ATM_G"] = df["Benchmark"] - (
-                df["HF_jdz"] + df["-D4 2B@ATM_params (adz) G"]
+                df["SAPT0_jdz_3_IE"] + df["-D4 2B@ATM_params (adz) G"]
             )
             df["SAPT0-D3/jun-cc-pVDZ"] = df.apply(
-                lambda row: row["HF_jdz"] + row["-D3 (jdz)"],
+                lambda row: row["SAPT0_jdz_3_IE"] + row["-D3 (jdz)"],
                 axis=1,
             )
             df["SAPT0-D3/aug-cc-pVDZ"] = df.apply(
-                lambda row: row["HF_adz"] + row["-D3 (adz)"],
+                lambda row: row["SAPT0_adz_3_IE"] + row["-D3 (adz)"],
                 axis=1,
             )
             df["SAPT0-D3/aug-cc-pVDZ"] = df.apply(
-                lambda row: row["HF_adz"] + row["-D3 (adz)"],
+                lambda row: row["SAPT0_adz_3_IE"] + row["-D3 (adz)"],
                 axis=1,
             )
         df["adz_diff_d3"] = df["Benchmark"] - df["SAPT0-D3/aug-cc-pVDZ"]
         df["jdz_diff_d3"] = df["Benchmark"] - df["SAPT0-D3/jun-cc-pVDZ"]
 
         # D3 binary results
-        df["jdz_diff_d3mbj"] = df["Benchmark"] - (df["HF_jdz"] + df["D3MBJ"])
-        df["adz_diff_d3mbj"] = df["Benchmark"] - (df["HF_adz"] + df["D3MBJ"])
-        df["jdz_diff_d3mbj_atm"] = df["Benchmark"] - (df["HF_jdz"] + df["D3MBJ ATM"])
-        df["adz_diff_d3mbj_atm"] = df["Benchmark"] - (df["HF_adz"] + df["D3MBJ ATM"])
+        df["jdz_diff_d3mbj"] = df["Benchmark"] - (df["SAPT0_jdz_3_IE"] + df["D3MBJ"])
+        df["adz_diff_d3mbj"] = df["Benchmark"] - (df["SAPT0_adz_3_IE"] + df["D3MBJ"])
+        df["jdz_diff_d3mbj_atm"] = df["Benchmark"] - (df["SAPT0_jdz_3_IE"] + df["D3MBJ ATM"])
+        df["adz_diff_d3mbj_atm"] = df["Benchmark"] - (df["SAPT0_adz_3_IE"] + df["D3MBJ ATM"])
         df.to_pickle(df_out)
     else:
         df = pd.read_pickle(df_out)
+    print(df[['D3MBJ', "D3MBJ ATM"]])
     # Non charged
     plot_dbs_d3_d4(
         df,
@@ -664,11 +665,11 @@ def plotting_setup(df, build_df=False, df_out: str = "plots/plot.pkl", compute_d
     plot_violin_d3_d4_ALL(
         df,
         {
-            "0-D3MBJ/jDZ": "SAPT0_jdz_3_IE_d3_diff",
-            "0-D3MBJ(ATM)/jDZ": "jdz_diff_d3mbj_atm",
+            "0-D3/jDZ": "SAPT0_jdz_3_IE_d3_diff",
+            # "0-D3MBJ(ATM)/jDZ": "jdz_diff_d3mbj_atm",
             "0-D3/aDZ": "SAPT0_adz_3_IE_d3_diff",
-            "0-D3MBJ(ATM)/aDZ": "adz_diff_d3mbj_atm",
-            "0-D4/aDZ": "adz_diff_d4",
+            # "0-D3MBJ(ATM)/aDZ": "adz_diff_d3mbj_atm",
+            "0-D4/aDZ": "SAPT0_adz_3_IE_d4_diff",
             "0-D4(ATM)/aDZ": "adz_diff_d4_ATM",
             "0-D4(2B@G ATM)/aDZ": "adz_diff_d4_2B@ATM_G",
             "0-D4(2B@G ATM@G)/aDZ": "adz_diff_d4_ATM_G",

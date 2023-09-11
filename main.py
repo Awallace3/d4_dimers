@@ -62,6 +62,7 @@ def optimize_paramaters(
     ATM=False,
     extra="",
     use_2B_C6s=False,
+    drop_na=True,
 ) -> None:
     # Optimize parameters through 5-fold cross validation
     # params = src.paramsTable.paramsDict()[start_params_d4_key][1:]
@@ -83,7 +84,9 @@ def optimize_paramaters(
         "C6_ATM_A",
         "C6_ATM_B",
     ]
-    df = df[subset].copy()
+    if drop_na:
+        df = df[df[bases].notna().all(axis=1)].copy()
+        print(f"Dropped NaNs, new size: {len(df)}")
     if use_2B_C6s:
         print("Using 2B, charge scaled C6s!")
         df["C6_ATM"] = df["C6s"]
@@ -417,6 +420,17 @@ def charge_comparison():
     print(cnt_correct, cnt_wrong)
     return
 
+def sum_IE(vals):
+    if vals is not None:
+        return sum(vals[1:4])
+    else:
+        return np.nan
+def total_IE(vals):
+    if vals is not None:
+        return vals[0]
+    else:
+        return np.nan
+
 
 def merge_SAPT0_results_into_df():
     df, selected = df_names(6)
@@ -437,6 +451,7 @@ def merge_SAPT0_results_into_df():
         df[i] = df2[i]
     for i in copy_SAPT0_cols:
         print(df[i])
+
     for i in [
         j
         for j in df.columns.values
@@ -445,24 +460,53 @@ def merge_SAPT0_results_into_df():
         if "_IE" not in j
     ]:
         print(f'"{i}_3_IE",')
-        df[i + "_3_IE"] = df.apply(lambda r: sum(r[i][1:4]), axis=1)
-        df[i + "_IE"] = df.apply(lambda r: r[i][0], axis=1)
+        df[i + "_3_IE"] = df.apply(lambda r: sum_IE(r[i]), axis=1)
+        df[i + "_IE"] = df.apply(lambda r: total_IE(r[i]), axis=1)
+    df.to_pickle(selected)
+    return
+
+
+def merge_SAPTDFT_results_into_df():
+    df, selected = df_names(6)
+    print(df)
+    df2 = pd.read_pickle("data/schr_saptdft.pkl")
+    print(df2.columns.values)
+    copy_SAPT0_cols = [
+        "id",
+        "SAPT_DFT_adz",
+    ]
+    for i in copy_SAPT0_cols:
+        df[i] = df2[i]
+    for i in copy_SAPT0_cols:
+        print(df[i])
+    for i in [
+        j
+        for j in df.columns.values
+        if "SAPT_DFT_" in j
+        if j not in ["SAPT0", "SAPT0_aqz"]
+        if "_IE" not in j
+    ]:
+        print(f'"{i}_3_IE",')
+        df[i + "_3_IE"] = df.apply(lambda r: sum_IE(r[i]), axis=1)
+        df[i + "_IE"] = df.apply(lambda r: total_IE(r[i]), axis=1)
     df.to_pickle(selected)
     return
 
 
 def main():
+    # merge_SAPTDFT_results_into_df()
     # TODO: plot -D4 2B with Grimme parameters
     # TODO: plot -D3 ATM
     # df, selected = df_names(8)
-    # src.dftd3.compute_dftd3(*df_names(4), "Geometry", param_label="D3MBJ")
-    # src.dftd3.compute_dftd3(*df_names(4), "Geometry", param_label="D3MBJ ATM")
+    # src.dftd3.compute_dftd3(*df_names(9), "Geometry", param_label="D3MBJ")
+    # src.dftd3.compute_dftd3(*df_names(9), "Geometry", param_label="D3MBJ ATM")
     # merge_SAPT0_results_into_df()
     df, selected = df_names(6)
     # df.to_pickle(selected)
 
     bases = [
-        "SAPT0_adz_3_IE",
+        # "SAPT0_adz_3_IE",
+        "SAPT_DFT_adz_3_IE",
         # "SAPT0_jdz_3_IE",
         # "SAPT0_mtz_3_IE",
         # "SAPT0_jtz_3_IE",
@@ -475,22 +519,21 @@ def main():
         optimize_paramaters(
             df,
             bases,
-            # start_params_d4_key="HF_ATM_CHG_OPT_START",
+            start_params_d4_key="HF_OPT_2B_START",
+            # start_params_d4_key="HF_OPT",
             # D3={"powell": True},
-            # D4={"powell": True, "least_squares": False, "powell_ATM_TT": False},
-            start_params_d4_key="HF_ATM_TT_OPT_START",
+            D4={"powell": True, "least_squares": False, "powell_ATM_TT": False},
+            # start_params_d4_key="HF_ATM_TT_OPT_START",
             D3={"powell": False},
-            D4={"powell": False, "least_squares": False, "powell_ATM_TT": True},
+            # D4={"powell": False, "least_squares": False, "powell_ATM_TT": True},
             ATM=True,
             # extra="",
-            extra="TT_",
+            extra="SAPT_DFT",
             use_2B_C6s=False,
         )
 
-    # opt(bases)
-    # return
-    # opt(["HF_qz"])
-    # opt(["HF_adz"])
+    opt(bases)
+    return
 
     def SR_testing():
         import dispersion
@@ -523,7 +566,7 @@ def main():
     if True:
         src.plotting.plotting_setup(
             df_names(9),
-            False,
+            True,
         )
     return
 
