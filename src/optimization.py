@@ -750,7 +750,6 @@ def opt_val_no_folds(
     start = time.time()
     print(start_params)
     mp = optimization(df, start_params, hf_key, version, force_ATM_on=force_ATM_on)
-    print(f"{mp = }")
     mmae, mrmse, mmax_e, mmad, mmean_diff = compute_stats(
         mp, df, hf_key, force_ATM_on=force_ATM_on
     )
@@ -769,7 +768,7 @@ def opt_val_no_folds(
     print("\nStats")
     print(stats)
     print("\nFinal Parameters for the whole data set\n")
-    params_2B, params_ATM = paramsTable.generate_2B_ATM_param_subsets(ff_start_params)
+    params_2B, params_ATM = paramsTable.generate_2B_ATM_param_subsets(mp)
     all_params = repr(np.array([params_2B, params_ATM], np.float64))
     print(f'"{hf_key}": np.{all_params},')
     return

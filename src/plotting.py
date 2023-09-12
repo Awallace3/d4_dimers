@@ -104,10 +104,34 @@ def compute_D3_D4_values_for_params_for_plotting(
 def compute_d4_from_opt_params(
     df: pd.DataFrame,
     bases=[
+        [
+            "SAPT_DFT_adz_IE",
+            "SAPT_DFT_adz_3_IE_ATM",
+            "SAPT_DFT_OPT_ATM_END3",
+            "SAPT_DFT_adz_3_IE",
+        ],
+        [
+            "SAPT_DFT_adz_IE",
+            "SAPT_DFT_adz_3_IE",
+            "SAPT_DFT_OPT_END3",
+            "SAPT_DFT_adz_3_IE",
+        ],
+        [
+            "SAPT_DFT_adz_3_IE",
+            "SAPT_DFT_adz_3_IE_no_disp",
+            "SAPT_DFT_OPT_END3",
+            "SAPT_DFT_adz_3_IE",
+        ],
         # "DF_col_for_IE": "PARAMS_NAME"
         ["SAPT0_dz_IE", "SAPT0_dz_3_IE", "SAPT0_dz_3_IE_2B", "SAPT0_dz_3_IE"],
         ["SAPT0_jdz_IE", "SAPT0_jdz_3_IE", "SAPT0_jdz_3_IE_2B", "SAPT0_jdz_3_IE"],
         ["SAPT0_adz_IE", "SAPT0_adz_3_IE", "SAPT0_adz_3_IE_2B", "SAPT0_adz_3_IE"],
+        [
+            "SAPT0_adz_3_IE",
+            "SAPT0_adz_3_IE_no_disp",
+            "SAPT0_adz_3_IE_2B",
+            "SAPT0_adz_3_IE",
+        ],
         ["SAPT0_tz_IE", "SAPT0_tz_3_IE", "SAPT0_tz_3_IE_2B", "SAPT0_tz_3_IE"],
         ["SAPT0_mtz_IE", "SAPT0_mtz_3_IE", "SAPT0_mtz_3_IE_2B", "SAPT0_mtz_3_IE"],
         ["SAPT0_jtz_IE", "SAPT0_jtz_3_IE", "SAPT0_jtz_3_IE_2B", "SAPT0_jtz_3_IE"],
@@ -137,6 +161,7 @@ def compute_d4_from_opt_params(
         print(f'"{diff}",')
         print(f'"{d4_diff}",')
     return df
+
 
 def compute_d4_from_opt_params_TT(
     df: pd.DataFrame,
@@ -361,6 +386,7 @@ def get_charged_df(df) -> pd.DataFrame:
 def plot_basis_sets_d4(df, build_df=False, df_out: str = "basis"):
     df_out = f"plots/{df_out}.pkl"
     if build_df:
+        df = compute_d4_from_opt_params(df)
         df = compute_d4_from_opt_params(
             df,
             bases=[
@@ -409,7 +435,6 @@ def plot_basis_sets_d4(df, build_df=False, df_out: str = "basis"):
                 ],
             ],
         )
-        df = compute_d4_from_opt_params(df)
         print(df.columns.values)
         df.to_pickle(df_out)
     else:
@@ -466,13 +491,48 @@ def compute_d3_from_opt_params(
     df: pd.DataFrame,
     bases=[
         # "DF_col_for_IE": "PARAMS_NAME"
-        ["SAPT0_dz_IE",  "SAPT0_dz_3_IE", "SAPT0_dz_3_IE_2B_D3"  , "SAPT0_dz_3_IE", ],
-        ["SAPT0_jdz_IE", "SAPT0_jdz_3_IE", "SAPT0_jdz_3_IE_2B_D3", "SAPT0_jdz_3_IE",],
-        ["SAPT0_adz_IE", "SAPT0_adz_3_IE", "SAPT0_adz_3_IE_2B_D3", "SAPT0_adz_3_IE",],
-        ["SAPT0_tz_IE",  "SAPT0_tz_3_IE", "SAPT0_tz_3_IE_2B_D3"  , "SAPT0_tz_3_IE", ],
-        ["SAPT0_mtz_IE", "SAPT0_mtz_3_IE", "SAPT0_mtz_3_IE_2B_D3", "SAPT0_mtz_3_IE",],
-        ["SAPT0_jtz_IE", "SAPT0_jtz_3_IE", "SAPT0_jtz_3_IE_2B_D3", "SAPT0_jtz_3_IE",],
-        ["SAPT0_atz_IE", "SAPT0_atz_3_IE", "SAPT0_atz_3_IE_2B_D3", "SAPT0_atz_3_IE",],
+        [
+            "SAPT0_dz_IE",
+            "SAPT0_dz_3_IE",
+            "SAPT0_dz_3_IE_2B_D3",
+            "SAPT0_dz_3_IE",
+        ],
+        [
+            "SAPT0_jdz_IE",
+            "SAPT0_jdz_3_IE",
+            "SAPT0_jdz_3_IE_2B_D3",
+            "SAPT0_jdz_3_IE",
+        ],
+        [
+            "SAPT0_adz_IE",
+            "SAPT0_adz_3_IE",
+            "SAPT0_adz_3_IE_2B_D3",
+            "SAPT0_adz_3_IE",
+        ],
+        [
+            "SAPT0_tz_IE",
+            "SAPT0_tz_3_IE",
+            "SAPT0_tz_3_IE_2B_D3",
+            "SAPT0_tz_3_IE",
+        ],
+        [
+            "SAPT0_mtz_IE",
+            "SAPT0_mtz_3_IE",
+            "SAPT0_mtz_3_IE_2B_D3",
+            "SAPT0_mtz_3_IE",
+        ],
+        [
+            "SAPT0_jtz_IE",
+            "SAPT0_jtz_3_IE",
+            "SAPT0_jtz_3_IE_2B_D3",
+            "SAPT0_jtz_3_IE",
+        ],
+        [
+            "SAPT0_atz_IE",
+            "SAPT0_atz_3_IE",
+            "SAPT0_atz_3_IE_2B_D3",
+            "SAPT0_atz_3_IE",
+        ],
     ],
 ) -> pd.DataFrame:
     """
@@ -507,13 +567,48 @@ def plot_basis_sets_d3(df, build_df=False, df_out: str = "basis"):
         df = compute_d3_from_opt_params(
             df,
             bases=[
-                ["SAPT0_dz_IE", "SAPT0_dz_3_IE_ADZ", "SAPT0_adz_3_IE_2B_D3"  , "SAPT0_dz_3_IE",],
-                ["SAPT0_jdz_IE", "SAPT0_jdz_3_IE_ADZ", "SAPT0_adz_3_IE_2B_D3", "SAPT0_jdz_3_IE",],
-                ["SAPT0_adz_IE", "SAPT0_adz_3_IE_ADZ", "SAPT0_adz_3_IE_2B_D3", "SAPT0_adz_3_IE",],
-                ["SAPT0_tz_IE", "SAPT0_tz_3_IE_ADZ", "SAPT0_adz_3_IE_2B_D3",   "SAPT0_tz_3_IE", ],
-                ["SAPT0_mtz_IE", "SAPT0_mtz_3_IE_ADZ", "SAPT0_adz_3_IE_2B_D3", "SAPT0_mtz_3_IE",],
-                ["SAPT0_jtz_IE", "SAPT0_jtz_3_IE_ADZ", "SAPT0_adz_3_IE_2B_D3", "SAPT0_jtz_3_IE",],
-                ["SAPT0_atz_IE", "SAPT0_atz_3_IE_ADZ", "SAPT0_adz_3_IE_2B_D3", "SAPT0_atz_3_IE",],
+                [
+                    "SAPT0_dz_IE",
+                    "SAPT0_dz_3_IE_ADZ",
+                    "SAPT0_adz_3_IE_2B_D3",
+                    "SAPT0_dz_3_IE",
+                ],
+                [
+                    "SAPT0_jdz_IE",
+                    "SAPT0_jdz_3_IE_ADZ",
+                    "SAPT0_adz_3_IE_2B_D3",
+                    "SAPT0_jdz_3_IE",
+                ],
+                [
+                    "SAPT0_adz_IE",
+                    "SAPT0_adz_3_IE_ADZ",
+                    "SAPT0_adz_3_IE_2B_D3",
+                    "SAPT0_adz_3_IE",
+                ],
+                [
+                    "SAPT0_tz_IE",
+                    "SAPT0_tz_3_IE_ADZ",
+                    "SAPT0_adz_3_IE_2B_D3",
+                    "SAPT0_tz_3_IE",
+                ],
+                [
+                    "SAPT0_mtz_IE",
+                    "SAPT0_mtz_3_IE_ADZ",
+                    "SAPT0_adz_3_IE_2B_D3",
+                    "SAPT0_mtz_3_IE",
+                ],
+                [
+                    "SAPT0_jtz_IE",
+                    "SAPT0_jtz_3_IE_ADZ",
+                    "SAPT0_adz_3_IE_2B_D3",
+                    "SAPT0_jtz_3_IE",
+                ],
+                [
+                    "SAPT0_atz_IE",
+                    "SAPT0_atz_3_IE_ADZ",
+                    "SAPT0_adz_3_IE_2B_D3",
+                    "SAPT0_atz_3_IE",
+                ],
             ],
         )
         print(df.columns.values)
@@ -574,8 +669,9 @@ def plotting_setup(df, build_df=False, df_out: str = "plots/plot.pkl", compute_d
     df, selected = df
     selected = selected.split("/")[-1].split(".")[0]
     df_out = f"plots/{selected}.pkl"
+    print(df.columns.values)
     if build_df:
-        print(df.columns.values)
+        # print(df.columns.values)
         # for i in [
         #     j
         #     for j in df.columns.values
@@ -645,12 +741,16 @@ def plotting_setup(df, build_df=False, df_out: str = "plots/plot.pkl", compute_d
         # D3 binary results
         df["jdz_diff_d3mbj"] = df["Benchmark"] - (df["SAPT0_jdz_3_IE"] + df["D3MBJ"])
         df["adz_diff_d3mbj"] = df["Benchmark"] - (df["SAPT0_adz_3_IE"] + df["D3MBJ"])
-        df["jdz_diff_d3mbj_atm"] = df["Benchmark"] - (df["SAPT0_jdz_3_IE"] + df["D3MBJ ATM"])
-        df["adz_diff_d3mbj_atm"] = df["Benchmark"] - (df["SAPT0_adz_3_IE"] + df["D3MBJ ATM"])
+        df["jdz_diff_d3mbj_atm"] = df["Benchmark"] - (
+            df["SAPT0_jdz_3_IE"] + df["D3MBJ ATM"]
+        )
+        df["adz_diff_d3mbj_atm"] = df["Benchmark"] - (
+            df["SAPT0_adz_3_IE"] + df["D3MBJ ATM"]
+        )
         df.to_pickle(df_out)
+
     else:
         df = pd.read_pickle(df_out)
-    print(df[['D3MBJ', "D3MBJ ATM"]])
     # Non charged
     plot_dbs_d3_d4(
         df,
@@ -674,8 +774,10 @@ def plotting_setup(df, build_df=False, df_out: str = "plots/plot.pkl", compute_d
             "0-D4(2B@G ATM)/aDZ": "adz_diff_d4_2B@ATM_G",
             "0-D4(2B@G ATM@G)/aDZ": "adz_diff_d4_ATM_G",
             "0-D4(ATM TT)/aDZ": "SAPT0_adz_3_IE_TT_OPT_d4_diff",
-            "0/jDZ": "SAPT0_jdz_diff",
-            "0/aDZ": "SAPT0_adz_diff",
+            "0/jDZ": "SAPT0_jdz_3_IE_diff",
+            "0/aDZ": "SAPT0_adz_3_IE_diff",
+            "DFT-D4/aDZ": "SAPT_DFT_adz_3_IE_d4_diff",
+            "DFT/aDZ": "SAPT_DFT_adz_3_IE_diff",
         },
         f"All Dimers with SAPT0",
         f"{selected}_ATM",
@@ -686,15 +788,15 @@ def plotting_setup(df, build_df=False, df_out: str = "plots/plot.pkl", compute_d
     plot_violin_d3_d4_ALL(
         df,
         {
-            "0-D4/DZ": "SAPT0_dz_diff",
-            "0-D4/jDZ": "jdz_diff_d4",
-            "0/jDZ": "SAPT0_jdz_diff",
-            "0-D4/aDZ": "adz_diff_d4",
-            "0/aDZ": "SAPT0_adz_diff",
-            "0/TZ": "SAPT0_tz_diff",
-            "0/mTZ": "SAPT0_mtz_diff",
-            "0/jTZ": "SAPT0_jtz_diff",
-            "0/aTZ": "SAPT0_atz_diff",
+            "0-D4/DZ": "SAPT0_dz_3_IE_d4_diff",
+            "0-D4/jDZ": "SAPT0_jdz_3_IE_d4_diff",
+            "0/jDZ": "SAPT0_jdz_3_IE_diff",
+            "0-D4/aDZ": "SAPT0_adz_3_IE_d4_diff",
+            "0/aDZ": "SAPT0_adz_3_IE_diff",
+            "0/TZ": "SAPT0_tz_3_IE_diff",
+            "0/mTZ": "SAPT0_mtz_3_IE_diff",
+            "0/jTZ": "SAPT0_jtz_3_IE_diff",
+            "0/aTZ": "SAPT0_atz_3_IE_diff",
         },
         f"All Dimers with SAPT0 ({selected})",
         f"{selected}_basis_set",
@@ -714,8 +816,8 @@ def plotting_setup(df, build_df=False, df_out: str = "plots/plot.pkl", compute_d
             # "0-D4(2B@G ATM)/aDZ": "adz_diff_d4_2B@ATM_G",
             "0-D4(2B@G ATM@G)/jDZ": "jdz_diff_d4_ATM_G",
             "0-D4(2B@G ATM@G)/aDZ": "adz_diff_d4_ATM_G",
-            "0/jDZ": "SAPT0_jdz_diff",
-            "0/aDZ": "SAPT0_adz_diff",
+            "0/jDZ": "SAPT0_jdz_3_IE_diff",
+            "0/aDZ": "SAPT0_adz_3_IE_diff",
             "0-D4(ATM TT)/aDZ": "SAPT0_adz_3_IE_TT_OPT_d4_diff",
         },
         f"Charged Dimers (Totaling {len(df_charged)} Dimers)",
@@ -723,6 +825,45 @@ def plotting_setup(df, build_df=False, df_out: str = "plots/plot.pkl", compute_d
         bottom=0.42,
         ylim=[-10, 10],
     )
+    return
+
+
+def plotting_setup_dft(
+    df, build_df=False, df_out: str = "plots/plot.pkl", compute_d3=True
+):
+    df, selected = df
+    selected = selected.split("/")[-1].split(".")[0]
+    df_out = f"plots/{selected}.pkl"
+    if build_df:
+        # df = compute_d4_from_opt_params(df)
+        # Need to get components
+        df["SAPT0_adz_elst"] = df["SAPT0_adz_3_IE"][1]
+        df["SAPT0_adz_exch"] = df["SAPT0_adz_3_IE"][2]
+        df["SAPT0_adz_indu"] = df["SAPT0_adz_3_IE"][3]
+        df["SAPT_DFT_adz_elst"] = df["SAPT_DFT_adz_3_IE"][1]
+        df["SAPT_DFT_adz_exch"] = df["SAPT_DFT_adz_3_IE"][2]
+        df["SAPT_DFT_adz_indu"] = df["SAPT_DFT_adz_3_IE"][3]
+        df.to_pickle(df_out)
+    else:
+        df = pd.read_pickle(df_out)
+    plot_violin_d3_d4_ALL(
+        df,
+        {
+            "0/aDZ": "SAPT0_adz_3_IE_diff",
+            "0/aDZ no disp": "SAPT0_adz_3_IE_no_disp_diff",
+            "0-D4/aDZ": "SAPT0_adz_3_IE_d4_diff",
+            "DFT/aDZ": "SAPT_DFT_adz_3_IE_diff",
+            "DFT/aDZ no disp": "SAPT_DFT_adz_3_IE_no_disp_diff",
+            "DFT-D4/aDZ": "SAPT_DFT_adz_3_IE_d4_diff",
+            "DFT-D4(ATM)/aDZ": "SAPT_DFT_adz_3_IE_ATM_d4_diff",
+        },
+        f"All Dimers with SAPT0 and SAPT-DFT",
+        f"{selected}_saptdft_sapt0",
+        bottom=0.45,
+        ylim=[-16, 30],
+        transparent=False,
+    )
+    # plot_violin_SAPT0_DFT_components(df, vals)
     return
 
 
@@ -809,12 +950,13 @@ def plot_violin_d3_d4_ALL(
     plt.rcParams["text.usetex"] = True
     for k, v in vals.items():
         df[v] = pd.to_numeric(df[v])
-        vData.append(df[v].to_list())
+        df_sub = df[df[v].notna()].copy()
+        vData.append(df_sub[v].to_list())
         vLabels.append(k)
-        m = df[v].max()
-        rmse = df[v].apply(lambda x: x**2).mean() ** 0.5
-        mae = df[v].apply(lambda x: abs(x)).mean()
-        max_error = df[v].apply(lambda x: abs(x)).max()
+        m = df_sub[v].max()
+        rmse = df_sub[v].apply(lambda x: x**2).mean() ** 0.5
+        mae = df_sub[v].apply(lambda x: abs(x)).mean()
+        max_error = df_sub[v].apply(lambda x: abs(x)).max()
         text = r"$\mathit{%.2f}$" % mae
         text += "\n"
         text += r"$\mathbf{%.2f}$" % rmse
@@ -926,7 +1068,182 @@ def plot_violin_d3_d4_ALL(
 
     # plt.title(f"{title_name}")
     fig.subplots_adjust(bottom=bottom)
-    plt.savefig(f"plots/{pfn}_dbs_violin.png", transparent=transparent, bbox_inches="tight")
+    plt.savefig(
+        f"plots/{pfn}_dbs_violin.png", transparent=transparent, bbox_inches="tight"
+    )
+    plt.clf()
+    return
+
+
+def plot_violin_SAPT0_DFT_components(
+    df,
+    elst_vals={
+        "name": "Electrostatics",
+        "reference": {"SAPT0 Electrostatics", "SAPT0_adz_elst"},
+        "vals": {
+            "SAPT_DFT_adz_elst": "SAPT_DFT_adz_elst",
+        },
+    },
+    exch_vals={
+        "name": "Exchange",
+        "reference": {"SAPT0 Exchange", "SAPT0_adz_exch"},
+        "vals": {
+            "SAPT_DFT_adz_exch": "SAPT_DFT_adz_exch",
+        },
+    },
+    indu_vals={
+        "name": "Induction",
+        "reference": {"SAPT0 Induction", "SAPT0_adz_indu"},
+        "vals": {
+            "SAPT_DFT_adz_indu": "SAPT_DFT_adz_indu",
+        },
+    },
+    disp_vals={
+        "name": "Dispersion",
+        "reference": {"SAPT0 Dispersion", "SAPT0_adz_disp"},
+        "vals": {
+            "SAPT_DFT_adz_disp": "SAPT_DFT_adz_disp",
+            "-D4/aDZ (SAPT0_2B)": "-D4 (SAPT0_adz_3_IE)",
+            "-D4/aDZ (SAPT_DFT_2B)": "-D4 (SAPT_DFT_adz_3_IE)",
+        },
+    },
+    pfn: str = "plots/SAPT0_DFT_components",
+    bottom: float = 0.4,
+    transparent=True,
+    widths=0.95,
+) -> None:
+    """ """
+    print(f"Plotting {pfn}")
+    kcal_per_mol = "$kcal\cdot mol^{-1}$"
+    # create subplots
+    fig, axs = plt.subplots(2, 2, figsize=(8, 6), dpi=1000)
+    elst_ax = axs[0, 0]
+    exch_ax = axs[0, 1]
+    indu_ax = axs[1, 0]
+    disp_ax = axs[1, 1]
+
+
+    vLabels, vData = [], []
+    annotations = []  # [(x, y, text), ...]
+    cnt = 1
+    plt.rcParams["text.usetex"] = True
+    for k, v in vals.items():
+        df[v] = pd.to_numeric(df[v])
+        df_sub = df[df[v].notna()].copy()
+        vData.append(df_sub[v].to_list())
+        vLabels.append(k)
+        m = df_sub[v].max()
+        rmse = df_sub[v].apply(lambda x: x**2).mean() ** 0.5
+        mae = df_sub[v].apply(lambda x: abs(x)).mean()
+        max_error = df_sub[v].apply(lambda x: abs(x)).max()
+        text = r"$\mathit{%.2f}$" % mae
+        text += "\n"
+        text += r"$\mathbf{%.2f}$" % rmse
+        text += "\n"
+        text += r"$\mathrm{%.2f}$" % max_error
+        annotations.append((cnt, m, text))
+        cnt += 1
+
+    pd.set_option("display.max_columns", None)
+    # print(df[vals.values()].describe(include="all"))
+    # transparent figure
+    fig = plt.figure(dpi=1000)
+    ax = plt.subplot(111)
+    vplot = ax.violinplot(
+        vData,
+        showmeans=True,
+        showmedians=False,
+        quantiles=[[0.05, 0.95] for i in range(len(vData))],
+        widths=widths,
+    )
+    for n, partname in enumerate(["cbars", "cmins", "cmaxes", "cmeans"]):
+        vp = vplot[partname]
+        vp.set_edgecolor("black")
+        vp.set_linewidth(1)
+        vp.set_alpha(1)
+    quantile_color = "red"
+    quantile_style = "-"
+    quantile_linewidth = 0.8
+    for n, partname in enumerate(["cquantiles"]):
+        vp = vplot[partname]
+        vp.set_edgecolor(quantile_color)
+        vp.set_linewidth(quantile_linewidth)
+        vp.set_linestyle(quantile_style)
+        vp.set_alpha(1)
+
+    colors = ["blue" if i % 2 == 0 else "green" for i in range(len(vLabels))]
+    for n, pc in enumerate(vplot["bodies"], 1):
+        pc.set_facecolor(colors[n - 1])
+        pc.set_alpha(0.6)
+
+    vLabels.insert(0, "")
+    xs = [i for i in range(len(vLabels))]
+    xs_error = [i for i in range(-1, len(vLabels) + 1)]
+    ax.plot(
+        xs_error,
+        [1 for i in range(len(xs_error))],
+        "k--",
+        label=r"$\pm$1 $\mathrm{kcal\cdot mol^{-1}}$",
+        zorder=0,
+        linewidth=0.6,
+    )
+    ax.plot(
+        xs_error,
+        [0 for i in range(len(xs_error))],
+        "k--",
+        linewidth=0.5,
+        alpha=0.5,
+        # label=r"Reference Energy",
+        zorder=0,
+    )
+    ax.plot(
+        xs_error,
+        [-1 for i in range(len(xs_error))],
+        "k--",
+        zorder=0,
+        linewidth=0.6,
+    )
+    ax.plot(
+        [],
+        [],
+        linestyle=quantile_style,
+        color=quantile_color,
+        linewidth=quantile_linewidth,
+        label=r"5-95th Percentile",
+    )
+    # TODO: fix minor ticks to be between
+    navy_blue = (0.0, 0.32, 0.96)
+    ax.set_xticks(xs)
+    plt.setp(ax.set_xticklabels(vLabels), rotation=90, fontsize="8")
+    ax.set_xlim((0, len(vLabels)))
+    lg = ax.legend(loc="upper left", edgecolor="black", fontsize="8")
+    lg.get_frame().set_facecolor((1, 1, 1, 0.0))
+
+    ax.set_xlabel("Level of Theory", color="k")
+    ax.set_ylabel(r"Error ($\mathrm{kcal\cdot mol^{-1}}$)", color="k")
+    ax.grid(color="gray", which="major", linewidth=0.5, alpha=0.3)
+    ax.grid(color="gray", which="minor", linewidth=0.5, alpha=0.3)
+
+    # Annotations of RMSE
+    for x, y, text in annotations:
+        ax.annotate(
+            text,
+            xy=(x, y),
+            xytext=(x, y + 0.1),
+            color="black",
+            fontsize="8",
+            horizontalalignment="center",
+            verticalalignment="bottom",
+        )
+
+    for n, xtick in enumerate(ax.get_xticklabels()):
+        xtick.set_color(colors[n - 1])
+        xtick.set_alpha(0.8)
+
+    fig.subplots_adjust(bottom=bottom)
+    plt.savefig(
+        f"plots/{pfn}_dbs_violin.png", transparent=transparent, bbox_inches="tight"
+    )
     plt.clf()
     return
 
@@ -1049,6 +1366,8 @@ def plot_dbs_d3_d4(
     plt.minorticks_on()
     # plt.title(f"{title_name}")
     fig.subplots_adjust(bottom=bottom)
-    plt.savefig(f"plots/{pfn}_dbs_violin.png", transparent=transparent, bbox_inches="tight")
+    plt.savefig(
+        f"plots/{pfn}_dbs_violin.png", transparent=transparent, bbox_inches="tight"
+    )
     plt.clf()
     return

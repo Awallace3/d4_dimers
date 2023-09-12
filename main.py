@@ -19,6 +19,8 @@ import dispersion
 ang_to_bohr = src.constants.Constants().g_aatoau()
 hartree_to_kcal_mol = qcel.constants.conversion_factor("hartree", "kcal / mol")
 
+# TODO: make subplots of components and do differences between SAPT0 and SAPT(DFT) components
+#       - see if need dispersion to correct more largely
 
 def gather_data(version="schr"):
     # Gather data
@@ -514,7 +516,7 @@ def main():
     # df, selected = df_names(8)
     # src.dftd3.compute_dftd3(*df_names(9), "Geometry", param_label="D3MBJ")
     # src.dftd3.compute_dftd3(*df_names(9), "Geometry", param_label="D3MBJ ATM")
-    # merge_SAPT0_results_into_df()
+    # merge_SAPTDFT_results_into_df()
     df, selected = df_names(6)
     # df.to_pickle(selected)
 
@@ -541,17 +543,17 @@ def main():
             # start_params_d4_key="HF_ATM_TT_OPT_START",
             D3={"powell": False},
             # D4={"powell": False, "least_squares": False, "powell_ATM_TT": True},
-            ATM=True,
+            ATM=False,
             # extra="",
             extra="SAPT_DFT_",
             use_2B_C6s=False,
             five_fold=False,
         )
 
-    opt(bases, "SAPT_DFT_OPT_START4")
-    opt(bases, "SAPT_DFT_OPT_START5")
-
-    return
+    # opt(bases, "SAPT_DFT_OPT_START3")
+    # opt(bases, "SAPT_DFT_OPT_START4")
+    # opt(bases, "SAPT_DFT_OPT_START5")
+    # return
 
     def SR_testing():
         import dispersion
@@ -570,19 +572,25 @@ def main():
     # return
     # src.misc.sensitivity_analysis(df)
     # src.misc.examine_ATM_TT(df)
-    if False:
+    if True:
         df, _ = df_names(9)
+        print(df.columns.values)
         src.plotting.plot_basis_sets_d4(
             df,
-            False,
+            True,
         )
         df, _ = df_names(9)
         src.plotting.plot_basis_sets_d3(
             df,
-            False,
+            True,
         )
     if True:
         src.plotting.plotting_setup(
+            df_names(9),
+            True,
+        )
+    if True:
+        src.plotting.plotting_setup_dft(
             df_names(9),
             True,
         )
