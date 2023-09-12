@@ -19,8 +19,6 @@ import dispersion
 ang_to_bohr = src.constants.Constants().g_aatoau()
 hartree_to_kcal_mol = qcel.constants.conversion_factor("hartree", "kcal / mol")
 
-# TODO: make subplots of components and do differences between SAPT0 and SAPT(DFT) components
-#       - see if need dispersion to correct more largely
 
 def gather_data(version="schr"):
     # Gather data
@@ -572,7 +570,7 @@ def main():
     # return
     # src.misc.sensitivity_analysis(df)
     # src.misc.examine_ATM_TT(df)
-    if True:
+    if False:
         df, _ = df_names(9)
         print(df.columns.values)
         src.plotting.plot_basis_sets_d4(
@@ -584,7 +582,7 @@ def main():
             df,
             True,
         )
-    if True:
+    # if True:
         src.plotting.plotting_setup(
             df_names(9),
             True,

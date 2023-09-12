@@ -5,6 +5,10 @@ import pandas as pd
 import numpy as np
 import src
 from qm_tools_aw import tools
+import warnings
+
+warnings.simplefilter(action='ignore', category=pd.errors.PerformanceWarning)
+
 
 # colors = [
 #         "blue",
@@ -828,6 +832,13 @@ def plotting_setup(df, build_df=False, df_out: str = "plots/plot.pkl", compute_d
     return
 
 
+def select_element(vals, ind):
+    if vals is not None:
+        return vals[ind]
+    else:
+        return np.nan
+
+
 def plotting_setup_dft(
     df, build_df=False, df_out: str = "plots/plot.pkl", compute_d3=True
 ):
@@ -837,15 +848,26 @@ def plotting_setup_dft(
     if build_df:
         # df = compute_d4_from_opt_params(df)
         # Need to get components
-        df["SAPT0_adz_elst"] = df["SAPT0_adz_3_IE"][1]
-        df["SAPT0_adz_exch"] = df["SAPT0_adz_3_IE"][2]
-        df["SAPT0_adz_indu"] = df["SAPT0_adz_3_IE"][3]
-        df["SAPT_DFT_adz_elst"] = df["SAPT_DFT_adz_3_IE"][1]
-        df["SAPT_DFT_adz_exch"] = df["SAPT_DFT_adz_3_IE"][2]
-        df["SAPT_DFT_adz_indu"] = df["SAPT_DFT_adz_3_IE"][3]
+        df["SAPT0_adz_elst"] = df.apply(lambda x: x["SAPT0_adz"][1], axis=1)
+        df["SAPT0_adz_exch"] = df.apply(lambda x: x["SAPT0_adz"][2], axis=1)
+        df["SAPT0_adz_indu"] = df.apply(lambda x: x["SAPT0_adz"][3], axis=1)
+        df["SAPT0_adz_disp"] = df.apply(lambda x: x["SAPT0_adz"][4], axis=1)
+        df["SAPT_DFT_adz_elst"] = df.apply(
+            lambda x: select_element(x["SAPT_DFT_adz"], 1), axis=1
+        )
+        df["SAPT_DFT_adz_exch"] = df.apply(
+            lambda x: select_element(x["SAPT_DFT_adz"], 2), axis=1
+        )
+        df["SAPT_DFT_adz_indu"] = df.apply(
+            lambda x: select_element(x["SAPT_DFT_adz"], 3), axis=1
+        )
+        df["SAPT_DFT_adz_disp"] = df.apply(
+            lambda x: select_element(x["SAPT_DFT_adz"], 4), axis=1
+        )
         df.to_pickle(df_out)
     else:
         df = pd.read_pickle(df_out)
+    plot_violin_SAPT0_DFT_components(df, pfn=f"{selected}_saptdft_sapt0_components")
     plot_violin_d3_d4_ALL(
         df,
         {
@@ -863,7 +885,6 @@ def plotting_setup_dft(
         ylim=[-16, 30],
         transparent=False,
     )
-    # plot_violin_SAPT0_DFT_components(df, vals)
     return
 
 
@@ -1075,67 +1096,24 @@ def plot_violin_d3_d4_ALL(
     return
 
 
-def plot_violin_SAPT0_DFT_components(
-    df,
-    elst_vals={
-        "name": "Electrostatics",
-        "reference": {"SAPT0 Electrostatics", "SAPT0_adz_elst"},
-        "vals": {
-            "SAPT_DFT_adz_elst": "SAPT_DFT_adz_elst",
-        },
-    },
-    exch_vals={
-        "name": "Exchange",
-        "reference": {"SAPT0 Exchange", "SAPT0_adz_exch"},
-        "vals": {
-            "SAPT_DFT_adz_exch": "SAPT_DFT_adz_exch",
-        },
-    },
-    indu_vals={
-        "name": "Induction",
-        "reference": {"SAPT0 Induction", "SAPT0_adz_indu"},
-        "vals": {
-            "SAPT_DFT_adz_indu": "SAPT_DFT_adz_indu",
-        },
-    },
-    disp_vals={
-        "name": "Dispersion",
-        "reference": {"SAPT0 Dispersion", "SAPT0_adz_disp"},
-        "vals": {
-            "SAPT_DFT_adz_disp": "SAPT_DFT_adz_disp",
-            "-D4/aDZ (SAPT0_2B)": "-D4 (SAPT0_adz_3_IE)",
-            "-D4/aDZ (SAPT_DFT_2B)": "-D4 (SAPT_DFT_adz_3_IE)",
-        },
-    },
-    pfn: str = "plots/SAPT0_DFT_components",
-    bottom: float = 0.4,
-    transparent=True,
-    widths=0.95,
-) -> None:
-    """ """
-    print(f"Plotting {pfn}")
-    kcal_per_mol = "$kcal\cdot mol^{-1}$"
-    # create subplots
-    fig, axs = plt.subplots(2, 2, figsize=(8, 6), dpi=1000)
-    elst_ax = axs[0, 0]
-    exch_ax = axs[0, 1]
-    indu_ax = axs[1, 0]
-    disp_ax = axs[1, 1]
-
-
+def collect_component_data(df, vals):
     vLabels, vData = [], []
     annotations = []  # [(x, y, text), ...]
     cnt = 1
     plt.rcParams["text.usetex"] = True
-    for k, v in vals.items():
+    print(vals)
+    for k, v in vals["vals"].items():
+        print(k, v)
         df[v] = pd.to_numeric(df[v])
-        df_sub = df[df[v].notna()].copy()
-        vData.append(df_sub[v].to_list())
+        df[f"{v}_diff"] = df[vals["reference"][1]] - df[v]
+        print(df[[vals["reference"][1], v, f"{v}_diff"]].describe())
+        df_sub = df[df[f"{v}_diff"].notna()].copy()
+        vData.append(df_sub[f"{v}_diff"].to_list())
         vLabels.append(k)
-        m = df_sub[v].max()
-        rmse = df_sub[v].apply(lambda x: x**2).mean() ** 0.5
-        mae = df_sub[v].apply(lambda x: abs(x)).mean()
-        max_error = df_sub[v].apply(lambda x: abs(x)).max()
+        m = df_sub[f"{v}_diff"].max()
+        rmse = df_sub[f"{v}_diff"].apply(lambda x: x**2).mean() ** 0.5
+        mae = df_sub[f"{v}_diff"].apply(lambda x: abs(x)).mean()
+        max_error = df_sub[f"{v}_diff"].apply(lambda x: abs(x)).max()
         text = r"$\mathit{%.2f}$" % mae
         text += "\n"
         text += r"$\mathbf{%.2f}$" % rmse
@@ -1143,12 +1121,33 @@ def plot_violin_SAPT0_DFT_components(
         text += r"$\mathrm{%.2f}$" % max_error
         annotations.append((cnt, m, text))
         cnt += 1
+    return vData, vLabels, annotations
 
-    pd.set_option("display.max_columns", None)
-    # print(df[vals.values()].describe(include="all"))
-    # transparent figure
-    fig = plt.figure(dpi=1000)
-    ax = plt.subplot(111)
+
+def create_minor_y_ticks(ylim):
+    diff = abs(ylim[1] - ylim[0])
+    if diff > 50:
+        inc = 10
+    elif diff > 25:
+        inc = 5
+    elif diff > 15:
+        inc = 5
+    else:
+        inc = 1
+    lower_bound = int(ylim[0])
+    while lower_bound % inc != 0:
+        lower_bound -= 1
+    upper_bound = int(ylim[1])
+    while upper_bound % inc != 0:
+        upper_bound += 1
+    upper_bound += inc
+    minor_yticks = np.arange(lower_bound, upper_bound, inc)
+    return minor_yticks
+
+
+def plot_component_violin(
+    ax, vData, vLabels, annotations, title_name, ylabel, widths=0.85
+):
     vplot = ax.violinplot(
         vData,
         showmeans=True,
@@ -1176,6 +1175,12 @@ def plot_violin_SAPT0_DFT_components(
         pc.set_facecolor(colors[n - 1])
         pc.set_alpha(0.6)
 
+    # plt automatically make extra ylimits for annotations above violin plot error bar
+    # so we need to add extra space to the ylim
+    ylim = ax.get_ylim()
+    minor_yticks = create_minor_y_ticks(ylim)
+    ax.set_yticks(minor_yticks, minor=True)
+    ax.set_ylim((ylim[0], int(ylim[1] + abs(ylim[1] - ylim[0]) * 0.2)))
     vLabels.insert(0, "")
     xs = [i for i in range(len(vLabels))]
     xs_error = [i for i in range(-1, len(vLabels) + 1)]
@@ -1214,15 +1219,30 @@ def plot_violin_SAPT0_DFT_components(
     # TODO: fix minor ticks to be between
     navy_blue = (0.0, 0.32, 0.96)
     ax.set_xticks(xs)
-    plt.setp(ax.set_xticklabels(vLabels), rotation=90, fontsize="8")
+    # plt.setp(ax.set_xticklabels(vLabels), rotation=90, fontsize="8")
+    plt.setp(ax.set_xticklabels(vLabels), rotation=45, fontsize="5")
     ax.set_xlim((0, len(vLabels)))
-    lg = ax.legend(loc="upper left", edgecolor="black", fontsize="8")
-    lg.get_frame().set_facecolor((1, 1, 1, 0.0))
+    # lg = ax.legend(loc="upper left", edgecolor="black", fontsize="8")
+    # lg.get_frame().set_facecolor((1, 1, 1, 0.0))
 
-    ax.set_xlabel("Level of Theory", color="k")
-    ax.set_ylabel(r"Error ($\mathrm{kcal\cdot mol^{-1}}$)", color="k")
+    ylabel = f"{ylabel} Error" + r" ($\mathrm{kcal\cdot mol^{-1}}$)"
+    ax.set_ylabel(ylabel, color="k")
+    # set minor ticks to be between major ticks
+
     ax.grid(color="gray", which="major", linewidth=0.5, alpha=0.3)
     ax.grid(color="gray", which="minor", linewidth=0.5, alpha=0.3)
+    # Set subplot title
+    ax.set_ylabel(ylabel, color="k", fontsize="8")
+    title_color = 'k'
+    if title_name == "Electrostatics":
+        title_color = "red"
+    elif title_name == "Exchange":
+        title_color = "blue"
+    elif title_name == "Induction":
+        title_color = "green"
+    elif title_name == "Dispersion":
+        title_color = "orange"
+    ax.set_title(title_name, color=title_color, fontsize="10")
 
     # Annotations of RMSE
     for x, y, text in annotations:
@@ -1239,11 +1259,107 @@ def plot_violin_SAPT0_DFT_components(
     for n, xtick in enumerate(ax.get_xticklabels()):
         xtick.set_color(colors[n - 1])
         xtick.set_alpha(0.8)
+    return ax
 
-    fig.subplots_adjust(bottom=bottom)
-    plt.savefig(
-        f"plots/{pfn}_dbs_violin.png", transparent=transparent, bbox_inches="tight"
+
+def plot_violin_SAPT0_DFT_components(
+    df,
+    elst_vals={
+        "name": "Electrostatics",
+        "reference": ["SAPT0 Ref.", "SAPT0_adz_elst"],
+        "vals": {
+            "SAPT(DFT)": "SAPT_DFT_adz_elst",
+        },
+    },
+    exch_vals={
+        "name": "Exchange",
+        "reference": ["SAPT0 Ref.", "SAPT0_adz_exch"],
+        "vals": {
+            "SAPT(DFT)": "SAPT_DFT_adz_exch",
+        },
+    },
+    indu_vals={
+        "name": "Induction",
+        "reference": ["SAPT0 Ref.", "SAPT0_adz_indu"],
+        "vals": {
+            "SAPT(DFT)": "SAPT_DFT_adz_indu",
+        },
+    },
+    disp_vals={
+        "name": "Dispersion",
+        "reference": ["SAPT0 Ref.", "SAPT0_adz_disp"],
+        "vals": {
+            "SAPT(DFT)": "SAPT_DFT_adz_disp",
+            "-D4/aDZ (SAPT0_2B)": "-D4 (SAPT0_adz_3_IE)",
+            "-D4/aDZ (SAPT_DFT_2B)": "-D4 (SAPT_DFT_adz_3_IE)",
+            "-D4/aDZ (SAPT_DFT_ATM)": "-D4 (SAPT_DFT_adz_3_IE_ATM)",
+        },
+    },
+    pfn: str = "sapt0_dft_components",
+    bottom: float = 0.4,
+    transparent=False,
+    widths=0.95,
+) -> None:
+    """ """
+    print(f"Plotting {pfn}")
+    kcal_per_mol = "$kcal\cdot mol^{-1}$"
+    # create subplots
+
+    fig, axs = plt.subplots(2, 2, figsize=(8, 6), dpi=1000)
+    elst_ax = axs[0, 0]
+    exch_ax = axs[0, 1]
+    indu_ax = axs[1, 0]
+    disp_ax = axs[1, 1]
+    # add extra space for subplot titles
+    fig.subplots_adjust(hspace=0.3, wspace=0.3)
+
+    # Component Data
+    elst_data, elst_labels, elst_annotations = collect_component_data(df, elst_vals)
+    exch_data, exch_labels, exch_annotations = collect_component_data(df, exch_vals)
+    indu_data, indu_labels, indu_annotations = collect_component_data(df, indu_vals)
+    disp_data, disp_labels, disp_annotations = collect_component_data(df, disp_vals)
+
+    # Plot violins
+    plot_component_violin(
+        elst_ax,
+        elst_data,
+        elst_labels,
+        elst_annotations,
+        elst_vals["name"],
+        elst_vals["reference"][0],
+        widths,
     )
+    plot_component_violin(
+        exch_ax,
+        exch_data,
+        exch_labels,
+        exch_annotations,
+        exch_vals["name"],
+        exch_vals["reference"][0],
+        widths,
+    )
+    plot_component_violin(
+        indu_ax,
+        indu_data,
+        indu_labels,
+        indu_annotations,
+        indu_vals["name"],
+        indu_vals["reference"][0],
+        widths,
+    )
+    plot_component_violin(
+        disp_ax,
+        disp_data,
+        disp_labels,
+        disp_annotations,
+        disp_vals["name"],
+        disp_vals["reference"][0],
+        widths,
+    )
+
+    # plt add space at bottom of figure
+
+    plt.savefig(f"plots/{pfn}.png", transparent=transparent, bbox_inches="tight")
     plt.clf()
     return
 
