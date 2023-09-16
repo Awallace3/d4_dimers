@@ -7,7 +7,7 @@ import src
 from qm_tools_aw import tools
 import warnings
 
-warnings.simplefilter(action='ignore', category=pd.errors.PerformanceWarning)
+warnings.simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
 
 
 # colors = [
@@ -378,7 +378,6 @@ def plot_dbs_d3_d4_two(df, c1, c2, l1, l2, title_name, pfn, first=True) -> None:
 def get_charged_df(df) -> pd.DataFrame:
     df = df.copy()
     def_charge = np.array([[0, 1] for i in range(3)])
-    print(df.columns.values)
     inds = []
     for i, row in df.iterrows():
         if np.all(row["charges"] == def_charge):
@@ -439,7 +438,6 @@ def plot_basis_sets_d4(df, build_df=False, df_out: str = "basis"):
                 ],
             ],
         )
-        print(df.columns.values)
         df.to_pickle(df_out)
     else:
         df = pd.read_pickle(df_out)
@@ -461,7 +459,8 @@ def plot_basis_sets_d4(df, build_df=False, df_out: str = "basis"):
             "0/aTZ": "SAPT0_atz_3_IE_diff",
             "0-D4/aTZ": "SAPT0_atz_3_IE_d4_diff",
         },
-        f"{len(df)} Dimers With Different Basis Sets (D4)",
+        # f"{len(df)} Dimers With Different Basis Sets (D4)",
+        f"All Dimers ({len(df)})",
         f"basis_set_d4",
         bottom=0.30,
     )
@@ -483,7 +482,8 @@ def plot_basis_sets_d4(df, build_df=False, df_out: str = "basis"):
             "aTZ (aDZ)": "SAPT0_atz_3_IE_ADZ_d4_diff",
             "aTZ (OPT)": "SAPT0_atz_3_IE_d4_diff",
         },
-        f"{len(df)} Dimers With Different Basis Sets (D4)",
+        # f"{len(df)} Dimers With Different Basis Sets (D4)",
+        f"All Dimers ({len(df)})",
         f"basis_set_d4_opt_vs_adz",
         ylim=[-16, 14],
         bottom=0.35,
@@ -673,7 +673,6 @@ def plotting_setup(df, build_df=False, df_out: str = "plots/plot.pkl", compute_d
     df, selected = df
     selected = selected.split("/")[-1].split(".")[0]
     df_out = f"plots/{selected}.pkl"
-    print(df.columns.values)
     if build_df:
         # print(df.columns.values)
         # for i in [
@@ -685,11 +684,16 @@ def plotting_setup(df, build_df=False, df_out: str = "plots/plot.pkl", compute_d
         # ]:
         #     df[i + "_IE"] = df.apply(lambda r: r[i][0], axis=1)
         #     df[i + "_diff"] = df["Benchmark"] - df[i + "_IE"]
+        df = compute_d4_from_opt_params(
+            df,
+            bases=[["SAPT0_dz_IE", "SAPT0_dz_3_IE_ATM_SHARED", "HF_ATM_SHARED", "SAPT0_dz_3_IE"]],
+        )
 
         df = compute_D3_D4_values_for_params_for_plotting(df, "adz", compute_d3)
         df = compute_D3_D4_values_for_params_for_plotting(df, "jdz", compute_d3)
         df = compute_d4_from_opt_params(df)
         df = compute_d4_from_opt_params_TT(df)
+
 
         df["SAPT0-D4/aug-cc-pVDZ"] = df.apply(
             lambda row: row["SAPT0_adz_3_IE"] + row["-D4 (adz)"],
@@ -756,79 +760,108 @@ def plotting_setup(df, build_df=False, df_out: str = "plots/plot.pkl", compute_d
     else:
         df = pd.read_pickle(df_out)
     # Non charged
-    plot_dbs_d3_d4(
-        df,
-        "adz_diff_d4",
-        "adz_diff_d4_ATM_G",
-        "-D4",
-        "-D4(ATM)",
-        bottom=0.35,
-        title_name=f"DB Breakdown SAPT0-D4/aug-cc-pVDZ ({selected})",
-        pfn=f"db_breakdown_2B_ATM",
-    )
     plot_violin_d3_d4_ALL(
         df,
         {
-            "0-D3/jDZ": "SAPT0_jdz_3_IE_d3_diff",
-            # "0-D3MBJ(ATM)/jDZ": "jdz_diff_d3mbj_atm",
-            "0-D3/aDZ": "SAPT0_adz_3_IE_d3_diff",
-            # "0-D3MBJ(ATM)/aDZ": "adz_diff_d3mbj_atm",
-            "0-D4/aDZ": "SAPT0_adz_3_IE_d4_diff",
-            "0-D4(ATM)/aDZ": "adz_diff_d4_ATM",
-            "0-D4(2B@G ATM)/aDZ": "adz_diff_d4_2B@ATM_G",
-            "0-D4(2B@G ATM@G)/aDZ": "adz_diff_d4_ATM_G",
-            "0-D4(ATM TT)/aDZ": "SAPT0_adz_3_IE_TT_OPT_d4_diff",
-            "0/jDZ": "SAPT0_jdz_3_IE_diff",
-            "0/aDZ": "SAPT0_adz_3_IE_diff",
-            "DFT-D4/aDZ": "SAPT_DFT_adz_3_IE_d4_diff",
-            "DFT/aDZ": "SAPT_DFT_adz_3_IE_diff",
+            "SAPT0-D3/jDZ": "SAPT0_jdz_3_IE_d3_diff",
+            "SAPT0-D3/aDZ": "SAPT0_adz_3_IE_d3_diff",
+            "SAPT0-D4/aDZ": "SAPT0_adz_3_IE_d4_diff",
+            "SAPT0-D4(ATM)/aDZ": "SAPT0_dz_3_IE_ATM_SHARED_d4_diff",
+            "SAPT0-D4(2B ATM)/aDZ": "adz_diff_d4_ATM",
+            "SAPT0-D4(2B@G ATM)/aDZ": "adz_diff_d4_2B@ATM_G",
+            "SAPT0-D4(2B@G ATM@G)/aDZ": "adz_diff_d4_ATM_G",
+            "SAPT0-D4(ATM TT)/aDZ": "SAPT0_adz_3_IE_TT_OPT_d4_diff",
+            "SAPT0/jDZ": "SAPT0_jdz_3_IE_diff",
+            "SAPT0/aDZ": "SAPT0_adz_3_IE_diff",
+            "SAPT(DFT)-D4/aDZ": "SAPT_DFT_adz_3_IE_d4_diff",
+            "SAPT(DFT)/aDZ": "SAPT_DFT_adz_3_IE_diff",
         },
-        f"All Dimers with SAPT0",
+        f"",
         f"{selected}_ATM",
         bottom=0.45,
-        ylim=[-20, 25],
+        ylim=[-18, 22],
+        figure_size=(6, 6),
+        dpi=1200,
+        pdf=True,
     )
-    # Basis Set Performance: SAPT0
-    plot_violin_d3_d4_ALL(
-        df,
-        {
-            "0-D4/DZ": "SAPT0_dz_3_IE_d4_diff",
-            "0-D4/jDZ": "SAPT0_jdz_3_IE_d4_diff",
-            "0/jDZ": "SAPT0_jdz_3_IE_diff",
-            "0-D4/aDZ": "SAPT0_adz_3_IE_d4_diff",
-            "0/aDZ": "SAPT0_adz_3_IE_diff",
-            "0/TZ": "SAPT0_tz_3_IE_diff",
-            "0/mTZ": "SAPT0_mtz_3_IE_diff",
-            "0/jTZ": "SAPT0_jtz_3_IE_diff",
-            "0/aTZ": "SAPT0_atz_3_IE_diff",
-        },
-        f"All Dimers with SAPT0 ({selected})",
-        f"{selected}_basis_set",
-    )
-    # charged
-    df_charged = get_charged_df(df)
-    plot_violin_d3_d4_ALL(
-        df_charged,
-        {
-            "0-D3/jDZ": "jdz_diff_d3",
-            "0-D3/aDZ": "adz_diff_d3",
-            "0-D3MBJ(ATM)/jDZ": "jdz_diff_d3mbj_atm",
-            "0-D3MBJ(ATM)/aDZ": "adz_diff_d3mbj_atm",
-            "0-D4/jVDZ": "jdz_diff_d4",
-            "0-D4/aDZ": "adz_diff_d4",
-            # "0-D4(2B@G ATM)/jDZ": "jdz_diff_d4_2B@ATM_G",
-            # "0-D4(2B@G ATM)/aDZ": "adz_diff_d4_2B@ATM_G",
-            "0-D4(2B@G ATM@G)/jDZ": "jdz_diff_d4_ATM_G",
-            "0-D4(2B@G ATM@G)/aDZ": "adz_diff_d4_ATM_G",
-            "0/jDZ": "SAPT0_jdz_3_IE_diff",
-            "0/aDZ": "SAPT0_adz_3_IE_diff",
-            "0-D4(ATM TT)/aDZ": "SAPT0_adz_3_IE_TT_OPT_d4_diff",
-        },
-        f"Charged Dimers (Totaling {len(df_charged)} Dimers)",
-        f"{selected}_charged",
-        bottom=0.42,
-        ylim=[-10, 10],
-    )
+    if True:
+        # plot_violin_d3_d4_ALL(
+        #     df,
+        #     {
+        #         "0-D3/jDZ": "SAPT0_jdz_3_IE_d3_diff",
+        #         # "0-D3MBJ(ATM)/jDZ": "jdz_diff_d3mbj_atm",
+        #         "0-D3/aDZ": "SAPT0_adz_3_IE_d3_diff",
+        #         # "0-D3MBJ(ATM)/aDZ": "adz_diff_d3mbj_atm",
+        #         "0-D4/aDZ": "SAPT0_adz_3_IE_d4_diff",
+        #         "0-D4(ATM)/aDZ": "SAPT0_dz_3_IE_ATM_SHARED_d4_diff",
+        #         "0-D4(2B ATM)/aDZ": "adz_diff_d4_ATM",
+        #         "0-D4(2B@G ATM)/aDZ": "adz_diff_d4_2B@ATM_G",
+        #         "0-D4(2B@G ATM@G)/aDZ": "adz_diff_d4_ATM_G",
+        #         "0-D4(ATM TT)/aDZ": "SAPT0_adz_3_IE_TT_OPT_d4_diff",
+        #         "0/jDZ": "SAPT0_jdz_3_IE_diff",
+        #         "0/aDZ": "SAPT0_adz_3_IE_diff",
+        #         "SAPT(DFT)-D4/aDZ": "SAPT_DFT_adz_3_IE_d4_diff",
+        #         "SAPT(DFT)/aDZ": "SAPT_DFT_adz_3_IE_diff",
+        #     },
+        #     f"All Dimers (8299)",
+        #     f"{selected}_ATM",
+        #     bottom=0.45,
+        #     ylim=[-18, 22],
+        #     figure_size=(6, 6),
+        # )
+        plot_dbs_d3_d4(
+            df,
+            "adz_diff_d4",
+            "adz_diff_d4_ATM_G",
+            "-D4",
+            "-D4(ATM)",
+            bottom=0.35,
+            # title_name=f"DB Breakdown SAPT0-D4/aug-cc-pVDZ ({selected})",
+            title_name=f"-D4 Two-Body versus Three-Body",
+            pfn=f"db_breakdown_2B_ATM",
+        )
+        # Basis Set Performance: SAPT0
+        plot_violin_d3_d4_ALL(
+            df,
+            {
+                "0-D4/DZ": "SAPT0_dz_3_IE_d4_diff",
+                "0-D4/jDZ": "SAPT0_jdz_3_IE_d4_diff",
+                "0/jDZ": "SAPT0_jdz_3_IE_diff",
+                "0-D4/aDZ": "SAPT0_adz_3_IE_d4_diff",
+                "0/aDZ": "SAPT0_adz_3_IE_diff",
+                "0/TZ": "SAPT0_tz_3_IE_diff",
+                "0/mTZ": "SAPT0_mtz_3_IE_diff",
+                "0/jTZ": "SAPT0_jtz_3_IE_diff",
+                "0/aTZ": "SAPT0_atz_3_IE_diff",
+            },
+            # f"All Dimers with SAPT0 ({selected})",
+            "All Dimers (8299)",
+            f"{selected}_basis_set",
+        )
+        # charged
+        df_charged = get_charged_df(df)
+        plot_violin_d3_d4_ALL(
+            df_charged,
+            {
+                "0-D3/jDZ": "jdz_diff_d3",
+                "0-D3/aDZ": "adz_diff_d3",
+                "0-D3MBJ(ATM)/jDZ": "jdz_diff_d3mbj_atm",
+                "0-D3MBJ(ATM)/aDZ": "adz_diff_d3mbj_atm",
+                "0-D4/jVDZ": "jdz_diff_d4",
+                "0-D4/aDZ": "adz_diff_d4",
+                # "0-D4(2B@G ATM)/jDZ": "jdz_diff_d4_2B@ATM_G",
+                # "0-D4(2B@G ATM)/aDZ": "adz_diff_d4_2B@ATM_G",
+                "0-D4(2B@G ATM@G)/jDZ": "jdz_diff_d4_ATM_G",
+                "0-D4(2B@G ATM@G)/aDZ": "adz_diff_d4_ATM_G",
+                "0/jDZ": "SAPT0_jdz_3_IE_diff",
+                "0/aDZ": "SAPT0_adz_3_IE_diff",
+                "0-D4(ATM TT)/aDZ": "SAPT0_adz_3_IE_TT_OPT_d4_diff",
+            },
+            f"Charged Dimers ({len(df_charged)})",
+            f"{selected}_charged",
+            bottom=0.42,
+            ylim=[-10, 10],
+        )
     return
 
 
@@ -898,8 +931,6 @@ def plotting_setup_G(
     selected = selected.split("/")[-1].split(".")[0]
     df_out = f"plots/{selected}.pkl"
     if build_df:
-        print(df.columns.values)
-
         df = compute_D3_D4_values_for_params_for_plotting(df, "qz", compute_d3)
 
         df["SAPT0-D4/aug-cc-pVDZ"] = df.apply(
@@ -929,7 +960,8 @@ def plotting_setup_G(
         "qz_diff_d4_ATM_G",
         "-D4 (2B)",
         "-D4 (ATM_G)",
-        title_name=f"DB Breakdown SAPT0-D4/aug-cc-pVDZ ({selected})",
+        # title_name=f"DB Breakdown SAPT0-D4/aug-cc-pVDZ ({selected})",
+        title_name=f"-D4 Two-Body version Three-Body",
         pfn=f"{selected}_db_breakdown_2B_ATM",
     )
     df_charged = get_charged_df(df)
@@ -958,6 +990,10 @@ def plot_violin_d3_d4_ALL(
     ylim=[-16, 35],
     transparent=True,
     widths=0.85,
+    figure_size=None,
+    set_xlable=False,
+    dpi=1200,
+    pdf=False,
 ) -> None:
     """ """
     print(f"Plotting {pfn}")
@@ -973,7 +1009,8 @@ def plot_violin_d3_d4_ALL(
         df[v] = pd.to_numeric(df[v])
         df_sub = df[df[v].notna()].copy()
         vData.append(df_sub[v].to_list())
-        vLabels.append(k)
+        k_label = "\\textbf{" + k + "}"
+        vLabels.append(k_label)
         m = df_sub[v].max()
         rmse = df_sub[v].apply(lambda x: x**2).mean() ** 0.5
         mae = df_sub[v].apply(lambda x: abs(x)).mean()
@@ -989,7 +1026,9 @@ def plot_violin_d3_d4_ALL(
     pd.set_option("display.max_columns", None)
     # print(df[vals.values()].describe(include="all"))
     # transparent figure
-    fig = plt.figure(dpi=1000)
+    fig = plt.figure(dpi=dpi)
+    if figure_size is not None:
+        plt.figure(figsize=figure_size)
     ax = plt.subplot(111)
     vplot = ax.violinplot(
         vData,
@@ -1057,20 +1096,28 @@ def plot_violin_d3_d4_ALL(
     # TODO: fix minor ticks to be between
     navy_blue = (0.0, 0.32, 0.96)
     ax.set_xticks(xs)
-    minor_yticks = np.arange(ylim[0], ylim[1], 2)
-    ax.set_yticks(minor_yticks, minor=True)
+    # minor_yticks = np.arange(ylim[0], ylim[1], 2)
+    # ax.set_yticks(minor_yticks, minor=True)
+
     plt.setp(ax.set_xticklabels(vLabels), rotation=90, fontsize="8")
     ax.set_xlim((0, len(vLabels)))
     ax.set_ylim(ylim)
+
+    minor_yticks = create_minor_y_ticks(ylim)
+    ax.set_yticks(minor_yticks, minor=True)
+
     lg = ax.legend(loc="upper left", edgecolor="black", fontsize="8")
-    # lg.get_frame().set_alpha(None)
+    lg.get_frame().set_alpha(None)
     lg.get_frame().set_facecolor((1, 1, 1, 0.0))
 
-    ax.set_xlabel("Level of Theory", color="k")
+    if set_xlable:
+        ax.set_xlabel("Level of Theory", color="k")
     ax.set_ylabel(r"Error ($\mathrm{kcal\cdot mol^{-1}}$)", color="k")
-    ax.grid(color="gray", which="major", linewidth=0.5, alpha=0.3)
-    ax.grid(color="gray", which="minor", linewidth=0.5, alpha=0.3)
+    # ax.grid(color="gray", which="major", linewidth=0.5, alpha=0.3)
+    # ax.grid(color="gray", which="minor", linewidth=0.5, alpha=0.3)
 
+    ax.grid(color="#54585A", which="major", linewidth=0.5, alpha=0.5, axis="y")
+    # ax.grid(color="#54585A", which="minor", linewidth=0.5, alpha=0.5)
     # Annotations of RMSE
     for x, y, text in annotations:
         ax.annotate(
@@ -1087,11 +1134,25 @@ def plot_violin_d3_d4_ALL(
         xtick.set_color(colors[n - 1])
         xtick.set_alpha(0.8)
 
-    # plt.title(f"{title_name}")
+    if title_name is not None:
+        plt.title(f"{title_name}")
+    plt.title(f"{title_name}")
     fig.subplots_adjust(bottom=bottom)
-    plt.savefig(
-        f"plots/{pfn}_dbs_violin.png", transparent=transparent, bbox_inches="tight"
-    )
+
+    if pdf:
+        fn_pdf = f"plots/{pfn}.pdf"
+        fn_png = f"plots/{pfn}.png"
+        plt.savefig(
+            fn_pdf, transparent=transparent, bbox_inches="tight", dpi=dpi,
+        )
+        if os.path.exists(fn_png):
+            os.system(f"rm {fn_png}")
+        os.system(f"pdftoppm -png -r 400 {fn_pdf} {fn_png}")
+        os.system(f"mv {fn_png}-1.png {fn_png}")
+    else:
+        plt.savefig(
+            f"plots/{pfn}_dbs_violin.png", transparent=transparent, bbox_inches="tight", dpi=dpi,
+        )
     plt.clf()
     return
 
@@ -1106,8 +1167,8 @@ def collect_component_data(df, vals):
         print(k, v)
         df[v] = pd.to_numeric(df[v])
         df[f"{v}_diff"] = df[vals["reference"][1]] - df[v]
-        print(df[[vals["reference"][1], v, f"{v}_diff"]].describe())
         df_sub = df[df[f"{v}_diff"].notna()].copy()
+        print(df_sub[[vals["reference"][1], v, f"{v}_diff"]].describe())
         vData.append(df_sub[f"{v}_diff"].to_list())
         vLabels.append(k)
         m = df_sub[f"{v}_diff"].max()
@@ -1229,11 +1290,11 @@ def plot_component_violin(
     ax.set_ylabel(ylabel, color="k")
     # set minor ticks to be between major ticks
 
-    ax.grid(color="gray", which="major", linewidth=0.5, alpha=0.3)
-    ax.grid(color="gray", which="minor", linewidth=0.5, alpha=0.3)
+    ax.grid(color="grey", which="major", linewidth=0.5, alpha=0.3)
+    ax.grid(color="grey", which="minor", linewidth=0.5, alpha=0.3)
     # Set subplot title
     ax.set_ylabel(ylabel, color="k", fontsize="8")
-    title_color = 'k'
+    title_color = "k"
     if title_name == "Electrostatics":
         title_color = "red"
     elif title_name == "Exchange":
@@ -1375,7 +1436,10 @@ def plot_dbs_d3_d4(
     outlier_cutoff=3,
     bottom=0.3,
     transparent=True,
+    dpi=1200,
+    pdf=False,
 ) -> None:
+    print(f"Plotting {pfn}")
     kcal_per_mol = "$kcal\cdot mol^{-1}$"
     dbs = list(set(df["DB"].to_list()))
     dbs = sorted(dbs, key=lambda x: x.lower())
@@ -1402,8 +1466,10 @@ def plot_dbs_d3_d4(
         else:
             vDataErrors.append([])
         d_str = d.replace(" ", "")
-        vLabels.append(f"{d_str} -{l1}")
-        vLabels.append(f"{d_str} -{l2}")
+        # vLabels.append(f"{d_str} -{l1}")
+        # vLabels.append(f"{d_str} -{l2}")
+        vLabels.append(f"\\textbf{{{d_str}-{l1}}}")
+        vLabels.append(f"\\textbf{{{d_str}-{l2}}}")
 
     fig = plt.figure(dpi=800)
     ax = plt.subplot(111)
@@ -1470,7 +1536,8 @@ def plot_dbs_d3_d4(
     ax.set_xlim((0, len(vLabels)))
     ax.legend(loc="upper left")
     ax.set_xlabel("Database")
-    ax.set_ylabel(r"Error ($kcal\cdot mol^{-1}$)")
+    # ax.set_ylabel(r"Error ($kcal\cdot mol^{-1}$)")
+    ax.set_ylabel(r"Error ($\mathrm{kcal\cdot mol^{-1}}$)", color="k")
     # ax.set_ylabel(r"Error ($\frac{kcal}{mol}$)")
     ax.grid(color="gray", linewidth=0.5, alpha=0.3)
     for n, xtick in enumerate(ax.get_xticklabels()):
@@ -1480,10 +1547,21 @@ def plot_dbs_d3_d4(
             xtick.set_color("red")
 
     plt.minorticks_on()
-    # plt.title(f"{title_name}")
+    plt.title(f"{title_name}")
     fig.subplots_adjust(bottom=bottom)
-    plt.savefig(
-        f"plots/{pfn}_dbs_violin.png", transparent=transparent, bbox_inches="tight"
-    )
+    if pdf:
+        fn_pdf = f"plots/{pfn}.pdf"
+        fn_png = f"plots/{pfn}.png"
+        plt.savefig(
+            fn_pdf, transparent=transparent, bbox_inches="tight", dpi=dpi,
+        )
+        if os.path.exists(fn_png):
+            os.system(f"rm {fn_png}")
+        os.system(f"pdftoppm -png -r 400 {fn_pdf} {fn_png}")
+        os.system(f"mv {fn_png}-1.png {fn_png}")
+    else:
+        plt.savefig(
+            f"plots/{pfn}_dbs_violin.png", transparent=transparent, bbox_inches="tight", dpi=dpi,
+        )
     plt.clf()
     return

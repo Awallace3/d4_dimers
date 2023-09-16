@@ -514,7 +514,7 @@ def main():
     # df, selected = df_names(8)
     # src.dftd3.compute_dftd3(*df_names(9), "Geometry", param_label="D3MBJ")
     # src.dftd3.compute_dftd3(*df_names(9), "Geometry", param_label="D3MBJ ATM")
-    # merge_SAPTDFT_results_into_df()
+    merge_SAPTDFT_results_into_df()
     df, selected = df_names(6)
     # df.to_pickle(selected)
 
@@ -570,24 +570,24 @@ def main():
     # return
     # src.misc.sensitivity_analysis(df)
     # src.misc.examine_ATM_TT(df)
-    if False:
-        df, _ = df_names(9)
+    if True:
+        df, _ = df_names(6)
         print(df.columns.values)
         src.plotting.plot_basis_sets_d4(
             df,
-            True,
+            False,
         )
         df, _ = df_names(9)
         src.plotting.plot_basis_sets_d3(
             df,
-            True,
-        )
-    # if True:
-        src.plotting.plotting_setup(
-            df_names(9),
-            True,
+            False,
         )
     if True:
+        src.plotting.plotting_setup(
+            df_names(9),
+            False,
+        )
+    if False:
         src.plotting.plotting_setup_dft(
             df_names(9),
             True,
