@@ -9,6 +9,7 @@ import warnings
 
 warnings.simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
 
+kcal_per_mol = "$\mathrm{kcal\cdot mol^{-1}}$"
 
 # colors = [
 #         "blue",
@@ -290,7 +291,6 @@ def plot_dbs(df, df_col, title_name, pfn, color="blue") -> None:
 
 def plot_dbs_d3_d4_two(df, c1, c2, l1, l2, title_name, pfn, first=True) -> None:
     """ """
-    kcal_per_mol = "$kcal\cdot mol^{-1}$"
     dbs = list(set(df["DB"].to_list()))
     dbs = sorted(dbs, key=lambda x: x.lower())
     vLabels, vData = [], []
@@ -333,7 +333,7 @@ def plot_dbs_d3_d4_two(df, c1, c2, l1, l2, title_name, pfn, first=True) -> None:
         xs_error,
         [1 for i in range(len(xs_error))],
         "k--",
-        label=r"$\pm$1 $kcal\cdot mol^{-1}$",
+        label=r"$\pm$1" + kcal_per_mol,
         zorder=0,
     )
     ax.plot(
@@ -358,7 +358,7 @@ def plot_dbs_d3_d4_two(df, c1, c2, l1, l2, title_name, pfn, first=True) -> None:
     ax.set_ylim((-12, 6))
     ax.legend(loc="upper left")
     ax.set_xlabel("Database")
-    ax.set_ylabel(r"Error ($kcal\cdot mol^{-1}$)")
+    ax.set_ylabel(r"Error ($\mathrm{kcal\cdot mol^{-1}}$)")
     # ax.set_ylabel(r"Error ($\frac{kcal}{mol}$)")
     ax.grid(color="gray", linewidth=0.5, alpha=0.3)
     for n, xtick in enumerate(ax.get_xticklabels()):
@@ -460,7 +460,8 @@ def plot_basis_sets_d4(df, build_df=False, df_out: str = "basis"):
             "0-D4/aTZ": "SAPT0_atz_3_IE_d4_diff",
         },
         # f"{len(df)} Dimers With Different Basis Sets (D4)",
-        f"All Dimers ({len(df)})",
+        # f"All Dimers ({len(df)})",
+        f"Basis Set Comparison Across All Dimers ({len(df)})",
         f"basis_set_d4",
         bottom=0.30,
     )
@@ -782,7 +783,7 @@ def plotting_setup(df, build_df=False, df_out: str = "plots/plot.pkl", compute_d
         ylim=[-18, 22],
         figure_size=(6, 6),
         dpi=1200,
-        pdf=True,
+        pdf=False,
     )
     if True:
         # plot_violin_d3_d4_ALL(
@@ -817,7 +818,7 @@ def plotting_setup(df, build_df=False, df_out: str = "plots/plot.pkl", compute_d
             "-D4(ATM)",
             bottom=0.35,
             # title_name=f"DB Breakdown SAPT0-D4/aug-cc-pVDZ ({selected})",
-            title_name=f"-D4 Two-Body versus Three-Body",
+            title_name=f"-D4 Two-Body versus Three-Body (ATM)",
             pfn=f"db_breakdown_2B_ATM",
         )
         # Basis Set Performance: SAPT0
@@ -997,7 +998,6 @@ def plot_violin_d3_d4_ALL(
 ) -> None:
     """ """
     print(f"Plotting {pfn}")
-    kcal_per_mol = "$kcal\cdot mol^{-1}$"
     dbs = list(set(df["DB"].to_list()))
     dbs = sorted(dbs, key=lambda x: x.lower())
     vLabels, vData = [], []
@@ -1140,15 +1140,18 @@ def plot_violin_d3_d4_ALL(
     fig.subplots_adjust(bottom=bottom)
 
     if pdf:
-        fn_pdf = f"plots/{pfn}.pdf"
-        fn_png = f"plots/{pfn}.png"
+        fn_pdf = f"plots/{pfn}_dbs_violin.pdf"
+        fn_png = f"plots/{pfn}_dbs_violin.png"
         plt.savefig(
             fn_pdf, transparent=transparent, bbox_inches="tight", dpi=dpi,
         )
         if os.path.exists(fn_png):
             os.system(f"rm {fn_png}")
         os.system(f"pdftoppm -png -r 400 {fn_pdf} {fn_png}")
-        os.system(f"mv {fn_png}-1.png {fn_png}")
+        if os.path.exists(f"{fn_png}-1.png"):
+            os.system(f"mv {fn_png}-1.png {fn_png}")
+        else:
+            print(f"Error: {fn_png}-1.png does not exist")
     else:
         plt.savefig(
             f"plots/{pfn}_dbs_violin.png", transparent=transparent, bbox_inches="tight", dpi=dpi,
@@ -1363,7 +1366,6 @@ def plot_violin_SAPT0_DFT_components(
 ) -> None:
     """ """
     print(f"Plotting {pfn}")
-    kcal_per_mol = "$kcal\cdot mol^{-1}$"
     # create subplots
 
     fig, axs = plt.subplots(2, 2, figsize=(8, 6), dpi=1000)
@@ -1440,7 +1442,6 @@ def plot_dbs_d3_d4(
     pdf=False,
 ) -> None:
     print(f"Plotting {pfn}")
-    kcal_per_mol = "$kcal\cdot mol^{-1}$"
     dbs = list(set(df["DB"].to_list()))
     dbs = sorted(dbs, key=lambda x: x.lower())
     vLabels, vData, vDataErrors = [], [], []
@@ -1504,7 +1505,7 @@ def plot_dbs_d3_d4(
         xs_error,
         [1 for i in range(len(xs_error))],
         "k--",
-        label=r"$\pm$1 $kcal\cdot mol^{-1}$",
+        label=r"$\pm$1 $\mathrm{kcal\cdot mol^{-1}}$",
         zorder=0,
     )
     ax.plot(
@@ -1534,7 +1535,7 @@ def plot_dbs_d3_d4(
 
     plt.setp(ax.set_xticklabels(vLabels), rotation=90, fontsize="5")
     ax.set_xlim((0, len(vLabels)))
-    ax.legend(loc="upper left")
+    ax.legend(loc="lower left")
     ax.set_xlabel("Database")
     # ax.set_ylabel(r"Error ($kcal\cdot mol^{-1}$)")
     ax.set_ylabel(r"Error ($\mathrm{kcal\cdot mol^{-1}}$)", color="k")
@@ -1550,15 +1551,18 @@ def plot_dbs_d3_d4(
     plt.title(f"{title_name}")
     fig.subplots_adjust(bottom=bottom)
     if pdf:
-        fn_pdf = f"plots/{pfn}.pdf"
-        fn_png = f"plots/{pfn}.png"
+        fn_pdf = f"plots/{pfn}_dbs_violin.pdf"
+        fn_png = f"plots/{pfn}_dbs_violin.png"
         plt.savefig(
             fn_pdf, transparent=transparent, bbox_inches="tight", dpi=dpi,
         )
         if os.path.exists(fn_png):
             os.system(f"rm {fn_png}")
         os.system(f"pdftoppm -png -r 400 {fn_pdf} {fn_png}")
-        os.system(f"mv {fn_png}-1.png {fn_png}")
+        if os.path.exists(f"{fn_png}-1.png"):
+            os.system(f"mv {fn_png}-1.png {fn_png}")
+        else:
+            print(f"Error: {fn_png}-1.png does not exist")
     else:
         plt.savefig(
             f"plots/{pfn}_dbs_violin.png", transparent=transparent, bbox_inches="tight", dpi=dpi,

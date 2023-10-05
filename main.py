@@ -6,16 +6,6 @@ import tqdm
 from qm_tools_aw import tools
 import dispersion
 
-# TODO: Plot Violin plots for each basis set
-#       - collect basis set
-
-# from pandarallel import pandarallel
-# pandarallel.initialize(use_memory_fs=True)
-# from parallel_pandas import ParallelPandas
-# ParallelPandas.initialize(
-#     n_cpu=8, split_factor=4, show_vmem=True, disable_pr_bar=False
-# )
-
 ang_to_bohr = src.constants.Constants().g_aatoau()
 hartree_to_kcal_mol = qcel.constants.conversion_factor("hartree", "kcal / mol")
 
@@ -514,7 +504,7 @@ def main():
     # df, selected = df_names(8)
     # src.dftd3.compute_dftd3(*df_names(9), "Geometry", param_label="D3MBJ")
     # src.dftd3.compute_dftd3(*df_names(9), "Geometry", param_label="D3MBJ ATM")
-    merge_SAPTDFT_results_into_df()
+    # merge_SAPTDFT_results_into_df()
     df, selected = df_names(6)
     # df.to_pickle(selected)
 
@@ -556,22 +546,40 @@ def main():
     def SR_testing():
         import dispersion
 
-        src.sr.generate_SR_data_ATM(
-            *df_names(6),
-            # params_key="HF_ATM_SHARED",
-            params_key="SAPT0_adz_3_IE_ATM",
-            ncols=5,
-            generate=True,
-        )
+        if False:
+            src.sr.generate_SR_data_ATM(
+                *df_names(6),
+                # params_key="HF_ATM_SHARED",
+                params_key="SAPT0_adz_3_IE_ATM",
+                ncols=5,
+                generate=True,
+            )
+        if True:
+            src.sr.error_statistics_SR(
+                *df_names(6),
+                # params_key="HF_ATM_SHARED",
+                params_key="SAPT0_adz_3_IE_ATM",
+                ncols=5,
+                generate=True,
+            )
+        # df, _ = df_names(6)
+        # params_key = "SAPT0_adz_3_IE_ATM"
+        # params = src.paramsTable.get_params(params_key)
+        # src.optimization.compute_int_energy_stats_DISP_SR(
+        #     params,
+        #     df,
+        #     "SAPT0_adz_3_IE",
+        #     SR_func=dispersion.disp.disp_SR_6_vals,
+        # )
         return
 
-    # SR_testing()
+    SR_testing()
     # return
     # return
     # src.misc.sensitivity_analysis(df)
     # src.misc.examine_ATM_TT(df)
-    if True:
-        df, _ = df_names(6)
+    if False:
+        df, _ = df_names(9)
         print(df.columns.values)
         src.plotting.plot_basis_sets_d4(
             df,
@@ -582,7 +590,7 @@ def main():
             df,
             False,
         )
-    if True:
+    if False:
         src.plotting.plotting_setup(
             df_names(9),
             False,

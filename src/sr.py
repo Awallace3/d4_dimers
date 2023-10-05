@@ -4,6 +4,7 @@ import dispersion
 from . import paramsTable
 from . import locald4
 from qm_tools_aw import tools
+from sklearn.model_selection import train_test_split
 
 
 def build_vals(pos, carts, C6, params_ATM, cols=7, max_N=None):
@@ -13,7 +14,8 @@ def build_vals(pos, carts, C6, params_ATM, cols=7, max_N=None):
         (int(max_N * (max_N - 1) * (max_N - 2) / 6), cols), dtype=np.float64
     )
     # energy = dispersion.disp.vals_for_SR(pos, carts, C6, params_ATM, vals)
-    energy = dispersion.disp.disp_SR_5_vals(pos, carts, C6, params_ATM, vals)
+    # energy = dispersion.disp.disp_SR_5_vals(pos, carts, C6, params_ATM, vals)
+    energy = dispersion.disp.disp_SR_6_vals(pos, carts, C6, params_ATM, vals)
     # energy = dispersion.disp.disp_SR_4_vals(pos, carts, C6, params_ATM, vals)
     return energy, vals
 
@@ -144,6 +146,67 @@ def generate_SR_data_ATM(
         cnt += 1
     return
 
+def compute_mae_mse_rmse(df, y_pred):
+    mae = df[y_pred].abs().mean()
+    mse = (df[y_pred] ** 2).mean()
+    rmse = np.sqrt(mse)
+    return mae, mse, rmse
+
+def error_statistics_SR(
+    df,
+    selected,
+    target_HF_key="SAPT0_adz_3_IE",
+    ncols=8,
+    generate=True,
+    params_key="SAPT0_adz_3_IE_ATM",
+):
+    r = df.iloc[0]
+    params = paramsTable.get_params(params_key)
+    params_2B, params_ATM = paramsTable.generate_2B_ATM_param_subsets(params, force_ATM_on=True)
+    print(f"{params_2B = }")
+    print(f"{params_ATM = }")
+    df[["SR_ATM", "xs_all"]] = df.apply(
+        lambda r: build_vals_molecule(
+            r,
+            params_ATM,
+            cols=ncols,
+        ),
+        axis=1,
+        result_type="expand",
+    )
+    params_ATM[-1] = 0.0
+    df["d4_2B"] = df.apply(
+        lambda r: locald4.compute_disp_2B_BJ_ATM_CHG_dimer(
+            r,
+            params_2B,
+            params_ATM,
+        ),
+        axis=1,
+    )
+    df["y_pred"] = df.apply(
+        lambda r: (r["Benchmark"] - (r[target_HF_key] + r["d4_2B"] + sum(r["SR_ATM"]))),
+        axis=1,
+    )
+    df['y_2b'] = df.apply(
+        lambda r: (r["Benchmark"] - (r[target_HF_key] + r["d4_2B"])),
+        axis=1,
+    )
+    print(df[['Benchmark', 'y_2b', 'y_pred']].describe())
+    print(df[['Benchmark', target_HF_key, 'd4_2B', 'y_2b', 'y_pred']].head(10))
+    df_tr, df_te = train_test_split(df, test_size=0.2, random_state=42)
+    print(len(df_tr), len(df_te))
+
+    tr_mae_2b, tr_mse_2b, tr_rmse_2b = compute_mae_mse_rmse(df_tr, "y_2b")
+    te_mae_2b, te_mse_2b, te_rmse_2b = compute_mae_mse_rmse(df_te, "y_2b")
+    print("2B")
+    print(f"Train MAE: {tr_mae_2b:.4f} RMSE: {tr_rmse_2b:.4f} MSE: {tr_mse_2b:.4f}")
+    print(f"Test  MAE: {te_mae_2b:.4f} RMSE: {te_rmse_2b:.4f} MSE: {tr_mse_2b:.4f}")
+    tr_mae, tr_mse, tr_rmse = compute_mae_mse_rmse(df_tr, "y_pred")
+    te_mae, te_mse, te_rmse = compute_mae_mse_rmse(df_te, "y_pred")
+    print("ATM")
+    print(f"Train MAE: {tr_mae:.4f} RMSE: {tr_rmse:.4f} MSE: {tr_mse:.4f}")
+    print(f"Test  MAE: {te_mae:.4f} RMSE: {te_rmse:.4f} MSE: {tr_mse:.4f}")
+    return
 
 def evaluate_SR_function(
     row,
