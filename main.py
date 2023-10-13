@@ -574,27 +574,27 @@ def main():
         # )
         return
 
-    SR_testing()
+    # SR_testing()
     # return
     # return
     # src.misc.sensitivity_analysis(df)
     # src.misc.examine_ATM_TT(df)
-    if False:
-        df, _ = df_names(6)
+    if True:
+        df, _ = df_names(9)
         print(df.columns.values)
         src.plotting.plot_basis_sets_d4(
             df,
-            True,
+            False,
         )
         df, _ = df_names(9)
         src.plotting.plot_basis_sets_d3(
             df,
-            True,
+            False,
         )
-    if False:
+    if True:
         src.plotting.plotting_setup(
             df_names(9),
-            True,
+            False,
         )
     if False:
         src.plotting.plotting_setup_dft(
