@@ -6,6 +6,7 @@ from . import locald4
 from qm_tools_aw import tools
 from sklearn.model_selection import train_test_split
 
+disp_func = dispersion.disp.disp_SR_7_vals
 
 def build_vals(pos, carts, C6, params_ATM, cols=7, max_N=None):
     if max_N is None:
@@ -13,10 +14,7 @@ def build_vals(pos, carts, C6, params_ATM, cols=7, max_N=None):
     vals = np.zeros(
         (int(max_N * (max_N - 1) * (max_N - 2) / 6), cols), dtype=np.float64
     )
-    # energy = dispersion.disp.vals_for_SR(pos, carts, C6, params_ATM, vals)
-    # energy = dispersion.disp.disp_SR_5_vals(pos, carts, C6, params_ATM, vals)
-    energy = dispersion.disp.disp_SR_6_vals(pos, carts, C6, params_ATM, vals)
-    # energy = dispersion.disp.disp_SR_4_vals(pos, carts, C6, params_ATM, vals)
+    energy = disp_func(pos, carts, C6, params_ATM, vals)
     return energy, vals
 
 
@@ -68,8 +66,6 @@ def generate_SR_data_ATM(
             axis=1,
             result_type="expand",
         )
-        # for n, r in df.iterrows():
-        #     df.at[n, "xs"][:, 0] *= locald4.hartree_to_kcalmol
         df["d4_ATM_E"] = df.apply(lambda r: sum(r["xs_all"][:, 0]), axis=1)
         df["xs"] = df.apply(lambda r: r["xs_all"][:, 1:], axis=1)
         print(df["xs"].iloc[0])
@@ -127,9 +123,9 @@ def generate_SR_data_ATM(
 
     # df['ys'] /= locald4.hartree_to_kcalmol
     print(df[["ys", "d4_ATM_E", "y_pred", "diff"]].describe())
-    if False:
+    if True:
         # out = selected.replace(".pkl", "_SR.pkl")
-        out = "/theoryfs2/ds/amwalla3/projects/symbolic_regression/sr/data/schr_dft2_SR.pkl"
+        out = "/theoryfs2/ds/amwalla3/projects/symbolic_regression/d4_ATM/data/schr_dft2_SR_2.pkl"
         print(f"Saving to...\n{out}")
         df.to_pickle(out)
 
@@ -198,14 +194,14 @@ def error_statistics_SR(
 
     tr_mae_2b, tr_mse_2b, tr_rmse_2b = compute_mae_mse_rmse(df_tr, "y_2b")
     te_mae_2b, te_mse_2b, te_rmse_2b = compute_mae_mse_rmse(df_te, "y_2b")
-    print("2B")
-    print(f"Train MAE: {tr_mae_2b:.4f} RMSE: {tr_rmse_2b:.4f} MSE: {tr_mse_2b:.4f}")
-    print(f"Test  MAE: {te_mae_2b:.4f} RMSE: {te_rmse_2b:.4f} MSE: {tr_mse_2b:.4f}")
+    print("2B (No ATM)")
+    print(f"Train MAE: {tr_mae_2b:.6f} RMSE: {tr_rmse_2b:.6f} MSE: {tr_mse_2b:.6f}")
+    print(f"Test  MAE: {te_mae_2b:.6f} RMSE: {te_rmse_2b:.6f} MSE: {tr_mse_2b:.6f}")
     tr_mae, tr_mse, tr_rmse = compute_mae_mse_rmse(df_tr, "y_pred")
     te_mae, te_mse, te_rmse = compute_mae_mse_rmse(df_te, "y_pred")
-    print("ATM")
-    print(f"Train MAE: {tr_mae:.4f} RMSE: {tr_rmse:.4f} MSE: {tr_mse:.4f}")
-    print(f"Test  MAE: {te_mae:.4f} RMSE: {te_rmse:.4f} MSE: {tr_mse:.4f}")
+    print("ATM (SR damping function)")
+    print(f"Train MAE: {tr_mae:.6f} RMSE: {tr_rmse:.6f} MSE: {tr_mse:.6f}")
+    print(f"Test  MAE: {te_mae:.6f} RMSE: {te_rmse:.6f} MSE: {te_mse:.6f}")
     return
 
 def evaluate_SR_function(

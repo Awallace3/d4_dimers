@@ -210,6 +210,7 @@ def df_names(i):
         "data/schr_dft_charges.pkl",
         "data/schr_dft2_SR.pkl",
         "plots/basis.pkl",
+        "data/schr_saptdft.pkl"
     ]
     # NOTE: data/grimme_fitset_db3.pkl Geometry is in Angstrom!!!
     selected = names[i]
@@ -472,12 +473,12 @@ def merge_SAPT0_results_into_df():
 
 def merge_SAPTDFT_results_into_df():
     df, selected = df_names(6)
-    print(df)
     df2 = pd.read_pickle("data/schr_saptdft.pkl")
     print(df2.columns.values)
     copy_SAPT0_cols = [
         "id",
         "SAPT_DFT_adz",
+        "SAPT_DFT_atz",
     ]
     for i in copy_SAPT0_cols:
         df[i] = df2[i]
@@ -493,14 +494,13 @@ def merge_SAPTDFT_results_into_df():
         print(f'"{i}_3_IE",')
         df[i + "_3_IE"] = df.apply(lambda r: sum_IE(r[i]), axis=1)
         df[i + "_IE"] = df.apply(lambda r: total_IE(r[i]), axis=1)
+    print(df.columns.values)
     df.to_pickle(selected)
     return
 
 
 def main():
     # merge_SAPTDFT_results_into_df()
-    # TODO: plot -D4 2B with Grimme parameters
-    # TODO: plot -D3 ATM
     # df, selected = df_names(8)
     # src.dftd3.compute_dftd3(*df_names(9), "Geometry", param_label="D3MBJ")
     # src.dftd3.compute_dftd3(*df_names(9), "Geometry", param_label="D3MBJ ATM")
@@ -510,7 +510,8 @@ def main():
 
     bases = [
         # "SAPT0_adz_3_IE",
-        "SAPT_DFT_adz_3_IE",
+        # "SAPT_DFT_adz_3_IE",
+        "SAPT_DFT_atz_3_IE",
         # "SAPT0_jdz_3_IE",
         # "SAPT0_mtz_3_IE",
         # "SAPT0_jtz_3_IE",
@@ -546,12 +547,12 @@ def main():
     def SR_testing():
         import dispersion
 
-        if False:
+        if True:
             src.sr.generate_SR_data_ATM(
                 *df_names(6),
                 # params_key="HF_ATM_SHARED",
                 params_key="SAPT0_adz_3_IE_ATM",
-                ncols=5,
+                ncols=7,
                 generate=True,
             )
         if True:
@@ -559,7 +560,7 @@ def main():
                 *df_names(6),
                 # params_key="HF_ATM_SHARED",
                 params_key="SAPT0_adz_3_IE_ATM",
-                ncols=5,
+                ncols=7,
                 generate=True,
             )
         # df, _ = df_names(6)
@@ -579,21 +580,21 @@ def main():
     # src.misc.sensitivity_analysis(df)
     # src.misc.examine_ATM_TT(df)
     if False:
-        df, _ = df_names(9)
+        df, _ = df_names(6)
         print(df.columns.values)
         src.plotting.plot_basis_sets_d4(
             df,
-            False,
+            True,
         )
         df, _ = df_names(9)
         src.plotting.plot_basis_sets_d3(
             df,
-            False,
+            True,
         )
     if False:
         src.plotting.plotting_setup(
             df_names(9),
-            False,
+            True,
         )
     if False:
         src.plotting.plotting_setup_dft(
