@@ -547,7 +547,7 @@ def main():
     def SR_testing():
         import dispersion
 
-        if True:
+        if False:
             src.sr.generate_SR_data_ATM(
                 *df_names(6),
                 # params_key="HF_ATM_SHARED",
@@ -574,12 +574,12 @@ def main():
         # )
         return
 
-    # SR_testing()
+    SR_testing()
     # return
     # return
     # src.misc.sensitivity_analysis(df)
     # src.misc.examine_ATM_TT(df)
-    if True:
+    if False:
         df, _ = df_names(9)
         print(df.columns.values)
         src.plotting.plot_basis_sets_d4(
@@ -591,7 +591,7 @@ def main():
             df,
             False,
         )
-    if True:
+    if False:
         src.plotting.plotting_setup(
             df_names(9),
             False,

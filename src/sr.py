@@ -67,6 +67,7 @@ def generate_SR_data_ATM(
             result_type="expand",
         )
         df["d4_ATM_E"] = df.apply(lambda r: sum(r["xs_all"][:, 0]), axis=1)
+        df["d4_ATM_Es"] = df.apply(lambda r: r["xs_all"][:, 0], axis=1)
         df["xs"] = df.apply(lambda r: r["xs_all"][:, 1:], axis=1)
         print(df["xs"].iloc[0])
         print(params)
@@ -189,6 +190,13 @@ def error_statistics_SR(
     )
     print(df[['Benchmark', 'y_2b', 'y_pred']].describe())
     print(df[['Benchmark', target_HF_key, 'd4_2B', 'y_2b', 'y_pred']].head(10))
+    mae_2b, mse_2b, rmse_2b = compute_mae_mse_rmse(df, "y_2b")
+    print("2B (No ATM)")
+    print(f"full df MAE: {mae_2b:.6f} RMSE: {rmse_2b:.6f} MSE: {mse_2b:.6f}")
+    mae, mse, rmse = compute_mae_mse_rmse(df, "y_pred")
+    print("ATM (SR damping function)")
+    print(f"full df MAE: {mae:.6f} RMSE: {rmse:.6f} MSE: {mse:.6f}")
+
     df_tr, df_te = train_test_split(df, test_size=0.2, random_state=42)
     print(len(df_tr), len(df_te))
 

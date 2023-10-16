@@ -464,6 +464,7 @@ def plot_basis_sets_d4(df, build_df=False, df_out: str = "basis"):
         f"Basis Set Comparison Across All Dimers ({len(df)})",
         f"basis_set_d4",
         bottom=0.30,
+
     )
     plot_violin_d3_d4_ALL(
         df,
@@ -486,7 +487,7 @@ def plot_basis_sets_d4(df, build_df=False, df_out: str = "basis"):
         # f"{len(df)} Dimers With Different Basis Sets (D4)",
         f"All Dimers ({len(df)})",
         f"basis_set_d4_opt_vs_adz",
-        ylim=[-16, 14],
+        ylim=[-15, 14],
         bottom=0.35,
     )
     return
@@ -664,7 +665,7 @@ def plot_basis_sets_d3(df, build_df=False, df_out: str = "basis"):
         f"{len(df)} Dimers With Different Basis Sets (D3)",
         f"basis_set_d3_opt_vs_adz",
         bottom=0.35,
-        ylim=[-16, 15],
+        ylim=[-15, 15],
     )
 
     return
@@ -990,7 +991,7 @@ def plot_violin_d3_d4_ALL(
     title_name: str,
     pfn: str,
     bottom: float = 0.4,
-    ylim=[-16, 35],
+    ylim=[-15, 35],
     transparent=True,
     widths=0.85,
     figure_size=None,
@@ -1109,8 +1110,8 @@ def plot_violin_d3_d4_ALL(
     ax.set_yticks(minor_yticks, minor=True)
 
     lg = ax.legend(loc="upper left", edgecolor="black", fontsize="8")
-    lg.get_frame().set_alpha(None)
-    lg.get_frame().set_facecolor((1, 1, 1, 0.0))
+    # lg.get_frame().set_alpha(None)
+    # lg.get_frame().set_facecolor((1, 1, 1, 0.0))
 
     if set_xlable:
         ax.set_xlabel("Level of Theory", color="k")
@@ -1119,7 +1120,7 @@ def plot_violin_d3_d4_ALL(
     # ax.grid(color="gray", which="minor", linewidth=0.5, alpha=0.3)
 
     ax.grid(color="#54585A", which="major", linewidth=0.5, alpha=0.5, axis="y")
-    # ax.grid(color="#54585A", which="minor", linewidth=0.5, alpha=0.5)
+    ax.grid(color="#54585A", which="minor", linewidth=0.5, alpha=0.5)
     # Annotations of RMSE
     for x, y, text in annotations:
         ax.annotate(
@@ -1192,12 +1193,12 @@ def collect_component_data(df, vals):
 
 def create_minor_y_ticks(ylim):
     diff = abs(ylim[1] - ylim[0])
-    if diff > 50:
+    if diff > 100:
         inc = 10
-    elif diff > 25:
+    if diff > 20:
         inc = 5
-    elif diff > 15:
-        inc = 5
+    elif diff > 10:
+        inc = 2.5
     else:
         inc = 1
     lower_bound = int(ylim[0])
