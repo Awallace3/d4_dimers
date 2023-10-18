@@ -4,6 +4,9 @@ import matplotlib.pyplot as plt
 from qm_tools_aw import tools
 from . import water_data
 from . import setup
+from . import locald4
+from . import paramsTable
+from . import optimization
 
 
 def find_charged_systems(df):
@@ -22,7 +25,6 @@ def find_charged_systems(df):
 def print_geom_by_id(df, id):
     tools.print_cartesians(df.loc[id]["Geometry"], symbols=True)
     return
-
 
 
 def test_water_dftd4_2_body_and_ATM():
@@ -72,10 +74,97 @@ def test_water_dftd4_2_body_and_ATM():
 
     assert IE_ATM != IE
 
+
 def regenerate_D4_data(df, df_path):
     df = setup.generate_D4_data(df)
     df.to_pickle(df_path)
     return
+
+
+def sensitivity_analysis(df):
+    """
+    Computes the RMSE for dataset for each parameter and
+    see how sensitive these are to parameter changes by
+    orders of magnitude.
+
+    RESULT:
+    The parameters are not very sensitive to changes in the
+    parameters up to 1e-2. Hence, should report to 1e-3 to ensure
+    that RMSE stays below a change of 1e-4.
+    """
+    basis = "SAPT0_adz_3_IE"
+    params = paramsTable.get_params(basis + "_2B")[1:4]
+    print(basis, params)
+    rmse = optimization.compute_int_energy_DISP(params, df, hf_key=basis)
+    starting_rmse = rmse
+    rmse_diff = abs(starting_rmse - rmse)
+    values = [
+        1e-6,
+        -1e-6,
+        1e-5,
+        -1e-5,
+        1e-4,
+        -1e-4,
+        1e-3,
+        -1e-3,
+        1e-2,
+        -1e-2,
+        0.1,
+        -0.1,
+    ]
+    for i in range(len(params)):
+        print("\n\nNext Parameter:\n\n")
+        for v in values:
+            params = paramsTable.get_params(basis + "_2B")[1:4]
+            params[i] += v
+            rmse = optimization.compute_int_energy_DISP(params, df, hf_key=basis)
+            rmse_diff = abs(starting_rmse - rmse)
+            print(f"{i} {v} {rmse_diff}")
+            if rmse_diff > 1e-4:
+                print(f"BREAKING HERE")
+                break
+    return
+
+
+def examine_ATM_TT(df):
+    params = paramsTable.get_params("SAPT0_adz_3_IE_2B")
+
+    params_2B, params_ATM = params[0], params[1]
+    # params_ATM[-1] = 1.0
+    print(params_2B)
+    print(params_ATM)
+    r = df.iloc[0]
+    # ATM = locald4.compute_disp_2B_BJ_ATM_TT_dimer(r, params_2B, params_ATM)
+    # return
+    df["d4_2B"] = df.apply(
+        lambda r: locald4.compute_disp_2B_BJ_ATM_CHG_dimer(r, params_2B, params_ATM),
+        axis=1,
+    )
+    params_ATM[-1] = 1.0
+    df["ATM_TT"] = df.apply(
+        lambda r: locald4.compute_disp_2B_BJ_ATM_TT_dimer(r, params_2B, params_ATM),
+        axis=1,
+    )
+    df["ATM_CHG"] = df.apply(
+        lambda r: locald4.compute_disp_2B_BJ_ATM_CHG_dimer(r, params_2B, params_ATM)
+        - r["d4_2B"],
+        axis=1,
+    )
+    df["ATM_diff"] = df["ATM_TT"] - df["ATM_CHG"]
+    df["target"] = df["Benchmark"] - (df["SAPT0_adz_3_IE"] + df["d4_2B"])
+    for n, r in df.iterrows():
+        line = f"{n} {r['target']:.6f} {r['ATM_TT']:.6f} {r['ATM_CHG']:.6f} {r['ATM_diff']:.6f}"
+        print(line)
+    print("CHG:")
+    optimization.compute_int_energy_stats_DISP(
+        params, df, "SAPT0_adz_3_IE", print_results=True
+    )
+    print("TT:")
+    optimization.compute_int_energy_stats_DISP_TT(
+        params, df, "SAPT0_adz_3_IE", print_results=True
+    )
+    return
+
 
 def main():
     # water_data.water_data_collect()

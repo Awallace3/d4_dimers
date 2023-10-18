@@ -184,6 +184,8 @@ def compute_bj_f90(
         s6 = 1.0
     elif len(params) == 4:
         s6, s8, a1, a2 = params
+    elif len(params) == 5:
+        s6, s8, a1, a2, s9 = params
     else:
         raise ValueError("params must be length 3 or 4")
     M_tot = len(carts)
@@ -272,7 +274,6 @@ def compute_bj_f90_ATM(
         s8, a1, a2 = params
         s6, s9 = 1.0, 1.0
     else:
-
         s6, s8, a1, a2, s9 = params
     M_tot = len(carts)
     energies = np.zeros((M_tot, M_tot))
@@ -397,12 +398,16 @@ def compute_bj_pairs_DIMER(
     energy = np.sum(energies)
     return energy * hartree_to_kcalmol
 
+
 def compute_disp_2B(
     params,
     r,
     params_ATM=None,
 ):
-    num, coords = np.array(r["Geometry_bohr"][:, 0], dtype=np.int32), r["Geometry_bohr"][:, 1:]
+    num, coords = (
+        np.array(r["Geometry_bohr"][:, 0], dtype=np.int32),
+        r["Geometry_bohr"][:, 1:],
+    )
     charges = r["charges"]
     monAs, monBs = r["monAs"], r["monBs"]
     charges = r["charges"]
@@ -410,7 +415,7 @@ def compute_disp_2B(
     e_d = disp.disp_2B(
         num,
         coords,
-        r['C6s'],
+        r["C6s"],
         params,
     )
     n1, p1 = num[monAs], coords[monAs, :]
@@ -432,53 +437,43 @@ def compute_disp_2B(
     e_total = (e_d - (e_1 + e_2)) * hartree_to_kcalmol
     return e_total
 
+
 def compute_disp_2B_dimer(
     params,
     r,
 ):
-    pos, carts = np.array(r["Geometry_bohr"][:, 0], dtype=np.int32), r["Geometry_bohr"][:, 1:]
+    pos, carts = (
+        np.array(r["Geometry_bohr"][:, 0], dtype=np.int32),
+        r["Geometry_bohr"][:, 1:],
+    )
     charges = r["charges"]
     monAs, monBs = r["monAs"], r["monBs"]
     charges = r["charges"]
     pA, cA = pos[monAs], carts[monAs, :]
     pB, cB = pos[monBs], carts[monBs, :]
     e_total = disp.disp_2B_dimer(
-            pos,
-            carts,
-            r["C6s"],
-            pA,
-            cA,
-            r['C6_A'],
-            pB,
-            cB,
-            r['C6_B'],
-            params
-            )
+        pos, carts, r["C6s"], pA, cA, r["C6_A"], pB, cB, r["C6_B"], params
+    )
     return e_total * hartree_to_kcalmol
+
 
 def compute_disp_ATM_CHG_dimer(
     params,
     r,
-    mult_out = hartree_to_kcalmol,
+    mult_out=hartree_to_kcalmol,
 ):
-    pos, carts = np.array(r["Geometry_bohr"][:, 0], dtype=np.int32), r["Geometry_bohr"][:, 1:]
+    pos, carts = (
+        np.array(r["Geometry_bohr"][:, 0], dtype=np.int32),
+        r["Geometry_bohr"][:, 1:],
+    )
     charges = r["charges"]
     monAs, monBs = r["monAs"], r["monBs"]
     charges = r["charges"]
     pA, cA = pos[monAs], carts[monAs, :]
     pB, cB = pos[monBs], carts[monBs, :]
     e_total = disp.disp_ATM_CHG_dimer(
-            pos,
-            carts,
-            r["C6_ATM"],
-            pA,
-            cA,
-            r['C6_ATM_A'],
-            pB,
-            cB,
-            r['C6_ATM_B'],
-            params
-            )
+        pos, carts, r["C6_ATM"], pA, cA, r["C6_ATM_A"], pB, cB, r["C6_ATM_B"], params
+    )
     return e_total * mult_out
 
 
@@ -486,31 +481,107 @@ def compute_disp_2B_BJ_ATM_CHG_dimer(
     r,
     params_2B,
     params_ATM,
-    mult_out = hartree_to_kcalmol,
+    mult_out=hartree_to_kcalmol,
 ):
-    pos, carts = np.array(r["Geometry_bohr"][:, 0], dtype=np.int32), r["Geometry_bohr"][:, 1:]
+    pos, carts = (
+        np.array(r["Geometry_bohr"][:, 0], dtype=np.int32),
+        r["Geometry_bohr"][:, 1:],
+    )
     charges = r["charges"]
     monAs, monBs = r["monAs"], r["monBs"]
     charges = r["charges"]
     pA, cA = pos[monAs], carts[monAs, :]
     pB, cB = pos[monBs], carts[monBs, :]
     e_total = disp.disp_2B_BJ_ATM_CHG(
-            pos,
-            carts,
-            r["C6s"],
-            r["C6_ATM"],
-            pA,
-            cA,
-            r["C6_A"],
-            r['C6_ATM_A'],
-            pB,
-            cB,
-            r["C6_B"],
-            r['C6_ATM_B'],
-            params_2B,
-            params_ATM,
-            )
+        pos,
+        carts,
+        r["C6s"],
+        r["C6_ATM"],
+        pA,
+        cA,
+        r["C6_A"],
+        r["C6_ATM_A"],
+        pB,
+        cB,
+        r["C6_B"],
+        r["C6_ATM_B"],
+        params_2B,
+        params_ATM,
+    )
     return e_total * mult_out
+
+
+def compute_disp_2B_BJ_ATM_TT_dimer(
+    r,
+    params_2B,
+    params_ATM,
+    mult_out=hartree_to_kcalmol,
+):
+    pos, carts = (
+        np.array(r["Geometry_bohr"][:, 0], dtype=np.int32),
+        r["Geometry_bohr"][:, 1:],
+    )
+    charges = r["charges"]
+    monAs, monBs = r["monAs"], r["monBs"]
+    charges = r["charges"]
+    pA, cA = pos[monAs], carts[monAs, :]
+    pB, cB = pos[monBs], carts[monBs, :]
+    e_total = disp.disp_2B_BJ_ATM_TT(
+        pos,
+        carts,
+        r["C6s"],
+        r["C6_ATM"],
+        pA,
+        cA,
+        r["C6_A"],
+        r["C6_ATM_A"],
+        pB,
+        cB,
+        r["C6_B"],
+        r["C6_ATM_B"],
+        params_2B,
+        params_ATM,
+    )
+    return e_total * mult_out
+
+
+def compute_disp_2B_BJ_ATM_SR_dimer(
+    r,
+    params_2B,
+    params_ATM,
+    mult_out=hartree_to_kcalmol,
+    SR_func=disp.disp_SR_1,
+):
+    pos, carts = (
+        np.array(r["Geometry_bohr"][:, 0], dtype=np.int32),
+        r["Geometry_bohr"][:, 1:],
+    )
+    charges = r["charges"]
+    monAs, monBs = r["monAs"], r["monBs"]
+    pA, cA = pos[monAs], carts[monAs, :]
+    pB, cB = pos[monBs], carts[monBs, :]
+    e_d = SR_func(
+        pos,
+        carts,
+        r["C6_ATM"],
+        params_ATM,
+    )
+    e_1 = SR_func(
+        pA,
+        cA,
+        r["C6_ATM_A"],
+        params_ATM,
+    )
+    e_2 = SR_func(
+        pB,
+        cB,
+        r["C6_ATM_B"],
+        params_ATM,
+    )
+    e_total = e_d - (e_1 + e_2)
+    e_total *= mult_out
+    return e_total
+
 
 def compute_bj_dimer_f90(
     params,
@@ -640,6 +711,7 @@ def compute_bj_dimer_DFTD4(
     print(f"disp dftd4 = {d} - ({AB}) = {d} - ({A} + {B})")
     disp = (d - (AB)) * mult_out
     return disp
+
 
 def compute_bj_dimer_DFTD4_ATM(
     params,

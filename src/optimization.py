@@ -9,6 +9,7 @@ import pandas as pd
 import numpy as np
 from .tools import print_cartesians, df_to_latex_table_round
 from qcelemental import constants
+import dispersion
 
 
 def chunkify(df: pd.DataFrame, chunk_size: int):
@@ -133,10 +134,13 @@ def compute_int_energy_stats_DISP(
     parallel=False,
     print_results=False,
     chunk_count=1000,
+    force_ATM_on=False,
 ) -> (float, float, float,):
     t = df[hf_key].isna().sum()
     assert t == 0, f"The HF_col provided has np.nan values present, {t}"
-    params_2B, params_ATM = paramsTable.generate_2B_ATM_param_subsets(params)
+    params_2B, params_ATM = paramsTable.generate_2B_ATM_param_subsets(
+        params, force_ATM_on=force_ATM_on
+    )
     print(f"{params_2B = }")
     print(f"{params_ATM = }")
 
@@ -180,25 +184,142 @@ def compute_int_energy_stats_DISP(
     return mae, rmse, max_e, mad, mean_dif
 
 
+def compute_int_energy_stats_DISP_TT(
+    params: [float],
+    df: pd.DataFrame,
+    hf_key: str = "HF INTERACTION ENERGY",
+    parallel=False,
+    print_results=False,
+    chunk_count=1000,
+    force_ATM_on=False,
+) -> (float, float, float,):
+    t = df[hf_key].isna().sum()
+    assert t == 0, f"The HF_col provided has np.nan values present, {t}"
+    # params_2B, params_ATM = paramsTable.generate_2B_ATM_param_subsets(params)
+    # params_2B, params_ATM = paramsTable.get_params("SAPT0_adz_3_IE_2B")
+    params_2B, params_ATM = paramsTable.get_params("HF_ATM_SHARED")
+    params_ATM = np.array([0.0, 0.0, params[0], params[1], 1.0])
+    print(f"{params_2B = }")
+    print(f"{params_ATM = }")
+
+    diff = np.zeros(len(df))
+    r4r2_ls = r4r2.r4r2_vals_ls()
+    df["d4"] = df.apply(
+        lambda row: locald4.compute_disp_2B_BJ_ATM_TT_dimer(
+            row,
+            params_2B,
+            params_ATM,
+        ),
+        axis=1,
+    )
+    df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
+    mae = df["diff"].abs().mean()
+    rmse = (df["diff"] ** 2).mean() ** 0.5
+    max_e = df["diff"].abs().max()
+    mad = abs(df["diff"] - df["diff"].mean()).mean()
+    mean_dif = df["diff"].mean()
+    if print_results:
+        print("        1. MAE  = %.4f" % mae)
+        print("        2. RMSE = %.4f" % rmse)
+        print("        3. MAX  = %.4f" % max_e)
+        print("        4. MAD  = %.4f" % mad)
+        print("        4. MD   = %.4f" % mean_dif)
+    return mae, rmse, max_e, mad, mean_dif
+
+
+def compute_int_energy_stats_DISP_SR(
+    params: [float],
+    df: pd.DataFrame,
+    hf_key: str = "HF INTERACTION ENERGY",
+    SR_func=dispersion.disp.disp_SR_1,
+    print_results=False,
+    chunk_count=1000,
+) -> (float, float, float,):
+    t = df[hf_key].isna().sum()
+    assert t == 0, f"The HF_col provided has np.nan values present, {t}"
+    params_2B, params_ATM = paramsTable.generate_2B_ATM_param_subsets(params)
+    print("SETTING s9=1.0 for SR ATM to be non-zero!")
+
+    params_ATM[-1] = 1.0
+    print(f"{params_2B = }")
+    print(f"{params_ATM = }")
+
+    diff = np.zeros(len(df))
+    print(f"{params = }")
+    df["d4_ATM"] = df.apply(
+        lambda row: locald4.compute_disp_2B_BJ_ATM_SR_dimer(
+            row,
+            params_2B,
+            params_ATM,
+            SR_func=SR_func,
+        ),
+        axis=1,
+    )
+    df["d4_2B"] = df.apply(
+        lambda r: locald4.compute_disp_2B_dimer(params_2B, r), axis=1
+    )
+    df["d4"] = df.apply(lambda r: r["d4_2B"] + r["d4_ATM"], axis=1)
+
+    df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
+
+    print("Mol\tDiff\tBench\tTotal\t2B\tATM\tATM_SR")
+    for n, r in df.iterrows():
+        line = f"{n} {r['diff']:5.4f} {r['Benchmark']:5.4f} {(r[hf_key] + r['d4']):5.4f} {r[hf_key]:5.4f} {r['d4']:5.4f} {r['d4_2B']:5.4f} {r['d4_ATM']:5.16f}"
+        print(line)
+
+    mae = df["diff"].abs().mean()
+    rmse = (df["diff"] ** 2).mean() ** 0.5
+    mse = (df["diff"] ** 2).mean()
+    max_e = df["diff"].abs().max()
+    mad = abs(df["diff"] - df["diff"].mean()).mean()
+    mean_dif = df["diff"].mean()
+    if print_results:
+        print("SR ATM ENABLED")
+        print("        1. MAE  = %.4f" % mae)
+        print("        2. RMSE = %.4f" % rmse)
+        print("        3. MAX  = %.4f" % max_e)
+        print("        4. MAD  = %.4f" % mad)
+        print("        4. MD   = %.4f" % mean_dif)
+        print("        5. MSE  = %.4f" % mse)
+    df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4_2B"]), axis=1)
+    mae = df["diff"].abs().mean()
+    rmse = (df["diff"] ** 2).mean() ** 0.5
+    mse = (df["diff"] ** 2).mean()
+    max_e = df["diff"].abs().max()
+    mad = abs(df["diff"] - df["diff"].mean()).mean()
+    mean_dif = df["diff"].mean()
+    if print_results:
+        print("2B ONLY")
+        print("        1. MAE  = %.4f" % mae)
+        print("        2. RMSE = %.4f" % rmse)
+        print("        3. MAX  = %.4f" % max_e)
+        print("        4. MAD  = %.4f" % mad)
+        print("        4. MD   = %.4f" % mean_dif)
+        print("        5. MSE  = %.4f" % mse)
+    return mae, rmse, max_e, mad, mean_dif
+
+
 def compute_int_energy_DISP(
     params,
     df: pd.DataFrame,
     hf_key: str = "HF INTERACTION ENERGY",
-    prevent_negative_params: bool = True,
+    force_ATM_on: bool = False,
+    prevent_negative_params: bool = False,
     parallel=False,
     chunk_count=1000,
 ):
     """
     compute_int_energy_DISP is used to optimize paramaters for damping function in dftd4
     """
-    params_2B, params_ATM = paramsTable.generate_2B_ATM_param_subsets(params)
+    params_2B, params_ATM = paramsTable.generate_2B_ATM_param_subsets(
+        params, force_ATM_on=force_ATM_on
+    )
     if prevent_negative_params:
         for i in params:
             if i < 0:
                 return 10
     rmse = 0
     diff = np.zeros(len(df))
-    r4r2_ls = r4r2.r4r2_vals_ls()
     if parallel:
         chunks = []
         cnt = 0
@@ -228,6 +349,35 @@ def compute_int_energy_DISP(
     df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
     rmse = (df["diff"] ** 2).mean() ** 0.5
     print("%.8f\t" % rmse, params.tolist())
+    return rmse
+
+
+def compute_int_energy_DISP_TT(
+    params,
+    df: pd.DataFrame,
+    hf_key: str = "HF INTERACTION ENERGY",
+    force_ATM_on: bool = False,
+):
+    """
+    compute_int_energy_DISP_TT is used to optimize paramaters for damping function in dftd4 with TT damping ATM function
+    """
+    # params_2B, params_ATM = paramsTable.get_params("SAPT0_adz_3_IE_2B")
+    params_2B, params_ATM = paramsTable.get_params("HF_ATM_SHARED")
+    params_ATM = np.array([0.0, 0.0, params[0], params[1], 1.0])
+    rmse = 0
+    df["d4"] = df.apply(
+        lambda row: locald4.compute_disp_2B_BJ_ATM_TT_dimer(
+            row,
+            params_2B,
+            params_ATM,
+        ),
+        axis=1,
+    )
+    df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
+    rmse = (df["diff"] ** 2).mean() ** 0.5
+    print("%.8f\t" % rmse, params.tolist())
+    if np.isnan(rmse):
+        return 10
     return rmse
 
 
@@ -290,6 +440,7 @@ def compute_int_energy_least_squares(
     params: [float],
     df: pd.DataFrame,
     hf_key: str = "HF INTERACTION ENERGY",
+    force_ATM_on: bool = False,
     # ban_neg_params: bool = False,
 ):
     """
@@ -320,6 +471,7 @@ def compute_int_energy_least_squares_ATM(
     params: [float],
     df: pd.DataFrame,
     hf_key: str = "HF INTERACTION ENERGY",
+    force_ATM_on: bool = False,
     # ban_neg_params: bool = False,
 ):
     """
@@ -349,6 +501,7 @@ def compute_int_energy(
     params: [float],
     df: pd.DataFrame,
     hf_key: str = "HF INTERACTION ENERGY",
+    force_ATM_on: bool = False,
     prevent_negative_params: bool = False,
     parallel=False,
     chunk_count=1000,
@@ -399,6 +552,7 @@ def compute_int_energy_ATM(
     params: [float],
     df: pd.DataFrame,
     hf_key: str = "HF INTERACTION ENERGY",
+    force_ATM_on: bool = False,
     prevent_negative_params: bool = False,
     parallel=False,
     chunk_count=1000,
@@ -495,9 +649,13 @@ def optimization(
         "method": "powell",
         "compute_energy": "compute_int_energy_DISP",
     },
+    force_ATM_on=False,
+    bounds=(-3.0, 8.0),
 ):
     if version["compute_energy"] == "compute_int_energy_DISP":
         compute = compute_int_energy_DISP
+    elif version["compute_energy"] == "compute_int_energy_DISP_TT":
+        compute = compute_int_energy_DISP_TT
     elif version["compute_energy"] == "compute_int_energy":
         compute = compute_int_energy
     elif version["compute_energy"] == "compute_int_energy_ATM":
@@ -513,9 +671,10 @@ def optimization(
     print("RMSE\t\tparams")
     ret = opt.minimize(
         compute,
-        args=(df, hf_key),
+        args=(df, hf_key, force_ATM_on),
         x0=params,
         method=version["method"],
+        bounds=[bounds for i in range(len(params))],
     )
     print("\nResults\n")
     out_params = ret.x
@@ -555,6 +714,64 @@ def avg_matrix(
     out[-1] = np.amax(arr[:, -1])
     return out
 
+def opt_val_no_folds(
+    df: pd.DataFrame,
+    start_params: [] = [3.02227550, 0.47396846, 4.49845309],
+    hf_key: str = "HF INTERACTION ENERGY",
+    version={
+        "method": "powell",
+        "compute_energy": "compute_int_energy_DISP",
+        "compute_stats": "compute_int_energy_stats_DISP",
+    },
+    force_ATM_on=False,
+) -> None:
+    """
+    opt_cross_val performs n-fold cross validation on opt*.pkl df from
+    """
+    print(f"{force_ATM_on = }")
+
+    if version["compute_stats"] == "compute_int_energy_stats_DISP":
+        compute_stats = compute_int_energy_stats_DISP
+    elif version["compute_stats"] == "compute_int_energy_stats_DISP_TT":
+        compute_stats = compute_int_energy_stats_DISP_TT
+    elif version["compute_stats"] == "compute_int_energy_stats":
+        compute_stats = compute_int_energy_stats
+    elif version["compute_stats"] == "jeff_d3":
+        compute_stats = jeff.compute_error_stats_d3
+    else:
+        raise Exception("compute_stats not defined")
+    opt_type = version["method"]
+    print(f"{hf_key = }")
+    print(f"{version = }")
+
+    nans = df[hf_key].isna().sum()
+    inds = df.index[df[hf_key].isna()]
+    assert nans == 0, f"The HF_col provided has np.nan values present with {inds} nans"
+    start = time.time()
+    print(start_params)
+    mp = optimization(df, start_params, hf_key, version, force_ATM_on=force_ATM_on)
+    mmae, mrmse, mmax_e, mmad, mmean_diff = compute_stats(
+        mp, df, hf_key, force_ATM_on=force_ATM_on
+    )
+    stats = {
+        "method": [f"{hf_key} full"],
+        # "Optimization Algorithm": [opt_type],
+        "RMSE": [mrmse],
+        "MAD": [mmad],
+        "MD": [mmean_diff],
+        "MAX_E": [mmax_e],
+    }
+    total_time = (time.time() - start) / 60
+    print("\nTime = %.2f Minutes\n" % total_time)
+    print("\nStarting Parameters\n")
+    print(start_params)
+    print("\nStats")
+    print(stats)
+    print("\nFinal Parameters for the whole data set\n")
+    params_2B, params_ATM = paramsTable.generate_2B_ATM_param_subsets(mp)
+    all_params = repr(np.array([params_2B, params_ATM], np.float64))
+    print(f'"{hf_key}": np.{all_params},')
+    return
 
 def opt_cross_val(
     df: pd.DataFrame,
@@ -567,13 +784,17 @@ def opt_cross_val(
         "compute_energy": "compute_int_energy_DISP",
         "compute_stats": "compute_int_energy_stats_DISP",
     },
+    force_ATM_on=False,
 ) -> None:
     """
     opt_cross_val performs n-fold cross validation on opt*.pkl df from
     """
+    print(f"{force_ATM_on = }")
 
     if version["compute_stats"] == "compute_int_energy_stats_DISP":
         compute_stats = compute_int_energy_stats_DISP
+    elif version["compute_stats"] == "compute_int_energy_stats_DISP_TT":
+        compute_stats = compute_int_energy_stats_DISP_TT
     elif version["compute_stats"] == "compute_int_energy_stats":
         compute_stats = compute_int_energy_stats
     elif version["compute_stats"] == "jeff_d3":
@@ -581,6 +802,8 @@ def opt_cross_val(
     else:
         raise Exception("compute_stats not defined")
     opt_type = version["method"]
+    print(f"{hf_key = }")
+    print(f"{version = }")
 
     nans = df[hf_key].isna().sum()
     inds = df.index[df[hf_key].isna()]
@@ -590,14 +813,14 @@ def opt_cross_val(
     stats_np = np.zeros((nfolds, 4))
     p_out = np.zeros((nfolds, len(start_params)))
     print(start_params)
-    mp = optimization(df, start_params, hf_key, version)
-    mmae, mrmse, mmax_e, mmad, mmean_diff = compute_stats(mp, df, hf_key)
+    mp = optimization(df, start_params, hf_key, version, force_ATM_on=force_ATM_on)
+    print(f"{mp = }")
+    mmae, mrmse, mmax_e, mmad, mmean_diff = compute_stats(
+        mp, df, hf_key, force_ATM_on=force_ATM_on
+    )
     stats = {
         "method": [f"{hf_key} full"],
-        "Optimization Algorithm": [opt_type],
-        "s8": [mp[0]],
-        "a1": [mp[1]],
-        "a2": [mp[2]],
+        # "Optimization Algorithm": [opt_type],
         "RMSE": [mrmse],
         "MAD": [mmad],
         "MD": [mmean_diff],
@@ -605,7 +828,7 @@ def opt_cross_val(
     }
     print("1. MAE = %.4f\n2. RMSE = %.4f\n3. MAX = %.4f" % (mmae, mrmse, mmax_e))
     # reset params to mp
-    start_params = mp
+    ff_start_params = mp.copy()
     for n, fold in enumerate(folds):
         print(f"Fold {n} Start")
         df["Fitset"] = fold
@@ -616,21 +839,22 @@ def opt_cross_val(
         print(f"Training: {len(training)}")
         print(f"Testing: {len(testing)}")
 
-        o_params = optimization(training, start_params, hf_key, version)
-        mae, rmse, max_e, mad, mean_diff = compute_stats(o_params, testing, hf_key)
+        o_params = optimization(
+            training, ff_start_params, hf_key, version, force_ATM_on=force_ATM_on
+        )
+        mae, rmse, max_e, mad, mean_diff = compute_stats(
+            o_params, testing, hf_key, force_ATM_on=force_ATM_on
+        )
 
         stats_np[n] = np.array([rmse, mad, mean_diff, max_e])
         p_out[n] = o_params
         print(f"Fold {n} End")
 
         stats["method"].append(f"{hf_key} fold {n+1}")
-        stats["Optimization Algorithm"].append(opt_type)
+        # stats["Optimization Algorithm"].append(opt_type)
         stats["RMSE"].append(rmse)
         stats["MAD"].append(mad)
         stats["MD"].append(mean_diff)
-        stats["s8"].append(o_params[0])
-        stats["a1"].append(o_params[1])
-        stats["a2"].append(o_params[2])
         stats["MAX_E"].append(max_e)
 
     print("stats_np")
@@ -639,14 +863,11 @@ def opt_cross_val(
     rmse, mad, mean_diff, max_e = avg
 
     stats["method"].append(f"{hf_key}")
-    stats["Optimization Algorithm"].append(opt_type)
+    # stats["Optimization Algorithm"].append(opt_type)
     stats["RMSE"].append(rmse)
     stats["MAX_E"].append(max_e)
     stats["MAD"].append(mad)
     stats["MD"].append(mean_diff)
-    stats["s8"].append(mp[0])
-    stats["a1"].append(mp[1])
-    stats["a2"].append(mp[2])
 
     total_time = (time.time() - start) / 60
     print("\nTime = %.2f Minutes\n" % total_time)
@@ -658,9 +879,9 @@ def opt_cross_val(
     print("\nStarting Parameters\n")
     print(start_params)
     print("\nFinal Parameters for the whole data set\n")
-    print("        1. s8 = %.6f" % mp[0])
-    print("        2. a1 = %.6f" % mp[1])
-    print("        3. a2 = %.6f" % mp[2])
+    params_2B, params_ATM = paramsTable.generate_2B_ATM_param_subsets(ff_start_params)
+    all_params = repr(np.array([params_2B, params_ATM], np.float64))
+    print(f'"{hf_key}": np.{all_params},')
     print("\nStats\n")
     print("        1. MAD  = %.4f" % mmad)
     print("        2. RMSE = %.4f" % mrmse)
@@ -679,9 +900,6 @@ def opt_cross_val(
             "MAX_E": 4,
             "MAD": 4,
             "MD": 4,
-            "s8": 6,
-            "a1": 6,
-            "a2": 6,
         },
         l_out=f"{output_l_marker}{hf_key}_5f_P",
     )

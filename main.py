@@ -6,13 +6,6 @@ import tqdm
 from qm_tools_aw import tools
 import dispersion
 
-# from pandarallel import pandarallel
-# pandarallel.initialize(use_memory_fs=True)
-# from parallel_pandas import ParallelPandas
-# ParallelPandas.initialize(
-#     n_cpu=8, split_factor=4, show_vmem=True, disable_pr_bar=False
-# )
-
 ang_to_bohr = src.constants.Constants().g_aatoau()
 hartree_to_kcal_mol = qcel.constants.conversion_factor("hartree", "kcal / mol")
 
@@ -53,20 +46,24 @@ def optimize_paramaters(
     },
     D4={
         "powell": True,
-        "least_squares": True,
+        "least_squares": False,
+        "powell_ATM_TT": True,
     },
     ATM=False,
     extra="",
     use_2B_C6s=False,
+    drop_na=True,
+    five_fold=True,
 ) -> None:
     # Optimize parameters through 5-fold cross validation
     # params = src.paramsTable.paramsDict()[start_params_d4_key][1:]
-    params = src.paramsTable.paramsDict()[start_params_d4_key]
+    params = src.paramsTable.get_params(start_params_d4_key)
     dispersion.omp_set_num_threads(8)
     print(f"Starting Key: {start_params_d4_key}")
     subset = [
         "Geometry_bohr",
         *bases,
+        "D3Data",
         "Benchmark",
         "charges",
         "monAs",
@@ -78,7 +75,9 @@ def optimize_paramaters(
         "C6_ATM_A",
         "C6_ATM_B",
     ]
-    df = df[subset].copy()
+    if drop_na:
+        df = df[df[bases].notna().all(axis=1)].copy()
+        print(f"Dropped NaNs, new size: {len(df)}")
     if use_2B_C6s:
         print("Using 2B, charge scaled C6s!")
         df["C6_ATM"] = df["C6s"]
@@ -86,6 +85,7 @@ def optimize_paramaters(
         df["C6_ATM_B"] = df["C6_B"]
 
     for i in bases:
+        extra_added = extra
         print(i)
         if D3["powell"]:
             print("D3 powell")
@@ -99,7 +99,7 @@ def optimize_paramaters(
                 nfolds=5,
                 start_params=start_params_d3,
                 hf_key=i,
-                output_l_marker="D3_",
+                output_l_marker="D3_" + extra_added,
                 version=version,
             )
         if D4["powell"]:
@@ -107,26 +107,60 @@ def optimize_paramaters(
             if ATM:
                 print("ATM ON")
                 compute_energy = "compute_int_energy_DISP"
-                extra += "ATM_"
+                extra_added += "ATM_"
                 # params.append(1.0)
             else:
                 print("ATM OFF")
                 # TODO: need to ensure s9 is 0.0
                 compute_energy = "compute_int_energy_DISP"
-                extra += "2B_"
+                extra_added += "2B_"
             version = {
                 "method": "powell",
                 "compute_energy": compute_energy,
                 "compute_stats": "compute_int_energy_stats_DISP",
             }
 
-            print(version)
+            if five_fold:
+                src.optimization.opt_cross_val(
+                    df,
+                    nfolds=5,
+                    start_params=params,
+                    hf_key=i,
+                    # output_l_marker=f"{extra_added}",
+                    output_l_marker="D4_" + extra_added,
+                    version=version,
+                    force_ATM_on=ATM,
+                )
+            else:
+                src.optimization.opt_val_no_folds(
+                    df,
+                    start_params=params,
+                    hf_key=i,
+                    version=version,
+                    force_ATM_on=ATM,
+                )
+
+        if D4["powell_ATM_TT"]:
+            print("D4 powell ATM TT")
+            if ATM:
+                print("ATM ON")
+                extra_added += "ATM_"
+            else:
+                print("ATM OFF")
+                extra_added += "2B_"
+            version = {
+                "method": "powell",
+                "compute_energy": "compute_int_energy_DISP_TT",
+                "compute_stats": "compute_int_energy_stats_DISP_TT",
+            }
+
             src.optimization.opt_cross_val(
                 df,
                 nfolds=5,
                 start_params=params,
                 hf_key=i,
-                output_l_marker=f"{extra}",
+                # output_l_marker=f"{extra_added}",
+                output_l_marker="TT_" + extra_added,
                 version=version,
             )
         if D4["least_squares"]:
@@ -175,6 +209,8 @@ def df_names(i):
         "data/schr_dft2.pkl",
         "data/schr_dft_charges.pkl",
         "data/schr_dft2_SR.pkl",
+        "plots/basis.pkl",
+        "data/schr_saptdft.pkl"
     ]
     # NOTE: data/grimme_fitset_db3.pkl Geometry is in Angstrom!!!
     selected = names[i]
@@ -387,53 +423,184 @@ def charge_comparison():
     return
 
 
-def main():
-    # df, selected = df_names(8)
-    # TODO: plot -D4 2B with Grimme parameters
-    # TODO: plot -D3 ATM
-    # src.sr.generate_SR_data_ATM(*df_names(6))
-    # src.dftd3.compute_dftd3(*df_names(4), "Geometry", param_label="D3MBJ")
-    # src.dftd3.compute_dftd3(*df_names(4), "Geometry", param_label="D3MBJ ATM")
+def sum_IE(vals):
+    if vals is not None:
+        return sum(vals[1:4])
+    else:
+        return np.nan
 
-    # bases = [
-    #     # "HF_dz",
-    #     # "HF_adz",
-    #     # "HF_jdz",
-    #     # "pbe0_adz_saptdft_ndisp",
-    # ]
-    def opt(bases):
+
+def total_IE(vals):
+    if vals is not None:
+        return vals[0]
+    else:
+        return np.nan
+
+
+def merge_SAPT0_results_into_df():
+    df, selected = df_names(6)
+    print(df)
+    df2 = pd.read_pickle("data/schr_sapt0.pkl")
+    print(df2.columns.values)
+    copy_SAPT0_cols = [
+        "id",
+        "SAPT0_dz",
+        "SAPT0_jdz",
+        "SAPT0_adz",
+        "SAPT0_tz",
+        "SAPT0_mtz",
+        "SAPT0_jtz",
+        "SAPT0_atz",
+    ]
+    for i in copy_SAPT0_cols:
+        df[i] = df2[i]
+    for i in copy_SAPT0_cols:
+        print(df[i])
+
+    for i in [
+        j
+        for j in df.columns.values
+        if "SAPT0_" in j
+        if j not in ["SAPT0", "SAPT0_aqz"]
+        if "_IE" not in j
+    ]:
+        print(f'"{i}_3_IE",')
+        df[i + "_3_IE"] = df.apply(lambda r: sum_IE(r[i]), axis=1)
+        df[i + "_IE"] = df.apply(lambda r: total_IE(r[i]), axis=1)
+    df.to_pickle(selected)
+    return
+
+
+def merge_SAPTDFT_results_into_df():
+    df, selected = df_names(6)
+    df2 = pd.read_pickle("data/schr_saptdft.pkl")
+    print(df2.columns.values)
+    copy_SAPT0_cols = [
+        "id",
+        "SAPT_DFT_adz",
+        "SAPT_DFT_atz",
+    ]
+    for i in copy_SAPT0_cols:
+        df[i] = df2[i]
+    for i in copy_SAPT0_cols:
+        print(df[i])
+    for i in [
+        j
+        for j in df.columns.values
+        if "SAPT_DFT_" in j
+        if j not in ["SAPT0", "SAPT0_aqz"]
+        if "_IE" not in j
+    ]:
+        print(f'"{i}_3_IE",')
+        df[i + "_3_IE"] = df.apply(lambda r: sum_IE(r[i]), axis=1)
+        df[i + "_IE"] = df.apply(lambda r: total_IE(r[i]), axis=1)
+    print(df.columns.values)
+    df.to_pickle(selected)
+    return
+
+
+def main():
+    # merge_SAPTDFT_results_into_df()
+    # df, selected = df_names(8)
+    # src.dftd3.compute_dftd3(*df_names(9), "Geometry", param_label="D3MBJ")
+    # src.dftd3.compute_dftd3(*df_names(9), "Geometry", param_label="D3MBJ ATM")
+    # merge_SAPTDFT_results_into_df()
+    df, selected = df_names(6)
+    # df.to_pickle(selected)
+
+    bases = [
+        # "SAPT0_adz_3_IE",
+        # "SAPT_DFT_adz_3_IE",
+        "SAPT_DFT_atz_3_IE",
+        # "SAPT0_jdz_3_IE",
+        # "SAPT0_mtz_3_IE",
+        # "SAPT0_jtz_3_IE",
+        # "SAPT0_dz_3_IE",
+        # "SAPT0_atz_3_IE",
+        # "SAPT0_tz_3_IE",
+    ]
+
+    def opt(bases, start_params_d4_key="SAPT_DFT_OPT_START4"):
         optimize_paramaters(
             df,
             bases,
-            # start_params_d4_key="sadz",
-            start_params_d4_key="sadz_OPT",
-            # start_params_d4_key="HF_2B_ATM_OPT_START_s9",
+            start_params_d4_key=start_params_d4_key,
             # start_params_d4_key="HF_ATM_OPT_START",
+            # start_params_d4_key="HF_OPT",
+            # D3={"powell": True},
+            D4={"powell": True, "least_squares": False, "powell_ATM_TT": False},
+            # start_params_d4_key="HF_ATM_TT_OPT_START",
             D3={"powell": False},
-            D4={"powell": True, "least_squares": False},
+            # D4={"powell": False, "least_squares": False, "powell_ATM_TT": True},
             ATM=False,
-            extra="_HF",
-            use_2B_C6s=True,
+            # extra="",
+            extra="SAPT_DFT_",
+            use_2B_C6s=False,
+            five_fold=False,
         )
 
-    # opt(["HF_qz"])
-    # opt(["HF_adz"])
+    # opt(bases, "SAPT_DFT_OPT_START3")
+    # opt(bases, "SAPT_DFT_OPT_START4")
+    # opt(bases, "SAPT_DFT_OPT_START5")
     # return
 
-    # compute_ie_differences(0)
-    # compute_ie_differences(5)
-    # opt()
-    # grimme_test_atm()
+    def SR_testing():
+        import dispersion
+
+        if False:
+            src.sr.generate_SR_data_ATM(
+                *df_names(6),
+                # params_key="HF_ATM_SHARED",
+                params_key="SAPT0_adz_3_IE_ATM",
+                ncols=7,
+                generate=True,
+            )
+        if True:
+            src.sr.error_statistics_SR(
+                *df_names(6),
+                # params_key="HF_ATM_SHARED",
+                params_key="SAPT0_adz_3_IE_ATM",
+                ncols=7,
+                generate=True,
+            )
+        # df, _ = df_names(6)
+        # params_key = "SAPT0_adz_3_IE_ATM"
+        # params = src.paramsTable.get_params(params_key)
+        # src.optimization.compute_int_energy_stats_DISP_SR(
+        #     params,
+        #     df,
+        #     "SAPT0_adz_3_IE",
+        #     SR_func=dispersion.disp.disp_SR_6_vals,
+        # )
+        return
+
+    SR_testing()
+    # return
+    # return
+    # src.misc.sensitivity_analysis(df)
+    # src.misc.examine_ATM_TT(df)
+    if False:
+        df, _ = df_names(9)
+        print(df.columns.values)
+        src.plotting.plot_basis_sets_d4(
+            df,
+            False,
+        )
+        df, _ = df_names(9)
+        src.plotting.plot_basis_sets_d3(
+            df,
+            False,
+        )
     if False:
         src.plotting.plotting_setup(
-            df_names(6),
+            df_names(9),
             False,
-            compute_d3=True,
         )
-    src.plotting.plotting_setup_G(
-        df_names(4),
-        True,
-    )
+    if False:
+        src.plotting.plotting_setup_dft(
+            df_names(9),
+            True,
+        )
     return
 
 

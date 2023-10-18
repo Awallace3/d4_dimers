@@ -6,6 +6,7 @@ import pandas as pd
 from psi4.driver.wrapper_database import database
 import psi4
 import sys, os
+import dispersion
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ""))
 import src
@@ -18,6 +19,21 @@ hartree_to_kcalmol = qcel.constants.conversion_factor("hartree", "kcal/mol")
 dftd4_bin = "/theoryfs2/ds/amwalla3/.local/bin/dftd4"
 # data_pkl = "/theoryfs2/ds/amwalla3/projects/d4_corrections/tests/data/test.pkl"
 data_pkl = "/theoryfs2/ds/amwalla3/projects/d4_corrections/tests/data/t2.pkl"
+
+
+def test_d3_BJ():
+    df = pd.read_pickle(data_pkl)
+    id_list = [0, 500, 2700, 4992]
+    params = src.paramsTable.get_params("sdjdz")
+    params = np.array(params[1:4], dtype=np.float64)
+    for n, i in enumerate(id_list):
+        row = df.iloc[i]
+        d3data = np.array(row["D3Data"], dtype=np.float64)
+        j_e = src.jeff.compute_bj(params, d3data)
+        print("gen:", j_e)
+        cpp_e = src.jeff.compute_BJ_CPP(params, d3data)
+        print("cpp:", cpp_e)
+        assert np.allclose(j_e, cpp_e, rtol=1e-14)
 
 
 def test_stored_C6s():
@@ -288,6 +304,7 @@ def test_C6s_change_dimer_to_monomer():
 
 
 def test_C6s_change_dimer_to_monomer_IE():
+    # TODO: update eval function to be disp
     params = src.paramsTable.paramsDict()["HF"]
     df = pd.read_pickle(data_pkl)
     id_list = [0, 2600, 4000, 4926, 7000]
@@ -402,16 +419,19 @@ def test_compute_ATM_CHG_dimer():
     df = pd.read_pickle(data_pkl)
     id_list = [0, 500]
     params = src.paramsTable.paramsDict()["HF"]
-    params.append(1.0)
     params = np.array(params, dtype=np.float64)
-    print(params)
+    params_2B = params.copy()
+    params_ATM = params.copy()
+    params_ATM[-1] = 1.0
+    print(params_2B)
+    print(params_ATM)
     energies = np.zeros((len(id_list), 2))
     r4r2_ls = src.r4r2.r4r2_vals_ls()
     for n, i in enumerate(id_list):
         print(i)
         row = df.iloc[i]
         d4_local = src.locald4.compute_disp_ATM_CHG_dimer(
-            params,
+            params_ATM,
             row,
         )
         dftd4 = src.locald4.compute_bj_dimer_DFTD4(
@@ -445,11 +465,12 @@ def test_compute_2B_BJ_ATM_CHG_dimer():
     df = pd.read_pickle(data_pkl)
     id_list = [0, 500]
     params = src.paramsTable.paramsDict()["HF"]
-    params.append(1.0)
     params = np.array(params, dtype=np.float64)
-    print(params)
-    params_2B = params[:4].copy()
+    params_2B = params.copy()
     params_ATM = params.copy()
+    params_ATM[-1] = 1.0
+    print(params_2B)
+    print(params_ATM)
     energies = np.zeros((len(id_list), 2))
     r4r2_ls = src.r4r2.r4r2_vals_ls()
     for n, i in enumerate(id_list):
@@ -473,7 +494,4 @@ def test_compute_2B_BJ_ATM_CHG_dimer():
         energies[n, 1] = dftd4
     print(energies)
     assert np.allclose(energies[:, 0], energies[:, 1], atol=1e-14)
-
-
-
 
