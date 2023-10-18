@@ -8,3 +8,6 @@
 [submodule "symbolic_regression/PySR"]
 	path = symbolic_regression/PySR
 	url = git@github.com:Awallace3/PySR.git
+[submodule "dispersion"]
+    path = src/dispersion
+    url = git@github.com:Awallace3/dispersion.git
