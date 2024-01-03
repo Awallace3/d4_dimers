@@ -6,7 +6,7 @@ from . import locald4
 from qm_tools_aw import tools
 from sklearn.model_selection import train_test_split
 
-disp_func = dispersion.disp.disp_SR_7_vals
+disp_func = dispersion.disp.disp_SR_8_vals
 
 def build_vals(pos, carts, C6, params_ATM, cols=7, max_N=None):
     if max_N is None:
@@ -67,11 +67,10 @@ def generate_SR_data_ATM(
             result_type="expand",
         )
         df["d4_ATM_E"] = df.apply(lambda r: sum(r["xs_all"][:, 0]), axis=1)
-        df["d4_ATM_Es"] = df.apply(lambda r: r["xs_all"][:, 0], axis=1)
+        df["constants"] = df.apply(lambda r: np.array([r["xs_all"][:, 0]]), axis=1)
         df["xs"] = df.apply(lambda r: r["xs_all"][:, 1:], axis=1)
         print(df["xs"].iloc[0])
         print(params)
-        # df["xs"] = df.apply(lambda r: r["xs"][:, 1:], axis=1)
         splits = []
         end = 0
         for i in range(len(df)):
@@ -101,7 +100,7 @@ def generate_SR_data_ATM(
         axis=1,
     )
     df["ys"] = df.apply(
-        lambda r: (r["Benchmark"] - (r[target_HF_key] + r["d4_2B"])) / r["d4_ATM_E"],
+        lambda r: (r["Benchmark"] - (r[target_HF_key] + r["d4_2B"])),
         axis=1,
     )
     df["ys_target"] = df.apply(
@@ -122,15 +121,14 @@ def generate_SR_data_ATM(
     diff_rmse = np.sqrt((df["diff"] ** 2).mean())
     print(f"Diff   MAE: {diff_mae:.4f} MSE: {diff_mse:.4f} RMSE: {diff_rmse:.4f}")
 
-    # df['ys'] /= locald4.hartree_to_kcalmol
     print(df[["ys", "d4_ATM_E", "y_pred", "diff"]].describe())
     if True:
         # out = selected.replace(".pkl", "_SR.pkl")
-        out = "/theoryfs2/ds/amwalla3/projects/symbolic_regression/d4_ATM/data/schr_dft2_SR_2.pkl"
+        out = f"/theoryfs2/ds/amwalla3/projects/symbolic_regression/d4_ATM/data/schr_dft2_SR_{target_HF_key}.pkl"
         print(f"Saving to...\n{out}")
         df.to_pickle(out)
 
-    df.sort_values("diff", inplace=True, ascending=False)
+    df.sort_values("ys_target", inplace=True, ascending=False)
     cnt = 0
     for n, r in df.iterrows():
         line = f"{n}    START: {r['ys_target']:.4f} = {r['Benchmark']:.4f} - ({r[target_HF_key]:.4f} + {r['d4_2B']:.4f}) ::: fmp * {r['d4_ATM_E']:.4f}"
@@ -180,6 +178,11 @@ def error_statistics_SR(
         ),
         axis=1,
     )
+    df['SR_ATM_E'] = df.apply(lambda r: sum(r['SR_ATM']), axis=1)
+    df['diff'] = df.apply(
+        lambda r: (r["Benchmark"] - r[target_HF_key]),
+        axis=1,
+    )
     df["y_pred"] = df.apply(
         lambda r: (r["Benchmark"] - (r[target_HF_key] + r["d4_2B"] + sum(r["SR_ATM"]))),
         axis=1,
@@ -188,8 +191,15 @@ def error_statistics_SR(
         lambda r: (r["Benchmark"] - (r[target_HF_key] + r["d4_2B"])),
         axis=1,
     )
-    print(df[['Benchmark', 'y_2b', 'y_pred']].describe())
-    print(df[['Benchmark', target_HF_key, 'd4_2B', 'y_2b', 'y_pred']].head(10))
+    print(df[['Benchmark', target_HF_key, "diff", 'd4_2B', "SR_ATM_E"]].describe())
+    print(df[['y_2b', "y_pred", ]].describe())
+
+    df.sort_values("SR_ATM_E", inplace=True, ascending=True)
+    print(df[['Benchmark', target_HF_key, 'diff', 'y_2b', 'y_pred', "SR_ATM_E"]].head(10))
+
+    df.sort_values("SR_ATM_E", inplace=True, ascending=False)
+    print(df[['Benchmark', target_HF_key, 'diff', 'y_2b', 'y_pred', "SR_ATM_E"]].head(10))
+
     mae_2b, mse_2b, rmse_2b = compute_mae_mse_rmse(df, "y_2b")
     print("2B (No ATM)")
     print(f"full df MAE: {mae_2b:.6f} RMSE: {rmse_2b:.6f} MSE: {mse_2b:.6f}")
