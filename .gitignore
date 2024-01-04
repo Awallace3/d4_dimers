@@ -201,3 +201,4 @@ build
 compile_commands.json
 .nfs*
 plots/*.pkl
+plots/basis_study.pkl*

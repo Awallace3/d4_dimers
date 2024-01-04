@@ -11,31 +11,6 @@ warnings.simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
 
 kcal_per_mol = "$\mathrm{kcal\cdot mol^{-1}}$"
 
-# colors = [
-#         "blue",
-#         "red",
-#         "purple",
-#         "brown",
-#         "green",
-#         "orange",
-#         "pink",
-#         "grey",
-#         "yellow",
-#         "teal",
-#         "cyan",
-#         "navy",
-#         "magenta",
-#         "lime",
-#         "maroon",
-#         "olive",
-#         "indigo",
-#         "gold",
-#         "orchid",
-#         "salmon",
-#         "tan",
-#         "turquoise",
-#     ]
-
 
 def compute_D3_D4_values_for_params_for_plotting(
     df: pd.DataFrame,
@@ -283,7 +258,8 @@ def plot_dbs(df, df_col, title_name, pfn, color="blue") -> None:
     ax.legend(loc="upper left")
     ax.set_xlabel("Database")
     ax.set_ylabel("Error (kcal/mol)")
-    plt.title(f"{title_name}")
+    if title_name is not None:
+        plt.title(f"{title_name}")
     plt.savefig(f"plots/{pfn}_dbs_violin.png", bbox_inches="tight")
     plt.clf()
     return
@@ -367,7 +343,8 @@ def plot_dbs_d3_d4_two(df, c1, c2, l1, l2, title_name, pfn, first=True) -> None:
         else:
             xtick.set_color("red")
 
-    plt.title(f"{title_name}")
+    if title_name is not None:
+        plt.title(f"{title_name}")
     fig.subplots_adjust(bottom=0.25)
     # plt.show()
     plt.savefig(f"plots/{pfn}_dbs_violin.png", bbox_inches="tight")
@@ -461,7 +438,8 @@ def plot_basis_sets_d4(df, build_df=False, df_out: str = "basis"):
         },
         # f"{len(df)} Dimers With Different Basis Sets (D4)",
         # f"All Dimers ({len(df)})",
-        f"Basis Set Comparison Across All Dimers ({len(df)})",
+        # f"Basis Set Comparison Across All Dimers ({len(df)})",
+        None,
         f"basis_set_d4",
         bottom=0.30,
 
@@ -485,7 +463,8 @@ def plot_basis_sets_d4(df, build_df=False, df_out: str = "basis"):
             "aTZ (OPT)": "SAPT0_atz_3_IE_d4_diff",
         },
         # f"{len(df)} Dimers With Different Basis Sets (D4)",
-        f"All Dimers ({len(df)})",
+        # f"All Dimers ({len(df)})",
+        None,
         f"basis_set_d4_opt_vs_adz",
         ylim=[-15, 14],
         bottom=0.35,
@@ -640,7 +619,8 @@ def plot_basis_sets_d3(df, build_df=False, df_out: str = "basis"):
             "0/aTZ": "SAPT0_atz_3_IE_diff",
             "0-D3/aTZ": "SAPT0_atz_3_IE_d3_diff",
         },
-        f"{len(df)} Dimers With Different Basis Sets (D3)",
+        # f"{len(df)} Dimers With Different Basis Sets (D3)",
+        None,
         f"basis_set_d3",
         bottom=0.30,
     )
@@ -662,7 +642,8 @@ def plot_basis_sets_d3(df, build_df=False, df_out: str = "basis"):
             "aTZ (ADZ)": "SAPT0_atz_3_IE_ADZ_d3_diff",
             "aTZ (OPT)": "SAPT0_atz_3_IE_d3_diff",
         },
-        f"{len(df)} Dimers With Different Basis Sets (D3)",
+        # f"{len(df)} Dimers With Different Basis Sets (D3)",
+        None,
         f"basis_set_d3_opt_vs_adz",
         bottom=0.35,
         ylim=[-15, 15],
@@ -780,7 +761,7 @@ def plotting_setup(df, build_df=False, df_out: str = "plots/plot.pkl", compute_d
             "SAPT(DFT)-D4/aTZ": "SAPT_DFT_adz_3_IE_d4_diff",
             "SAPT(DFT)/aTZ": "SAPT_DFT_adz_3_IE_diff",
         },
-        f"",
+        None,
         f"{selected}_ATM",
         bottom=0.45,
         ylim=[-18, 22],
@@ -820,8 +801,9 @@ def plotting_setup(df, build_df=False, df_out: str = "plots/plot.pkl", compute_d
             "-D4",
             "-D4(ATM)",
             bottom=0.35,
+            title_name=None,
             # title_name=f"DB Breakdown SAPT0-D4/aug-cc-pVDZ ({selected})",
-            title_name=f"-D4 Two-Body versus Three-Body (ATM)",
+            # title_name=f"-D4 Two-Body versus Three-Body (ATM)",
             pfn=f"db_breakdown_2B_ATM",
         )
         # Basis Set Performance: SAPT0
@@ -839,7 +821,8 @@ def plotting_setup(df, build_df=False, df_out: str = "plots/plot.pkl", compute_d
                 "0/aTZ": "SAPT0_atz_3_IE_diff",
             },
             # f"All Dimers with SAPT0 ({selected})",
-            "All Dimers (8299)",
+            # "All Dimers (8299)",
+            None,
             f"{selected}_basis_set",
         )
         # charged
@@ -861,7 +844,8 @@ def plotting_setup(df, build_df=False, df_out: str = "plots/plot.pkl", compute_d
                 "0/aDZ": "SAPT0_adz_3_IE_diff",
                 "0-D4(ATM TT)/aDZ": "SAPT0_adz_3_IE_TT_OPT_d4_diff",
             },
-            f"Charged Dimers ({len(df_charged)})",
+            # f"Charged Dimers ({len(df_charged)})",
+            None,
             f"{selected}_charged",
             bottom=0.42,
             ylim=[-10, 10],
@@ -965,7 +949,8 @@ def plotting_setup_G(
         "-D4 (2B)",
         "-D4 (ATM_G)",
         # title_name=f"DB Breakdown SAPT0-D4/aug-cc-pVDZ ({selected})",
-        title_name=f"-D4 Two-Body version Three-Body",
+        # title_name=f"-D4 Two-Body version Three-Body",
+        title_name=None,
         pfn=f"{selected}_db_breakdown_2B_ATM",
     )
     df_charged = get_charged_df(df)
@@ -979,7 +964,8 @@ def plotting_setup_G(
             "-D4(2B@ATM_params_G)/aug-cc-pVDZ": "qz_diff_d4_2B@ATM_G",
             "-D4(ATM_G)/aug-cc-pVDZ": "qz_diff_d4_ATM_G",
         },
-        f"All Dimers with SAPT0 ({selected})",
+        # f"All Dimers with SAPT0 ({selected})",
+        None,
         f"{selected}_qz_d3_d4_total_sapt0",
     )
     return
@@ -1139,7 +1125,6 @@ def plot_violin_d3_d4_ALL(
 
     if title_name is not None:
         plt.title(f"{title_name}")
-    plt.title(f"{title_name}")
     fig.subplots_adjust(bottom=bottom)
 
     if pdf:
@@ -1551,7 +1536,8 @@ def plot_dbs_d3_d4(
             xtick.set_color("red")
 
     plt.minorticks_on()
-    plt.title(f"{title_name}")
+    if title_name is not None:
+        plt.title(f"{title_name}")
     fig.subplots_adjust(bottom=bottom)
     if pdf:
         fn_pdf = f"plots/{pfn}_dbs_violin.pdf"
