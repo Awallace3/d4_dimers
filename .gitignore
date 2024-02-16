@@ -205,3 +205,5 @@ plots/basis_study.pkl*
 *.DS_Store
 *.ds2
 rsrc.sh
+latex_outfiles
+outs/
