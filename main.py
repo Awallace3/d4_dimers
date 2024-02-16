@@ -148,6 +148,7 @@ def optimize_paramaters(
 
 def df_names(i):
     names = [
+        "dfs/schr_dft2_SR.pkl",
         "data/d4.pkl",
         "data/grimme_fitset_db3.pkl",
         "data/schr_dft.pkl",
@@ -161,14 +162,13 @@ def df_names(i):
         "data/schr_saptdft.pkl"
         "plots/basis_study.pkl",
     ]
-    if i == 6:
-        if not os.path.exists("plots/basis_study.pkl"):
-            print("Cannot find ./plots/basis_study.pkl, creating it now...")
-            subprocess.call("cat plots/basis_study-* > plots/basis_study.pkl.tar.gz", shell=True)
-            subprocess.call("tar -xzf plots/basis_study.pkl.tar.gz", shell=True)
-            subprocess.call("rm plots/basis_study.pkl.tar.gz", shell=True)
-            subprocess.call("mv basis_study.pkl plots/basis_study.pkl", shell=True)
-            pass
+    if i == 0:
+        if not os.path.exists("plots/schr_dft2.pkl"):
+            print("Cannot find ./dfs/schr_dft2.pkl, creating it now...")
+            subprocess.call("cat dfs/schr_dft2-* > dfs/schr_dft2.pkl.tar.gz", shell=True)
+            subprocess.call("tar -xzf dfs/schr_dft2.pkl.tar.gz", shell=True)
+            subprocess.call("rm dfs/schr_dft2.pkl.tar.gz", shell=True)
+            subprocess.call("mv schr_dft2.pkl dfs/schr_dft2.pkl", shell=True)
     selected = names[i]
     print(f"Selected: {selected} for df")
     df = pd.read_pickle(selected)
@@ -176,7 +176,7 @@ def df_names(i):
 
 
 def main():
-    df, selected = df_names(6)
+    df, selected = df_names(0)
 
     bases = [
         # "SAPT0_adz_3_IE",
