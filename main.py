@@ -161,6 +161,14 @@ def df_names(i):
         "data/schr_saptdft.pkl"
         "plots/basis_study.pkl",
     ]
+    if i == 6:
+        if not os.path.exists("plots/basis_study.pkl"):
+            print("Cannot find ./plots/basis_study.pkl, creating it now...")
+            subprocess.call("cat plots/basis_study-* > plots/basis_study.pkl.tar.gz", shell=True)
+            subprocess.call("tar -xzf plots/basis_study.pkl.tar.gz", shell=True)
+            subprocess.call("rm plots/basis_study.pkl.tar.gz", shell=True)
+            subprocess.call("mv basis_study.pkl plots/basis_study.pkl", shell=True)
+            pass
     selected = names[i]
     print(f"Selected: {selected} for df")
     df = pd.read_pickle(selected)

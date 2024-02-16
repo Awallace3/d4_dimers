@@ -8,12 +8,15 @@
   results.
 
 ## Installation
-1. Recommended installation is to create a conda environment using the
+1. `git clone --recursive git@github.com:Awallace3/d4_dimers`
+2. Recommended installation is to create a conda environment using the
    `environment.yml` file provided.
 ```bash
 conda env create -f env.yml
 ```
-2. (Optional) The DFTD4 binary must be compiled from [this forked
+3. Install CPP dispersion module `pip install -e ./src/dispersion`. If you only
+   care about plotting results, you can stop here.
+4. (Only for `main.py`) The DFTD4 binary must be compiled from [this forked
    repository](https://github.com/Awallace3/dftd4) to acquire C6's and pass the
    pytests.
 
