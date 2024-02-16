@@ -3,8 +3,6 @@ import numpy as np
 import qcelemental as qcel
 from qm_tools_aw import tools as tools
 import pandas as pd
-from psi4.driver.wrapper_database import database
-import psi4
 import sys, os
 import dispersion
 

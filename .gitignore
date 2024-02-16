@@ -202,3 +202,6 @@ compile_commands.json
 .nfs*
 plots/*.pkl
 plots/basis_study.pkl*
+*.DS_Store
+*.ds2
+rsrc.sh
