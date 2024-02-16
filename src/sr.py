@@ -331,3 +331,42 @@ def compute_disp_2B_BJ_ATM_SR_dimer(r, params_ATM, max_N=None, cols=7):
 #     e_total = e_d - (e_1 + e_2)
 #     e_total *= mult_out
 #     return e_total
+
+if __name__ == "__main__":
+    def SR_testing():
+        import dispersion
+
+        if False:
+            sr.generate_SR_data_ATM(
+                *df_names(6),
+                # params_key="HF_ATM_SHARED",
+                # target_HF_key="SAPT_DFT_adz_3_IE",
+                params_key="SAPT0_adz_3_IE_ATM",
+                # params_key="SAPT_DFT_atz_3_IE_END4",
+                ncols=7,
+                generate=True,
+
+            )
+        if True:
+            sr.error_statistics_SR(
+                *df_names(6),
+                # params_key="HF_ATM_SHARED",
+                params_key="SAPT0_adz_3_IE_ATM",
+                ncols=7,
+                generate=True,
+            )
+        # df, _ = df_names(6)
+        # params_key = "SAPT0_adz_3_IE_ATM"
+        # params = src.paramsTable.get_params(params_key)
+        # src.optimization.compute_int_energy_stats_DISP_SR(
+        #     params,
+        #     df,
+        #     "SAPT0_adz_3_IE",
+        #     SR_func=dispersion.disp.disp_SR_6_vals,
+        # )
+        return
+
+    SR_testing()
+    # src.misc.sensitivity_analysis(df)
+    # src.misc.examine_ATM_TT(df)
+    return

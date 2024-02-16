@@ -24,6 +24,7 @@ def main():
         (df, df_name),
         False,
     )
+    return
 
 
 if __name__ == "__main__":
