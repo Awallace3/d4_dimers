@@ -363,7 +363,7 @@ def get_charged_df(df) -> pd.DataFrame:
     return df
 
 
-def plot_basis_sets_d4(df, build_df=False, df_out: str = "basis"):
+def plot_basis_sets_d4(df, build_df=False, df_out: str = "basis_study"):
     df_out = f"plots/{df_out}.pkl"
     if build_df:
         df = compute_d4_from_opt_params(df)
@@ -545,7 +545,7 @@ def compute_d3_from_opt_params(
     return df
 
 
-def plot_basis_sets_d3(df, build_df=False, df_out: str = "basis"):
+def plot_basis_sets_d3(df, build_df=False, df_out: str = "basis_study"):
     df_out = f"plots/{df_out}.pkl"
     if build_df:
         df = compute_d3_from_opt_params(df)
