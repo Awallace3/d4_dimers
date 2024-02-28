@@ -657,16 +657,6 @@ def plotting_setup(df, build_df=False, df_out: str = "plots/plot.pkl", compute_d
     selected = selected.split("/")[-1].split(".")[0]
     df_out = f"plots/{selected}.pkl"
     if build_df:
-        # print(df.columns.values)
-        # for i in [
-        #     j
-        #     for j in df.columns.values
-        #     if "SAPT0_" in j
-        #     if j not in ["SAPT0", "SAPT0_jdz", "SAPT0_aqz"]
-        #     if "_IE" not in j
-        # ]:
-        #     df[i + "_IE"] = df.apply(lambda r: r[i][0], axis=1)
-        #     df[i + "_diff"] = df["Benchmark"] - df[i + "_IE"]
         df = compute_d4_from_opt_params(
             df,
             bases=[["SAPT0_dz_IE", "SAPT0_dz_3_IE_ATM_SHARED", "HF_ATM_SHARED", "SAPT0_dz_3_IE"]],
@@ -1433,7 +1423,6 @@ def plot_dbs_d3_d4(
     dbs = list(set(df["DB"].to_list()))
     dbs = sorted(dbs, key=lambda x: x.lower())
     vLabels, vData, vDataErrors = [], [], []
-    annotations = []  # [(x, y, text), ...]
     for d in dbs:
         df2 = df[df["DB"] == d]
         vData.append(df2[c1].to_list())
@@ -1455,15 +1444,12 @@ def plot_dbs_d3_d4(
         else:
             vDataErrors.append([])
         d_str = d.replace(" ", "")
-        # vLabels.append(f"{d_str} -{l1}")
-        # vLabels.append(f"{d_str} -{l2}")
         vLabels.append(f"\\textbf{{{d_str}-{l1}}}")
         vLabels.append(f"\\textbf{{{d_str}-{l2}}}")
 
     fig = plt.figure(dpi=800)
     ax = plt.subplot(111)
     vplot = ax.violinplot(vData, showmeans=True, showmedians=False)
-    # for partname in ('cbars', 'cmins', 'cmaxes', 'cmeans', 'cmedians'):
     for n, partname in enumerate(["cbars", "cmins", "cmaxes", "cmeans"]):
         vp = vplot[partname]
         vp.set_edgecolor("black")
@@ -1476,12 +1462,11 @@ def plot_dbs_d3_d4(
         else:
             pc.set_facecolor("red")
         pc.set_alpha(0.5)
-        # pc.set_edgecolor("black")
 
     xs, ys = [], []
     for n, y in enumerate(vDataErrors):
         if len(y) > 0:
-            xs.extend([n + 1 for j in range(len(y))])
+            xs.extend([n + 1 for _ in range(len(y))])
             ys.extend(y)
     print(xs, ys)
     ax.scatter(xs, ys, color="orange", s=8.0, label="Outliers")
@@ -1491,14 +1476,14 @@ def plot_dbs_d3_d4(
     xs_error = [i for i in range(-1, len(vLabels) + 1)]
     ax.plot(
         xs_error,
-        [1 for i in range(len(xs_error))],
+        [1 for _ in range(len(xs_error))],
         "k--",
         label=r"$\pm$1 $\mathrm{kcal\cdot mol^{-1}}$",
         zorder=0,
     )
     ax.plot(
         xs_error,
-        [0 for i in range(len(xs_error))],
+        [0 for _ in range(len(xs_error))],
         "k--",
         linewidth=0.5,
         alpha=0.5,
@@ -1507,7 +1492,7 @@ def plot_dbs_d3_d4(
     )
     ax.plot(
         xs_error,
-        [-1 for i in range(len(xs_error))],
+        [-1 for _ in range(len(xs_error))],
         "k--",
         # label="+-1 kcal/mol",
         zorder=0,
@@ -1528,7 +1513,7 @@ def plot_dbs_d3_d4(
     # ax.set_ylabel(r"Error ($kcal\cdot mol^{-1}$)")
     ax.set_ylabel(r"Error ($\mathrm{kcal\cdot mol^{-1}}$)", color="k")
     # ax.set_ylabel(r"Error ($\frac{kcal}{mol}$)")
-    ax.grid(color="gray", linewidth=0.5, alpha=0.3)
+    # ax.grid(color="gray", linewidth=0.5, alpha=0.3)
     for n, xtick in enumerate(ax.get_xticklabels()):
         if n % 2 != 0:
             xtick.set_color("blue")
