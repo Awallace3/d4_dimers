@@ -1413,7 +1413,7 @@ def plot_dbs_d3_d4(
     l2,
     title_name,
     pfn,
-    outlier_cutoff=3,
+    outlier_cutoff=5,
     bottom=0.3,
     transparent=True,
     dpi=1200,
@@ -1469,7 +1469,7 @@ def plot_dbs_d3_d4(
             xs.extend([n + 1 for _ in range(len(y))])
             ys.extend(y)
     print(xs, ys)
-    ax.scatter(xs, ys, color="orange", s=8.0, label="Outliers")
+    ax.scatter(xs, ys, color="orange", s=8.0, label=r"Errors Beyond $\pm$5 $\mathrm{kcal\cdot mol^{-1}}$ ")
 
     vLabels.insert(0, "")
     xs = [i for i in range(len(vLabels))]
