@@ -1,6 +1,8 @@
 import pandas as pd
 import src
 import dispersion
+import os
+import subprocess
 
 
 def optimize_paramaters(
@@ -120,14 +122,25 @@ def optimize_paramaters(
                 "compute_stats": "compute_int_energy_stats_DISP_TT",
             }
 
-            src.optimization.opt_cross_val(
-                df,
-                nfolds=5,
-                start_params=params,
-                hf_key=i,
-                output_l_marker="TT_" + extra_added,
-                version=version,
-            )
+            if five_fold:
+                src.optimization.opt_cross_val(
+                    df,
+                    nfolds=5,
+                    start_params=params,
+                    hf_key=i,
+                    output_l_marker="D4_" + extra_added,
+                    version=version,
+                    force_ATM_on=ATM,
+                )
+            else:
+                src.optimization.opt_val_no_folds(
+                    df,
+                    start_params=params,
+                    hf_key=i,
+                    version=version,
+                    force_ATM_on=ATM,
+                )
+
         if D4["least_squares"]:
             print("D4 least_squares")
             version = {
@@ -148,6 +161,7 @@ def optimize_paramaters(
 
 def df_names(i):
     names = [
+        "dfs/schr_dft2.pkl",
         "dfs/schr_dft2_SR.pkl",
         "data/d4.pkl",
         "data/grimme_fitset_db3.pkl",
@@ -163,9 +177,9 @@ def df_names(i):
         "plots/basis_study.pkl",
     ]
     if i == 0:
-        if not os.path.exists("plots/schr_dft2.pkl"):
+        if not os.path.exists("dfs/schr_dft2.pkl"):
             print("Cannot find ./dfs/schr_dft2.pkl, creating it now...")
-            subprocess.call("cat dfs/schr_dft2-* > dfs/schr_dft2.pkl.tar.gz", shell=True)
+            subprocess.call("cat dfs/schr_dft2.pkl_part* > dfs/schr_dft2.pkl.tar.gz", shell=True)
             subprocess.call("tar -xzf dfs/schr_dft2.pkl.tar.gz", shell=True)
             subprocess.call("rm dfs/schr_dft2.pkl.tar.gz", shell=True)
             subprocess.call("mv schr_dft2.pkl dfs/schr_dft2.pkl", shell=True)
@@ -179,9 +193,9 @@ def main():
     df, selected = df_names(0)
 
     bases = [
-        # "SAPT0_adz_3_IE",
+        "SAPT0_adz_3_IE",
         # "SAPT_DFT_adz_3_IE",
-        "SAPT_DFT_atz_3_IE",
+        # "SAPT_DFT_atz_3_IE",
         # "SAPT0_jdz_3_IE",
         # "SAPT0_mtz_3_IE",
         # "SAPT0_jtz_3_IE",
@@ -198,20 +212,21 @@ def main():
             # start_params_d4_key="HF_ATM_OPT_START",
             # start_params_d4_key="HF_OPT",
             # D3={"powell": True},
-            D4={"powell": True, "least_squares": False, "powell_ATM_TT": False},
+            D4={"powell": False, "least_squares": False, "powell_ATM_TT": True},
             # start_params_d4_key="HF_ATM_TT_OPT_START",
             D3={"powell": False},
             # D4={"powell": False, "least_squares": False, "powell_ATM_TT": True},
-            ATM=False,
-            # extra="",
-            extra="SAPT_DFT_",
+            ATM=True,
+            extra="",
+            # extra="SAPT_DFT_",
             use_2B_C6s=False,
             five_fold=False,
         )
 
     # opt(bases, "SAPT_DFT_OPT_START4")
     # opt(bases, "SAPT_DFT_OPT_START5")
-    opt(bases, "SAPT_DFT_OPT_START3")
+    # opt(bases, "SAPT_DFT_OPT_START3")
+    opt(bases, "HF_ATM_TT_OPT_START")
     return
 
 

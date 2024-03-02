@@ -7,8 +7,11 @@ from . import setup
 from . import locald4
 from . import paramsTable
 from . import optimization
+from . import constants
+import qcelements as qcel
+import os
 
-ang_to_bohr = src.constants.Constants().g_aatoau()
+ang_to_bohr = constants.Constants().g_aatoau()
 hartree_to_kcal_mol = qcel.constants.conversion_factor("hartree", "kcal / mol")
 
 def find_charged_systems(df):
@@ -30,7 +33,7 @@ def print_geom_by_id(df, id):
 
 
 def test_water_dftd4_2_body_and_ATM():
-    params = src.paramsTable.paramsDict()["pbe"]
+    params = paramsTable.paramsDict()["pbe"]
     print(params)
     df = pd.read_pickle(data_pkl)
     row = df.iloc[3014]
@@ -39,31 +42,31 @@ def test_water_dftd4_2_body_and_ATM():
     ma = row["monAs"]
     mb = row["monBs"]
     pos, carts = geom[:, 0], geom[:, 1:]
-    d4C6s, d4C8s, pairs, d4e_dimer = src.locald4.calc_dftd4_c6_c8_pairDisp2(
+    d4C6s, d4C8s, pairs, d4e_dimer = locald4.calc_dftd4_c6_c8_pairDisp2(
         pos, carts, charges[0], dftd4_bin=dftd4_bin, p=params
     )
     print(f"{d4e_dimer = }")
-    d4C6s, d4C8s, pairs, d4e_monA = src.locald4.calc_dftd4_c6_c8_pairDisp2(
+    d4C6s, d4C8s, pairs, d4e_monA = locald4.calc_dftd4_c6_c8_pairDisp2(
         pos[ma], carts[ma], charges[0], dftd4_bin=dftd4_bin, p=params
     )
     print(f"{d4e_monA = }")
-    d4C6s, d4C8s, pairs, d4e_monB = src.locald4.calc_dftd4_c6_c8_pairDisp2(
+    d4C6s, d4C8s, pairs, d4e_monB = locald4.calc_dftd4_c6_c8_pairDisp2(
         pos[mb], carts[mb], charges[0], dftd4_bin=dftd4_bin, p=params
     )
     print(f"{d4e_monB = }")
     IE = d4e_dimer - d4e_monA - d4e_monB
     # print(f"{IE = }")
-    ed4_2_body_IE = src.locald4.compute_bj_dimer_f90(params, row)
+    ed4_2_body_IE = locald4.compute_bj_dimer_f90(params, row)
     ed4_2_body_IE /= hartree_to_kcalmol
     print(f"{ed4_2_body_IE = }")
-    d4C6s, d4C8s, pairs, d4e_dimer_ATM = src.locald4.calc_dftd4_c6_c8_pairDisp2(
+    d4C6s, d4C8s, pairs, d4e_dimer_ATM = locald4.calc_dftd4_c6_c8_pairDisp2(
         pos, carts, charges[0], dftd4_bin=dftd4_bin, p=params, s9=1.0
     )
-    d4C6s, d4C8s, pairs, d4e_monA_ATM = src.locald4.calc_dftd4_c6_c8_pairDisp2(
+    d4C6s, d4C8s, pairs, d4e_monA_ATM = locald4.calc_dftd4_c6_c8_pairDisp2(
         pos[ma], carts[ma], charges[0], dftd4_bin=dftd4_bin, p=params
     )
     print(f"{d4e_monA_ATM = }")
-    d4C6s, d4C8s, pairs, d4e_monB_ATM = src.locald4.calc_dftd4_c6_c8_pairDisp2(
+    d4C6s, d4C8s, pairs, d4e_monB_ATM = locald4.calc_dftd4_c6_c8_pairDisp2(
         pos[mb], carts[mb], charges[0], dftd4_bin=dftd4_bin, p=params
     )
     print(f"{d4e_monB_ATM = }")
@@ -170,7 +173,7 @@ def examine_ATM_TT(df):
 def gather_data(version="schr"):
     # Gather data
     if version == "schr":
-        src.setup.gather_data6(
+        setup.gather_data6(
             output_path="data/d4.pkl",
             from_master=True,
             HF_columns=[
@@ -185,9 +188,9 @@ def gather_data(version="schr"):
             overwrite=True,
         )
     elif version == "grimme":
-        src.grimme_setup.combine_data_with_new_df()
+        grimme_setup.combine_data_with_new_df()
     elif version == "grimme_paper":
-        src.grimme_setup.read_grimme_dftd4_paper_HF_energies()
+        grimme_setup.read_grimme_dftd4_paper_HF_energies()
     else:
         raise ValueError(f"version {version} not recognized")
     return
@@ -272,10 +275,10 @@ def grimme_test_atm(df_names_inds=[3, 4]) -> None:
     return
 def compute_ie_differences(df_num=0):
     df, selected = df_names(df_num)
-    params = src.paramsTable.paramsDict()["HF"]
+    params = paramsTable.paramsDict()["HF"]
     if False:
         d4_dimers, d4_mons, d4_diffs = [], [], []
-        r4r2_ls = src.r4r2.r4r2_vals_ls()
+        r4r2_ls = r4r2.r4r2_vals_ls()
         for n, row in df.iterrows():
             print(n)
             ma = row["monAs"]
@@ -286,7 +289,7 @@ def compute_ie_differences(df_num=0):
             C6s_mA = row["C6_A"]
             C6s_mB = row["C6_B"]
 
-            d4_dimer, d4_mons_individually = src.locald4.compute_bj_with_different_C6s(
+            d4_dimer, d4_mons_individually = locald4.compute_bj_with_different_C6s(
                 geom_bohr,
                 ma,
                 mb,

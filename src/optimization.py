@@ -652,10 +652,13 @@ def optimization(
     force_ATM_on=False,
     bounds=(-3.0, 8.0),
 ):
+    bounds=[bounds for i in range(len(params))]
+    print(f"{bounds = }")
     if version["compute_energy"] == "compute_int_energy_DISP":
         compute = compute_int_energy_DISP
     elif version["compute_energy"] == "compute_int_energy_DISP_TT":
         compute = compute_int_energy_DISP_TT
+        bounds = [(-1.0, -0.001), (3.0, 6.0)]
     elif version["compute_energy"] == "compute_int_energy":
         compute = compute_int_energy
     elif version["compute_energy"] == "compute_int_energy_ATM":
@@ -674,7 +677,7 @@ def optimization(
         args=(df, hf_key, force_ATM_on),
         x0=params,
         method=version["method"],
-        bounds=[bounds for i in range(len(params))],
+        bounds=bounds,
     )
     print("\nResults\n")
     out_params = ret.x
