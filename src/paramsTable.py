@@ -103,9 +103,12 @@ def paramsDict() -> {}:
             dtype=np.float64,
         ),
         "HF_ATM_TT_OPT_START": np.array(
+            # [
+            #     -0.31,
+            #     3.43,
+            # ],
             [
-                -0.31,
-                3.43,
+                -0.448517511580954, 3.455087592475979
             ],
             dtype=np.float64,
         ),
