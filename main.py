@@ -226,7 +226,9 @@ def main():
     # opt(bases, "SAPT_DFT_OPT_START4")
     # opt(bases, "SAPT_DFT_OPT_START5")
     # opt(bases, "SAPT_DFT_OPT_START3")
-    opt(bases, "HF_ATM_TT_OPT_START")
+    print(df.columns.values)
+    print(df['SAPT_DFT_atz'])
+    # opt(bases, "HF_ATM_TT_OPT_START")
     return
 
 

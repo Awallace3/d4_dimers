@@ -8,7 +8,7 @@ from . import locald4
 from . import paramsTable
 from . import optimization
 from . import constants
-import qcelements as qcel
+import qcelemental as qcel
 import os
 
 ang_to_bohr = constants.Constants().g_aatoau()

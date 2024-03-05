@@ -469,7 +469,7 @@ def plot_basis_sets_d4(df, build_df=False, df_out: str = "basis_study"):
         ylim=[-15, 14],
         bottom=0.35,
     )
-    return
+    return df
 
 
 def compute_d3_from_opt_params(
@@ -649,10 +649,10 @@ def plot_basis_sets_d3(df, build_df=False, df_out: str = "basis_study"):
         ylim=[-15, 15],
     )
 
-    return
+    return df
 
 
-def plotting_setup(df, build_df=False, df_out: str = "plots/plot.pkl", compute_d3=True):
+def plotting_setup(df, build_df=False, df_out: str = "plots/basis_study.pkl", compute_d3=True):
     df, selected = df
     selected = selected.split("/")[-1].split(".")[0]
     df_out = f"plots/{selected}.pkl"
@@ -752,7 +752,7 @@ def plotting_setup(df, build_df=False, df_out: str = "plots/plot.pkl", compute_d
             "SAPT(DFT)/aTZ": "SAPT_DFT_adz_3_IE_diff",
         },
         None,
-        f"{selected}_ATM",
+        f"{selected}_ATM_DFT",
         bottom=0.45,
         ylim=[-18, 22],
         # figure_size=(6, 6),
@@ -840,7 +840,7 @@ def plotting_setup(df, build_df=False, df_out: str = "plots/plot.pkl", compute_d
             bottom=0.42,
             ylim=[-10, 10],
         )
-    return
+    return df
 
 
 def select_element(vals, ind):
@@ -851,7 +851,7 @@ def select_element(vals, ind):
 
 
 def plotting_setup_dft(
-    df, build_df=False, df_out: str = "plots/plot.pkl", compute_d3=True
+    df, build_df=False, df_out: str = "plots/basis_study.pkl", compute_d3=True
 ):
     df, selected = df
     selected = selected.split("/")[-1].split(".")[0]
@@ -859,10 +859,16 @@ def plotting_setup_dft(
     if build_df:
         # df = compute_d4_from_opt_params(df)
         # Need to get components
+        df["SAPT0_adz_total"] = df.apply(lambda x: x["SAPT0_adz"][0], axis=1)
         df["SAPT0_adz_elst"] = df.apply(lambda x: x["SAPT0_adz"][1], axis=1)
         df["SAPT0_adz_exch"] = df.apply(lambda x: x["SAPT0_adz"][2], axis=1)
         df["SAPT0_adz_indu"] = df.apply(lambda x: x["SAPT0_adz"][3], axis=1)
         df["SAPT0_adz_disp"] = df.apply(lambda x: x["SAPT0_adz"][4], axis=1)
+        df["SAPT_DFT_adz_total"] = df.apply(lambda x: x["SAPT_DFT_adz"][0], axis=1)
+        df['SAPT0_adz_3_IE'] = df.apply(
+            lambda x: x['SAPT0_adz_elst'] + x['SAPT0_adz_exch'] + x['SAPT0_adz_indu'], 
+            axis=1
+        )
         df["SAPT_DFT_adz_elst"] = df.apply(
             lambda x: select_element(x["SAPT_DFT_adz"], 1), axis=1
         )
@@ -874,6 +880,27 @@ def plotting_setup_dft(
         )
         df["SAPT_DFT_adz_disp"] = df.apply(
             lambda x: select_element(x["SAPT_DFT_adz"], 4), axis=1
+        )
+        df['SAPT_DFT_adz_3_IE'] = df.apply(
+            lambda x: x['SAPT_DFT_adz_elst'] + x['SAPT_DFT_adz_exch'] + x['SAPT_DFT_adz_indu'],
+            axis=1
+        )
+        df["SAPT_DFT_atz_total"] = df.apply(lambda x: x["SAPT_DFT_atz"][0], axis=1)
+        df["SAPT_DFT_atz_elst"] = df.apply(
+            lambda x: select_element(x["SAPT_DFT_atz"], 1), axis=1
+        )
+        df["SAPT_DFT_atz_exch"] = df.apply(
+            lambda x: select_element(x["SAPT_DFT_atz"], 2), axis=1
+        )
+        df["SAPT_DFT_atz_indu"] = df.apply(
+            lambda x: select_element(x["SAPT_DFT_atz"], 3), axis=1
+        )
+        df["SAPT_DFT_atz_disp"] = df.apply(
+            lambda x: select_element(x["SAPT_DFT_atz"], 4), axis=1
+        )
+        df['SAPT_DFT_atz_3_IE'] = df.apply(
+            lambda x: x['SAPT_DFT_atz_elst'] + x['SAPT_DFT_atz_exch'] + x['SAPT_DFT_atz_indu'],
+            axis=1
         )
         df.to_pickle(df_out)
     else:
@@ -896,13 +923,13 @@ def plotting_setup_dft(
         ylim=[-16, 30],
         transparent=False,
     )
-    return
+    return df
 
 
 def plotting_setup_G(
     df,
     build_df=False,
-    df_out: str = "plots/plot.pkl",
+    df_out: str = "plots/basis_study.pkl",
     compute_d3=False,
 ):
     df, selected = df
@@ -999,6 +1026,7 @@ def plot_violin_d3_d4_ALL(
         text += r"$\mathbf{%.2f}$" % rmse
         text += "\n"
         text += r"$\mathrm{%.2f}$" % max_error
+        print(text)
         annotations.append((cnt, m, text))
         cnt += 1
 
@@ -1308,33 +1336,53 @@ def plot_violin_SAPT0_DFT_components(
     df,
     elst_vals={
         "name": "Electrostatics",
-        "reference": ["SAPT0 Ref.", "SAPT0_adz_elst"],
+        "reference": ["SAPT0/aDZ Ref.", "SAPT0_adz_elst"],
         "vals": {
-            "SAPT(DFT)": "SAPT_DFT_adz_elst",
+            "SAPT(DFT)/aDZ": "SAPT_DFT_adz_elst",
+            "SAPT(DFT)/aTZ": "SAPT_DFT_atz_elst",
         },
     },
     exch_vals={
         "name": "Exchange",
-        "reference": ["SAPT0 Ref.", "SAPT0_adz_exch"],
+        "reference": ["SAPT0/aDZ Ref.", "SAPT0_adz_exch"],
         "vals": {
-            "SAPT(DFT)": "SAPT_DFT_adz_exch",
+            "SAPT(DFT)/aDZ": "SAPT_DFT_adz_exch",
+            "SAPT(DFT)/aTZ": "SAPT_DFT_atz_exch",
         },
     },
     indu_vals={
         "name": "Induction",
-        "reference": ["SAPT0 Ref.", "SAPT0_adz_indu"],
+        "reference": ["SAPT0/aDZ Ref.", "SAPT0_adz_indu"],
         "vals": {
-            "SAPT(DFT)": "SAPT_DFT_adz_indu",
+            "SAPT(DFT)/aDZ": "SAPT_DFT_adz_indu",
+            "SAPT(DFT)/aTZ": "SAPT_DFT_atz_indu",
         },
     },
     disp_vals={
         "name": "Dispersion",
-        "reference": ["SAPT0 Ref.", "SAPT0_adz_disp"],
+        "reference": ["SAPT0/aDZ Ref.", "SAPT0_adz_disp"],
         "vals": {
-            "SAPT(DFT)": "SAPT_DFT_adz_disp",
+            "SAPT(DFT)/aDZ": "SAPT_DFT_adz_disp",
+            "SAPT(DFT)/aTZ": "SAPT_DFT_atz_disp",
             "-D4/aDZ (SAPT0_2B)": "-D4 (SAPT0_adz_3_IE)",
             "-D4/aDZ (SAPT_DFT_2B)": "-D4 (SAPT_DFT_adz_3_IE)",
             "-D4/aDZ (SAPT_DFT_ATM)": "-D4 (SAPT_DFT_adz_3_IE_ATM)",
+        },
+    },
+    three_total_vals={
+        "name": "(Elst. + Exch. + Indu.)",
+        "reference": ["SAPT0/aDZ Ref.", "SAPT0_adz_3_IE"],
+        "vals": {
+            "SAPT(DFT)/aDZ": "SAPT_DFT_adz_3_IE",
+            "SAPT(DFT)/aTZ": "SAPT_DFT_atz_3_IE",
+        },
+    },
+    total_vals={
+        "name": "(Elst. + Exch. + Indu. + Disp.)",
+        "reference": ["SAPT0/aDZ Ref.", "SAPT0_adz_total"],
+        "vals": {
+            "SAPT(DFT)/aDZ": "SAPT_DFT_adz_total",
+            "SAPT(DFT)/aTZ": "SAPT_DFT_atz_total",
         },
     },
     pfn: str = "sapt0_dft_components",
@@ -1346,11 +1394,13 @@ def plot_violin_SAPT0_DFT_components(
     print(f"Plotting {pfn}")
     # create subplots
 
-    fig, axs = plt.subplots(2, 2, figsize=(8, 6), dpi=1000)
+    fig, axs = plt.subplots(3, 2, figsize=(8, 6), dpi=1000)
     elst_ax = axs[0, 0]
     exch_ax = axs[0, 1]
     indu_ax = axs[1, 0]
     disp_ax = axs[1, 1]
+    three_total_ax = axs[2, 0]
+    total_ax = axs[2, 1]
     # add extra space for subplot titles
     fig.subplots_adjust(hspace=0.3, wspace=0.3)
 
@@ -1359,6 +1409,8 @@ def plot_violin_SAPT0_DFT_components(
     exch_data, exch_labels, exch_annotations = collect_component_data(df, exch_vals)
     indu_data, indu_labels, indu_annotations = collect_component_data(df, indu_vals)
     disp_data, disp_labels, disp_annotations = collect_component_data(df, disp_vals)
+    three_total_data, three_total_labels, three_total_annotations = collect_component_data(df, three_total_vals)
+    total_data, total_labels, total_annotations = collect_component_data(df, total_vals)
 
     # Plot violins
     plot_component_violin(
@@ -1398,8 +1450,27 @@ def plot_violin_SAPT0_DFT_components(
         widths,
     )
 
-    # plt add space at bottom of figure
+    plot_component_violin(
+        three_total_ax,
+        three_total_data,
+        three_total_labels,
+        three_total_annotations,
+        three_total_vals["name"],
+        three_total_vals["reference"][0],
+        widths,
+    )
+    plot_component_violin(
+        total_ax,
+        total_data,
+        total_labels,
+        total_annotations,
+        total_vals["name"],
+        total_vals["reference"][0],
+        widths,
+    )
 
+    # plt add space at bottom of figure
+    plt.show()
     plt.savefig(f"plots/{pfn}.png", transparent=transparent, bbox_inches="tight")
     plt.clf()
     return
@@ -1444,8 +1515,8 @@ def plot_dbs_d3_d4(
         else:
             vDataErrors.append([])
         d_str = d.replace(" ", "")
-        vLabels.append(f"\\textbf{{{d_str}-{l1}}}")
-        vLabels.append(f"\\textbf{{{d_str}-{l2}}}")
+        vLabels.append(rf"\textbf{{{d_str}-{l1}}}")
+        vLabels.append(rf"\textbf{{{d_str}-{l2}}}")
 
     fig = plt.figure(dpi=800)
     ax = plt.subplot(111)
