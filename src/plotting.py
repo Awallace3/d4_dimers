@@ -857,6 +857,7 @@ def plotting_setup_dft(
     selected = selected.split("/")[-1].split(".")[0]
     df_out = f"plots/{selected}.pkl"
     if build_df:
+        print(df.columns.values)
         # df = compute_d4_from_opt_params(df)
         # Need to get components
         df["SAPT0_adz_total"] = df.apply(lambda x: x["SAPT0_adz"][0], axis=1)
@@ -1470,7 +1471,6 @@ def plot_violin_SAPT0_DFT_components(
     )
 
     # plt add space at bottom of figure
-    plt.show()
     plt.savefig(f"plots/{pfn}.png", transparent=transparent, bbox_inches="tight")
     plt.clf()
     return

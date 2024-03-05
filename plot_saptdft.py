@@ -12,7 +12,6 @@ def main():
         subprocess.call("mv basis_study.pkl plots/basis_study.pkl", shell=True)
     df = pd.read_pickle(df_name)
     print('Read df from ./plots/basis_study.pkl')
-    print(df.columns.values)
     src.plotting.plotting_setup_dft(
         (df, df_name),
         build_df=False,
