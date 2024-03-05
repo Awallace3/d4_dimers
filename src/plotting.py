@@ -3,9 +3,11 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-import src
 from qm_tools_aw import tools
 import warnings
+from . import paramsTable
+from . import locald4
+from . import jeff
 
 warnings.simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
 
@@ -20,23 +22,24 @@ def compute_D3_D4_values_for_params_for_plotting(
     """
     compute_D3_D4_values_for_params
     """
-    params_dict = src.paramsTable.paramsDict()
+    params_dict = paramsTable.paramsDict()
     params_d4 = params_dict["sadz"]
     params_d3 = params_dict["sdadz"][1:4]
     params_d4_ATM_G = params_dict["HF_ATM_OPT_START"]
     params_d4_ATM = params_dict["HF_ATM_OPT_OUT"]
+    params_d4_ATM_OPT_ALL = params_dict["SAPT0_adz_BJ_ATM_OUT"]
 
     if compute_d3:
         print(f"Computing D3 values for {label}...")
         df[f"-D3 ({label})"] = df.apply(
-            lambda r: src.jeff.compute_bj(params_d3, r["D3Data"]),
+            lambda r: jeff.compute_bj(params_d3, r["D3Data"]),
             axis=1,
         )
     print(f"Computing D4 2B values for {label}...")
-    params_2B, params_ATM = src.paramsTable.generate_2B_ATM_param_subsets(params_d4)
+    params_2B, params_ATM = paramsTable.generate_2B_ATM_param_subsets(params_d4)
 
     df[f"-D4 ({label})"] = df.apply(
-        lambda row: src.locald4.compute_disp_2B_BJ_ATM_CHG_dimer(
+        lambda row: locald4.compute_disp_2B_BJ_ATM_CHG_dimer(
             row,
             params_2B,
             params_ATM,
@@ -44,11 +47,11 @@ def compute_D3_D4_values_for_params_for_plotting(
         axis=1,
     )
     print(f"Computing D4-ATM values for {label}...")
-    params_2B_2, params_ATM_2 = src.paramsTable.generate_2B_ATM_param_subsets(
+    params_2B_2, params_ATM_2 = paramsTable.generate_2B_ATM_param_subsets(
         params_d4_ATM_G
     )
     df[f"-D4 ({label}) ATM G"] = df.apply(
-        lambda row: src.locald4.compute_disp_2B_BJ_ATM_CHG_dimer(
+        lambda row: locald4.compute_disp_2B_BJ_ATM_CHG_dimer(
             row,
             params_2B_2,
             params_ATM_2,
@@ -57,7 +60,7 @@ def compute_D3_D4_values_for_params_for_plotting(
     )
     print(f"Computing D4 2B values (ATM PARAMS) for {label}...")
     df[f"-D4 2B@ATM_params ({label}) G"] = df.apply(
-        lambda row: src.locald4.compute_disp_2B_BJ_ATM_CHG_dimer(
+        lambda row: locald4.compute_disp_2B_BJ_ATM_CHG_dimer(
             row,
             params_2B_2,
             params_ATM,
@@ -66,11 +69,23 @@ def compute_D3_D4_values_for_params_for_plotting(
     )
     print(params_2B, params_2B_2, sep="\n")
     print(params_ATM, params_ATM_2, sep="\n")
-    params_2B_2, params_ATM_2 = src.paramsTable.generate_2B_ATM_param_subsets(
+    params_2B_2, params_ATM_2 = paramsTable.generate_2B_ATM_param_subsets(
         params_d4_ATM
     )
     df[f"-D4 ({label}) ATM"] = df.apply(
-        lambda row: src.locald4.compute_disp_2B_BJ_ATM_CHG_dimer(
+        lambda row: locald4.compute_disp_2B_BJ_ATM_CHG_dimer(
+            row,
+            params_2B_2,
+            params_ATM_2,
+        ),
+        axis=1,
+    )
+
+    params_2B_2, params_ATM_2 = paramsTable.generate_2B_ATM_param_subsets(
+        params_d4_ATM_OPT_ALL
+    )
+    df[f"-D4 ({label}) ATM ALL"] = df.apply(
+        lambda row: locald4.compute_disp_2B_BJ_ATM_CHG_dimer(
             row,
             params_2B_2,
             params_ATM_2,
@@ -126,14 +141,23 @@ def compute_d4_from_opt_params(
 ) -> pd.DataFrame:
     """
     compute_D3_D4_values_for_params
+    each bases element should be a list of 4 strings:
+    [[
+        df_column_for_IE_method_diff,
+        df_column_for_label,
+        params_name, 
+        df_column_for_elst_exch_indu_sum
+    ]
+    ...
+    ]
     """
-    params_dict = src.paramsTable.paramsDict()
+    params_dict = paramsTable.paramsDict()
     plot_vals = {}
     for i in bases:
         params_d4 = params_dict[i[2]]
-        params_2B, params_ATM = src.paramsTable.generate_2B_ATM_param_subsets(params_d4)
+        params_2B, params_ATM = paramsTable.generate_2B_ATM_param_subsets(params_d4)
         df[f"-D4 ({i[1]})"] = df.apply(
-            lambda row: src.locald4.compute_disp_2B_BJ_ATM_CHG_dimer(
+            lambda row: locald4.compute_disp_2B_BJ_ATM_CHG_dimer(
                 row,
                 params_2B,
                 params_ATM,
@@ -153,20 +177,24 @@ def compute_d4_from_opt_params_TT(
     df: pd.DataFrame,
     bases=[
         # "DF_col_for_IE": "PARAMS_NAME"
-        ["SAPT0_adz_IE", "SAPT0_adz_3_IE_TT", "HF_ATM_TT_OPT_START", "SAPT0_adz_3_IE"],
-        ["SAPT0_adz_IE", "SAPT0_adz_3_IE_TT_OPT", "HF_ATM_OPT_OUT", "SAPT0_adz_3_IE"],
+        ["SAPT0_adz_IE", "SAPT0_adz_3_IE_TT_ALL", "SAPT0_adz_BJ_ATM_TT_5p", "SAPT0_adz_3_IE"],
+        # ["SAPT0_adz_IE", "SAPT0_adz_3_IE_TT", "HF_ATM_TT_OPT_START", "SAPT0_adz_3_IE"],
+        # ["SAPT0_adz_IE", "SAPT0_adz_3_IE_TT_OPT", "HF_ATM_OPT_OUT", "SAPT0_adz_3_IE"],
     ],
 ) -> pd.DataFrame:
     """
     compute_D3_D4_values_for_params
     """
-    params_dict = src.paramsTable.paramsDict()
+    params_dict = paramsTable.paramsDict()
     plot_vals = {}
     for i in bases:
         params_d4 = params_dict[i[2]]
-        params_2B, params_ATM = src.paramsTable.generate_2B_ATM_param_subsets(params_d4)
+        params_2B, params_ATM = paramsTable.generate_2B_ATM_param_subsets(params_d4)
+        params_2B[-1] = 1.0
+        params_ATM[-1] = 1.0
+        print(params_2B, params_ATM, sep="\n")
         df[f"-D4(ATM TT) ({i[1]})"] = df.apply(
-            lambda row: src.locald4.compute_disp_2B_BJ_ATM_TT_dimer(
+            lambda row: locald4.compute_disp_2B_BJ_ATM_TT_dimer(
                 row,
                 params_2B,
                 params_ATM,
@@ -419,6 +447,12 @@ def plot_basis_sets_d4(df, build_df=False, df_out: str = "basis_study"):
                     "SAPT0_adz_3_IE_2B",
                     "SAPT0_atz_3_IE",
                 ],
+                [
+                    "SAPT0_adz_IE",
+                    "SAPT0_adz_BJ_ATM",
+                    "SAPT0_adz_BJ_ATM",
+                    "SAPT0_adz_3_IE",
+                ]
             ],
         )
         df.to_pickle(df_out)
@@ -529,13 +563,13 @@ def compute_d3_from_opt_params(
     """
     compute_D3_D4_values_for_params
     """
-    params_dict = src.paramsTable.paramsDict()
+    params_dict = paramsTable.paramsDict()
     plot_vals = {}
     for i in bases:
         params_d3 = params_dict[i[2]][0][1:4]
         print(params_d3)
         df[f"-D3 ({i[1]})"] = df.apply(
-            lambda row: src.jeff.compute_BJ_CPP(
+            lambda row: jeff.compute_BJ_CPP(
                 params_d3,
                 row["D3Data"],
             ),
@@ -663,16 +697,14 @@ def plotting_setup(df, build_df=False, df_out: str = "plots/basis_study.pkl", co
     selected = selected.split("/")[-1].split(".")[0]
     df_out = f"plots/{selected}.pkl"
     if build_df:
-        df = compute_d4_from_opt_params(
-            df,
-            bases=[["SAPT0_dz_IE", "SAPT0_dz_3_IE_ATM_SHARED", "HF_ATM_SHARED", "SAPT0_dz_3_IE"]],
-        )
-
-        df = compute_D3_D4_values_for_params_for_plotting(df, "adz", compute_d3)
-        df = compute_D3_D4_values_for_params_for_plotting(df, "jdz", compute_d3)
-        df = compute_d4_from_opt_params(df)
-        df = compute_d4_from_opt_params_TT(df)
-
+        # df = compute_D3_D4_values_for_params_for_plotting(df, "adz", compute_d3)
+        # df = compute_D3_D4_values_for_params_for_plotting(df, "jdz", compute_d3)
+        # df = compute_d4_from_opt_params(df)
+        df = compute_d4_from_opt_params_TT(df, 
+            bases=[
+                ["SAPT0_adz_IE", "SAPT0_adz_3_IE_TT_ALL", "SAPT0_adz_BJ_ATM_TT_5p", "SAPT0_adz_3_IE"],
+            ],
+       )
 
         df["SAPT0-D4/aug-cc-pVDZ"] = df.apply(
             lambda row: row["SAPT0_adz_3_IE"] + row["-D4 (adz)"],
@@ -682,6 +714,11 @@ def plotting_setup(df, build_df=False, df_out: str = "plots/basis_study.pkl", co
             lambda row: row["SAPT0_adz_3_IE"] + row["-D4 (adz) ATM"],
             axis=1,
         )
+        df["SAPT0-D4(ATM ALL)/aug-cc-pVDZ"] = df.apply(
+            lambda row: row["SAPT0_adz_3_IE"] + row["-D4 (adz) ATM ALL"],
+            axis=1,
+        )
+        df['SAPT0_adz_ATM_opt_all_diff'] = df['Benchmark'] - df['SAPT0-D4(ATM ALL)/aug-cc-pVDZ']
         df["SAPT0-D4/jun-cc-pVDZ"] = df.apply(
             lambda row: row["SAPT0_jdz_3_IE"] + row["-D4 (jdz)"],
             axis=1,
@@ -739,57 +776,58 @@ def plotting_setup(df, build_df=False, df_out: str = "plots/basis_study.pkl", co
     else:
         df = pd.read_pickle(df_out)
     # Non charged
-    plot_violin_d3_d4_ALL(
-        df,
-        {
-            "0-D3/jDZ": "SAPT0_jdz_3_IE_d3_diff",
-            "0-D3/aDZ": "SAPT0_adz_3_IE_d3_diff",
-            "0-D4/aDZ": "SAPT0_adz_3_IE_d4_diff",
-            "0-D4(ATM)/aDZ": "SAPT0_dz_3_IE_ATM_SHARED_d4_diff",
-            "0-D4(2B ATM)/aDZ": "adz_diff_d4_ATM",
-            "0-D4(2B@G ATM)/aDZ": "adz_diff_d4_2B@ATM_G",
-            "0-D4(2B@G ATM@G)/aDZ": "adz_diff_d4_ATM_G",
-            # "0-D4(ATM TT)/aDZ": "SAPT0_adz_3_IE_TT_OPT_d4_diff",
-            "0/jDZ": "SAPT0_jdz_3_IE_diff",
-            "0/aDZ": "SAPT0_adz_3_IE_diff",
-            "SAPT(DFT)-D4/aDZ": "SAPT_DFT_adz_3_IE_d4_diff",
-            "SAPT(DFT)/aDZ": "SAPT_DFT_adz_3_IE_diff",
-            "SAPT(DFT)-D4/aTZ": "SAPT_DFT_atz_3_IE_d4_diff",
-            "SAPT(DFT)/aTZ": "SAPT_DFT_atz_3_IE_diff",
-        },
-        None,
-        f"{selected}_ATM_DFT",
-        bottom=0.45,
-        ylim=[-18, 22],
-        # figure_size=(6, 6),
-        dpi=1200,
-        pdf=False,
-    )
+    # plot_violin_d3_d4_ALL(
+    #     df,
+    #     {
+    #         "0-D3/jDZ": "SAPT0_jdz_3_IE_d3_diff",
+    #         "0-D3/aDZ": "SAPT0_adz_3_IE_d3_diff",
+    #         "0-D4/aDZ": "SAPT0_adz_3_IE_d4_diff",
+    #         "0-D4(ATM)/aDZ": "SAPT0_dz_3_IE_ATM_SHARED_d4_diff",
+    #         "0-D4(2B ATM)/aDZ": "adz_diff_d4_ATM",
+    #         "0-D4(2B@G ATM)/aDZ": "adz_diff_d4_2B@ATM_G",
+    #         "0-D4(2B@G ATM@G)/aDZ": "adz_diff_d4_ATM_G",
+    #         # "0-D4(ATM TT)/aDZ": "SAPT0_adz_3_IE_TT_OPT_d4_diff",
+    #         "0/jDZ": "SAPT0_jdz_3_IE_diff",
+    #         "0/aDZ": "SAPT0_adz_3_IE_diff",
+    #         "SAPT(DFT)-D4/aDZ": "SAPT_DFT_adz_3_IE_d4_diff",
+    #         "SAPT(DFT)/aDZ": "SAPT_DFT_adz_3_IE_diff",
+    #         "SAPT(DFT)-D4/aTZ": "SAPT_DFT_atz_3_IE_d4_diff",
+    #         "SAPT(DFT)/aTZ": "SAPT_DFT_atz_3_IE_diff",
+    #     },
+    #     None,
+    #     f"{selected}_ATM_DFT",
+    #     bottom=0.45,
+    #     ylim=[-18, 22],
+    #     # figure_size=(6, 6),
+    #     dpi=1200,
+    #     pdf=False,
+    # )
     if True:
-        # plot_violin_d3_d4_ALL(
-        #     df,
-        #     {
-        #         "0-D3/jDZ": "SAPT0_jdz_3_IE_d3_diff",
-        #         # "0-D3MBJ(ATM)/jDZ": "jdz_diff_d3mbj_atm",
-        #         "0-D3/aDZ": "SAPT0_adz_3_IE_d3_diff",
-        #         # "0-D3MBJ(ATM)/aDZ": "adz_diff_d3mbj_atm",
-        #         "0-D4/aDZ": "SAPT0_adz_3_IE_d4_diff",
-        #         "0-D4(ATM)/aDZ": "SAPT0_dz_3_IE_ATM_SHARED_d4_diff",
-        #         "0-D4(2B ATM)/aDZ": "adz_diff_d4_ATM",
-        #         "0-D4(2B@G ATM)/aDZ": "adz_diff_d4_2B@ATM_G",
-        #         "0-D4(2B@G ATM@G)/aDZ": "adz_diff_d4_ATM_G",
-        #         "0-D4(ATM TT)/aDZ": "SAPT0_adz_3_IE_TT_OPT_d4_diff",
-        #         "0/jDZ": "SAPT0_jdz_3_IE_diff",
-        #         "0/aDZ": "SAPT0_adz_3_IE_diff",
-        #         "SAPT(DFT)-D4/aDZ": "SAPT_DFT_adz_3_IE_d4_diff",
-        #         "SAPT(DFT)/aDZ": "SAPT_DFT_adz_3_IE_diff",
-        #     },
-        #     f"All Dimers (8299)",
-        #     f"{selected}_ATM",
-        #     bottom=0.45,
-        #     ylim=[-18, 22],
-        #     figure_size=(6, 6),
-        # )
+        plot_violin_d3_d4_ALL(
+            df,
+            {
+                "0-D3/jDZ": "SAPT0_jdz_3_IE_d3_diff",
+                # "0-D3MBJ(ATM)/jDZ": "jdz_diff_d3mbj_atm",
+                "0-D3/aDZ": "SAPT0_adz_3_IE_d3_diff",
+                # "0-D3MBJ(ATM)/aDZ": "adz_diff_d3mbj_atm",
+                "0-D4/aDZ": "SAPT0_adz_3_IE_d4_diff",
+                # "0-D4(ATM)/aDZ": "SAPT0_dz_3_IE_ATM_SHARED_d4_diff",
+                "0-D4(ATM)/aDZ": "SAPT0_adz_ATM_opt_all_diff",
+                "0-D4(2B ATM)/aDZ": "adz_diff_d4_ATM",
+                "0-D4(2B@G ATM)/aDZ": "adz_diff_d4_2B@ATM_G",
+                "0-D4(2B@G ATM@G)/aDZ": "adz_diff_d4_ATM_G",
+                "0-D4(ATM TT ALL)/aDZ": "SAPT0_adz_3_IE_TT_ALL_d4_diff",
+                "0/jDZ": "SAPT0_jdz_3_IE_diff",
+                "0/aDZ": "SAPT0_adz_3_IE_diff",
+                # "SAPT(DFT)-D4/aDZ": "SAPT_DFT_adz_3_IE_d4_diff",
+                # "SAPT(DFT)/aDZ": "SAPT_DFT_adz_3_IE_diff",
+            },
+            f"All Dimers (8299)",
+            f"{selected}_ATM",
+            bottom=0.45,
+            ylim=[-18, 22],
+            # figure_size=(6, 6),
+        )
         plot_dbs_d3_d4(
             df,
             "adz_diff_d4",
@@ -1530,6 +1568,7 @@ def plot_dbs_d3_d4(
     transparent=True,
     dpi=1200,
     pdf=False,
+    verbose=False,
 ) -> None:
     print(f"Plotting {pfn}")
     dbs = list(set(df["DB"].to_list()))
@@ -1547,12 +1586,12 @@ def plot_dbs_d3_d4(
         df3 = df2[abs(df2[c2]) > outlier_cutoff]
         if len(df3) > 0:
             vDataErrors.append(df3[c2].to_list())
-            for n, r in df3.iterrows():
-                print(
-                    f"\n{r['DB']}, {r['System']}\nid: {r['id']}, error: {c2}={r[c2]:.2f}, {c1}={r[c1]:.2f}"
-                )
-                tools.print_cartesians(r["Geometry"])
-
+            if verbose:
+                for n, r in df3.iterrows():
+                    print(
+                        f"\n{r['DB']}, {r['System']}\nid: {r['id']}, error: {c2}={r[c2]:.2f}, {c1}={r[c1]:.2f}"
+                    )
+                    tools.print_cartesians(r["Geometry"])
         else:
             vDataErrors.append([])
         d_str = d.replace(" ", "")
@@ -1580,7 +1619,6 @@ def plot_dbs_d3_d4(
         if len(y) > 0:
             xs.extend([n + 1 for _ in range(len(y))])
             ys.extend(y)
-    print(xs, ys)
     ax.scatter(xs, ys, color="orange", s=8.0, label=r"Errors Beyond $\pm$5 $\mathrm{kcal\cdot mol^{-1}}$ ")
 
     vLabels.insert(0, "")

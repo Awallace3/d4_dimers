@@ -404,6 +404,8 @@ def compute_int_energy_DISP(
         )
     df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
     rmse = (df["diff"] ** 2).mean() ** 0.5
+    if np.isnan(rmse):
+        return 1000
     print("%.8f\t" % rmse, params.tolist())
     return rmse
 
@@ -459,6 +461,8 @@ def compute_int_energy_DISP_C6_only(
     df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
     rmse = (df["diff"] ** 2).mean() ** 0.5
     print("%.8f\t" % rmse, params.tolist())
+    if np.isnan(rmse):
+        return 1000
     return rmse
 
 
@@ -471,9 +475,17 @@ def compute_int_energy_DISP_TT(
     """
     compute_int_energy_DISP_TT is used to optimize paramaters for damping function in dftd4 with TT damping ATM function
     """
-    # params_2B, params_ATM = paramsTable.get_params("SAPT0_adz_3_IE_2B")
-    params_2B, params_ATM = paramsTable.get_params("HF_ATM_SHARED")
-    params_ATM = np.array([0.0, 0.0, params[0], params[1], 1.0])
+    # params_2B, params_ATM = paramsTable.get_params("HF_ATM_SHARED")
+    # params_ATM = np.array([0.0, 0.0, params[0], params[1], 1.0])
+    if len(params) == 5:
+        params_2B = np.array([1.0, params[0], params[1], params[2], 1.0])
+        params_ATM = np.array([0.0, 0.0, params[3], params[4], 1.0])
+    elif len(params) == 2:
+        params_2B, params_ATM = paramsTable.get_params("SAPT0_adz_3_IE_2B")
+        params_ATM = np.array([0.0, 0.0, params[0], params[1], 1.0])
+    if force_ATM_on:
+        params_2B[-1] = 1.0
+        params_ATM[-1] = 1.0
     rmse = 0
     df["d4"] = df.apply(
         lambda row: locald4.compute_disp_2B_BJ_ATM_TT_dimer(
@@ -655,6 +667,8 @@ def compute_int_energy(
     df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
     rmse = (df["diff"] ** 2).mean() ** 0.5
     print("%.8f\t" % rmse, params.tolist())
+    if np.isnan(rmse):
+        return 1000
     return rmse
 
 
@@ -702,6 +716,8 @@ def compute_int_energy_ATM(
     df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
     rmse = (df["diff"] ** 2).mean() ** 0.5
     print("%.8f\t" % rmse, params.tolist())
+    if np.isnan(rmse):
+        return 1000
     return rmse
 
 
@@ -732,6 +748,8 @@ def compute_int_energy_NO_DAMPING(
     rmse = (df["diff"] ** 2).mean() ** 0.5
     print("%.8f\t" % rmse)
     df["diff"] = 0
+    if np.isnan(rmse):
+        return 1000, df
     return rmse, df
 
 
@@ -760,17 +778,20 @@ def optimization(
         "compute_energy": "compute_int_energy_DISP",
     },
     force_ATM_on=False,
-    bounds=(-3.0, 8.0),
+    bounds=(-3.0, 12.0),
 ):
     bounds=[bounds for i in range(len(params))]
-    print(f"{bounds = }")
     if version["compute_energy"] == "compute_int_energy_DISP":
         compute = compute_int_energy_DISP
     elif version["compute_energy"] == "compute_int_energy_DISP_C6_only":
         compute = compute_int_energy_DISP_C6_only
     elif version["compute_energy"] == "compute_int_energy_DISP_TT":
         compute = compute_int_energy_DISP_TT
-        bounds = [(-1.0, -0.001), (3.0, 6.0)]
+        # bounds = [(-1.0, -0.001), (3.0, 6.0)]
+        if len(params) == 2:
+            bounds = [(-1.0, -0.001), (3.0, 6.0)]
+        else:
+            bounds = [(-3.0, 6.0),(-3.0, 6.0), (-3.0, 6.0), (-1.0, -0.001), (-3.0, 6.0)]
     elif version["compute_energy"] == "compute_int_energy":
         compute = compute_int_energy
     elif version["compute_energy"] == "compute_int_energy_ATM":
@@ -783,6 +804,7 @@ def optimization(
         compute = jeff.compute_int_energy_d3
     else:
         raise Exception("compute_energy not defined")
+    print(f"{bounds = }")
     print("RMSE\t\tparams")
     ret = opt.minimize(
         compute,
@@ -885,7 +907,7 @@ def opt_val_no_folds(
     print("\nStats")
     print(stats)
     print("\nFinal Parameters for the whole data set\n")
-    params_2B, params_ATM = paramsTable.generate_2B_ATM_param_subsets(mp)
+    params_2B, params_ATM = paramsTable.generate_2B_ATM_param_subsets(mp, force_ATM_on=force_ATM_on)
     all_params = repr(np.array([params_2B, params_ATM], np.float64))
     print(f'"{hf_key}": np.{all_params},')
     return

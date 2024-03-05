@@ -229,9 +229,9 @@ def main():
     df, selected = df_names(0)
 
     bases = [
-        # "SAPT0_adz_3_IE",
+        "SAPT0_adz_3_IE",
         # "SAPT_DFT_adz_3_IE",
-        "SAPT_DFT_atz_3_IE",
+        # "SAPT_DFT_atz_3_IE",
         # "SAPT0_jdz_3_IE",
         # "SAPT0_mtz_3_IE",
         # "SAPT0_jtz_3_IE",
@@ -245,14 +245,13 @@ def main():
             df,
             bases,
             start_params_d4_key=start_params_d4_key,
-            # start_params_d4_key="HF_ATM_OPT_START",
-            # start_params_d4_key="HF_OPT",
-            # D3={"powell": True},
-            # D4={"powell": False, "least_squares": False, "powell_ATM_TT": True},
-            D4={"powell": False, "least_squares": False, "powell_ATM_TT": False, "powell_C6_only": True},
-            # start_params_d4_key="HF_ATM_TT_OPT_START",
+            D4={"powell": False,
+                 "least_squares": False,
+                 "powell_ATM_TT": True,
+                 "powell_C6_only": False,
+            },
+
             D3={"powell": False},
-            # D4={"powell": False, "least_squares": False, "powell_ATM_TT": True},
             ATM=True,
             extra="",
             # extra="SAPT_DFT_",
@@ -263,8 +262,9 @@ def main():
     # opt(bases, "SAPT_DFT_OPT_START4")
     # opt(bases, "SAPT_DFT_OPT_START5")
     # opt(bases, "SAPT_DFT_OPT_START3")
-    opt(bases, "SAPT_DFT_OPT_START_C6_ONLY")
-    # opt(bases, "HF_ATM_TT_OPT_START")
+    # opt(bases, "SAPT0_adz_BJ_ATM")
+    opt(bases, "SAPT0_adz_BJ_ATM_TT_5p")
+    # opt(bases, "SAPT_DFT_atz_ATM_TT_OPT_START_2p")
     return
 
 
