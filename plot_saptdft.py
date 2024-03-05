@@ -14,7 +14,7 @@ def main():
     print('Read df from ./plots/basis_study.pkl')
     src.plotting.plotting_setup_dft(
         (df, df_name),
-        build_df=False,
+        build_df=True,
     )
     return
 

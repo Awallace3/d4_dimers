@@ -860,6 +860,9 @@ def plotting_setup_dft(
         print(df.columns.values)
         # df = compute_d4_from_opt_params(df)
         # Need to get components
+        df['SAPT0_adz_d4'] = df.apply(
+            lambda x: x["SAPT0_adz_3_IE"] + x["-D4 (SAPT0_adz_3_IE)"], axis=1
+        )
         df["SAPT0_adz_total"] = df.apply(lambda x: x["SAPT0_adz"][0], axis=1)
         df["SAPT0_adz_elst"] = df.apply(lambda x: x["SAPT0_adz"][1], axis=1)
         df["SAPT0_adz_exch"] = df.apply(lambda x: x["SAPT0_adz"][2], axis=1)
@@ -1383,7 +1386,7 @@ def plot_violin_SAPT0_DFT_components(
         "reference": ["CCSD(T)/CBS Ref.", "Benchmark"],
         "vals": {
             "SAPT0/aDZ": "SAPT0_adz_total",
-            "SAPT0-D4/aDZ": "SAPT0_adz_3_IE_d4_diff",
+            "SAPT0-D4/aDZ": "SAPT0_adz_d4",
             "SAPT(DFT)/aDZ": "SAPT_DFT_adz_total",
             "SAPT(DFT)/aTZ": "SAPT_DFT_atz_total",
         },
