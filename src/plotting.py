@@ -917,6 +917,9 @@ def plotting_setup_dft(
             lambda x: x['SAPT_DFT_adz_elst'] + x['SAPT_DFT_adz_exch'] + x['SAPT_DFT_adz_indu'],
             axis=1
         )
+        df['SAPT_DFT_adz_3_IE_d4'] = df.apply(
+            lambda x: x['SAPT_DFT_adz_3_IE'] + x['-D4 (SAPT_DFT_adz_3_IE)'], axis=1
+        )
         df["SAPT_DFT_atz_total"] = df.apply(lambda x: x["SAPT_DFT_atz"][0], axis=1)
         df["SAPT_DFT_atz_elst"] = df.apply(
             lambda x: select_element(x["SAPT_DFT_atz"], 1), axis=1
@@ -933,6 +936,9 @@ def plotting_setup_dft(
         df['SAPT_DFT_atz_3_IE'] = df.apply(
             lambda x: x['SAPT_DFT_atz_elst'] + x['SAPT_DFT_atz_exch'] + x['SAPT_DFT_atz_indu'],
             axis=1
+        )
+        df['SAPT_DFT_atz_3_IE_d4'] = df.apply(
+            lambda x: x['SAPT_DFT_atz_3_IE'] + x['-D4 (SAPT_DFT_atz_3_IE)'], axis=1
         )
         df.to_pickle(df_out)
     else:
@@ -1415,9 +1421,9 @@ def plot_violin_SAPT0_DFT_components(
             "SAPT0/aDZ": "SAPT0_adz_total",
             "SAPT0-D4/aDZ": "SAPT0_adz_d4",
             "SAPT(DFT)/aDZ": "SAPT_DFT_adz_total",
-            "SAPT(DFT)-D4/aDZ": "SAPT_DFT_adz_3_IE_d4_diff",
+            "SAPT(DFT)-D4/aDZ": "SAPT_DFT_adz_3_IE_d4",
             "SAPT(DFT)/aTZ": "SAPT_DFT_atz_total",
-            "SAPT(DFT)-D4/aTZ": "SAPT_DFT_atz_3_IE_d4_diff",
+            "SAPT(DFT)-D4/aTZ": "SAPT_DFT_atz_3_IE_d4",
         },
     },
     pfn: str = "sapt0_dft_components",
