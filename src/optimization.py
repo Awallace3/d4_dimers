@@ -419,6 +419,8 @@ def compute_int_energy_DISP_C6_only(
     """
     compute_int_energy_DISP_C6_only is used to optimize paramaters for damping function in dftd4
     """
+    # params_2B, params_ATM = paramsTable.get_params("HF_ATM_SHARED")
+    # params_ATM = np.array([0.0, 0.0, params[0], params[1], 1.0])
     params_2B, params_ATM = paramsTable.generate_2B_ATM_param_subsets(
         params, force_ATM_on=force_ATM_on
     )

@@ -96,7 +96,7 @@ def paramsDict() -> {}:
                 [1.0, 1.19131302, 1.27135607, -1.41172872, 1.0],
             ]
         ),
-        "SAPT_DFT_atz_3_IE_ATM": np.array(
+        "SAPT_DFT_atz_3_IE_ATM_LINKED": np.array(
             [
                 [1.0, 1.58405999, 1.20257999, -0.94509505, 0.0],
                 [1.0, 1.58405999, 1.20257999, -0.94509505, 1.0],
@@ -106,6 +106,12 @@ def paramsDict() -> {}:
             [
                 [1.0, 1.19131302, 1.27135607, -1.41172872, 0.0],
                 [1.0, 1.19131302, 1.27135607, -1.41172872, 0.0],
+            ]
+        ),
+        "SAPT_DFT_atz_3_IE_C6_ONLY": np.array(
+            [
+                [ 1.        ,  0.        ,  0.77164007, -0.25627041,  0.        ],
+                [ 1.        ,  0.        ,  0.77164007, -0.25627041,  0.        ]
             ]
         ),
         "HF_ATM_OPT_START": np.array(
@@ -344,6 +350,8 @@ def generate_2B_ATM_param_subsets(
                 [s6, s8, a1, a2],
                 [s6, s8, a1_ATM, a2_ATM],
         ]
+        OR
+        2 params = [a1, a2]
     """
     s9 = 0.0
     if force_ATM_on:
@@ -399,6 +407,15 @@ def generate_2B_ATM_param_subsets(
     ):
         params_2B = np.array(params[0], dtype=np.float64)
         params_ATM = np.array(params[1], dtype=np.float64)
+    elif len(params) == 2 and (
+            type(params[0]) == float or type(params[0]) == np.float64
+        ):
+        params_2B = np.array(
+            [1.0, 0.0, params[0], params[1], s9], dtype=np.float64
+        )
+        params_ATM = np.array(
+            [1.0, 0.0, params[0], params[1], s9], dtype=np.float64
+        )
     elif len(params) == 2:
         params_2B, params_ATM = get_params(params_2B_key)
         params_ATM[2] = params[0]

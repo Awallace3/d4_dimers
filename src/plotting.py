@@ -884,6 +884,12 @@ def plotting_setup_dft(
                         "SAPT_DFT_atz_3_IE",
                         "SAPT_DFT_atz_3_IE",
                     ],
+                    [
+                        "SAPT_DFT_atz_IE",
+                        "SAPT_DFT_atz_3_IE_ATM",
+                        "SAPT_DFT_atz_3_IE_ATM_LINKED",
+                        "SAPT_DFT_atz_3_IE",
+                    ],
                 ],
             )
         print(df.columns.values)
@@ -920,6 +926,9 @@ def plotting_setup_dft(
         df['SAPT_DFT_adz_3_IE_d4'] = df.apply(
             lambda x: x['SAPT_DFT_adz_3_IE'] + x['-D4 (SAPT_DFT_adz_3_IE)'], axis=1
         )
+        df['SAPT_DFT_adz_3_IE_d4_ATM'] = df.apply(
+            lambda x: x['SAPT_DFT_adz_3_IE'] + x['-D4 (SAPT_DFT_adz_3_IE_ATM)'], axis=1
+        )
         df["SAPT_DFT_atz_total"] = df.apply(lambda x: x["SAPT_DFT_atz"][0], axis=1)
         df["SAPT_DFT_atz_elst"] = df.apply(
             lambda x: select_element(x["SAPT_DFT_atz"], 1), axis=1
@@ -939,6 +948,9 @@ def plotting_setup_dft(
         )
         df['SAPT_DFT_atz_3_IE_d4'] = df.apply(
             lambda x: x['SAPT_DFT_atz_3_IE'] + x['-D4 (SAPT_DFT_atz_3_IE)'], axis=1
+        )
+        df['SAPT_DFT_atz_3_IE_d4_ATM'] = df.apply(
+            lambda x: x['SAPT_DFT_atz_3_IE'] + x['-D4 (SAPT_DFT_atz_3_IE_ATM)'], axis=1
         )
         df.to_pickle(df_out)
     else:
@@ -1287,7 +1299,7 @@ def plot_component_violin(
     ylim = ax.get_ylim()
     minor_yticks = create_minor_y_ticks(ylim)
     ax.set_yticks(minor_yticks, minor=True)
-    ax.set_ylim((ylim[0], int(ylim[1] + abs(ylim[1] - ylim[0]) * 0.2)))
+    ax.set_ylim((ylim[0], int(ylim[1] + abs(ylim[1] - ylim[0]) * 0.3)))
     vLabels.insert(0, "")
     xs = [i for i in range(len(vLabels))]
     xs_error = [i for i in range(-1, len(vLabels) + 1)]
@@ -1422,8 +1434,10 @@ def plot_violin_SAPT0_DFT_components(
             "SAPT0-D4/aDZ": "SAPT0_adz_d4",
             "SAPT(DFT)/aDZ": "SAPT_DFT_adz_total",
             "SAPT(DFT)-D4/aDZ": "SAPT_DFT_adz_3_IE_d4",
+            "SAPT(DFT)-D4(ATM)/aDZ": "SAPT_DFT_adz_3_IE_d4_ATM",
             "SAPT(DFT)/aTZ": "SAPT_DFT_atz_total",
             "SAPT(DFT)-D4/aTZ": "SAPT_DFT_atz_3_IE_d4",
+            "SAPT(DFT)-D4(ATM)/aTZ": "SAPT_DFT_atz_3_IE_d4_ATM",
         },
     },
     pfn: str = "sapt0_dft_components",

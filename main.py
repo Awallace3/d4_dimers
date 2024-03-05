@@ -115,16 +115,13 @@ def optimize_paramaters(
             print("D4 powell")
             if ATM:
                 print("ATM ON")
-                # compute_energy = "compute_int_energy_DISP"
-                # extra_added += "ATM_"
-                raise ValueError("ATM not supported for C6 only")
+                extra_added += "2B_C6_ATM_"
             else:
                 print("ATM OFF")
-                compute_energy = "compute_int_energy_DISP_C6_only"
                 extra_added += "2B_C6"
             version = {
                 "method": "powell",
-                "compute_energy": compute_energy,
+                "compute_energy": "compute_int_energy_DISP_C6_only",
                 "compute_stats": "compute_int_energy_stats_DISP_C6_only",
             }
 
@@ -256,7 +253,7 @@ def main():
             # start_params_d4_key="HF_ATM_TT_OPT_START",
             D3={"powell": False},
             # D4={"powell": False, "least_squares": False, "powell_ATM_TT": True},
-            ATM=False,
+            ATM=True,
             extra="",
             # extra="SAPT_DFT_",
             use_2B_C6s=False,
