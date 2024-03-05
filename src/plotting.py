@@ -1373,6 +1373,7 @@ def plot_violin_SAPT0_DFT_components(
         "name": "(Elst. + Exch. + Indu.)",
         "reference": ["CCSD(T)/CBS Ref.", "Benchmark"],
         "vals": {
+            "SAPT0/aDZ": "SAPT0_adz_3_IE",
             "SAPT(DFT)/aDZ": "SAPT_DFT_adz_3_IE",
             "SAPT(DFT)/aTZ": "SAPT_DFT_atz_3_IE",
         },
@@ -1381,6 +1382,8 @@ def plot_violin_SAPT0_DFT_components(
         "name": "(Elst. + Exch. + Indu. + Disp.)",
         "reference": ["CCSD(T)/CBS Ref.", "Benchmark"],
         "vals": {
+            "SAPT0/aDZ": "SAPT0_adz_total",
+            "SAPT0-D4/aDZ": "SAPT0_adz_3_IE_d4_diff",
             "SAPT(DFT)/aDZ": "SAPT_DFT_adz_total",
             "SAPT(DFT)/aTZ": "SAPT_DFT_atz_total",
         },
