@@ -17,6 +17,7 @@ def optimize_paramaters(
         "powell": True,
         "least_squares": False,
         "powell_ATM_TT": True,
+        "powell_C6_only": True,
     },
     ATM=False,
     extra="",
@@ -27,6 +28,7 @@ def optimize_paramaters(
 ) -> None:
     """
     Optimize the parameters for the D3 and D4 dispersion models.
+
     """
 
     params = src.paramsTable.get_params(start_params_d4_key)
@@ -83,6 +85,42 @@ def optimize_paramaters(
             else:
                 print("ATM OFF")
                 compute_energy = "compute_int_energy_DISP"
+                extra_added += "2B_"
+            version = {
+                "method": "powell",
+                "compute_energy": compute_energy,
+                "compute_stats": "compute_int_energy_stats_DISP",
+            }
+
+            if five_fold:
+                src.optimization.opt_cross_val(
+                    df,
+                    nfolds=5,
+                    start_params=params,
+                    hf_key=i,
+                    output_l_marker="D4_" + extra_added,
+                    version=version,
+                    force_ATM_on=ATM,
+                )
+            else:
+                src.optimization.opt_val_no_folds(
+                    df,
+                    start_params=params,
+                    hf_key=i,
+                    version=version,
+                    force_ATM_on=ATM,
+                )
+
+        if D4["powell_C6_only"]:
+            print("D4 powell")
+            if ATM:
+                print("ATM ON")
+                # compute_energy = "compute_int_energy_DISP"
+                # extra_added += "ATM_"
+                raise ValueError("ATM not supported for C6 only")
+            else:
+                print("ATM OFF")
+                compute_energy = "compute_int_energy_DISP_C6_only"
                 extra_added += "2B_"
             version = {
                 "method": "powell",
@@ -214,7 +252,7 @@ def main():
             # start_params_d4_key="HF_OPT",
             # D3={"powell": True},
             # D4={"powell": False, "least_squares": False, "powell_ATM_TT": True},
-            D4={"powell": True, "least_squares": False, "powell_ATM_TT": False},
+            D4={"powell": False, "least_squares": False, "powell_ATM_TT": False, "powell_C6_only": True},
             # start_params_d4_key="HF_ATM_TT_OPT_START",
             D3={"powell": False},
             # D4={"powell": False, "least_squares": False, "powell_ATM_TT": True},
@@ -227,9 +265,8 @@ def main():
 
     # opt(bases, "SAPT_DFT_OPT_START4")
     # opt(bases, "SAPT_DFT_OPT_START5")
-    print(df.columns.values)
-    print(df['SAPT_DFT_atz'])
-    opt(bases, "SAPT_DFT_OPT_START3")
+    # opt(bases, "SAPT_DFT_OPT_START3")
+    opt(bases, "SAPT_DFT_OPT_START_C6_ONLY")
     # opt(bases, "HF_ATM_TT_OPT_START")
     return
 

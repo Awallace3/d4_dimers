@@ -60,6 +60,10 @@ def paramsDict() -> {}:
             [1.16530757, 1.2627746, -1.42162522],
             dtype=np.float64,
         ),
+        "SAPT_DFT_OPT_START_C6_ONLY": np.array(
+            [1.16530757, 1.2627746],
+            dtype=np.float64,
+        ),
         "SAPT_DFT_OPT_END3": np.array(
             [
                 [1.0, 1.16530757, 1.2627746, -1.42162522, 0.0],
