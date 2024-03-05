@@ -894,64 +894,43 @@ def plotting_setup_dft(
             )
         print(df.columns.values)
         # Need to get components
-        df['SAPT0_adz_d4'] = df.apply(
-            lambda x: x["SAPT0_adz_3_IE"] + x["-D4 (SAPT0_adz_3_IE)"], axis=1
-        )
-        df["SAPT0_adz_total"] = df.apply(lambda x: x["SAPT0_adz"][0], axis=1)
-        df["SAPT0_adz_elst"] = df.apply(lambda x: x["SAPT0_adz"][1], axis=1)
-        df["SAPT0_adz_exch"] = df.apply(lambda x: x["SAPT0_adz"][2], axis=1)
-        df["SAPT0_adz_indu"] = df.apply(lambda x: x["SAPT0_adz"][3], axis=1)
-        df["SAPT0_adz_disp"] = df.apply(lambda x: x["SAPT0_adz"][4], axis=1)
-        df["SAPT_DFT_adz_total"] = df.apply(lambda x: x["SAPT_DFT_adz"][0], axis=1)
-        df['SAPT0_adz_3_IE'] = df.apply(
-            lambda x: x['SAPT0_adz_elst'] + x['SAPT0_adz_exch'] + x['SAPT0_adz_indu'], 
-            axis=1
-        )
-        df["SAPT_DFT_adz_elst"] = df.apply(
-            lambda x: select_element(x["SAPT_DFT_adz"], 1), axis=1
-        )
-        df["SAPT_DFT_adz_exch"] = df.apply(
-            lambda x: select_element(x["SAPT_DFT_adz"], 2), axis=1
-        )
-        df["SAPT_DFT_adz_indu"] = df.apply(
-            lambda x: select_element(x["SAPT_DFT_adz"], 3), axis=1
-        )
-        df["SAPT_DFT_adz_disp"] = df.apply(
-            lambda x: select_element(x["SAPT_DFT_adz"], 4), axis=1
-        )
-        df['SAPT_DFT_adz_3_IE'] = df.apply(
-            lambda x: x['SAPT_DFT_adz_elst'] + x['SAPT_DFT_adz_exch'] + x['SAPT_DFT_adz_indu'],
-            axis=1
-        )
-        df['SAPT_DFT_adz_3_IE_d4'] = df.apply(
-            lambda x: x['SAPT_DFT_adz_3_IE'] + x['-D4 (SAPT_DFT_adz_3_IE)'], axis=1
-        )
-        df['SAPT_DFT_adz_3_IE_d4_ATM'] = df.apply(
-            lambda x: x['SAPT_DFT_adz_3_IE'] + x['-D4 (SAPT_DFT_adz_3_IE_ATM)'], axis=1
-        )
-        df["SAPT_DFT_atz_total"] = df.apply(lambda x: x["SAPT_DFT_atz"][0], axis=1)
-        df["SAPT_DFT_atz_elst"] = df.apply(
-            lambda x: select_element(x["SAPT_DFT_atz"], 1), axis=1
-        )
-        df["SAPT_DFT_atz_exch"] = df.apply(
-            lambda x: select_element(x["SAPT_DFT_atz"], 2), axis=1
-        )
-        df["SAPT_DFT_atz_indu"] = df.apply(
-            lambda x: select_element(x["SAPT_DFT_atz"], 3), axis=1
-        )
-        df["SAPT_DFT_atz_disp"] = df.apply(
-            lambda x: select_element(x["SAPT_DFT_atz"], 4), axis=1
-        )
-        df['SAPT_DFT_atz_3_IE'] = df.apply(
-            lambda x: x['SAPT_DFT_atz_elst'] + x['SAPT_DFT_atz_exch'] + x['SAPT_DFT_atz_indu'],
-            axis=1
-        )
-        df['SAPT_DFT_atz_3_IE_d4'] = df.apply(
-            lambda x: x['SAPT_DFT_atz_3_IE'] + x['-D4 (SAPT_DFT_atz_3_IE)'], axis=1
-        )
-        df['SAPT_DFT_atz_3_IE_d4_ATM'] = df.apply(
-            lambda x: x['SAPT_DFT_atz_3_IE'] + x['-D4 (SAPT_DFT_atz_3_IE_ATM)'], axis=1
-        )
+        for basis in ['adz', 'atz', 'tz', 'jdz']:
+            df[f"SAPT0_adz_d4"] = df.apply(
+                lambda x: x[f"SAPT0_adz_3_IE"] + x[f"-D4 (SAPT0_adz_3_IE)"], axis=1
+            )
+            df[f"SAPT0_{basis}_total"] = df.apply(lambda x: x[f"SAPT0_{basis}"][0], axis=1)
+            df[f"SAPT0_{basis}_elst"] = df.apply(lambda x: x[f"SAPT0_{basis}"][1], axis=1)
+            df[f"SAPT0_{basis}_exch"] = df.apply(lambda x: x[f"SAPT0_{basis}"][2], axis=1)
+            df[f"SAPT0_{basis}_indu"] = df.apply(lambda x: x[f"SAPT0_{basis}"][3], axis=1)
+            df[f"SAPT0_{basis}_disp"] = df.apply(lambda x: x[f"SAPT0_{basis}"][4], axis=1)
+            df[f'SAPT0_{basis}_3_IE'] = df.apply(
+                lambda x: x[f'SAPT0_{basis}_elst'] + x[f'SAPT0_{basis}_exch'] + x[f'SAPT0_{basis}_indu'], 
+                axis=1
+            )
+        for basis in ['adz', 'atz']:
+            df[f"SAPT_DFT_{basis}_total"] = df.apply(lambda x: x[f"SAPT_DFT_{basis}"][0], axis=1)
+            df[f"SAPT_DFT_{basis}_elst"] = df.apply(
+                lambda x: select_element(x[f"SAPT_DFT_{basis}"], 1), axis=1
+            )
+            df[f"SAPT_DFT_{basis}_exch"] = df.apply(
+                lambda x: select_element(x[f"SAPT_DFT_{basis}"], 2), axis=1
+            )
+            df[f"SAPT_DFT_{basis}_indu"] = df.apply(
+                lambda x: select_element(x[f"SAPT_DFT_{basis}"], 3), axis=1
+            )
+            df[f"SAPT_DFT_{basis}_disp"] = df.apply(
+                lambda x: select_element(x[f"SAPT_DFT_{basis}"], 4), axis=1
+            )
+            df[f'SAPT_DFT_{basis}_3_IE'] = df.apply(
+                lambda x: x[f'SAPT_DFT_{basis}_elst'] + x[f'SAPT_DFT_{basis}_exch'] + x[f'SAPT_DFT_{basis}_indu'],
+                axis=1
+            )
+            df[f'SAPT_DFT_{basis}_3_IE_d4'] = df.apply(
+                lambda x: x[f'SAPT_DFT_{basis}_3_IE'] + x[f'-D4 (SAPT_DFT_{basis}_3_IE)'], axis=1
+            )
+            df[f'SAPT_DFT_{basis}_3_IE_d4_ATM'] = df.apply(
+                lambda x: x[f'SAPT_DFT_{basis}_3_IE'] + x[f'-D4 (SAPT_DFT_{basis}_3_IE_ATM)'], axis=1
+            )
         df.to_pickle(df_out)
     else:
         df = pd.read_pickle(df_out)
@@ -1388,6 +1367,8 @@ def plot_violin_SAPT0_DFT_components(
         "vals": {
             "SAPT(DFT)/aDZ": "SAPT_DFT_adz_elst",
             "SAPT(DFT)/aTZ": "SAPT_DFT_atz_elst",
+            "SAPT0/jDZ": "SAPT0_jdz_elst",
+            "SAPT0/aTZ": "SAPT0_atz_elst",
         },
     },
     exch_vals={
@@ -1396,6 +1377,8 @@ def plot_violin_SAPT0_DFT_components(
         "vals": {
             "SAPT(DFT)/aDZ": "SAPT_DFT_adz_exch",
             "SAPT(DFT)/aTZ": "SAPT_DFT_atz_exch",
+            "SAPT0/jDZ": "SAPT0_jdz_exch",
+            "SAPT0/aTZ": "SAPT0_atz_exch",
         },
     },
     indu_vals={
@@ -1404,6 +1387,8 @@ def plot_violin_SAPT0_DFT_components(
         "vals": {
             "SAPT(DFT)/aDZ": "SAPT_DFT_adz_indu",
             "SAPT(DFT)/aTZ": "SAPT_DFT_atz_indu",
+            "SAPT0/jDZ": "SAPT0_jdz_indu",
+            "SAPT0/aTZ": "SAPT0_atz_indu",
         },
     },
     disp_vals={
@@ -1412,6 +1397,8 @@ def plot_violin_SAPT0_DFT_components(
         "vals": {
             "SAPT(DFT)/aDZ": "SAPT_DFT_adz_disp",
             "SAPT(DFT)/aTZ": "SAPT_DFT_atz_disp",
+            "SAPT0/jDZ": "SAPT0_jdz_disp",
+            "SAPT0/aTZ": "SAPT0_atz_disp",
             "-D4/aDZ (SAPT0_2B)": "-D4 (SAPT0_adz_3_IE)",
             "-D4/aDZ (SAPT_DFT_2B)": "-D4 (SAPT_DFT_adz_3_IE)",
             "-D4/aDZ (SAPT_DFT_ATM)": "-D4 (SAPT_DFT_adz_3_IE_ATM)",
