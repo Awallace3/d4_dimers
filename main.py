@@ -121,11 +121,11 @@ def optimize_paramaters(
             else:
                 print("ATM OFF")
                 compute_energy = "compute_int_energy_DISP_C6_only"
-                extra_added += "2B_"
+                extra_added += "2B_C6"
             version = {
                 "method": "powell",
                 "compute_energy": compute_energy,
-                "compute_stats": "compute_int_energy_stats_DISP",
+                "compute_stats": "compute_int_energy_stats_DISP_C6_only",
             }
 
             if five_fold:

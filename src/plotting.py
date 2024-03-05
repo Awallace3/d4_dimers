@@ -105,7 +105,7 @@ def compute_d4_from_opt_params(
         [
             "SAPT_DFT_atz_3_IE",
             "SAPT_DFT_atz_3_IE_no_disp",
-            "SAPT_DFT_atz_3_IE_END4",
+            "SAPT_DFT_atz_3_IE",
             "SAPT_DFT_atz_3_IE",
         ],
         # "DF_col_for_IE": "PARAMS_NAME"
@@ -863,8 +863,30 @@ def plotting_setup_dft(
     selected = selected.split("/")[-1].split(".")[0]
     df_out = f"plots/{selected}.pkl"
     if build_df:
+        df = compute_d4_from_opt_params(
+                df,
+                bases=[
+                    [
+                        "SAPT_DFT_adz_IE",
+                        "SAPT_DFT_adz_3_IE_ATM",
+                        "SAPT_DFT_OPT_ATM_END3",
+                        "SAPT_DFT_adz_3_IE",
+                    ],
+                    [
+                        "SAPT_DFT_adz_IE",
+                        "SAPT_DFT_adz_3_IE",
+                        "SAPT_DFT_OPT_END3",
+                        "SAPT_DFT_adz_3_IE",
+                    ],
+                    [
+                        "SAPT_DFT_atz_IE",
+                        "SAPT_DFT_atz_3_IE",
+                        "SAPT_DFT_atz_3_IE",
+                        "SAPT_DFT_atz_3_IE",
+                    ],
+                ],
+            )
         print(df.columns.values)
-        # df = compute_d4_from_opt_params(df)
         # Need to get components
         df['SAPT0_adz_d4'] = df.apply(
             lambda x: x["SAPT0_adz_3_IE"] + x["-D4 (SAPT0_adz_3_IE)"], axis=1
@@ -1036,7 +1058,6 @@ def plot_violin_d3_d4_ALL(
         text += r"$\mathbf{%.2f}$" % rmse
         text += "\n"
         text += r"$\mathrm{%.2f}$" % max_error
-        print(text)
         annotations.append((cnt, m, text))
         cnt += 1
 
