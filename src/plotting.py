@@ -1172,13 +1172,13 @@ def collect_component_data(df, vals):
     annotations = []  # [(x, y, text), ...]
     cnt = 1
     plt.rcParams["text.usetex"] = True
-    print(vals)
+    # print(vals)
     for k, v in vals["vals"].items():
-        print(k, v)
+        # print(k, v)
         df[v] = pd.to_numeric(df[v])
         df[f"{v}_diff"] = df[vals["reference"][1]] - df[v]
         df_sub = df[df[f"{v}_diff"].notna()].copy()
-        print(df_sub[[vals["reference"][1], v, f"{v}_diff"]].describe())
+        # print(df_sub[[vals["reference"][1], v, f"{v}_diff"]].describe())
         vData.append(df_sub[f"{v}_diff"].to_list())
         vLabels.append(k)
         m = df_sub[f"{v}_diff"].max()
@@ -1291,19 +1291,18 @@ def plot_component_violin(
     navy_blue = (0.0, 0.32, 0.96)
     ax.set_xticks(xs)
     # plt.setp(ax.set_xticklabels(vLabels), rotation=90, fontsize="8")
-    plt.setp(ax.set_xticklabels(vLabels), rotation=45, fontsize="5")
+    plt.setp(ax.set_xticklabels(vLabels), rotation=20, fontsize="5")
     ax.set_xlim((0, len(vLabels)))
     # lg = ax.legend(loc="upper left", edgecolor="black", fontsize="8")
     # lg.get_frame().set_facecolor((1, 1, 1, 0.0))
 
     ylabel = f"{ylabel} Error" + r" ($\mathrm{kcal\cdot mol^{-1}}$)"
-    ax.set_ylabel(ylabel, color="k")
     # set minor ticks to be between major ticks
 
     ax.grid(color="grey", which="major", linewidth=0.5, alpha=0.3)
     ax.grid(color="grey", which="minor", linewidth=0.5, alpha=0.3)
     # Set subplot title
-    ax.set_ylabel(ylabel, color="k", fontsize="8")
+    ax.set_ylabel(ylabel, color="k", fontsize="6")
     title_color = "k"
     if title_name == "Electrostatics":
         title_color = "red"
@@ -1313,7 +1312,7 @@ def plot_component_violin(
         title_color = "green"
     elif title_name == "Dispersion":
         title_color = "orange"
-    ax.set_title(title_name, color=title_color, fontsize="10")
+    ax.set_title(title_name, color=title_color, fontsize="8")
 
     # Annotations of RMSE
     for x, y, text in annotations:
@@ -1322,7 +1321,7 @@ def plot_component_violin(
             xy=(x, y),
             xytext=(x, y + 0.1),
             color="black",
-            fontsize="8",
+            fontsize="6",
             horizontalalignment="center",
             verticalalignment="bottom",
         )
