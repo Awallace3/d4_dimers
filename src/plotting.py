@@ -869,7 +869,7 @@ def plotting_setup_dft(
                     [
                         "SAPT_DFT_adz_IE",
                         "SAPT_DFT_adz_3_IE_ATM",
-                        "SAPT_DFT_OPT_ATM_END3",
+                        "SAPT_DFT_atz_3_IE_ATM_LINKED",
                         "SAPT_DFT_adz_3_IE",
                     ],
                     [
