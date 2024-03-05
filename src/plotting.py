@@ -1371,7 +1371,7 @@ def plot_violin_SAPT0_DFT_components(
     },
     three_total_vals={
         "name": "(Elst. + Exch. + Indu.)",
-        "reference": ["SAPT0/aDZ Ref.", "SAPT0_adz_3_IE"],
+        "reference": ["CCSD(T)/CBS Ref.", "Benchmark"],
         "vals": {
             "SAPT(DFT)/aDZ": "SAPT_DFT_adz_3_IE",
             "SAPT(DFT)/aTZ": "SAPT_DFT_atz_3_IE",
@@ -1379,7 +1379,7 @@ def plot_violin_SAPT0_DFT_components(
     },
     total_vals={
         "name": "(Elst. + Exch. + Indu. + Disp.)",
-        "reference": ["SAPT0/aDZ Ref.", "SAPT0_adz_total"],
+        "reference": ["CCSD(T)/CBS Ref.", "Benchmark"],
         "vals": {
             "SAPT(DFT)/aDZ": "SAPT_DFT_adz_total",
             "SAPT(DFT)/aTZ": "SAPT_DFT_atz_total",
@@ -1402,7 +1402,7 @@ def plot_violin_SAPT0_DFT_components(
     three_total_ax = axs[2, 0]
     total_ax = axs[2, 1]
     # add extra space for subplot titles
-    fig.subplots_adjust(hspace=0.3, wspace=0.3)
+    fig.subplots_adjust(hspace=0.6, wspace=0.3)
 
     # Component Data
     elst_data, elst_labels, elst_annotations = collect_component_data(df, elst_vals)
