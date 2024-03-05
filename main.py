@@ -23,13 +23,14 @@ def optimize_paramaters(
     use_2B_C6s=False,
     drop_na=True,
     five_fold=False,
+    omp_threads=20,
 ) -> None:
     """
     Optimize the parameters for the D3 and D4 dispersion models.
     """
 
     params = src.paramsTable.get_params(start_params_d4_key)
-    dispersion.omp_set_num_threads(8)
+    dispersion.omp_set_num_threads(omp_threads)
     print(f"Starting Key: {start_params_d4_key}")
     subset = [
         "Geometry_bohr",
@@ -193,9 +194,9 @@ def main():
     df, selected = df_names(0)
 
     bases = [
-        "SAPT0_adz_3_IE",
+        # "SAPT0_adz_3_IE",
         # "SAPT_DFT_adz_3_IE",
-        # "SAPT_DFT_atz_3_IE",
+        "SAPT_DFT_atz_3_IE",
         # "SAPT0_jdz_3_IE",
         # "SAPT0_mtz_3_IE",
         # "SAPT0_jtz_3_IE",
@@ -212,11 +213,12 @@ def main():
             # start_params_d4_key="HF_ATM_OPT_START",
             # start_params_d4_key="HF_OPT",
             # D3={"powell": True},
-            D4={"powell": False, "least_squares": False, "powell_ATM_TT": True},
+            # D4={"powell": False, "least_squares": False, "powell_ATM_TT": True},
+            D4={"powell": True, "least_squares": False, "powell_ATM_TT": False},
             # start_params_d4_key="HF_ATM_TT_OPT_START",
             D3={"powell": False},
             # D4={"powell": False, "least_squares": False, "powell_ATM_TT": True},
-            ATM=True,
+            ATM=False,
             extra="",
             # extra="SAPT_DFT_",
             use_2B_C6s=False,
@@ -225,9 +227,9 @@ def main():
 
     # opt(bases, "SAPT_DFT_OPT_START4")
     # opt(bases, "SAPT_DFT_OPT_START5")
-    # opt(bases, "SAPT_DFT_OPT_START3")
     print(df.columns.values)
     print(df['SAPT_DFT_atz'])
+    opt(bases, "SAPT_DFT_OPT_START3")
     # opt(bases, "HF_ATM_TT_OPT_START")
     return
 
