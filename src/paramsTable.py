@@ -126,8 +126,8 @@ def paramsDict() -> {}:
         ),
         "SAPT_DFT_atz_3_IE_C6_ONLY": np.array(
             [
-                [ 1.        ,  0.        ,  0.77164007, -0.25627041,  0.        ],
-                [ 1.        ,  0.        ,  0.77164007, -0.25627041,  0.        ]
+                [1.0, 0.0, 0.77164007, -0.25627041, 0.0],
+                [1.0, 0.0, 0.77164007, -0.25627041, 0.0],
             ]
         ),
         "HF_ATM_OPT_START": np.array(
@@ -150,28 +150,57 @@ def paramsDict() -> {}:
         ),
         "SAPT0_adz_BJ_ATM_TT_OPT_START_5p": np.array(
             # [s8, a1, a2, b1, b2],
-            [0.83055196, 0.70628586, 1.12379695, -0.4421002222768613, 3.4023423446618244],
-
+            [
+                0.83055196,
+                0.70628586,
+                1.12379695,
+                -0.4421002222768613,
+                3.4023423446618244,
+            ],
             dtype=np.float64,
         ),
         "SAPT0_adz_BJ_ATM_TT_5p": np.array(
             # [s8, a1, a2, b1, b2],
-            [0.8511497759419333, 0.6970836936306952, 1.1782512192148995, -0.4432103400372058, 3.377839953032742],
+            [
+                0.8511497759419333,
+                0.6970836936306952,
+                1.1782512192148995,
+                -0.4432103400372058,
+                3.377839953032742,
+            ],
             dtype=np.float64,
         ),
-
-
+        "SAPT0_adz_3_IE_BJ_ATM_TT_5p_IN": np.array(
+            [
+                0.90455638,
+                0.71658931,
+                1.1473544,
+                -0.4315316,
+                3.33495873,
+            ]
+        ),
+        "SAPT0_adz_3_IE_BJ_ATM_TT_5p_OUT": np.array(
+            [
+                [1.0, 0.91490197, 0.77977634, 0.83410925, 1.0],
+                [1.0, 0.91490197, -0.06981482, 1.62459829, 1.0],
+            ]
+        ),
+        "SAPT0_adz_3_IE": np.array(
+            [
+                [1.0, 0.90455638, 0.71658931, 1.1473544, 1.0],
+                [1.0, 0.90455638, -0.4315316, 3.33495873, 1.0],
+            ]
+        ),
         "SAPT0_adz_BJ_ATM": np.array(
             # [s8, a1, a2, a3, a4],
-            [0.9003073 , 0.71135369, 1.16267184, 9.99999301, 9.62788878],
+            [0.9003073, 0.71135369, 1.16267184, 9.99999301, 9.62788878],
             dtype=np.float64,
         ),
         "SAPT0_adz_BJ_ATM_OUT": np.array(
             # [s8, a1, a2, a3, a4] Optimization on 2B BJ and ATM MCGH
             [
-                [1.0        , 0.9003073 , 0.71135369, 1.16267184, 1.0]
-,
-                [1.0        , 0.9003073 , 9.99999301, 9.62788878, 1.0]
+                [1.0, 0.9003073, 0.71135369, 1.16267184, 1.0],
+                [1.0, 0.9003073, 9.99999301, 9.62788878, 1.0],
             ]
         ),
         "SAPT_DFT_atz_ATM_TT_OPT_START_2p": np.array(
@@ -181,19 +210,30 @@ def paramsDict() -> {}:
         ),
         "SAPT_DFT_atz_ATM_TT_OPT_START_5p": np.array(
             # [s8, a1, a2, b1, b2],
-            [0.83055196, 0.70628586, 1.12379695, -0.4421002222768613, 3.4023423446618244],
+            [
+                0.83055196,
+                0.70628586,
+                1.12379695,
+                -0.4421002222768613,
+                3.4023423446618244,
+            ],
             dtype=np.float64,
         ),
-        
         "SAPT0_adz_ATM_TT": np.array(
             [
-               [ 1.        ,  0.        , -0.43832754,  3.38022962,  1.  ],
-               [ 1.        ,  0.        , -0.43832754,  3.38022962,  1.  ] 
+                [1.0, 0.0, -0.43832754, 3.38022962, 1.0],
+                [1.0, 0.0, -0.43832754, 3.38022962, 1.0],
             ]
         ),
         "SAPT0_adz_ATM_TT_OPT_START_5p": np.array(
             # [s8, a1, a2, b1, b2],
-            [0.83055196, 0.70628586, 1.12379695, -0.4421002222768613, 3.4023423446618244],
+            [
+                0.83055196,
+                0.70628586,
+                1.12379695,
+                -0.4421002222768613,
+                3.4023423446618244,
+            ],
             dtype=np.float64,
         ),
         "HF_ATM_TT_OPT_OUT": np.array(
@@ -360,7 +400,6 @@ def paramsDict() -> {}:
         "sjtz": [1.0, 0.85669728, 0.71700985, 1.13483727, 0.0],
         "sdatz": [1.0, 0.76344431, 0.11057267, 3.64771308, 0.0],
         "satz": [1.0, 0.85616613, 0.71801039, 1.13665562, 0.0],
-
         "sdft_pbe0_adz": [
             1.0,
             1.1223852449709826,
@@ -413,7 +452,7 @@ def generate_2B_ATM_param_subsets(
     params types:
         7 params = [s6, s8, a1, a2, a1_ATM, a2_ATM, s9],
         6 params = [s8, a1, a2, a1_ATM, a2_ATM, s9],
-        5 params = [s6, s8, a1, a2, s9] || [s8, a1, a2, a1_ATM, a2_ATM] || 
+        5 params = [s6, s8, a1, a2, s9] || [s8, a1, a2, a1_ATM, a2_ATM] ||
         [s8, a1, a2, b1_ATM_TT, b2_ATM_TT],
         4 params = [s6, s8, a1, a2],
         2 params = [
@@ -479,14 +518,10 @@ def generate_2B_ATM_param_subsets(
         params_2B = np.array(params[0], dtype=np.float64)
         params_ATM = np.array(params[1], dtype=np.float64)
     elif len(params) == 2 and (
-            type(params[0]) == float or type(params[0]) == np.float64
-        ):
-        params_2B = np.array(
-            [1.0, 0.0, params[0], params[1], s9], dtype=np.float64
-        )
-        params_ATM = np.array(
-            [1.0, 0.0, params[0], params[1], s9], dtype=np.float64
-        )
+        type(params[0]) == float or type(params[0]) == np.float64
+    ):
+        params_2B = np.array([1.0, 0.0, params[0], params[1], s9], dtype=np.float64)
+        params_ATM = np.array([1.0, 0.0, params[0], params[1], s9], dtype=np.float64)
     elif len(params) == 2:
         params_2B, params_ATM = get_params(params_2B_key)
         params_ATM[2] = params[0]

@@ -209,13 +209,15 @@ def df_names(i):
         "data/schr_dft_charges.pkl",
         "data/schr_dft2_SR.pkl",
         "plots/basis.pkl",
-        "data/schr_saptdft.pkl"
+        "data/schr_saptdft.pkl",
         "plots/basis_study.pkl",
     ]
     if i == 0:
         if not os.path.exists("dfs/schr_dft2.pkl"):
             print("Cannot find ./dfs/schr_dft2.pkl, creating it now...")
-            subprocess.call("cat dfs/schr_dft2.pkl_part* > dfs/schr_dft2.pkl.tar.gz", shell=True)
+            subprocess.call(
+                "cat dfs/schr_dft2.pkl_part* > dfs/schr_dft2.pkl.tar.gz", shell=True
+            )
             subprocess.call("tar -xzf dfs/schr_dft2.pkl.tar.gz", shell=True)
             subprocess.call("rm dfs/schr_dft2.pkl.tar.gz", shell=True)
             subprocess.call("mv schr_dft2.pkl dfs/schr_dft2.pkl", shell=True)
@@ -245,12 +247,12 @@ def main():
             df,
             bases,
             start_params_d4_key=start_params_d4_key,
-            D4={"powell": False,
-                 "least_squares": False,
-                 "powell_ATM_TT": True,
-                 "powell_C6_only": False,
+            D4={
+                "powell": False,
+                "least_squares": False,
+                "powell_ATM_TT": True,
+                "powell_C6_only": False,
             },
-
             D3={"powell": False},
             ATM=True,
             extra="",
@@ -263,7 +265,7 @@ def main():
     # opt(bases, "SAPT_DFT_OPT_START5")
     # opt(bases, "SAPT_DFT_OPT_START3")
     # opt(bases, "SAPT0_adz_BJ_ATM")
-    opt(bases, "SAPT0_adz_BJ_ATM_TT_5p")
+    opt(bases, "SAPT0_adz_3_IE_BJ_ATM_TT_5p_IN")
     # opt(bases, "SAPT_DFT_atz_ATM_TT_OPT_START_2p")
     return
 

@@ -702,7 +702,7 @@ def plotting_setup(df, build_df=False, df_out: str = "plots/basis_study.pkl", co
         # df = compute_d4_from_opt_params(df)
         df = compute_d4_from_opt_params_TT(df, 
             bases=[
-                ["SAPT0_adz_IE", "SAPT0_adz_3_IE_TT_ALL", "SAPT0_adz_BJ_ATM_TT_5p", "SAPT0_adz_3_IE"],
+                ["SAPT0_adz_IE", "SAPT0_adz_3_IE_TT_ALL", "SAPT0_adz_3_IE_BJ_ATM_TT_5p_OUT", "SAPT0_adz_3_IE"],
             ],
        )
 

@@ -253,10 +253,16 @@ def compute_int_energy_stats_DISP_TT(
     assert t == 0, f"The HF_col provided has np.nan values present, {t}"
     # params_2B, params_ATM = paramsTable.generate_2B_ATM_param_subsets(params)
     # params_2B, params_ATM = paramsTable.get_params("SAPT0_adz_3_IE_2B")
-    params_2B, params_ATM = paramsTable.get_params("HF_ATM_SHARED")
-    params_ATM = np.array([0.0, 0.0, params[0], params[1], 1.0])
-    print(f"{params_2B = }")
-    print(f"{params_ATM = }")
+    if len(params) == 5:
+        params_2B = np.array([1.0, params[0], params[1], params[2], 1.0])
+        params_ATM = np.array([0.0, 0.0, params[3], params[4], 1.0])
+    elif len(params) == 2:
+        params_2B, params_ATM = paramsTable.get_params("SAPT0_adz_3_IE_2B")
+        params_ATM = np.array([0.0, 0.0, params[0], params[1], 1.0])
+    if force_ATM_on:
+        params_2B[-1] = 1.0
+        params_ATM[-1] = 1.0
+    print(f"compute_int_energy_stats_DISP_TT:\n{params_2B = }\n{params_ATM = }")
 
     diff = np.zeros(len(df))
     r4r2_ls = r4r2.r4r2_vals_ls()
