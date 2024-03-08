@@ -3,11 +3,12 @@ import src
 import dispersion
 import os
 import subprocess
+import argparse
 
 
 def optimize_paramaters(
     df,
-    bases,
+    level_theories,
     start_params_d3=[0.7683276390453782, 0.09699087897359535, 3.6407701963142745],
     start_params_d4_key="HF",
     D3={
@@ -16,13 +17,14 @@ def optimize_paramaters(
     D4={
         "powell": True,
         "least_squares": False,
-        "powell_ATM_TT": True,
-        "powell_C6_only": True,
+        "powell_2B_BJ_ATM_TT": False,
+        "powell_2B_TT_ATM_TT": False,
+        "powell_C6_only": False,
     },
     ATM=False,
     extra="",
     use_2B_C6s=False,
-    drop_na=True,
+    drop_na=False,
     five_fold=False,
     omp_threads=20,
 ) -> None:
@@ -36,7 +38,7 @@ def optimize_paramaters(
     print(f"Starting Key: {start_params_d4_key}")
     subset = [
         "Geometry_bohr",
-        *bases,
+        *level_theories,
         "D3Data",
         "Benchmark",
         "charges",
@@ -50,7 +52,7 @@ def optimize_paramaters(
         "C6_ATM_B",
     ]
     if drop_na:
-        df = df[df[bases].notna().all(axis=1)].copy()
+        df = df[df[level_theories].notna().all(axis=1)].copy()
         print(f"Dropped NaNs, new size: {len(df)}")
     if use_2B_C6s:
         print("Using 2B, charge scaled C6s!")
@@ -58,7 +60,7 @@ def optimize_paramaters(
         df["C6_ATM_A"] = df["C6_A"]
         df["C6_ATM_B"] = df["C6_B"]
 
-    for i in bases:
+    for i in level_theories:
         extra_added = extra
         print(i)
         if D3["powell"]:
@@ -144,8 +146,41 @@ def optimize_paramaters(
                     force_ATM_on=ATM,
                 )
 
-        if D4["powell_ATM_TT"]:
-            print("D4 powell ATM TT")
+        if D4["powell_2B_BJ_ATM_TT"]:
+            print("D4 powell 2B BJ ATM TT")
+            if ATM:
+                print("ATM ON")
+                extra_added += "ATM_"
+            else:
+                print("ATM OFF")
+                extra_added += "2B_"
+            version = {
+                "method": "powell",
+                "compute_energy": "compute_int_energy_DISP_TT",
+                "compute_stats": "compute_int_energy_stats_DISP_TT",
+            }
+
+            if five_fold:
+                src.optimization.opt_cross_val(
+                    df,
+                    nfolds=5,
+                    start_params=params,
+                    hf_key=i,
+                    output_l_marker="D4_" + extra_added,
+                    version=version,
+                    force_ATM_on=ATM,
+                )
+            else:
+                src.optimization.opt_val_no_folds(
+                    df,
+                    start_params=params,
+                    hf_key=i,
+                    version=version,
+                    force_ATM_on=ATM,
+                )
+
+        if D4["powell_2B_TT_ATM_TT"]:
+            print("D4 powell 2B TT ATM TT")
             if ATM:
                 print("ATM ON")
                 extra_added += "ATM_"
@@ -242,31 +277,103 @@ def main():
         # "SAPT0_tz_3_IE",
     ]
 
-    def opt(bases, start_params_d4_key="SAPT_DFT_OPT_START4"):
-        optimize_paramaters(
-            df,
-            bases,
-            start_params_d4_key=start_params_d4_key,
-            D4={
-                "powell": False,
-                "least_squares": False,
-                "powell_ATM_TT": True,
-                "powell_C6_only": False,
-            },
-            D3={"powell": False},
-            ATM=True,
-            extra="",
-            # extra="SAPT_DFT_",
-            use_2B_C6s=False,
-            five_fold=False,
-        )
+    parser = argparse.ArgumentParser(
+        description="main.py for optimizing D3 and D4 dispersion parameters."
+    )
+    parser.add_argument(
+        "--level_theories",
+        type=str,
+        help="Pandas Column Name for the level of theory to optimize for (Default: SAPT0_adz_3_IE)",
+        nargs="+",
+        default="SAPT0_adz_3_IE",
+    )
+    parser.add_argument(
+        "--start_params_d4_key",
+        type=str,
+        help="Key for the start parameters for the D4 optimization. Find available options in src/paramsTable.py:paramsDict() (Default: SAPT_DFT_OPT_START4)",
+        default="SAPT_DFT_OPT_START4",
+    )
+    parser.add_argument(
+        "--powell",
+        help="Flag for using Powell optimization (Default: False)",
+        action="store_true",
+        default=False,
+    )
+    parser.add_argument(
+        "--least_squares",
+        help="Flag for using least_squares optimization (Default: False)",
+        action="store_true",
+        default=False,
+    )
+    parser.add_argument(
+        "--powell_2B_BJ_ATM_TT",
+        help="Flag for using Powell 2B BJ ATM TT optimization (Default: False)",
+        action="store_true",
+        default=False,
+    )
+    parser.add_argument(
+        "--powell_C6_only",
+        help="Flag for using Powell C6 only optimization (Default: False)",
+        action="store_true",
+        default=False,
+    )
+    parser.add_argument(
+        "--powell_2B_TT_ATM_TT",
+        help="Flag for using Powell 2B TT ATM TT optimization (Default: False)",
+        action="store_true",
+        default=False,
+    )
+    parser.add_argument(
+        "--ATM",
+        help="Flag for using ATM (Default: False)",
+        action="store_true",
+        default=False,
+    )
+    parser.add_argument(
+        "--use_2B_C6s",
+        help="Flag for using 2B C6s (Default: False)",
+        action="store_true",
+        default=False,
+    )
+    parser.add_argument(
+        "--D3",
+        help="Flag for using D3 (Default: False)",
+        action="store_true",
+        default=False,
+    )
 
-    # opt(bases, "SAPT_DFT_OPT_START4")
-    # opt(bases, "SAPT_DFT_OPT_START5")
-    # opt(bases, "SAPT_DFT_OPT_START3")
-    # opt(bases, "SAPT0_adz_BJ_ATM")
-    opt(bases, "SAPT0_adz_3_IE_BJ_ATM_TT_5p_IN")
-    # opt(bases, "SAPT_DFT_atz_ATM_TT_OPT_START_2p")
+    parser.add_argument(
+        "--five_fold",
+        help="Flag for using 5-fold cross validation (Default: False)",
+        action="store_true",
+        default=False,
+    )
+
+    parser.add_argument(
+        "--extra_label",
+        type=str,
+        help="Extra label to add to the output file from 5-fold (Default: None)",
+        default="",
+    )
+
+    args = parser.parse_args()
+    optimize_paramaters(
+        df=df,
+        level_theories=args.level_theories,
+        start_params_d4_key=args.start_params_d4_key,
+        D4={
+            "powell": args.powell,
+            "least_squares": args.least_squares,
+            "powell_2B_BJ_ATM_TT": args.powell_2B_BJ_ATM_TT,
+            "powell_C6_only": args.powell_C6_only,
+            "powell_2B_TT_ATM_TT": args.powell_2B_TT_ATM_TT,
+        },
+        D3={"powell": args.D3},
+        ATM=args.ATM,
+        extra=args.extra_label,
+        use_2B_C6s=args.use_2B_C6s,
+        five_fold=args.five_fold,
+    )
     return
 
 

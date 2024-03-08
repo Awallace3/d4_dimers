@@ -148,6 +148,13 @@ def paramsDict() -> {}:
             [-0.4421002222768613, 3.4023423446618244],
             dtype=np.float64,
         ),
+        "2B_TT_START": np.array(
+            [
+                -0.31,
+                3.43,
+            ],
+            dtype=np.float64,
+        ),
         "SAPT0_adz_BJ_ATM_TT_OPT_START_5p": np.array(
             # [s8, a1, a2, b1, b2],
             [
