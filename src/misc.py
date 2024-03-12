@@ -165,7 +165,7 @@ def examine_ATM_TT(df):
         params, df, "SAPT0_adz_3_IE", print_results=True
     )
     print("TT:")
-    optimization.compute_int_energy_stats_DISP_TT(
+    optimization.compute_int_energy_stats_DISP_2B_BJ_ATM_TT(
         params, df, "SAPT0_adz_3_IE", print_results=True
     )
     return

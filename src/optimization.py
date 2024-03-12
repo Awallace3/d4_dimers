@@ -240,7 +240,7 @@ def compute_int_energy_stats_DISP_C6_only(
     return mae, rmse, max_e, mad, mean_dif
 
 
-def compute_int_energy_stats_DISP_TT(
+def compute_int_energy_stats_DISP_2B_TT_ATM_TT(
     params: [float],
     df: pd.DataFrame,
     hf_key: str = "HF INTERACTION ENERGY",
@@ -253,15 +253,71 @@ def compute_int_energy_stats_DISP_TT(
     assert t == 0, f"The HF_col provided has np.nan values present, {t}"
     # params_2B, params_ATM = paramsTable.generate_2B_ATM_param_subsets(params)
     # params_2B, params_ATM = paramsTable.get_params("SAPT0_adz_3_IE_2B")
-    if len(params) == 5:
-        params_2B = np.array([1.0, params[0], params[1], params[2], 1.0])
-        params_ATM = np.array([0.0, 0.0, params[3], params[4], 1.0])
-    elif len(params) == 2:
-        params_2B, params_ATM = paramsTable.get_params("SAPT0_adz_3_IE_2B")
-        params_ATM = np.array([0.0, 0.0, params[0], params[1], 1.0])
     if force_ATM_on:
-        params_2B[-1] = 1.0
-        params_ATM[-1] = 1.0
+        if len(params) == 5:
+            params_2B = np.array([1.0, params[0], params[1], params[2], 1.0])
+            params_ATM = np.array([0.0, 0.0, params[3], params[4], 1.0])
+        else:
+            raise ValueError("params must be of length 5")
+    else:
+        if len(params) == 3:
+            params_2B = np.array([1.0, params[0], params[1], params[2], 0.0])
+            params_ATM = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
+        else:
+            raise ValueError("params must be of length 3")
+
+    print(f"compute_int_energy_stats_DISP_TT:\n{params_2B = }\n{params_ATM = }")
+
+    diff = np.zeros(len(df))
+    r4r2_ls = r4r2.r4r2_vals_ls()
+    df["d4"] = df.apply(
+        lambda row: locald4.compute_disp_2B_TT_ATM_TT_dimer(
+            row,
+            params_2B,
+            params_ATM,
+        ),
+        axis=1,
+    )
+    df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
+    mae = df["diff"].abs().mean()
+    rmse = (df["diff"] ** 2).mean() ** 0.5
+    max_e = df["diff"].abs().max()
+    mad = abs(df["diff"] - df["diff"].mean()).mean()
+    mean_dif = df["diff"].mean()
+    if print_results:
+        print("        1. MAE  = %.4f" % mae)
+        print("        2. RMSE = %.4f" % rmse)
+        print("        3. MAX  = %.4f" % max_e)
+        print("        4. MAD  = %.4f" % mad)
+        print("        4. MD   = %.4f" % mean_dif)
+    return mae, rmse, max_e, mad, mean_dif
+
+
+def compute_int_energy_stats_DISP_2B_BJ_ATM_TT(
+    params: [float],
+    df: pd.DataFrame,
+    hf_key: str = "HF INTERACTION ENERGY",
+    parallel=False,
+    print_results=False,
+    chunk_count=1000,
+    force_ATM_on=False,
+) -> (float, float, float,):
+    t = df[hf_key].isna().sum()
+    assert t == 0, f"The HF_col provided has np.nan values present, {t}"
+    # params_2B, params_ATM = paramsTable.generate_2B_ATM_param_subsets(params)
+    # params_2B, params_ATM = paramsTable.get_params("SAPT0_adz_3_IE_2B")
+    if force_ATM_on:
+        if len(params) == 5:
+            params_2B = np.array([1.0, params[0], params[1], params[2], 1.0])
+            params_ATM = np.array([0.0, 0.0, params[3], params[4], 1.0])
+        else:
+            raise ValueError("params must be of length 5")
+    else:
+        if len(params) == 3:
+            params_2B = np.array([1.0, params[0], params[1], params[2], 0.0])
+            params_ATM = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
+        else:
+            raise ValueError("params must be of length 3")
     print(f"compute_int_energy_stats_DISP_TT:\n{params_2B = }\n{params_ATM = }")
 
     diff = np.zeros(len(df))
@@ -471,8 +527,7 @@ def compute_int_energy_DISP_C6_only(
         return 1000
     return rmse
 
-
-def compute_int_energy_DISP_TT(
+def compute_int_energy_DISP_2B_TT_ATM_TT(
     params,
     df: pd.DataFrame,
     hf_key: str = "HF INTERACTION ENERGY",
@@ -483,15 +538,61 @@ def compute_int_energy_DISP_TT(
     """
     # params_2B, params_ATM = paramsTable.get_params("HF_ATM_SHARED")
     # params_ATM = np.array([0.0, 0.0, params[0], params[1], 1.0])
-    if len(params) == 5:
-        params_2B = np.array([1.0, params[0], params[1], params[2], 1.0])
-        params_ATM = np.array([0.0, 0.0, params[3], params[4], 1.0])
-    elif len(params) == 2:
-        params_2B, params_ATM = paramsTable.get_params("SAPT0_adz_3_IE_2B")
-        params_ATM = np.array([0.0, 0.0, params[0], params[1], 1.0])
     if force_ATM_on:
-        params_2B[-1] = 1.0
-        params_ATM[-1] = 1.0
+        if len(params) == 5:
+            params_2B = np.array([1.0, params[0], params[1], params[2], 1.0])
+            params_ATM = np.array([0.0, 0.0, params[3], params[4], 1.0])
+        else:
+            raise ValueError("params must be of length 5")
+    else:
+        if len(params) == 3:
+            params_2B = np.array([1.0, params[0], params[1], params[2], 0.0])
+            params_ATM = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
+        else:
+            raise ValueError("params must be of length 3")
+    print(f"compute_int_energy_DISP_TT:\n{params_2B = }\n{params_ATM = }")
+
+    rmse = 0
+    df["d4"] = df.apply(
+        lambda row: locald4.compute_disp_2B_TT_ATM_TT_dimer(
+            row,
+            params_2B,
+            params_ATM,
+        ),
+        axis=1,
+    )
+    df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
+    rmse = (df["diff"] ** 2).mean() ** 0.5
+    print("%.8f\t" % rmse, params.tolist())
+    if np.isnan(rmse):
+        return 10
+    return rmse
+
+
+
+def compute_int_energy_DISP_2B_BJ_ATM_TT(
+    params,
+    df: pd.DataFrame,
+    hf_key: str = "HF INTERACTION ENERGY",
+    force_ATM_on: bool = False,
+):
+    """
+    compute_int_energy_DISP_TT is used to optimize paramaters for damping function in dftd4 with TT damping ATM function
+    """
+    # params_2B, params_ATM = paramsTable.get_params("HF_ATM_SHARED")
+    # params_ATM = np.array([0.0, 0.0, params[0], params[1], 1.0])
+    if force_ATM_on:
+        if len(params) == 5:
+            params_2B = np.array([1.0, params[0], params[1], params[2], 1.0])
+            params_ATM = np.array([0.0, 0.0, params[3], params[4], 1.0])
+        else:
+            raise ValueError("params must be of length 5")
+    else:
+        if len(params) == 3:
+            params_2B = np.array([1.0, params[0], params[1], params[2], 0.0])
+            params_ATM = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
+        else:
+            raise ValueError("params must be of length 3")
     rmse = 0
     df["d4"] = df.apply(
         lambda row: locald4.compute_disp_2B_BJ_ATM_TT_dimer(
@@ -791,13 +892,24 @@ def optimization(
         compute = compute_int_energy_DISP
     elif version["compute_energy"] == "compute_int_energy_DISP_C6_only":
         compute = compute_int_energy_DISP_C6_only
-    elif version["compute_energy"] == "compute_int_energy_DISP_TT":
-        compute = compute_int_energy_DISP_TT
+    elif version["compute_energy"] == "compute_int_energy_DISP_2B_BJ_ATM_TT":
+        compute = compute_int_energy_DISP_2B_BJ_ATM_TT
         # bounds = [(-1.0, -0.001), (3.0, 6.0)]
         if len(params) == 2:
             bounds = [(-1.0, -0.001), (3.0, 6.0)]
+        elif len(params) == 3:
+            bounds = [(-3.0, 6.0),(-1.0, -0.001), (-3.0, 6.0)]
         else:
             bounds = [(-3.0, 6.0),(-3.0, 6.0), (-3.0, 6.0), (-1.0, -0.001), (-3.0, 6.0)]
+    elif version["compute_energy"] == "compute_int_energy_DISP_2B_TT_ATM_TT":
+        compute = compute_int_energy_DISP_2B_TT_ATM_TT
+        # bounds = [(-1.0, -0.001), (3.0, 6.0)]
+        if len(params) == 2:
+            bounds = [(-1.0, -0.001), (3.0, 6.0)]
+        elif len(params) == 3:
+            bounds = [(-3.0, 6.0),(-1.0, -0.001), (-3.0, 6.0)]
+        else:
+            bounds = [(-3.0, 6.0),(-1.0, -0.001), (-3.0, 6.0), (-1.0, -0.001), (-3.0, 6.0)]
     elif version["compute_energy"] == "compute_int_energy":
         compute = compute_int_energy
     elif version["compute_energy"] == "compute_int_energy_ATM":
@@ -867,6 +979,8 @@ def opt_val_no_folds(
         "compute_stats": "compute_int_energy_stats_DISP",
     },
     force_ATM_on=False,
+    output_marker="",
+    output_file='./out_params.out',
 ) -> None:
     """
     opt_cross_val performs n-fold cross validation on opt*.pkl df from
@@ -877,8 +991,10 @@ def opt_val_no_folds(
         compute_stats = compute_int_energy_stats_DISP
     elif version["compute_stats"] == "compute_int_energy_stats_DISP_C6_only":
         compute_stats = compute_int_energy_stats_DISP_C6_only
-    elif version["compute_stats"] == "compute_int_energy_stats_DISP_TT":
-        compute_stats = compute_int_energy_stats_DISP_TT
+    elif version["compute_stats"] == "compute_int_energy_DISP_2B_BJ_ATM_TT":
+        compute_stats = compute_int_energy_stats_DISP_2B_BJ_ATM_TT
+    elif version["compute_stats"] == "compute_int_energy_DISP_2B_TT_ATM_TT":
+        compute_stats = compute_int_energy_stats_DISP_2B_TT_ATM_TT
     elif version["compute_stats"] == "compute_int_energy_stats":
         compute_stats = compute_int_energy_stats
     elif version["compute_stats"] == "jeff_d3":
@@ -916,6 +1032,10 @@ def opt_val_no_folds(
     params_2B, params_ATM = paramsTable.generate_2B_ATM_param_subsets(mp, force_ATM_on=force_ATM_on)
     all_params = repr(np.array([params_2B, params_ATM], np.float64))
     print(f'"{hf_key}": np.{all_params},')
+    with open(output_file, 'w') as f:
+        f.write(f"{output_marker = }\n")
+        f.write(f'"{hf_key}": np.{all_params},')
+        f.write(f"\n{stats = }\n----------------\n")
     return
 
 def opt_cross_val(
@@ -940,8 +1060,8 @@ def opt_cross_val(
         compute_stats = compute_int_energy_stats_DISP
     elif version["compute_stats"] == "compute_int_energy_stats_DISP_C6_only":
         compute_stats = compute_int_energy_stats_DISP_C6_only
-    elif version["compute_stats"] == "compute_int_energy_stats_DISP_TT":
-        compute_stats = compute_int_energy_stats_DISP_TT
+    elif version["compute_stats"] == "compute_int_energy_stats_DISP_2B_BJ_ATM_TT":
+        compute_stats = compute_int_energy_stats_DISP_2B_BJ_ATM_TT
     elif version["compute_stats"] == "compute_int_energy_stats":
         compute_stats = compute_int_energy_stats
     elif version["compute_stats"] == "jeff_d3":

@@ -148,8 +148,37 @@ def paramsDict() -> {}:
             [-0.4421002222768613, 3.4023423446618244],
             dtype=np.float64,
         ),
-        "2B_TT_START": np.array(
+        "2B_TT": np.array(
+            # [b1, b2]
             [
+                -0.33,
+                4.39,
+            ],
+            dtype=np.float64,
+        ),
+        "3B_TT": np.array(
+            # [b3, b4]
+            [
+                -0.31,
+                3.43,
+            ],
+            dtype=np.float64,
+        ),
+        "2B_TT_START": np.array(
+            # [s8, b1, b2]
+            [
+                0.83055196,
+                -0.33,
+                4.39,
+            ],
+            dtype=np.float64,
+        ),
+        "2B_TT_ATM_TT_START": np.array(
+            # [s8, b1, b2, b3, b4]
+            [
+                0.83055196,
+                -0.33,
+                4.39,
                 -0.31,
                 3.43,
             ],

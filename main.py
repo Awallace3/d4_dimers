@@ -5,6 +5,7 @@ import os
 import subprocess
 import argparse
 
+# TODO: implement powell_2B_BJ_ATM_TT and powell_2B_TT_ATM_TT in optimzation.py
 
 def optimize_paramaters(
     df,
@@ -15,7 +16,7 @@ def optimize_paramaters(
         "powell": True,
     },
     D4={
-        "powell": True,
+        "powell": False,
         "least_squares": False,
         "powell_2B_BJ_ATM_TT": False,
         "powell_2B_TT_ATM_TT": False,
@@ -32,6 +33,7 @@ def optimize_paramaters(
     Optimize the parameters for the D3 and D4 dispersion models.
 
     """
+    print(f"{D4 = }")
 
     params = src.paramsTable.get_params(start_params_d4_key)
     dispersion.omp_set_num_threads(omp_threads)
@@ -60,6 +62,7 @@ def optimize_paramaters(
         df["C6_ATM_A"] = df["C6_A"]
         df["C6_ATM_B"] = df["C6_B"]
 
+    print(f"Level Theories: {level_theories}")
     for i in level_theories:
         extra_added = extra
         print(i)
@@ -78,6 +81,7 @@ def optimize_paramaters(
                 output_l_marker="D3_" + extra_added,
                 version=version,
             )
+            extra_added = extra
         if D4["powell"]:
             print("D4 powell")
             if ATM:
@@ -112,6 +116,7 @@ def optimize_paramaters(
                     version=version,
                     force_ATM_on=ATM,
                 )
+            extra_added = extra
 
         if D4["powell_C6_only"]:
             print("D4 powell")
@@ -145,9 +150,11 @@ def optimize_paramaters(
                     version=version,
                     force_ATM_on=ATM,
                 )
+            extra_added = extra
 
         if D4["powell_2B_BJ_ATM_TT"]:
             print("D4 powell 2B BJ ATM TT")
+            extra_added += "powell_2B_TT_ATM_TT_"
             if ATM:
                 print("ATM ON")
                 extra_added += "ATM_"
@@ -156,8 +163,8 @@ def optimize_paramaters(
                 extra_added += "2B_"
             version = {
                 "method": "powell",
-                "compute_energy": "compute_int_energy_DISP_TT",
-                "compute_stats": "compute_int_energy_stats_DISP_TT",
+                "compute_energy": "compute_int_energy_DISP_2B_BJ_ATM_TT",
+                "compute_stats": "compute_int_energy_stats_DISP_2B_BJ_ATM_TT",
             }
 
             if five_fold:
@@ -176,11 +183,14 @@ def optimize_paramaters(
                     start_params=params,
                     hf_key=i,
                     version=version,
+                    output_marker="powell_2B_BJ_ATM_TT",
                     force_ATM_on=ATM,
                 )
+            extra_added = extra
 
         if D4["powell_2B_TT_ATM_TT"]:
             print("D4 powell 2B TT ATM TT")
+            extra_added += "powell_2B_TT_ATM_TT_"
             if ATM:
                 print("ATM ON")
                 extra_added += "ATM_"
@@ -189,8 +199,8 @@ def optimize_paramaters(
                 extra_added += "2B_"
             version = {
                 "method": "powell",
-                "compute_energy": "compute_int_energy_DISP_TT",
-                "compute_stats": "compute_int_energy_stats_DISP_TT",
+                "compute_energy": "compute_int_energy_DISP_2B_TT_ATM_TT",
+                "compute_stats": "compute_int_energy_DISP_2B_TT_ATM_TT",
             }
 
             if five_fold:
@@ -209,8 +219,10 @@ def optimize_paramaters(
                     start_params=params,
                     hf_key=i,
                     version=version,
+                    output_marker="powell_2B_TT_ATM_TT",
                     force_ATM_on=ATM,
                 )
+            extra_added = extra
 
         if D4["least_squares"]:
             print("D4 least_squares")
@@ -227,6 +239,7 @@ def optimize_paramaters(
                 output_l_marker="least",
                 version=version,
             )
+            extra_added = extra
     return
 
 
@@ -357,6 +370,7 @@ def main():
     )
 
     args = parser.parse_args()
+    print(args)
     optimize_paramaters(
         df=df,
         level_theories=args.level_theories,

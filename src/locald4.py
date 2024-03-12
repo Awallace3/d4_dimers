@@ -544,6 +544,39 @@ def compute_disp_2B_C6_only(
     return e_total * mult_out
 
 
+def compute_disp_2B_TT_ATM_TT_dimer(
+    r,
+    params_2B,
+    params_ATM,
+    mult_out=hartree_to_kcalmol,
+):
+    pos, carts = (
+        np.array(r["Geometry_bohr"][:, 0], dtype=np.int32),
+        r["Geometry_bohr"][:, 1:],
+    )
+    charges = r["charges"]
+    monAs, monBs = r["monAs"], r["monBs"]
+    charges = r["charges"]
+    pA, cA = pos[monAs], carts[monAs, :]
+    pB, cB = pos[monBs], carts[monBs, :]
+    e_total = disp.disp_2B_TT_ATM_TT(
+        pos,
+        carts,
+        r["C6s"],
+        r["C6_ATM"],
+        pA,
+        cA,
+        r["C6_A"],
+        r["C6_ATM_A"],
+        pB,
+        cB,
+        r["C6_B"],
+        r["C6_ATM_B"],
+        params_2B,
+        params_ATM,
+    )
+    return e_total * mult_out
+
 def compute_disp_2B_BJ_ATM_TT_dimer(
     r,
     params_2B,
