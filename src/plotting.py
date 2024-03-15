@@ -13,6 +13,17 @@ warnings.simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
 
 kcal_per_mol = "$\mathrm{kcal\cdot mol^{-1}}$"
 
+# plt.rcParams["text.usetex"] = True
+plt.rcParams.update(
+    {
+        "text.usetex": True,
+        # "font.family": "Times",
+        "font.family": "serif",
+        "font.serif": "STIX",
+        "mathtext.fontset": "stix",
+    }
+)
+
 
 def compute_D3_D4_values_for_params_for_plotting(
     df: pd.DataFrame,
@@ -69,9 +80,7 @@ def compute_D3_D4_values_for_params_for_plotting(
     )
     print(params_2B, params_2B_2, sep="\n")
     print(params_ATM, params_ATM_2, sep="\n")
-    params_2B_2, params_ATM_2 = paramsTable.generate_2B_ATM_param_subsets(
-        params_d4_ATM
-    )
+    params_2B_2, params_ATM_2 = paramsTable.generate_2B_ATM_param_subsets(params_d4_ATM)
     df[f"-D4 ({label}) ATM"] = df.apply(
         lambda row: locald4.compute_disp_2B_BJ_ATM_CHG_dimer(
             row,
@@ -145,7 +154,7 @@ def compute_d4_from_opt_params(
     [[
         df_column_for_IE_method_diff,
         df_column_for_label,
-        params_name, 
+        params_name,
         df_column_for_elst_exch_indu_sum
     ]
     ...
@@ -177,7 +186,12 @@ def compute_d4_from_opt_params_TT(
     df: pd.DataFrame,
     bases=[
         # "DF_col_for_IE": "PARAMS_NAME"
-        ["SAPT0_adz_IE", "SAPT0_adz_3_IE_TT_ALL", "SAPT0_adz_BJ_ATM_TT_5p", "SAPT0_adz_3_IE"],
+        [
+            "SAPT0_adz_IE",
+            "SAPT0_adz_3_IE_TT_ALL",
+            "SAPT0_adz_BJ_ATM_TT_5p",
+            "SAPT0_adz_3_IE",
+        ],
         # ["SAPT0_adz_IE", "SAPT0_adz_3_IE_TT", "HF_ATM_TT_OPT_START", "SAPT0_adz_3_IE"],
         # ["SAPT0_adz_IE", "SAPT0_adz_3_IE_TT_OPT", "HF_ATM_OPT_OUT", "SAPT0_adz_3_IE"],
     ],
@@ -289,9 +303,9 @@ def plot_dbs(df, df_col, title_name, pfn, color="blue") -> None:
     ax.set_xticks(xs)
     plt.setp(ax.set_xticklabels(vLabels), rotation=90, fontsize="5")
     ax.set_xlim((0, len(vLabels)))
-    ax.legend(loc="upper left")
-    ax.set_xlabel("Database")
-    ax.set_ylabel("Error (kcal/mol)")
+    ax.legend(loc="upper left", fontsize="9")
+    ax.set_xlabel("Database", fontsize="12")
+    ax.set_ylabel("Error (kcal/mol)", fontsize="14")
     if title_name is not None:
         plt.title(f"{title_name}")
     plt.savefig(f"plots/{pfn}_dbs_violin.png", bbox_inches="tight")
@@ -366,9 +380,9 @@ def plot_dbs_d3_d4_two(df, c1, c2, l1, l2, title_name, pfn, first=True) -> None:
     plt.setp(ax.set_xticklabels(vLabels), rotation=50, fontsize="7")
     ax.set_xlim((0, len(vLabels)))
     ax.set_ylim((-12, 6))
-    ax.legend(loc="upper left")
-    ax.set_xlabel("Database")
-    ax.set_ylabel(r"Error ($\mathrm{kcal\cdot mol^{-1}}$)")
+    ax.legend(loc="upper left", fontsize="9")
+    ax.set_xlabel("Database", fontsize="12")
+    ax.set_ylabel(r"Error ($\mathrm{kcal\cdot mol^{-1}}$)", fontsize="14")
     # ax.set_ylabel(r"Error ($\frac{kcal}{mol}$)")
     ax.grid(color="gray", linewidth=0.5, alpha=0.3)
     for n, xtick in enumerate(ax.get_xticklabels()):
@@ -397,7 +411,8 @@ def get_charged_df(df) -> pd.DataFrame:
     return df
 
 
-def plot_basis_sets_d4(df, build_df=False, df_out: str = "basis_study"):
+def plot_basis_sets_d4(df, build_df=False, df_out: str = "basis_study", df_name=""):
+    selected = df_out
     df_out = f"plots/{df_out}.pkl"
     if build_df:
         df = compute_d4_from_opt_params(df)
@@ -452,7 +467,7 @@ def plot_basis_sets_d4(df, build_df=False, df_out: str = "basis_study"):
                     "SAPT0_adz_BJ_ATM",
                     "SAPT0_adz_BJ_ATM",
                     "SAPT0_adz_3_IE",
-                ]
+                ],
             ],
         )
         df.to_pickle(df_out)
@@ -480,9 +495,8 @@ def plot_basis_sets_d4(df, build_df=False, df_out: str = "basis_study"):
         # f"All Dimers ({len(df)})",
         # f"Basis Set Comparison Across All Dimers ({len(df)})",
         None,
-        f"basis_set_d4",
+        f"{selected}_d4",
         bottom=0.30,
-
     )
     plot_violin_d3_d4_ALL(
         df,
@@ -505,7 +519,7 @@ def plot_basis_sets_d4(df, build_df=False, df_out: str = "basis_study"):
         # f"{len(df)} Dimers With Different Basis Sets (D4)",
         # f"All Dimers ({len(df)})",
         None,
-        f"basis_set_d4_opt_vs_adz",
+        f"{selected}_d4_opt_vs_adz",
         ylim=[-15, 14],
         bottom=0.35,
     )
@@ -586,6 +600,7 @@ def compute_d3_from_opt_params(
 
 
 def plot_basis_sets_d3(df, build_df=False, df_out: str = "basis_study"):
+    selected = df_out
     df_out = f"plots/{df_out}.pkl"
     if build_df:
         df = compute_d3_from_opt_params(df)
@@ -661,7 +676,7 @@ def plot_basis_sets_d3(df, build_df=False, df_out: str = "basis_study"):
         },
         # f"{len(df)} Dimers With Different Basis Sets (D3)",
         None,
-        f"basis_set_d3",
+        f"{selected}_d3",
         bottom=0.30,
     )
     plot_violin_d3_d4_ALL(
@@ -684,7 +699,7 @@ def plot_basis_sets_d3(df, build_df=False, df_out: str = "basis_study"):
         },
         # f"{len(df)} Dimers With Different Basis Sets (D3)",
         None,
-        f"basis_set_d3_opt_vs_adz",
+        f"{selected}_d3_opt_vs_adz",
         bottom=0.35,
         ylim=[-15, 15],
     )
@@ -692,7 +707,9 @@ def plot_basis_sets_d3(df, build_df=False, df_out: str = "basis_study"):
     return df
 
 
-def plotting_setup(df, build_df=False, df_out: str = "plots/basis_study.pkl", compute_d3=True):
+def plotting_setup(
+    df, build_df=False, df_out: str = "plots/basis_study.pkl", compute_d3=True
+):
     df, selected = df
     selected = selected.split("/")[-1].split(".")[0]
     df_out = f"plots/{selected}.pkl"
@@ -700,11 +717,17 @@ def plotting_setup(df, build_df=False, df_out: str = "plots/basis_study.pkl", co
         # df = compute_D3_D4_values_for_params_for_plotting(df, "adz", compute_d3)
         # df = compute_D3_D4_values_for_params_for_plotting(df, "jdz", compute_d3)
         # df = compute_d4_from_opt_params(df)
-        df = compute_d4_from_opt_params_TT(df, 
+        df = compute_d4_from_opt_params_TT(
+            df,
             bases=[
-                ["SAPT0_adz_IE", "SAPT0_adz_3_IE_TT_ALL", "SAPT0_adz_3_IE_BJ_ATM_TT_5p_OUT", "SAPT0_adz_3_IE"],
+                [
+                    "SAPT0_adz_IE",
+                    "SAPT0_adz_3_IE_TT_ALL",
+                    "SAPT0_adz_3_IE_BJ_ATM_TT_5p_OUT",
+                    "SAPT0_adz_3_IE",
+                ],
             ],
-       )
+        )
 
         df["SAPT0-D4/aug-cc-pVDZ"] = df.apply(
             lambda row: row["SAPT0_adz_3_IE"] + row["-D4 (adz)"],
@@ -718,7 +741,9 @@ def plotting_setup(df, build_df=False, df_out: str = "plots/basis_study.pkl", co
             lambda row: row["SAPT0_adz_3_IE"] + row["-D4 (adz) ATM ALL"],
             axis=1,
         )
-        df['SAPT0_adz_ATM_opt_all_diff'] = df['Benchmark'] - df['SAPT0-D4(ATM ALL)/aug-cc-pVDZ']
+        df["SAPT0_adz_ATM_opt_all_diff"] = (
+            df["Benchmark"] - df["SAPT0-D4(ATM ALL)/aug-cc-pVDZ"]
+        )
         df["SAPT0-D4/jun-cc-pVDZ"] = df.apply(
             lambda row: row["SAPT0_jdz_3_IE"] + row["-D4 (jdz)"],
             axis=1,
@@ -816,7 +841,7 @@ def plotting_setup(df, build_df=False, df_out: str = "plots/basis_study.pkl", co
                 "0-D4(2B ATM)/aDZ": "adz_diff_d4_ATM",
                 "0-D4(2B@G ATM)/aDZ": "adz_diff_d4_2B@ATM_G",
                 "0-D4(2B@G ATM@G)/aDZ": "adz_diff_d4_ATM_G",
-                "0-D4(ATM TT ALL)/aDZ": "SAPT0_adz_3_IE_TT_ALL_d4_diff",
+                # "0-D4(ATM TT ALL)/aDZ": "SAPT0_adz_3_IE_TT_ALL_d4_diff",
                 "0/jDZ": "SAPT0_jdz_3_IE_diff",
                 "0/aDZ": "SAPT0_adz_3_IE_diff",
                 # "SAPT(DFT)-D4/aDZ": "SAPT_DFT_adz_3_IE_d4_diff",
@@ -825,7 +850,7 @@ def plotting_setup(df, build_df=False, df_out: str = "plots/basis_study.pkl", co
             f"All Dimers (8299)",
             f"{selected}_ATM",
             bottom=0.45,
-            ylim=[-18, 22],
+            ylim=[-18, 26],
             # figure_size=(6, 6),
         )
         plot_dbs_d3_d4(
@@ -838,7 +863,7 @@ def plotting_setup(df, build_df=False, df_out: str = "plots/basis_study.pkl", co
             title_name=None,
             # title_name=f"DB Breakdown SAPT0-D4/aug-cc-pVDZ ({selected})",
             # title_name=f"-D4 Two-Body versus Three-Body (ATM)",
-            pfn=f"db_breakdown_2B_ATM",
+            pfn=f"{selected}_db_breakdown_2B_ATM",
         )
         # Basis Set Performance: SAPT0
         plot_violin_d3_d4_ALL(
@@ -902,51 +927,65 @@ def plotting_setup_dft(
     df_out = f"plots/{selected}.pkl"
     if build_df:
         df = compute_d4_from_opt_params(
-                df,
-                bases=[
-                    [
-                        "SAPT_DFT_adz_IE",
-                        "SAPT_DFT_adz_3_IE_ATM",
-                        "SAPT_DFT_atz_3_IE_ATM_LINKED",
-                        "SAPT_DFT_adz_3_IE",
-                    ],
-                    [
-                        "SAPT_DFT_adz_IE",
-                        "SAPT_DFT_adz_3_IE",
-                        "SAPT_DFT_OPT_END3",
-                        "SAPT_DFT_adz_3_IE",
-                    ],
-                    [
-                        "SAPT_DFT_atz_IE",
-                        "SAPT_DFT_atz_3_IE",
-                        "SAPT_DFT_atz_3_IE",
-                        "SAPT_DFT_atz_3_IE",
-                    ],
-                    [
-                        "SAPT_DFT_atz_IE",
-                        "SAPT_DFT_atz_3_IE_ATM",
-                        "SAPT_DFT_atz_3_IE_ATM_LINKED",
-                        "SAPT_DFT_atz_3_IE",
-                    ],
+            df,
+            bases=[
+                [
+                    "SAPT_DFT_adz_IE",
+                    "SAPT_DFT_adz_3_IE_ATM",
+                    "SAPT_DFT_atz_3_IE_ATM_LINKED",
+                    "SAPT_DFT_adz_3_IE",
                 ],
-            )
+                [
+                    "SAPT_DFT_adz_IE",
+                    "SAPT_DFT_adz_3_IE",
+                    "SAPT_DFT_OPT_END3",
+                    "SAPT_DFT_adz_3_IE",
+                ],
+                [
+                    "SAPT_DFT_atz_IE",
+                    "SAPT_DFT_atz_3_IE",
+                    "SAPT_DFT_atz_3_IE",
+                    "SAPT_DFT_atz_3_IE",
+                ],
+                [
+                    "SAPT_DFT_atz_IE",
+                    "SAPT_DFT_atz_3_IE_ATM",
+                    "SAPT_DFT_atz_3_IE_ATM_LINKED",
+                    "SAPT_DFT_atz_3_IE",
+                ],
+            ],
+        )
         print(df.columns.values)
         # Need to get components
-        for basis in ['adz', 'atz', 'tz', 'jdz']:
+        for basis in ["adz", "atz", "tz", "jdz"]:
             df[f"SAPT0_adz_d4"] = df.apply(
                 lambda x: x[f"SAPT0_adz_3_IE"] + x[f"-D4 (SAPT0_adz_3_IE)"], axis=1
             )
-            df[f"SAPT0_{basis}_total"] = df.apply(lambda x: x[f"SAPT0_{basis}"][0], axis=1)
-            df[f"SAPT0_{basis}_elst"] = df.apply(lambda x: x[f"SAPT0_{basis}"][1], axis=1)
-            df[f"SAPT0_{basis}_exch"] = df.apply(lambda x: x[f"SAPT0_{basis}"][2], axis=1)
-            df[f"SAPT0_{basis}_indu"] = df.apply(lambda x: x[f"SAPT0_{basis}"][3], axis=1)
-            df[f"SAPT0_{basis}_disp"] = df.apply(lambda x: x[f"SAPT0_{basis}"][4], axis=1)
-            df[f'SAPT0_{basis}_3_IE'] = df.apply(
-                lambda x: x[f'SAPT0_{basis}_elst'] + x[f'SAPT0_{basis}_exch'] + x[f'SAPT0_{basis}_indu'], 
-                axis=1
+            df[f"SAPT0_{basis}_total"] = df.apply(
+                lambda x: x[f"SAPT0_{basis}"][0], axis=1
             )
-        for basis in ['adz', 'atz']:
-            df[f"SAPT_DFT_{basis}_total"] = df.apply(lambda x: x[f"SAPT_DFT_{basis}"][0], axis=1)
+            df[f"SAPT0_{basis}_elst"] = df.apply(
+                lambda x: x[f"SAPT0_{basis}"][1], axis=1
+            )
+            df[f"SAPT0_{basis}_exch"] = df.apply(
+                lambda x: x[f"SAPT0_{basis}"][2], axis=1
+            )
+            df[f"SAPT0_{basis}_indu"] = df.apply(
+                lambda x: x[f"SAPT0_{basis}"][3], axis=1
+            )
+            df[f"SAPT0_{basis}_disp"] = df.apply(
+                lambda x: x[f"SAPT0_{basis}"][4], axis=1
+            )
+            df[f"SAPT0_{basis}_3_IE"] = df.apply(
+                lambda x: x[f"SAPT0_{basis}_elst"]
+                + x[f"SAPT0_{basis}_exch"]
+                + x[f"SAPT0_{basis}_indu"],
+                axis=1,
+            )
+        for basis in ["adz", "atz"]:
+            df[f"SAPT_DFT_{basis}_total"] = df.apply(
+                lambda x: x[f"SAPT_DFT_{basis}"][0], axis=1
+            )
             df[f"SAPT_DFT_{basis}_elst"] = df.apply(
                 lambda x: select_element(x[f"SAPT_DFT_{basis}"], 1), axis=1
             )
@@ -959,15 +998,21 @@ def plotting_setup_dft(
             df[f"SAPT_DFT_{basis}_disp"] = df.apply(
                 lambda x: select_element(x[f"SAPT_DFT_{basis}"], 4), axis=1
             )
-            df[f'SAPT_DFT_{basis}_3_IE'] = df.apply(
-                lambda x: x[f'SAPT_DFT_{basis}_elst'] + x[f'SAPT_DFT_{basis}_exch'] + x[f'SAPT_DFT_{basis}_indu'],
-                axis=1
+            df[f"SAPT_DFT_{basis}_3_IE"] = df.apply(
+                lambda x: x[f"SAPT_DFT_{basis}_elst"]
+                + x[f"SAPT_DFT_{basis}_exch"]
+                + x[f"SAPT_DFT_{basis}_indu"],
+                axis=1,
             )
-            df[f'SAPT_DFT_{basis}_3_IE_d4'] = df.apply(
-                lambda x: x[f'SAPT_DFT_{basis}_3_IE'] + x[f'-D4 (SAPT_DFT_{basis}_3_IE)'], axis=1
+            df[f"SAPT_DFT_{basis}_3_IE_d4"] = df.apply(
+                lambda x: x[f"SAPT_DFT_{basis}_3_IE"]
+                + x[f"-D4 (SAPT_DFT_{basis}_3_IE)"],
+                axis=1,
             )
-            df[f'SAPT_DFT_{basis}_3_IE_d4_ATM'] = df.apply(
-                lambda x: x[f'SAPT_DFT_{basis}_3_IE'] + x[f'-D4 (SAPT_DFT_{basis}_3_IE_ATM)'], axis=1
+            df[f"SAPT_DFT_{basis}_3_IE_d4_ATM"] = df.apply(
+                lambda x: x[f"SAPT_DFT_{basis}_3_IE"]
+                + x[f"-D4 (SAPT_DFT_{basis}_3_IE_ATM)"],
+                axis=1,
             )
         df.to_pickle(df_out)
     else:
@@ -1077,18 +1122,18 @@ def plot_violin_d3_d4_ALL(
 
     annotations = []  # [(x, y, text), ...]
     cnt = 1
-    plt.rcParams["text.usetex"] = True
     for k, v in vals.items():
         df[v] = pd.to_numeric(df[v])
         df_sub = df[df[v].notna()].copy()
         vData.append(df_sub[v].to_list())
         k_label = "\\textbf{" + k + "}"
+        # k_label = k
         vLabels.append(k_label)
         m = df_sub[v].max()
         rmse = df_sub[v].apply(lambda x: x**2).mean() ** 0.5
         mae = df_sub[v].apply(lambda x: abs(x)).mean()
         max_error = df_sub[v].apply(lambda x: abs(x)).max()
-        text = r"$\mathit{%.2f}$" % mae
+        text = r"$\mathbf{\mathit{%.2f}}$" % mae
         text += "\n"
         text += r"$\mathbf{%.2f}$" % rmse
         text += "\n"
@@ -1172,20 +1217,20 @@ def plot_violin_d3_d4_ALL(
     # minor_yticks = np.arange(ylim[0], ylim[1], 2)
     # ax.set_yticks(minor_yticks, minor=True)
 
-    plt.setp(ax.set_xticklabels(vLabels), rotation=90, fontsize="8")
+    plt.setp(ax.set_xticklabels(vLabels), rotation=90, fontsize="10")
     ax.set_xlim((0, len(vLabels)))
     ax.set_ylim(ylim)
 
     minor_yticks = create_minor_y_ticks(ylim)
     ax.set_yticks(minor_yticks, minor=True)
 
-    lg = ax.legend(loc="upper left", edgecolor="black", fontsize="8")
+    lg = ax.legend(loc="upper left", edgecolor="black", fontsize="9")
     # lg.get_frame().set_alpha(None)
     # lg.get_frame().set_facecolor((1, 1, 1, 0.0))
 
     if set_xlable:
-        ax.set_xlabel("Level of Theory", color="k")
-    ax.set_ylabel(r"Error ($\mathrm{kcal\cdot mol^{-1}}$)", color="k")
+        ax.set_xlabel("Level of Theory", color="k", fontsize="12")
+    ax.set_ylabel(r"Error ($\mathrm{kcal\cdot mol^{-1}}$)", color="k", fontsize="14")
     # ax.grid(color="gray", which="major", linewidth=0.5, alpha=0.3)
     # ax.grid(color="gray", which="minor", linewidth=0.5, alpha=0.3)
 
@@ -1198,7 +1243,7 @@ def plot_violin_d3_d4_ALL(
             xy=(x, y),
             xytext=(x, y + 0.1),
             color="black",
-            fontsize="8",
+            fontsize="10",
             horizontalalignment="center",
             verticalalignment="bottom",
         )
@@ -1215,7 +1260,10 @@ def plot_violin_d3_d4_ALL(
         fn_pdf = f"plots/{pfn}_dbs_violin.pdf"
         fn_png = f"plots/{pfn}_dbs_violin.png"
         plt.savefig(
-            fn_pdf, transparent=transparent, bbox_inches="tight", dpi=dpi,
+            fn_pdf,
+            transparent=transparent,
+            bbox_inches="tight",
+            dpi=dpi,
         )
         if os.path.exists(fn_png):
             os.system(f"rm {fn_png}")
@@ -1226,7 +1274,10 @@ def plot_violin_d3_d4_ALL(
             print(f"Error: {fn_png}-1.png does not exist")
     else:
         plt.savefig(
-            f"plots/{pfn}_dbs_violin.png", transparent=transparent, bbox_inches="tight", dpi=dpi,
+            f"plots/{pfn}_dbs_violin.png",
+            transparent=transparent,
+            bbox_inches="tight",
+            dpi=dpi,
         )
     plt.clf()
     return
@@ -1236,7 +1287,6 @@ def collect_component_data(df, vals):
     vLabels, vData = [], []
     annotations = []  # [(x, y, text), ...]
     cnt = 1
-    plt.rcParams["text.usetex"] = True
     # print(vals)
     for k, v in vals["vals"].items():
         # print(k, v)
@@ -1367,7 +1417,7 @@ def plot_component_violin(
     ax.grid(color="grey", which="major", linewidth=0.5, alpha=0.3)
     ax.grid(color="grey", which="minor", linewidth=0.5, alpha=0.3)
     # Set subplot title
-    ax.set_ylabel(ylabel, color="k", fontsize="6")
+    ax.set_ylabel(ylabel, color="k", fontsize="14")
     title_color = "k"
     if title_name == "Electrostatics":
         title_color = "red"
@@ -1489,7 +1539,9 @@ def plot_violin_SAPT0_DFT_components(
     exch_data, exch_labels, exch_annotations = collect_component_data(df, exch_vals)
     indu_data, indu_labels, indu_annotations = collect_component_data(df, indu_vals)
     disp_data, disp_labels, disp_annotations = collect_component_data(df, disp_vals)
-    three_total_data, three_total_labels, three_total_annotations = collect_component_data(df, three_total_vals)
+    three_total_data, three_total_labels, three_total_annotations = (
+        collect_component_data(df, three_total_vals)
+    )
     total_data, total_labels, total_annotations = collect_component_data(df, total_vals)
 
     # Plot violins
@@ -1569,6 +1621,7 @@ def plot_dbs_d3_d4(
     dpi=1200,
     pdf=False,
     verbose=False,
+    ylim=None,
 ) -> None:
     print(f"Plotting {pfn}")
     dbs = list(set(df["DB"].to_list()))
@@ -1619,7 +1672,13 @@ def plot_dbs_d3_d4(
         if len(y) > 0:
             xs.extend([n + 1 for _ in range(len(y))])
             ys.extend(y)
-    ax.scatter(xs, ys, color="orange", s=8.0, label=r"Errors Beyond $\pm$5 $\mathrm{kcal\cdot mol^{-1}}$ ")
+    ax.scatter(
+        xs,
+        ys,
+        color="orange",
+        s=8.0,
+        label=r"Errors Beyond $\pm$5 $\mathrm{kcal\cdot mol^{-1}}$ ",
+    )
 
     vLabels.insert(0, "")
     xs = [i for i in range(len(vLabels))]
@@ -1656,12 +1715,14 @@ def plot_dbs_d3_d4(
     # ax.yaxis.set_minor_locator(MultipleLocator(2))
     # ax.tick_params(which='minor', length=2, color='black', labelsize=5)
 
-    plt.setp(ax.set_xticklabels(vLabels), rotation=90, fontsize="5")
+    plt.setp(ax.set_xticklabels(vLabels), rotation=90, fontsize="9")
     ax.set_xlim((0, len(vLabels)))
-    ax.legend(loc="lower left")
-    ax.set_xlabel("Database")
+    if ylim:
+        ax.set_ylim(ylim)
+    ax.legend(loc="lower left", fontsize="9")
+    ax.set_xlabel("Database", fontsize="12")
     # ax.set_ylabel(r"Error ($kcal\cdot mol^{-1}$)")
-    ax.set_ylabel(r"Error ($\mathrm{kcal\cdot mol^{-1}}$)", color="k")
+    ax.set_ylabel(r"Error ($\mathrm{kcal\cdot mol^{-1}}$)", color="k", fontsize="14")
     # ax.set_ylabel(r"Error ($\frac{kcal}{mol}$)")
     # ax.grid(color="gray", linewidth=0.5, alpha=0.3)
     for n, xtick in enumerate(ax.get_xticklabels()):
@@ -1670,7 +1731,9 @@ def plot_dbs_d3_d4(
         else:
             xtick.set_color("red")
 
-    plt.minorticks_on()
+    # plt.minorticks_on()
+    # plt.minorticks_on()
+    ax.tick_params(axis='y', which='minor')
     if title_name is not None:
         plt.title(f"{title_name}")
     fig.subplots_adjust(bottom=bottom)
@@ -1678,7 +1741,10 @@ def plot_dbs_d3_d4(
         fn_pdf = f"plots/{pfn}_dbs_violin.pdf"
         fn_png = f"plots/{pfn}_dbs_violin.png"
         plt.savefig(
-            fn_pdf, transparent=transparent, bbox_inches="tight", dpi=dpi,
+            fn_pdf,
+            transparent=transparent,
+            bbox_inches="tight",
+            dpi=dpi,
         )
         if os.path.exists(fn_png):
             os.system(f"rm {fn_png}")
@@ -1689,7 +1755,10 @@ def plot_dbs_d3_d4(
             print(f"Error: {fn_png}-1.png does not exist")
     else:
         plt.savefig(
-            f"plots/{pfn}_dbs_violin.png", transparent=transparent, bbox_inches="tight", dpi=dpi,
+            f"plots/{pfn}_dbs_violin.png",
+            transparent=transparent,
+            bbox_inches="tight",
+            dpi=dpi,
         )
     plt.clf()
     return
