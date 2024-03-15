@@ -266,7 +266,7 @@ def compute_int_energy_stats_DISP_2B_TT_ATM_TT(
         else:
             raise ValueError("params must be of length 3")
 
-    print(f"compute_int_energy_stats_DISP_TT:\n{params_2B = }\n{params_ATM = }")
+    # print(f"compute_int_energy_stats_DISP_TT:\n{params_2B = }\n{params_ATM = }")
 
     diff = np.zeros(len(df))
     r4r2_ls = r4r2.r4r2_vals_ls()
@@ -318,7 +318,7 @@ def compute_int_energy_stats_DISP_2B_BJ_ATM_TT(
             params_ATM = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
         else:
             raise ValueError("params must be of length 3")
-    print(f"compute_int_energy_stats_DISP_TT:\n{params_2B = }\n{params_ATM = }")
+    # print(f"compute_int_energy_stats_DISP_TT:\n{params_2B = }\n{params_ATM = }")
 
     diff = np.zeros(len(df))
     r4r2_ls = r4r2.r4r2_vals_ls()
@@ -550,7 +550,7 @@ def compute_int_energy_DISP_2B_TT_ATM_TT(
             params_ATM = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
         else:
             raise ValueError("params must be of length 3")
-    print(f"compute_int_energy_DISP_TT:\n{params_2B = }\n{params_ATM = }")
+    # print(f"compute_int_energy_DISP_TT:\n{params_2B = }\n{params_ATM = }")
 
     rmse = 0
     df["d4"] = df.apply(

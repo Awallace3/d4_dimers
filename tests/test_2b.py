@@ -5,6 +5,7 @@ from qm_tools_aw import tools
 import pandas as pd
 import sys, os
 from dispersion import disp
+import os
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ""))
 import src
@@ -521,3 +522,146 @@ def test_disp_2B_ATM_OFF(geom, request):
 
     d4_e_total = d4e - (d4e_A + d4e_B)
     assert abs(d4_e_total - e_total) < 1e-14
+
+@pytest.mark.parametrize(
+    "geom",
+    [
+        ("water1"),
+    ],
+)
+def test_disp_2B_BJ_ATM_TT_ATM_OFF(geom, request):
+    omp_num_threads = os.environ.get("OMP_NUM_THREADS")
+    if omp_num_threads is None:
+        omp_num_threads = 1
+    print(f"{omp_num_threads = }")
+    charges = [0, 1]
+    (
+        params,
+        pos,
+        carts,
+        d4C6s,
+        d4C8s,
+        pairs,
+        d4e,
+        d4C6s_ATM,
+        pos_A,
+        carts_A,
+        d4C6s_A,
+        d4C8s_A,
+        pairs_A,
+        d4e_A,
+        d4C6s_ATM_A,
+        pos_B,
+        carts_B,
+        d4C6s_B,
+        d4C8s_B,
+        pairs_B,
+        d4e_B,
+        d4C6s_ATM_B,
+    ) = request.getfixturevalue(geom)
+    p = params.copy()
+    tools.print_cartesians_pos_carts(pos, carts)
+    carts *= ang_to_bohr
+    carts_A *= ang_to_bohr
+    carts_B *= ang_to_bohr
+
+    params_2B = np.array(params, dtype=np.float64)
+    params_ATM = np.array([0,0,0,0,0], dtype=np.float64)
+    pos = np.array(pos, dtype=np.int32)
+    pos_A = np.array(pos_A, dtype=np.int32)
+    pos_B = np.array(pos_B, dtype=np.int32)
+
+    e_total = disp.disp_2B_BJ_ATM_TT(
+        pos,
+        carts,
+        d4C6s,
+        d4C6s_ATM,
+        pos_A,
+        carts_A,
+        d4C6s_A,
+        d4C6s_ATM_A,
+        pos_B,
+        carts_B,
+        d4C6s_B,
+        d4C6s_ATM_B,
+        params_2B,
+        params_ATM,
+    )
+    d4_e_total = d4e - (d4e_A + d4e_B)
+    print(f"{e_total = }")
+    print(f"{d4_e_total = }")
+    assert abs(d4_e_total - e_total) < 1e-14
+
+@pytest.mark.parametrize(
+    "geom",
+    [
+        ("water1"),
+    ],
+)
+def test_disp_2B_TT_ATM_TT_ATM_OFF(geom, request=None):
+    omp_num_threads = os.environ.get("OMP_NUM_THREADS")
+    if omp_num_threads is None:
+        omp_num_threads = 1
+    print(f"{omp_num_threads = }")
+    charges = [0, 1]
+    if request is None:
+        data = src.water_data.water_data1()
+    else:
+        data = request.getfixturevalue(geom)
+    (
+        params,
+        pos,
+        carts,
+        d4C6s,
+        d4C8s,
+        pairs,
+        d4e,
+        d4C6s_ATM,
+        pos_A,
+        carts_A,
+        d4C6s_A,
+        d4C8s_A,
+        pairs_A,
+        d4e_A,
+        d4C6s_ATM_A,
+        pos_B,
+        carts_B,
+        d4C6s_B,
+        d4C8s_B,
+        pairs_B,
+        d4e_B,
+        d4C6s_ATM_B,
+    ) = data
+    p = params.copy()
+    tools.print_cartesians_pos_carts(pos, carts)
+    carts *= ang_to_bohr
+    carts_A *= ang_to_bohr
+    carts_B *= ang_to_bohr
+
+    params_2B = np.array(params, dtype=np.float64)
+    params_ATM = np.array([0,0,0,0,0], dtype=np.float64)
+    pos = np.array(pos, dtype=np.int32)
+    pos_A = np.array(pos_A, dtype=np.int32)
+    pos_B = np.array(pos_B, dtype=np.int32)
+
+    e_total = disp.disp_2B_TT_ATM_TT(
+        pos,
+        carts,
+        d4C6s,
+        d4C6s_ATM,
+        pos_A,
+        carts_A,
+        d4C6s_A,
+        d4C6s_ATM_A,
+        pos_B,
+        carts_B,
+        d4C6s_B,
+        d4C6s_ATM_B,
+        params_2B,
+        params_ATM,
+    )
+    d4_e_total = d4e - (d4e_A + d4e_B)
+    print(f"{e_total = }")
+    print(f"{d4_e_total = }")
+    assert abs(d4_e_total - e_total) < 1
+
