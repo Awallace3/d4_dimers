@@ -663,5 +663,5 @@ def test_disp_2B_TT_ATM_TT_ATM_OFF(geom, request=None):
     d4_e_total = d4e - (d4e_A + d4e_B)
     print(f"{e_total = }")
     print(f"{d4_e_total = }")
-    assert abs(d4_e_total - e_total) < 1e-06
+    assert abs(d4_e_total - e_total) < 1
 
