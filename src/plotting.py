@@ -17,10 +17,13 @@ kcal_per_mol = "$\mathrm{kcal\cdot mol^{-1}}$"
 plt.rcParams.update(
     {
         "text.usetex": True,
-        # "font.family": "Times",
-        "font.family": "serif",
-        "font.serif": "STIX",
-        "mathtext.fontset": "stix",
+        "font.family": "sans-serif",
+        "font.sans-serif": "Helvetica",
+        "mathtext.fontset": "custom",
+        # "text.usetex": True,
+        # "font.family": "Arial",
+        # "font.sans-serif": "Arial",
+        # "mathtext.fontset": "custom",
     }
 )
 
@@ -907,7 +910,7 @@ def plotting_setup(
             None,
             f"{selected}_charged",
             bottom=0.42,
-            ylim=[-10, 10],
+            ylim=[-10, 15],
         )
     return df
 
@@ -1111,7 +1114,7 @@ def plot_violin_d3_d4_ALL(
     widths=0.85,
     figure_size=None,
     set_xlable=False,
-    dpi=1200,
+    dpi=600,
     pdf=False,
 ) -> None:
     """ """
@@ -1133,11 +1136,16 @@ def plot_violin_d3_d4_ALL(
         rmse = df_sub[v].apply(lambda x: x**2).mean() ** 0.5
         mae = df_sub[v].apply(lambda x: abs(x)).mean()
         max_error = df_sub[v].apply(lambda x: abs(x)).max()
-        text = r"$\mathbf{\mathit{%.2f}}$" % mae
+        # text = r"$\mathbf{\mathit{%.2f}}$" % mae
+        # text += "\n"
+        # text += r"$\mathbf{%.2f}$" % rmse
+        # text += "\n"
+        # text += r"$\mathrm{%.2f}$" % max_error
+        text = r"\textit{%.2f}" % mae
         text += "\n"
-        text += r"$\mathbf{%.2f}$" % rmse
+        text += r"\textbf{%.2f}" % rmse
         text += "\n"
-        text += r"$\mathrm{%.2f}$" % max_error
+        text += r"\textrm{%.2f}" % max_error
         annotations.append((cnt, m, text))
         cnt += 1
 
@@ -1243,7 +1251,7 @@ def plot_violin_d3_d4_ALL(
             xy=(x, y),
             xytext=(x, y + 0.1),
             color="black",
-            fontsize="10",
+            fontsize="10.0",
             horizontalalignment="center",
             verticalalignment="bottom",
         )
@@ -1618,7 +1626,7 @@ def plot_dbs_d3_d4(
     outlier_cutoff=5,
     bottom=0.3,
     transparent=True,
-    dpi=1200,
+    dpi=800,
     pdf=False,
     verbose=False,
     ylim=None,
@@ -1651,7 +1659,7 @@ def plot_dbs_d3_d4(
         vLabels.append(rf"\textbf{{{d_str}-{l1}}}")
         vLabels.append(rf"\textbf{{{d_str}-{l2}}}")
 
-    fig = plt.figure(dpi=800)
+    fig = plt.figure(dpi=dpi)
     ax = plt.subplot(111)
     vplot = ax.violinplot(vData, showmeans=True, showmedians=False)
     for n, partname in enumerate(["cbars", "cmins", "cmaxes", "cmeans"]):
