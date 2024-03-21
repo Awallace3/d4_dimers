@@ -214,6 +214,8 @@ def total_bases():
 
 
 def make_bohr(geometry, ang_to_bohr_convert):
+    if geometry is None:
+        return None
     if ang_to_bohr_convert:
         return np.hstack(
             (np.reshape(geometry[:, 0], (-1, 1)), ang_to_bohr * geometry[:, 1:])
@@ -223,6 +225,13 @@ def make_bohr(geometry, ang_to_bohr_convert):
             (np.reshape(geometry[:, 0], (-1, 1)), 1 / ang_to_bohr * geometry[:, 1:])
         )
 
+def make_geometry_bohr_column_df(df):
+    tools.print_cartesians(df.iloc[0]["Geometry"])
+    df["Geometry_bohr"] = df.apply(lambda x: make_bohr(x["Geometry"], True), axis=1)
+    print()
+    tools.print_cartesians(df.iloc[0]["Geometry_bohr"])
+    print(df.columns.values)
+    return df
 
 def make_geometry_bohr_column(i):
     df, selected = df_names(i)
