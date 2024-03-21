@@ -8,7 +8,6 @@ import warnings
 from . import paramsTable
 from . import locald4
 from . import jeff
-from . import misc
 
 warnings.simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
 
@@ -1043,20 +1042,24 @@ def plotting_setup_dft(
 
 def plotting_setup_dft_ddft(df, selected, df_out: str = "plots/ddft_study.pkl"):
     print(df)
-    df = df[df['SAPT_DFT_adz'].apply(lambda x: x is not None and len(x) > 0)]
-    df['SAPT_DFT_pbe0_adz'] = df['SAPT_DFT_adz']
-    df['SAPT_DFT_pbe0_adz_elst'] = df['SAPT_DFT_pbe0_adz'].apply(lambda x: x[1])
-    df['SAPT_DFT_pbe0_adz_exch'] = df['SAPT_DFT_pbe0_adz'].apply(lambda x: x[2])
-    df['SAPT_DFT_pbe0_adz_indu'] = df['SAPT_DFT_pbe0_adz'].apply(lambda x: x[3])
-    df['SAPT_DFT_pbe0_adz_disp'] = df['SAPT_DFT_pbe0_adz'].apply(lambda x: x[4])
+    df["SAPT_DFT_pbe0_adz_total"] = df.apply(
+        lambda x: x["SAPT_DFT_adz"][1]
+        + x["SAPT_DFT_adz"][2]
+        + x["SAPT_DFT_adz"][3]
+        + x["SAPT_DFT_pbe0_adz_D4_IE"]
+        + x["SAPT_DFT_pbe0_adz_dDFT"]
+        - x["SAPT_DFT_pbe0_adz_dHF"],
+        axis=1,
+    )
+    df['DFT-D4/aDZ'] = df.apply(lambda x: x['SAPT_DFT_pbe0_adz_DFT_IE'] + x['SAPT_DFT_pbe0_adz_D4_IE'], axis=1)
+    print(df[['SAPT_DFT_pbe0_adz_total', 'DFT-D4/aDZ']])
+    assert np.allclose(df['SAPT_DFT_pbe0_adz_total'], df['DFT-D4/aDZ'], atol=1e-6)
+    df['SAPT_DFT_pbe0_adz_elst'] = df['SAPT_DFT_adz'].apply(lambda x: x[1])
+    df['SAPT_DFT_pbe0_adz_exch'] = df['SAPT_DFT_adz'].apply(lambda x: x[2])
+    df['SAPT_DFT_pbe0_adz_indu'] = df['SAPT_DFT_adz'].apply(lambda x: x[3])
+    df['SAPT_DFT_pbe0_adz_disp'] = df['SAPT_DFT_adz'].apply(lambda x: x[4])
     df['SAPT_DFT_adz_3_IE'] = df['SAPT_DFT_pbe0_adz_elst'] + df['SAPT_DFT_pbe0_adz_exch'] + df['SAPT_DFT_pbe0_adz_indu']
-    df['SAPT_DFT_pbe0_adz_d4_disp'] = df['SAPT_DFT_pbe0_adz_D4_IE'] + df["SAPT_DFT_pbe0_adz_dDFT"] - df["SAPT_DFT_pbe0_adz_dHF"]
-    df['SAPT_DFT_pbe0_adz_total'] = df['SAPT_DFT_adz_3_IE'] + df['SAPT_DFT_pbe0_adz_d4_disp']
-    df['DFT-D4/aDZ'] = df['SAPT_DFT_pbe0_adz_DFT_IE'] + df['SAPT_DFT_pbe0_adz_d4_disp']
-    pd.set_option('display.max_columns', None)
-    print(df[['benchmark ref energy', 'SAPT_DFT_pbe0_adz_total', 'DFT-D4/aDZ', "SAPT_DFT_pbe0_adz_DFT_IE", "SAPT_DFT_pbe0_adz_d4_disp"]])
-    # assert df['SAPT_DFT_pbe0_adz_total'].equals(df['DFT-D4/aDZ'])
-    # assert df['SAPT_DFT_pbe0_adz_total'].equals(df['DFT-D4/aDZ'])
+    df['SAPT_DFT_pbe0_adz_d4_disp'] = df.apply(lambda x: x["SAPT_DFT_pbe0_adz_D4_IE"] + x["SAPT_DFT_pbe0_adz_dDFT"] - x["SAPT_DFT_pbe0_adz_dHF"], axis=1)
 
     df['SAPT0_atz_3_IE'] = df['SAPT0 ELST ENERGY'] + df['SAPT0 EXCH ENERGY'] + df['SAPT0 IND ENERGY']
     df['SAPT0_atz_total'] = df['SAPT0_atz_3_IE'] + df['SAPT0 DISP ENERGY']
