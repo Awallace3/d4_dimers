@@ -209,3 +209,5 @@ latex_outfiles
 outs/
 dfs/schr_dft2.pkl
 dfs/schr_dft2.pkl.tar.gz
+dfs/los_saptdft.pkl
+tmp.py

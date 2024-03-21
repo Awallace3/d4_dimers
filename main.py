@@ -27,7 +27,7 @@ def optimize_paramaters(
     use_2B_C6s=False,
     drop_na=False,
     five_fold=False,
-    omp_threads=16,
+    omp_threads=18,
 ) -> None:
     """
     Optimize the parameters for the D3 and D4 dispersion models.
