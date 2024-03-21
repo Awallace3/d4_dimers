@@ -525,3 +525,74 @@ def gather_data6(
         df = harvest_data(df, i.split("_")[-1], overwrite=overwrite)
     df.to_pickle(output_path)
     return df
+
+
+def extend_df():
+    df1 = pd.read_pickle("./dfs/master-regen.pkl")
+    df2 = pd.read_pickle("./dfs/schr_dft2.pkl")
+    df1.reset_index(drop=True, inplace=True)
+    print(df1.columns.values)
+    print(df2.columns.values)
+    print(len(df1), len(df2))
+
+    include_cols = [
+        "Geometry",
+        "QcdbSys",
+        "R",
+        "DB",
+        "System",
+        "System #",
+    ]
+
+    df1_premerge = df1[include_cols].copy()
+    def find_geometry_matches(df1, df2):
+        matches = []
+        for db in df1["DB"].unique():
+            print(f"{db = }")
+            df1_tmp = df1[df1["DB"] == db].copy()
+            df2_tmp = df2[df2["DB"] == db].copy()
+            for system in df1_tmp["System"].unique():
+                df1_tmp2 = df1_tmp[df1_tmp["System"] == system]
+                df2_tmp2 = df2_tmp[df2_tmp["System"] == system]
+                if db == "SSI" or db == "Water2510":
+                    for system_number in df1_tmp2["System #"].unique():
+                        if system_number:
+                            df1_tmp3 = df1_tmp2[df1_tmp2["System #"] == system_number]
+                            df2_tmp3 = df2_tmp2[df2_tmp2["System #"] == system_number]
+                        for i, row1 in df1_tmp3.iterrows():
+                            for j, row2 in df2_tmp3.iterrows():
+                                g1 = row1["Geometry"][np.lexsort((row1["Geometry"][:, 0], row1["Geometry"][:, 1]))]
+                                g2 = row2["Geometry"][np.lexsort((row2["Geometry"][:, 0], row2["Geometry"][:, 1]))]
+                                if np.array_equal(g1, g2):
+                                    matches.append((i, j))
+                else:
+                    for i, row1 in df1_tmp2.iterrows():
+                        for j, row2 in df2_tmp2.iterrows():
+                            g1 = row1["Geometry"][np.lexsort((row1["Geometry"][:, 0], row1["Geometry"][:, 1]))]
+                            g2 = row2["Geometry"][np.lexsort((row2["Geometry"][:, 0], row2["Geometry"][:, 1]))]
+                            if np.array_equal(g1, g2):
+                                matches.append((i, j))
+        return matches
+
+    matches = find_geometry_matches(df1_premerge, df2)
+    print(len(matches))
+    for df1_idx, df2_idx in matches:
+        df1_premerge.at[df1_idx, "temp_merge_key"] = df1_idx
+        df2.at[df2_idx, "temp_merge_key"] = df1_idx
+    for i in range(len(df2)):
+        row1 = df1_premerge.iloc[i]
+        row2 = df2.iloc[i]
+        if np.isnan(row2["temp_merge_key"]):
+            print(f"{row1['DB'] = }, {row1['System'] = }")
+            print(f"{row2['DB'] = }, {row2['System'] = }")
+            g1 = row1["Geometry"][np.lexsort((row1["Geometry"][:, 0], row1["Geometry"][:, 1]))]
+            g2 = row2["Geometry"][np.lexsort((row2["Geometry"][:, 0], row2["Geometry"][:, 1]))]
+            print(f"{np.subtract(g1, g2) = }")
+
+    df1_premerge = df1_premerge[[ "QcdbSys", "R", 'temp_merge_key' ]]
+    df2_merged = pd.merge(df2, df1_premerge, on="temp_merge_key", how="inner")
+    df2_merged.drop(columns=["temp_merge_key"], inplace=True)
+    # print(df2_merged)
+    # print(df2_merged.columns.values)
+    df2_merged.to_pickle("./data_files/schr_dft3.pkl")
+    return

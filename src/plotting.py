@@ -1040,12 +1040,12 @@ def plotting_setup_dft(
     return df
 
 
-def plotting_setup_dft_ddft(df, selected, df_out: str = "plots/ddft_study.pkl"):
+def plotting_setup_dft_ddft(df, selected):
     print(df)
     df["SAPT_DFT_pbe0_adz_total"] = df.apply(
-        lambda x: x["SAPT_DFT_adz"][1]
-        + x["SAPT_DFT_adz"][2]
-        + x["SAPT_DFT_adz"][3]
+        lambda x: x["SAPT_DFT_pbe0_adz"][1]
+        + x["SAPT_DFT_pbe0_adz"][2]
+        + x["SAPT_DFT_pbe0_adz"][3]
         + x["SAPT_DFT_pbe0_adz_D4_IE"]
         + x["SAPT_DFT_pbe0_adz_dDFT"]
         - x["SAPT_DFT_pbe0_adz_dHF"],
@@ -1054,11 +1054,11 @@ def plotting_setup_dft_ddft(df, selected, df_out: str = "plots/ddft_study.pkl"):
     df['DFT-D4/aDZ'] = df.apply(lambda x: x['SAPT_DFT_pbe0_adz_DFT_IE'] + x['SAPT_DFT_pbe0_adz_D4_IE'], axis=1)
     print(df[['SAPT_DFT_pbe0_adz_total', 'DFT-D4/aDZ']])
     assert np.allclose(df['SAPT_DFT_pbe0_adz_total'], df['DFT-D4/aDZ'], atol=1e-6)
-    df['SAPT_DFT_pbe0_adz_elst'] = df['SAPT_DFT_adz'].apply(lambda x: x[1])
-    df['SAPT_DFT_pbe0_adz_exch'] = df['SAPT_DFT_adz'].apply(lambda x: x[2])
-    df['SAPT_DFT_pbe0_adz_indu'] = df['SAPT_DFT_adz'].apply(lambda x: x[3])
-    df['SAPT_DFT_pbe0_adz_disp'] = df['SAPT_DFT_adz'].apply(lambda x: x[4])
-    df['SAPT_DFT_adz_3_IE'] = df['SAPT_DFT_pbe0_adz_elst'] + df['SAPT_DFT_pbe0_adz_exch'] + df['SAPT_DFT_pbe0_adz_indu']
+    df['SAPT_DFT_pbe0_adz_elst'] = df['SAPT_DFT_pbe0_adz'].apply(lambda x: x[1])
+    df['SAPT_DFT_pbe0_adz_exch'] = df['SAPT_DFT_pbe0_adz'].apply(lambda x: x[2])
+    df['SAPT_DFT_pbe0_adz_indu'] = df['SAPT_DFT_pbe0_adz'].apply(lambda x: x[3])
+    df['SAPT_DFT_pbe0_adz_disp'] = df['SAPT_DFT_pbe0_adz'].apply(lambda x: x[4])
+    df['SAPT_DFT_pbe0_adz_3_IE'] = df['SAPT_DFT_pbe0_adz_elst'] + df['SAPT_DFT_pbe0_adz_exch'] + df['SAPT_DFT_pbe0_adz_indu']
     df['SAPT_DFT_pbe0_adz_d4_disp'] = df.apply(lambda x: x["SAPT_DFT_pbe0_adz_D4_IE"] + x["SAPT_DFT_pbe0_adz_dDFT"] - x["SAPT_DFT_pbe0_adz_dHF"], axis=1)
 
     df['SAPT0_atz_3_IE'] = df['SAPT0 ELST ENERGY'] + df['SAPT0 EXCH ENERGY'] + df['SAPT0 IND ENERGY']
@@ -1119,7 +1119,7 @@ def plotting_setup_dft_ddft(df, selected, df_out: str = "plots/ddft_study.pkl"):
             "name": "(Elst. + Exch. + Indu.)",
             "reference": ["CCSD(T)/CBS Ref.", "benchmark ref energy"],
             "vals": {
-                "SAPT(DFT)/aDZ": "SAPT_DFT_adz_3_IE",
+                "SAPT(DFT)/aDZ": "SAPT_DFT_pbe0_adz_3_IE",
                 "SAPT0/aTZ": "SAPT0_atz_3_IE",
             },
         },
