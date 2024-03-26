@@ -13,15 +13,15 @@ def main():
         subprocess.call("mv basis_study.pkl plots/basis_study.pkl", shell=True)
     df = pd.read_pickle(df_name)
     print('Read df from ./plots/basis_study.pkl')
-    df = src.plotting.plotting_setup_dft(
-        (df, df_name),
-        build_df=False,
-    )
-    return
+    # df = src.plotting.plotting_setup_dft(
+    #     (df, df_name),
+    #     build_df=False,
+    # )
     df = src.plotting.plotting_setup(
         (df, df_name),
         True,
     )
+    return
     # return
     df = src.plotting.plot_basis_sets_d4(
         df,

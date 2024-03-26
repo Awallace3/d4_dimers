@@ -848,12 +848,32 @@ def plotting_setup(
                 "0-D4(2B@G ATM@G)/aDZ": "adz_diff_d4_ATM_G",
                 # "0-D4(ATM TT ALL)/aDZ": "SAPT0_adz_3_IE_TT_ALL_d4_diff",
                 "0/jDZ": "SAPT0_jdz_3_IE_diff",
+                "SAPT(DFT)/aDZ": "SAPT_DFT_adz_3_IE_diff",
                 "0/aDZ": "SAPT0_adz_3_IE_diff",
                 # "SAPT(DFT)-D4/aDZ": "SAPT_DFT_adz_3_IE_d4_diff",
-                # "SAPT(DFT)/aDZ": "SAPT_DFT_adz_3_IE_diff",
+                "SAPT(DFT)/aTZ": "SAPT_DFT_atz_3_IE_diff",
             },
             f"All Dimers (8299)",
             f"{selected}_ATM",
+            bottom=0.45,
+            ylim=[-18, 26],
+            # figure_size=(6, 6),
+        )
+        plot_violin_d3_d4_ALL(
+            df,
+            {
+                "0-D3/jDZ": "SAPT0_jdz_3_IE_d3_diff",
+                "0-D3/aDZ": "SAPT0_adz_3_IE_d3_diff",
+                "0-D4/aDZ": "SAPT0_adz_3_IE_d4_diff",
+                "0/jDZ": "SAPT0_jdz_3_IE_diff",
+                "0/aDZ": "SAPT0_adz_3_IE_diff",
+                "SAPT(DFT)/aDZ": "SAPT_DFT_adz_3_IE_diff",
+                "SAPT(DFT)-D4/aDZ": "SAPT_DFT_adz_3_IE_d4_diff",
+                "SAPT(DFT)/aTZ": "SAPT_DFT_atz_3_IE_diff",
+                "SAPT(DFT)-D4/aTZ": "SAPT_DFT_atz_3_IE_d4_diff",
+            },
+            f"All Dimers (8299)",
+            f"{selected}_saptdft_d4_dhf",
             bottom=0.45,
             ylim=[-18, 26],
             # figure_size=(6, 6),
@@ -1043,7 +1063,12 @@ def plotting_setup_dft(
     return df
 
 
-def plotting_setup_dft_ddft(selected, build_df=False, df_out: str = "plots/ddft_study.pkl"):
+def plotting_setup_dft_ddft(
+    selected,
+    build_df=False,
+    df_out: str = "plots/ddft_study.pkl",
+    split_components=False,
+):
     if build_df:
         df = pd.read_pickle(selected)
         df = df[df["SAPT_DFT_pbe0_adz"].notna()].copy()
@@ -1065,10 +1090,13 @@ def plotting_setup_dft_ddft(selected, build_df=False, df_out: str = "plots/ddft_
         )
 
         df["DFT-D4/aDZ"] = df.apply(
-            lambda x: x["SAPT_DFT_pbe0_adz_DFT_IE"] + x["SAPT_DFT_pbe0_adz_D4_IE"], axis=1
+            lambda x: x["SAPT_DFT_pbe0_adz_DFT_IE"] + x["SAPT_DFT_pbe0_adz_D4_IE"],
+            axis=1,
         )
         # print(df[["SAPT_DFT_D4_pbe0_adz_total", "DFT-D4/aDZ"]])
-        assert np.allclose(df["SAPT_DFT_D4_pbe0_adz_total"], df["DFT-D4/aDZ"], atol=1e-6)
+        assert np.allclose(
+            df["SAPT_DFT_D4_pbe0_adz_total"], df["DFT-D4/aDZ"], atol=1e-6
+        )
         df["SAPT_DFT_pbe0_adz_elst"] = df["SAPT_DFT_pbe0_adz"].apply(lambda x: x[1])
         df["SAPT_DFT_pbe0_adz_exch"] = df["SAPT_DFT_pbe0_adz"].apply(lambda x: x[2])
         df["SAPT_DFT_pbe0_adz_indu"] = df["SAPT_DFT_pbe0_adz"].apply(lambda x: x[3])
@@ -1100,17 +1128,17 @@ def plotting_setup_dft_ddft(selected, build_df=False, df_out: str = "plots/ddft_
         # df["SAPT0_atz_indu"] = df["SAPT0 IND ENERGY"] * h2kcalmol
         # df["SAPT0_atz_disp"] = df["SAPT0 DISP ENERGY"] * h2kcalmol
 
-        df['SAPT0_atz_total'] = df['SAPT0_atz'].apply(lambda x: x[0])
-        df['SAPT0_atz_elst'] = df['SAPT0_atz'].apply(lambda x: x[1])
-        df['SAPT0_atz_exch'] = df['SAPT0_atz'].apply(lambda x: x[2])
-        df['SAPT0_atz_indu'] = df['SAPT0_atz'].apply(lambda x: x[3])
-        df['SAPT0_atz_disp'] = df['SAPT0_atz'].apply(lambda x: x[4])
+        df["SAPT0_atz_total"] = df["SAPT0_atz"].apply(lambda x: x[0])
+        df["SAPT0_atz_elst"] = df["SAPT0_atz"].apply(lambda x: x[1])
+        df["SAPT0_atz_exch"] = df["SAPT0_atz"].apply(lambda x: x[2])
+        df["SAPT0_atz_indu"] = df["SAPT0_atz"].apply(lambda x: x[3])
+        df["SAPT0_atz_disp"] = df["SAPT0_atz"].apply(lambda x: x[4])
 
-        df['SAPT0_adz_total'] = df['SAPT0_adz'].apply(lambda x: x[0])
-        df['SAPT0_adz_elst'] = df['SAPT0_adz'].apply(lambda x: x[1])
-        df['SAPT0_adz_exch'] = df['SAPT0_adz'].apply(lambda x: x[2])
-        df['SAPT0_adz_indu'] = df['SAPT0_adz'].apply(lambda x: x[3])
-        df['SAPT0_adz_disp'] = df['SAPT0_adz'].apply(lambda x: x[4])
+        df["SAPT0_adz_total"] = df["SAPT0_adz"].apply(lambda x: x[0])
+        df["SAPT0_adz_elst"] = df["SAPT0_adz"].apply(lambda x: x[1])
+        df["SAPT0_adz_exch"] = df["SAPT0_adz"].apply(lambda x: x[2])
+        df["SAPT0_adz_indu"] = df["SAPT0_adz"].apply(lambda x: x[3])
+        df["SAPT0_adz_disp"] = df["SAPT0_adz"].apply(lambda x: x[4])
 
         reference = "SAPT2+3(CCD)DMP2"
         ref_basis = "aTZ"
@@ -1137,12 +1165,15 @@ def plotting_setup_dft_ddft(selected, build_df=False, df_out: str = "plots/ddft_
                 ],
             ],
         )
-        df['SAPT0-D4/aDZ'] = df.apply(lambda row: row['SAPT0_adz_3_IE'] + row['-D4 (SAPT0_adz_3_IE)'], axis=1)
+        df["SAPT0-D4/aDZ"] = df.apply(
+            lambda row: row["SAPT0_adz_3_IE"] + row["-D4 (SAPT0_adz_3_IE)"], axis=1
+        )
     else:
         df = pd.read_pickle(df_out)
+    basename_selected = selected.split("/")[-1].split(".")[0]
     plot_violin_SAPT0_DFT_components(
         df,
-        pfn=f"{selected}_saptdft_components",
+        pfn=f"{basename_selected}_saptdft_components",
         elst_vals={
             "name": "Electrostatics",
             "reference": [f"{reference}/{ref_basis} Ref.", f"{reference} ELST ENERGY"],
@@ -1209,6 +1240,7 @@ def plotting_setup_dft_ddft(selected, build_df=False, df_out: str = "plots/ddft_
                 # "SAPT(DFT)-D4(ATM)/aTZ": "SAPT_DFT_atz_3_IE_d4_ATM",
             },
         },
+        split_components=split_components,
     )
     return df
 
@@ -1695,18 +1727,22 @@ def plot_violin_SAPT0_DFT_components(
     bottom: float = 0.4,
     transparent=False,
     widths=0.95,
+    split_components=False,
 ) -> None:
     """ """
     print(f"Plotting {pfn}")
     # create subplots
 
-    fig, axs = plt.subplots(3, 2, figsize=(8, 6), dpi=1000)
+    if split_components:
+        fig, axs = plt.subplots(2, 2, figsize=(6, 6), dpi=1000)
+    else:
+        fig, axs = plt.subplots(3, 2, figsize=(8, 6), dpi=1000)
+        three_total_ax = axs[2, 0]
+        total_ax = axs[2, 1]
     elst_ax = axs[0, 0]
     exch_ax = axs[0, 1]
     indu_ax = axs[1, 0]
     disp_ax = axs[1, 1]
-    three_total_ax = axs[2, 0]
-    total_ax = axs[2, 1]
     # add extra space for subplot titles
     fig.subplots_adjust(hspace=0.6, wspace=0.3)
 
@@ -1762,28 +1798,44 @@ def plot_violin_SAPT0_DFT_components(
         widths,
     )
 
-    plot_component_violin(
-        three_total_ax,
-        three_total_data,
-        three_total_labels,
-        three_total_annotations,
-        three_total_vals["name"],
-        three_total_vals["reference"][0],
-        widths,
-    )
-    plot_component_violin(
-        total_ax,
-        total_data,
-        total_labels,
-        total_annotations,
-        total_vals["name"],
-        total_vals["reference"][0],
-        widths,
-    )
-
-    # plt add space at bottom of figure
-    plt.savefig(f"plots/{pfn}.png", transparent=transparent, bbox_inches="tight")
-    plt.clf()
+    if not split_components:
+        plot_component_violin(
+            three_total_ax,
+            three_total_data,
+            three_total_labels,
+            three_total_annotations,
+            three_total_vals["name"],
+            three_total_vals["reference"][0],
+            widths,
+        )
+        plot_component_violin(
+            total_ax,
+            total_data,
+            total_labels,
+            total_annotations,
+            total_vals["name"],
+            total_vals["reference"][0],
+            widths,
+        )
+        # plt add space at bottom of figure
+        plt.savefig(f"plots/{pfn}.png", transparent=transparent, bbox_inches="tight")
+        plt.clf()
+    else:
+        plt.savefig(f"plots/{pfn}_ONLY.png", transparent=transparent, bbox_inches="tight")
+        plt.clf()
+        fig, axs = plt.subplots(1, 1, figsize=(1, 2), dpi=600)
+        total_ax = axs[0, 0]
+        plot_component_violin(
+            total_ax,
+            total_data,
+            total_labels,
+            total_annotations,
+            total_vals["name"],
+            total_vals["reference"][0],
+            widths,
+        )
+        plt.savefig(f"plots/{pfn}_TOTAL.png", transparent=transparent, bbox_inches="tight")
+        plt.clf()
     return
 
 
