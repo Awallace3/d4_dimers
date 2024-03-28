@@ -1177,38 +1177,38 @@ def plotting_setup_dft_ddft(
             "name": "Electrostatics",
             "reference": [f"{reference}/{ref_basis} Ref.", f"{reference} ELST ENERGY"],
             "vals": {
-                "SAPT(DFT)/aDZ": "SAPT_DFT_pbe0_adz_elst",
                 "SAPT0/aDZ": "SAPT0_adz_elst",
                 "SAPT0/aTZ": "SAPT0_atz_elst",
+                "SAPT(DFT)/aDZ": "SAPT_DFT_pbe0_adz_elst",
             },
         },
         exch_vals={
             "name": "Exchange",
             "reference": [f"{reference}/{ref_basis} Ref.", f"{reference} EXCH ENERGY"],
             "vals": {
-                "SAPT(DFT)/aDZ": "SAPT_DFT_pbe0_adz_exch",
                 "SAPT0/aDZ": "SAPT0_adz_exch",
                 "SAPT0/aTZ": "SAPT0_atz_exch",
+                "SAPT(DFT)/aDZ": "SAPT_DFT_pbe0_adz_exch",
             },
         },
         indu_vals={
             "name": "Induction",
             "reference": [f"{reference}/{ref_basis} Ref.", f"{reference} IND ENERGY"],
             "vals": {
-                "SAPT(DFT)/aDZ": "SAPT_DFT_pbe0_adz_indu",
                 "SAPT0/aDZ": "SAPT0_adz_indu",
                 "SAPT0/aTZ": "SAPT0_atz_indu",
+                "SAPT(DFT)/aDZ": "SAPT_DFT_pbe0_adz_indu",
             },
         },
         disp_vals={
             "name": "Dispersion",
             "reference": [f"{reference}/{ref_basis} Ref.", f"{reference} DISP ENERGY"],
             "vals": {
-                "SAPT(DFT)/aDZ": "SAPT_DFT_pbe0_adz_disp",
-                "SAPT(DFT)-D4 (DDFT)/aDZ": "SAPT_DFT_pbe0_adz_d4_disp",
-                "SAPT0/aDZ": "SAPT0_adz_indu",
-                "SAPT0/aTZ": "SAPT0_atz_indu",
+                # "SAPT0/aDZ": "SAPT0_adz_indu",
+                # "SAPT0/aTZ": "SAPT0_atz_indu",
                 "SAPT0-D4/aDZ": "-D4 (SAPT0_adz_3_IE)",
+                "SAPT(DFT)/aDZ": "SAPT_DFT_pbe0_adz_disp",
+                "SAPT(DFT)-D4/aDZ": "SAPT_DFT_pbe0_adz_d4_disp",
             },
         },
         three_total_vals={
@@ -1240,6 +1240,8 @@ def plotting_setup_dft_ddft(
             },
         },
         split_components=split_components,
+        sub_fontsize=24,
+        sub_rotation=35,
     )
     return df
 
@@ -1539,7 +1541,16 @@ def create_minor_y_ticks(ylim):
 
 
 def plot_component_violin(
-    ax, vData, vLabels, annotations, title_name, ylabel, widths=0.85
+    ax,
+    vData,
+    vLabels,
+    annotations,
+    title_name,
+    ylabel,
+    widths=0.85,
+    fontsize=8,
+    sub_rotation=45,
+    ylim=None,
 ):
     vplot = ax.violinplot(
         vData,
@@ -1570,16 +1581,28 @@ def plot_component_violin(
 
     # plt automatically make extra ylimits for annotations above violin plot error bar
     # so we need to add extra space to the ylim
-    ylim = ax.get_ylim()
+    ylim_empty = False
+    if ylim is None:
+        ylim = ax.get_ylim()
+        ylim_empty = True
     minor_yticks = create_minor_y_ticks(ylim)
     ax.set_yticks(minor_yticks, minor=True)
-    ax.set_ylim((ylim[0], int(ylim[1] + abs(ylim[1] - ylim[0]) * 0.3)))
+    diff = abs(ylim[1] - ylim[0])
+    print(diff)
+    if diff > 20 and ylim_empty:
+        ax.set_ylim((ylim[0], int(ylim[1] + diff * 0.40)))
+    elif ylim_empty:
+        ax.set_ylim((ylim[0], int(ylim[1] + diff * 0.40)))
+    else:
+        ax.set_ylim(ylim)
+    # set ytick fontsize
+    ax.tick_params(axis="y", labelsize=fontsize - 2)
     vLabels.insert(0, "")
     xs = [i for i in range(len(vLabels))]
     xs_error = [i for i in range(-1, len(vLabels) + 1)]
     ax.plot(
         xs_error,
-        [1 for i in range(len(xs_error))],
+        [1 for _ in range(len(xs_error))],
         "k--",
         label=r"$\pm$1 $\mathrm{kcal\cdot mol^{-1}}$",
         zorder=0,
@@ -1613,18 +1636,19 @@ def plot_component_violin(
     navy_blue = (0.0, 0.32, 0.96)
     ax.set_xticks(xs)
     # plt.setp(ax.set_xticklabels(vLabels), rotation=90, fontsize="8")
-    plt.setp(ax.set_xticklabels(vLabels), rotation=20, fontsize="5")
+    plt.setp(ax.set_xticklabels(vLabels), rotation=sub_rotation, fontsize=f"{fontsize-2}")
     ax.set_xlim((0, len(vLabels)))
     # lg = ax.legend(loc="upper left", edgecolor="black", fontsize="8")
     # lg.get_frame().set_facecolor((1, 1, 1, 0.0))
 
-    ylabel = f"{ylabel} Error\n" + r" ($\mathrm{kcal\cdot mol^{-1}}$)"
     # set minor ticks to be between major ticks
 
     ax.grid(color="grey", which="major", linewidth=0.5, alpha=0.3)
     ax.grid(color="grey", which="minor", linewidth=0.5, alpha=0.3)
     # Set subplot title
-    ax.set_ylabel(ylabel, color="k", fontsize="6")
+    if ylabel is not None and len(ylabel) > 0:
+        ylabel = f"{ylabel} Error\n" + r" ($\mathrm{kcal\cdot mol^{-1}}$)"
+        ax.set_ylabel(ylabel, color="k", fontsize=f"{fontsize - 1}")
     title_color = "k"
     if title_name == "Electrostatics":
         title_color = "red"
@@ -1634,7 +1658,7 @@ def plot_component_violin(
         title_color = "green"
     elif title_name == "Dispersion":
         title_color = "orange"
-    ax.set_title(title_name, color=title_color, fontsize="8")
+    ax.set_title(title_name, color=title_color, fontsize=f"{fontsize + 1}")
 
     # Annotations of RMSE
     for x, y, text in annotations:
@@ -1643,7 +1667,7 @@ def plot_component_violin(
             xy=(x, y),
             xytext=(x, y + 0.1),
             color="black",
-            fontsize="6",
+            fontsize=f"{fontsize - 2}",
             horizontalalignment="center",
             verticalalignment="bottom",
         )
@@ -1726,23 +1750,29 @@ def plot_violin_SAPT0_DFT_components(
     transparent=False,
     widths=0.95,
     split_components=False,
+    sub_fontsize=8,
+    sub_rotation=45,
 ) -> None:
-    """ """
     print(f"Plotting {pfn}")
-    # create subplots
-
     if split_components:
-        fig, axs = plt.subplots(2, 2, figsize=(6, 6), dpi=1000)
+        fig, axs = plt.subplots(nrows=1, ncols=4, figsize=(20, 5), dpi=1000, constrained_layout=True)
         three_total_ax = None
         total_ax = None
+        exch_vals["reference"][0] = None
+        indu_vals["reference"][0] = None
+        disp_vals["reference"][0] = None
+        elst_ax = axs[0]
+        exch_ax = axs[1]
+        indu_ax = axs[2]
+        disp_ax = axs[3]
     else:
         fig, axs = plt.subplots(3, 2, figsize=(8, 6), dpi=1000)
         three_total_ax = axs[2, 0]
         total_ax = axs[2, 1]
-    elst_ax = axs[0, 0]
-    exch_ax = axs[0, 1]
-    indu_ax = axs[1, 0]
-    disp_ax = axs[1, 1]
+        elst_ax = axs[0, 0]
+        exch_ax = axs[0, 1]
+        indu_ax = axs[1, 0]
+        disp_ax = axs[1, 1]
     # add extra space for subplot titles
     fig.subplots_adjust(hspace=0.6, wspace=0.3)
 
@@ -1769,6 +1799,9 @@ def plot_violin_SAPT0_DFT_components(
         elst_vals["name"],
         elst_vals["reference"][0],
         widths,
+        fontsize=sub_fontsize,
+        sub_rotation=sub_rotation,
+        ylim=[-4, 6],
     )
     plot_component_violin(
         exch_ax,
@@ -1778,6 +1811,9 @@ def plot_violin_SAPT0_DFT_components(
         exch_vals["name"],
         exch_vals["reference"][0],
         widths,
+        fontsize=sub_fontsize,
+        sub_rotation=sub_rotation,
+        ylim=[-4, 25],
     )
     plot_component_violin(
         indu_ax,
@@ -1787,6 +1823,9 @@ def plot_violin_SAPT0_DFT_components(
         indu_vals["name"],
         indu_vals["reference"][0],
         widths,
+        fontsize=sub_fontsize,
+        sub_rotation=sub_rotation,
+        ylim=[-5, 15],
     )
     plot_component_violin(
         disp_ax,
@@ -1796,6 +1835,9 @@ def plot_violin_SAPT0_DFT_components(
         disp_vals["name"],
         disp_vals["reference"][0],
         widths,
+        fontsize=sub_fontsize,
+        sub_rotation=sub_rotation,
+        ylim=[-12, 15],
     )
 
     if not split_components:
@@ -1816,14 +1858,17 @@ def plot_violin_SAPT0_DFT_components(
             total_vals["name"],
             total_vals["reference"][0],
             widths,
+            # ylim=[-25, 45],
         )
         # plt add space at bottom of figure
         plt.savefig(f"plots/{pfn}.png", transparent=transparent, bbox_inches="tight")
         plt.clf()
     else:
-        plt.savefig(f"plots/{pfn}_ONLY.png", transparent=transparent, bbox_inches="tight")
+        plt.savefig(
+            f"plots/{pfn}_ONLY.png", transparent=transparent, bbox_inches="tight"
+        )
         plt.clf()
-        fig, axs = plt.subplots(1, 1, figsize=(1, 2), dpi=600, squeeze=True)
+        fig, axs = plt.subplots(1, 1, figsize=(12, 4), dpi=600, squeeze=True)
         plot_component_violin(
             axs,
             total_data,
@@ -1832,8 +1877,13 @@ def plot_violin_SAPT0_DFT_components(
             total_vals["name"],
             total_vals["reference"][0],
             widths,
+            sub_rotation=20,
+            fontsize=22,
+            # ylim=[-25, 45],
         )
-        plt.savefig(f"plots/{pfn}_TOTAL.png", transparent=transparent, bbox_inches="tight")
+        plt.savefig(
+            f"plots/{pfn}_TOTAL.png", transparent=transparent, bbox_inches="tight"
+        )
         plt.clf()
     return
 
