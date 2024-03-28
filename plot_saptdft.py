@@ -6,6 +6,7 @@ def main():
     src.plotting.plotting_setup_dft_ddft(
         df_name,
         build_df=True,
+        split_components=True,
     )
     return
 
