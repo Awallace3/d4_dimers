@@ -19,7 +19,7 @@ def main():
     # )
     df = src.plotting.plotting_setup(
         (df, df_name),
-        True,
+        False,
     )
     return
     # return

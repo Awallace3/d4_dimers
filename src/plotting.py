@@ -719,20 +719,20 @@ def plotting_setup(
     selected = selected.split("/")[-1].split(".")[0]
     df_out = f"plots/{selected}.pkl"
     if build_df:
-        # df = compute_D3_D4_values_for_params_for_plotting(df, "adz", compute_d3)
-        # df = compute_D3_D4_values_for_params_for_plotting(df, "jdz", compute_d3)
-        # df = compute_d4_from_opt_params(df)
-        df = compute_d4_from_opt_params_TT(
-            df,
-            bases=[
-                [
-                    "SAPT0_adz_IE",
-                    "SAPT0_adz_3_IE_TT_ALL",
-                    "SAPT0_adz_3_IE_BJ_ATM_TT_5p_OUT",
-                    "SAPT0_adz_3_IE",
-                ],
-            ],
-        )
+        df = compute_D3_D4_values_for_params_for_plotting(df, "adz", compute_d3)
+        df = compute_D3_D4_values_for_params_for_plotting(df, "jdz", compute_d3)
+        df = compute_d4_from_opt_params(df)
+        # df = compute_d4_from_opt_params_TT(
+        #     df,
+        #     bases=[
+        #         [
+        #             "SAPT0_adz_IE",
+        #             "SAPT0_adz_3_IE_TT_ALL",
+        #             "SAPT0_adz_3_IE_BJ_ATM_TT_5p_OUT",
+        #             "SAPT0_adz_3_IE",
+        #         ],
+        #     ],
+        # )
 
         df["SAPT0-D4/aug-cc-pVDZ"] = df.apply(
             lambda row: row["SAPT0_adz_3_IE"] + row["-D4 (adz)"],
@@ -843,7 +843,7 @@ def plotting_setup(
                 "0-D4/aDZ": "SAPT0_adz_3_IE_d4_diff",
                 # "0-D4(ATM)/aDZ": "SAPT0_dz_3_IE_ATM_SHARED_d4_diff",
                 "0-D4(ATM)/aDZ": "SAPT0_adz_ATM_opt_all_diff",
-                "0-D4(2B ATM)/aDZ": "adz_diff_d4_ATM",
+                "0-D4(ATMu)/aDZ": "adz_diff_d4_ATM", # (2B ATM) renamed to (ATMu)
                 "0-D4(2B@G ATM)/aDZ": "adz_diff_d4_2B@ATM_G",
                 "0-D4(2B@G ATM@G)/aDZ": "adz_diff_d4_ATM_G",
                 # "0-D4(ATM TT ALL)/aDZ": "SAPT0_adz_3_IE_TT_ALL_d4_diff",
@@ -853,7 +853,7 @@ def plotting_setup(
                 # "SAPT(DFT)-D4/aDZ": "SAPT_DFT_adz_3_IE_d4_diff",
                 "SAPT(DFT)/aTZ": "SAPT_DFT_atz_3_IE_diff",
             },
-            f"All Dimers (8299)",
+            "",# f"All Dimers (8299)",
             f"{selected}_ATM",
             bottom=0.45,
             ylim=[-18, 26],
@@ -910,23 +910,30 @@ def plotting_setup(
             f"{selected}_basis_set",
         )
         # charged
+        assert df["SAPT_DFT_adz_3_IE_diff"].isnull().sum() == 0
+        assert df["SAPT_DFT_atz_3_IE_diff"].isnull().sum() == 0
         df_charged = get_charged_df(df)
+        # ensure that SAPT_DFT_atz_3_IE_diff does not have NaN values
+        pd.set_option("display.max_rows", None)
+        df_charged['SAPT_DFT_adz_t'] = df_charged['SAPT_DFT_adz'].apply(lambda x: x[0])
+        print(df_charged[["adz_diff_d4", "SAPT_DFT_adz_3_IE_diff", "SAPT0_adz_d4", "SAPT_DFT_adz_t"]])
+        assert df_charged["SAPT_DFT_adz_3_IE_diff"].isnull().sum() == 0
+        assert df_charged["SAPT_DFT_atz_3_IE_diff"].isnull().sum() == 0
         plot_violin_d3_d4_ALL(
             df_charged,
             {
                 "0-D3/jDZ": "jdz_diff_d3",
                 "0-D3/aDZ": "adz_diff_d3",
-                "0-D3MBJ(ATM)/jDZ": "jdz_diff_d3mbj_atm",
-                "0-D3MBJ(ATM)/aDZ": "adz_diff_d3mbj_atm",
-                "0-D4/jVDZ": "jdz_diff_d4",
+                # "0-D3MBJ(ATM)/jDZ": "jdz_diff_d3mbj_atm",
+                # "0-D3MBJ(ATM)/aDZ": "adz_diff_d3mbj_atm",
+                "0-D4/jDZ": "jdz_diff_d4",
                 "0-D4/aDZ": "adz_diff_d4",
-                # "0-D4(2B@G ATM)/jDZ": "jdz_diff_d4_2B@ATM_G",
-                # "0-D4(2B@G ATM)/aDZ": "adz_diff_d4_2B@ATM_G",
-                "0-D4(2B@G ATM@G)/jDZ": "jdz_diff_d4_ATM_G",
+                # "0-D4(2B@G ATM@G)/jDZ": "jdz_diff_d4_ATM_G",
                 "0-D4(2B@G ATM@G)/aDZ": "adz_diff_d4_ATM_G",
                 "0/jDZ": "SAPT0_jdz_3_IE_diff",
+                "SAPT(DFT)/aDZ": "SAPT_DFT_adz_3_IE_diff",
                 "0/aDZ": "SAPT0_adz_3_IE_diff",
-                "0-D4(ATM TT)/aDZ": "SAPT0_adz_3_IE_TT_OPT_d4_diff",
+                "SAPT(DFT)/aTZ": "SAPT_DFT_atz_3_IE_diff",
             },
             # f"Charged Dimers ({len(df_charged)})",
             None,

@@ -23,6 +23,9 @@ data_pkl = "/theoryfs2/ds/amwalla3/projects/d4_corrections/tests/data/test.pkl"
 def water1():
     return src.water_data.water_data1()
 
+@pytest.fixture
+def water2():
+    return src.water_data.water_data2()
 
 @pytest.fixture
 def water1_undamped():
