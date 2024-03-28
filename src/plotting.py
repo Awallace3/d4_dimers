@@ -1545,7 +1545,7 @@ def plot_component_violin(
         vData,
         showmeans=True,
         showmedians=False,
-        quantiles=[[0.05, 0.95] for i in range(len(vData))],
+        quantiles=[[0.05, 0.95] for _ in range(len(vData))],
         widths=widths,
     )
     for n, partname in enumerate(["cbars", "cmins", "cmaxes", "cmeans"]):
@@ -1733,6 +1733,8 @@ def plot_violin_SAPT0_DFT_components(
 
     if split_components:
         fig, axs = plt.subplots(2, 2, figsize=(6, 6), dpi=1000)
+        three_total_ax = None
+        total_ax = None
     else:
         fig, axs = plt.subplots(3, 2, figsize=(8, 6), dpi=1000)
         three_total_ax = axs[2, 0]
@@ -1821,10 +1823,9 @@ def plot_violin_SAPT0_DFT_components(
     else:
         plt.savefig(f"plots/{pfn}_ONLY.png", transparent=transparent, bbox_inches="tight")
         plt.clf()
-        fig, axs = plt.subplots(1, 1, figsize=(1, 2), dpi=600)
-        total_ax = axs[0, 0]
+        fig, axs = plt.subplots(1, 1, figsize=(1, 2), dpi=600, squeeze=True)
         plot_component_violin(
-            total_ax,
+            axs,
             total_data,
             total_labels,
             total_annotations,
