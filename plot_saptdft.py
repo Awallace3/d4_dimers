@@ -1,6 +1,4 @@
-import pandas as pd
 import src
-import subprocess, os
 
 
 def main():

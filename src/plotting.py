@@ -1036,7 +1036,6 @@ def plotting_setup_dft(
         },
         f"All Dimers with SAPT0 and SAPT-DFT",
         f"{selected}_saptdft_sapt0",
-        bottom=0.45,
         ylim=[-16, 30],
         transparent=False,
     )
@@ -1044,6 +1043,8 @@ def plotting_setup_dft(
 
 
 def plotting_setup_dft_ddft(selected, build_df=False, df_out: str = "plots/ddft_study.pkl"):
+    reference = "SAPT2+3(CCD)DMP2"
+    ref_basis = "aTZ"
     if build_df:
         df = pd.read_pickle(selected)
         df = df[df["SAPT_DFT_pbe0_adz"].notna()].copy()
@@ -1112,8 +1113,6 @@ def plotting_setup_dft_ddft(selected, build_df=False, df_out: str = "plots/ddft_
         df['SAPT0_adz_indu'] = df['SAPT0_adz'].apply(lambda x: x[3])
         df['SAPT0_adz_disp'] = df['SAPT0_adz'].apply(lambda x: x[4])
 
-        reference = "SAPT2+3(CCD)DMP2"
-        ref_basis = "aTZ"
         df[f"{reference} ELST ENERGY"] = df[f"{reference} ELST ENERGY"] * h2kcalmol
         # print(df[f"{reference} ELST ENERGY"])
         df[f"{reference} EXCH ENERGY"] = df[f"{reference} EXCH ENERGY"] * h2kcalmol
@@ -1692,7 +1691,6 @@ def plot_violin_SAPT0_DFT_components(
         },
     },
     pfn: str = "sapt0_dft_components",
-    bottom: float = 0.4,
     transparent=False,
     widths=0.95,
 ) -> None:
