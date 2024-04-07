@@ -710,6 +710,26 @@ def plot_basis_sets_d3(df, build_df=False, df_out: str = "basis_study"):
     )
 
     return df
+def plot_ie_curve(
+        df,
+        elst_col,
+        exch_col,
+        indu_col,
+        disp_col,
+        db='NBC10',
+        system_num=0,
+    ):
+    df_sys = df[(df['DB'] == db) & (df['System #'] == system_num)]
+    print(df_sys.columns.values)
+    df_sys.sort_values(by='R', inplace=True)
+    df.reset_index(drop=True, inplace=True)
+    pd.set_option('display.max_columns', None)
+    tools.print_cartesians(df_sys.iloc[0]["Geometry"])
+    print()
+    print(df_sys['R'].to_list())
+    tools.print_cartesians(df_sys.iloc[len(df_sys) - 1]["Geometry"])
+    print(df_sys)
+    return
 
 
 def plotting_setup(
@@ -1177,6 +1197,8 @@ def plotting_setup_dft_ddft(
     else:
         df = pd.read_pickle(df_out)
     basename_selected = selected.split("/")[-1].split(".")[0]
+    assert df['SAPT_DFT_pbe0_adz_elst'].isnull().sum() == 0
+    print(f"Lenght of df: {len(df)}")
     plot_violin_SAPT0_DFT_components(
         df,
         pfn=f"{basename_selected}_saptdft_components",
