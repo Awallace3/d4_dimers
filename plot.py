@@ -12,24 +12,23 @@ def main():
         subprocess.call("rm plots/basis_study.pkl.tar.gz", shell=True)
         subprocess.call("mv basis_study.pkl plots/basis_study.pkl", shell=True)
     df = pd.read_pickle(df_name)
-    print('Read df from ./plots/basis_study.pkl')
-    # df = src.plotting.plotting_setup_dft(
-    #     (df, df_name),
-    #     build_df=False,
-    # )
+    df['size'] = df.apply(lambda x: len(x['Geometry']), axis=1)
+    print(df['size'].describe())
+    # get id of largest molecule
+    id_max = df['size'].idxmax()
+    print(id_max)
     df = src.plotting.plotting_setup(
         (df, df_name),
-        False,
+        True,
     )
     return
-    # return
     df = src.plotting.plot_basis_sets_d4(
         df,
-        False,
+        True,
     )
     df = src.plotting.plot_basis_sets_d3(
         df,
-        False,
+        True,
     )
     return
 

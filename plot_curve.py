@@ -1,6 +1,7 @@
 import pandas as pd
 import src
 import subprocess, os
+from qm_tools_aw import tools
 
 def plot_ie_curve(
         df,
@@ -59,12 +60,14 @@ def main():
         subprocess.call("rm plots/basis_study.pkl.tar.gz", shell=True)
         subprocess.call("mv basis_study.pkl plots/basis_study.pkl", shell=True)
     df = pd.read_pickle(df_name)
+    print(df['DB'].unique())
+    tools.print_cartesians(df[df['DB'] == 'ION43'].iloc[0]["Geometry"])
     for i in range(1, 11):
         print(f"Plotting system {i}")
         plot_ie_curve(
             df,
             sapt_col='SAPT0_adz',
-            db='nbc10',
+            db='ion43',
             system_num=i,
         )
     return 
