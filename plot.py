@@ -17,9 +17,10 @@ def main():
     #     (df, df_name),
     #     build_df=False,
     # )
+    print(df['SAPT_DFT_atz'][0])
     df = src.plotting.plotting_setup(
         (df, df_name),
-        False,
+        True,
     )
     return
     # return

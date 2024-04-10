@@ -132,9 +132,9 @@ def compute_d4_from_opt_params(
             "SAPT_DFT_adz_3_IE",
         ],
         [
+            "SAPT_DFT_atz_IE",
             "SAPT_DFT_atz_3_IE",
-            "SAPT_DFT_atz_3_IE_no_disp",
-            "SAPT_DFT_atz_3_IE",
+            "SAPT_DFT_OPT_END3",
             "SAPT_DFT_atz_3_IE",
         ],
         # "DF_col_for_IE": "PARAMS_NAME"
@@ -853,9 +853,12 @@ def plotting_setup(
     #     pdf=False,
     # )
     if True:
+        print(df[['SAPT_DFT_atz_3_IE_diff', 'SAPT_DFT_adz_3_IE_diff']])
         plot_violin_d3_d4_ALL(
             df,
             {
+                "0/jDZ": "SAPT0_jdz_3_IE_diff",
+                "0/aDZ": "SAPT0_adz_3_IE_diff",
                 "0-D3/jDZ": "SAPT0_jdz_3_IE_d3_diff",
                 # "0-D3MBJ(ATM)/jDZ": "jdz_diff_d3mbj_atm",
                 "0-D3/aDZ": "SAPT0_adz_3_IE_d3_diff",
@@ -867,9 +870,7 @@ def plotting_setup(
                 "0-D4(2B@G ATM)/aDZ": "adz_diff_d4_2B@ATM_G",
                 "0-D4(2B@G ATM@G)/aDZ": "adz_diff_d4_ATM_G",
                 # "0-D4(ATM TT ALL)/aDZ": "SAPT0_adz_3_IE_TT_ALL_d4_diff",
-                "0/jDZ": "SAPT0_jdz_3_IE_diff",
                 "SAPT(DFT)/aDZ": "SAPT_DFT_adz_3_IE_diff",
-                "0/aDZ": "SAPT0_adz_3_IE_diff",
                 # "SAPT(DFT)-D4/aDZ": "SAPT_DFT_adz_3_IE_d4_diff",
                 "SAPT(DFT)/aTZ": "SAPT_DFT_atz_3_IE_diff",
             },
@@ -936,7 +937,6 @@ def plotting_setup(
         # ensure that SAPT_DFT_atz_3_IE_diff does not have NaN values
         pd.set_option("display.max_rows", None)
         df_charged['SAPT_DFT_adz_t'] = df_charged['SAPT_DFT_adz'].apply(lambda x: x[0])
-        print(df_charged[["adz_diff_d4", "SAPT_DFT_adz_3_IE_diff", "SAPT0_adz_d4", "SAPT_DFT_adz_t"]])
         assert df_charged["SAPT_DFT_adz_3_IE_diff"].isnull().sum() == 0
         assert df_charged["SAPT_DFT_atz_3_IE_diff"].isnull().sum() == 0
         plot_violin_d3_d4_ALL(
