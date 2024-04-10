@@ -214,3 +214,6 @@ tmp.py
 dfs/los_saptdft_aqz.pkl
 dfs/los_saptdft_atz.pkl
 *.pkl
+dfs/los_saptdft_atz_1.pkl
+los_saptdft_atz.pkl
+

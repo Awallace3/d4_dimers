@@ -742,18 +742,6 @@ def plotting_setup(
         df = compute_D3_D4_values_for_params_for_plotting(df, "adz", compute_d3)
         df = compute_D3_D4_values_for_params_for_plotting(df, "jdz", compute_d3)
         df = compute_d4_from_opt_params(df)
-        # df = compute_d4_from_opt_params_TT(
-        #     df,
-        #     bases=[
-        #         [
-        #             "SAPT0_adz_IE",
-        #             "SAPT0_adz_3_IE_TT_ALL",
-        #             "SAPT0_adz_3_IE_BJ_ATM_TT_5p_OUT",
-        #             "SAPT0_adz_3_IE",
-        #         ],
-        #     ],
-        # )
-
         df["SAPT0-D4/aug-cc-pVDZ"] = df.apply(
             lambda row: row["SAPT0_adz_3_IE"] + row["-D4 (adz)"],
             axis=1,
@@ -852,6 +840,7 @@ def plotting_setup(
     #     dpi=1200,
     #     pdf=False,
     # )
+    print(df.columns.values)
     if True:
         print(df[['SAPT_DFT_atz_3_IE_diff', 'SAPT_DFT_adz_3_IE_diff']])
         plot_violin_d3_d4_ALL(
@@ -867,8 +856,8 @@ def plotting_setup(
                 # "0-D4(ATM)/aDZ": "SAPT0_dz_3_IE_ATM_SHARED_d4_diff",
                 "0-D4(ATM)/aDZ": "SAPT0_adz_ATM_opt_all_diff",
                 "0-D4(ATMu)/aDZ": "adz_diff_d4_ATM", # (2B ATM) renamed to (ATMu)
-                "0-D4(2B@G ATM)/aDZ": "adz_diff_d4_2B@ATM_G",
-                "0-D4(2B@G ATM@G)/aDZ": "adz_diff_d4_ATM_G",
+                # "0-D4(2B@G ATM)/aDZ": "adz_diff_d4_2B@ATM_G",
+                # "0-D4(2B@G ATM@G)/aDZ": "adz_diff_d4_ATM_G",
                 # "0-D4(ATM TT ALL)/aDZ": "SAPT0_adz_3_IE_TT_ALL_d4_diff",
                 "SAPT(DFT)/aDZ": "SAPT_DFT_adz_3_IE_diff",
                 # "SAPT(DFT)-D4/aDZ": "SAPT_DFT_adz_3_IE_d4_diff",
@@ -878,6 +867,7 @@ def plotting_setup(
             f"{selected}_ATM",
             bottom=0.45,
             ylim=[-18, 26],
+            legend_loc="upper right",
             # figure_size=(6, 6),
         )
         plot_violin_d3_d4_ALL(
@@ -949,10 +939,10 @@ def plotting_setup(
                 "0-D4/jDZ": "jdz_diff_d4",
                 "0-D4/aDZ": "adz_diff_d4",
                 # "0-D4(2B@G ATM@G)/jDZ": "jdz_diff_d4_ATM_G",
-                "0-D4(2B@G ATM@G)/aDZ": "adz_diff_d4_ATM_G",
+                # "0-D4(2B@G ATM@G)/aDZ": "adz_diff_d4_ATM_G",
                 "0/jDZ": "SAPT0_jdz_3_IE_diff",
-                "SAPT(DFT)/aDZ": "SAPT_DFT_adz_3_IE_diff",
                 "0/aDZ": "SAPT0_adz_3_IE_diff",
+                "SAPT(DFT)/aDZ": "SAPT_DFT_adz_3_IE_diff",
                 "SAPT(DFT)/aTZ": "SAPT_DFT_atz_3_IE_diff",
             },
             # f"Charged Dimers ({len(df_charged)})",
@@ -1099,6 +1089,10 @@ def plotting_setup_dft_ddft(
     ref_basis = "aTZ"
     if build_df:
         df = pd.read_pickle(selected)
+        if 'SAPT0_adz' not in df.columns:
+            ref_df = pd.read_pickle("plots/basis_study.pkl")
+            print(ref_df)
+        print(df.columns.values)
         df = df[df["SAPT_DFT_pbe0_adz"].notna()].copy()
         df["SAPT_DFT_D4_pbe0_adz_total"] = df.apply(
             lambda x: x["SAPT_DFT_pbe0_adz"][1]
@@ -1350,6 +1344,7 @@ def plot_violin_d3_d4_ALL(
     set_xlable=False,
     dpi=600,
     pdf=False,
+    legend_loc='upper left',
 ) -> None:
     """ """
     print(f"Plotting {pfn}")
@@ -1461,7 +1456,7 @@ def plot_violin_d3_d4_ALL(
     minor_yticks = create_minor_y_ticks(ylim)
     ax.set_yticks(minor_yticks, minor=True)
 
-    lg = ax.legend(loc="upper left", edgecolor="black", fontsize="9")
+    lg = ax.legend(loc=legend_loc, edgecolor="black", fontsize="9")
     # lg.get_frame().set_alpha(None)
     # lg.get_frame().set_facecolor((1, 1, 1, 0.0))
 
