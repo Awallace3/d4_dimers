@@ -968,6 +968,14 @@ def plotting_setup_dft(
     selected = selected.split("/")[-1].split(".")[0]
     df_out = f"plots/{selected}.pkl"
     if build_df:
+        for basis in ["adz", "atz"]:
+            df[f"SAPT_DFT_{basis}_3_IE"] = df.apply(
+                lambda x: 
+                  x[f"SAPT_DFT_{basis}"][1]
+                + x[f"SAPT_DFT_{basis}"][2]
+                + x[f"SAPT_DFT_{basis}"][3],
+                axis=1,
+            )
         df = compute_d4_from_opt_params(
             df,
             bases=[
