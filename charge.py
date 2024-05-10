@@ -26,6 +26,11 @@ def investigations():
     min_row = df_charged.iloc[id_min]
     print(min_row['Geometry'])
     print(min_row['charges'])
+    df_charged['size'] = df_charged.apply(lambda x: len(x['Geometry']), axis=1)
+    print(df_charged['size'].describe())
+    # get id of largest molecule
+    id_max = df_charged['size'].idxmax()
+    print(f"Max size molecule: {df_charged['size'][id_max]} {id_max = }")
     # Cation case: 7867
     # Anion case: 7898
     # Cation and Anion case: 7871

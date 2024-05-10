@@ -12,7 +12,12 @@ def main():
         subprocess.call("rm plots/basis_study.pkl.tar.gz", shell=True)
         subprocess.call("mv basis_study.pkl plots/basis_study.pkl", shell=True)
     df = pd.read_pickle(df_name)
-    print(df.columns.values)
+    # print(df.columns.values)
+    df = src.plotting.plotting_setup(
+        (df, df_name),
+        False,
+    )
+    return
     df = src.plotting.plotting_setup_dft(
         (df, df_name),
         build_df=True,
