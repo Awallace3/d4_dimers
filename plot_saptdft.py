@@ -2,8 +2,7 @@ import src
 
 
 def main():
-    # df_name = "dfs/los_saptdft_atz.pkl"
-    df_name = "./dfs/los_saptdft_atz_1.pkl"
+    df_name = "./dfs/los_saptdft_atz_2.pkl"
     src.plotting.plotting_setup_dft_ddft(
         df_name,
         build_df=True,

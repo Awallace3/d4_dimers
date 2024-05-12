@@ -844,7 +844,8 @@ def plotting_setup(
     # )
     if True:
         print(df[['SAPT_DFT_atz_3_IE_diff', 'SAPT_DFT_adz_3_IE_diff']])
-        plot_violin_d3_d4_ALL_zoomed(
+        # plot_violin_d3_d4_ALL_zoomed(
+        plot_violin_d3_d4_ALL_zoomed_min_max(
             df,
             {
                 "0/jDZ": "SAPT0_jdz_3_IE_diff",
@@ -1137,7 +1138,8 @@ def plotting_setup_dft_ddft(
             + x["SAPT_DFT_pbe0_adz"][3]
             + x["SAPT_DFT_pbe0_adz_D4_IE"]
             + x["SAPT_DFT_pbe0_adz_dDFT"]
-            - x["SAPT_DFT_pbe0_adz_dHF"],
+            # - x["SAPT_DFT_pbe0_adz_dHF"]
+            ,
             axis=1,
         )
         df["SAPT_DFT_pbe0_adz_total"] = df.apply(
@@ -1153,6 +1155,11 @@ def plotting_setup_dft_ddft(
             axis=1,
         )
         # print(df[["SAPT_DFT_D4_pbe0_adz_total", "DFT-D4/aDZ"]])
+        for n, i in df.iterrows():
+            if not np.allclose(i['SAPT_DFT_D4_pbe0_adz_total'], i["DFT-D4/aDZ"], atol=1e-6):
+                print(n, i['benchmark ref energy'], i['SAPT_DFT_D4_pbe0_adz_total'], i['DFT-D4/aDZ'])
+        df.dropna(subset=["SAPT_DFT_D4_pbe0_adz_total"], inplace=True)
+
         assert np.allclose(
             df["SAPT_DFT_D4_pbe0_adz_total"], df["DFT-D4/aDZ"], atol=1e-6
         )
@@ -1564,6 +1571,242 @@ def plot_violin_d3_d4_ALL_zoomed(
             xy=(x, 1),  # Position at the vertical center of the narrow subplot
             # xytext=(0, 0),
             xytext=(x, 0),
+            color="black",
+            fontsize="8",
+            ha="center",
+            va="center",
+        )
+
+    if title_name is not None:
+        plt.title(f"{title_name}")
+    fig.subplots_adjust(bottom=bottom)
+
+    if pdf:
+        fn_pdf = f"plots/{pfn}_dbs_violin.pdf"
+        fn_png = f"plots/{pfn}_dbs_violin.png"
+        plt.savefig(
+            fn_pdf,
+            transparent=transparent,
+            bbox_inches="tight",
+            dpi=dpi,
+        )
+        if os.path.exists(fn_png):
+            os.system(f"rm {fn_png}")
+        os.system(f"pdftoppm -png -r 400 {fn_pdf} {fn_png}")
+        if os.path.exists(f"{fn_png}-1.png"):
+            os.system(f"mv {fn_png}-1.png {fn_png}")
+        else:
+            print(f"Error: {fn_png}-1.png does not exist")
+    else:
+        plt.savefig(
+            f"plots/{pfn}_dbs_violin.png",
+            transparent=transparent,
+            bbox_inches="tight",
+            dpi=dpi,
+        )
+    plt.clf()
+    return
+
+def plot_violin_d3_d4_ALL_zoomed_min_max(
+    df,
+    vals: {},
+    title_name: str,
+    pfn: str,
+    bottom: float = 0.4,
+    ylim=[-15, 35],
+    transparent=True,
+    widths=0.85,
+    figure_size=None,
+    set_xlable=False,
+    dpi=800,
+    pdf=False,
+    legend_loc='upper left',
+) -> None:
+    print(f"Plotting {pfn}")
+    dbs = list(set(df["DB"].to_list()))
+    dbs = sorted(dbs, key=lambda x: x.lower())
+    vLabels, vData = [], []
+
+    annotations = []  # [(x, y, text), ...]
+    cnt = 1
+    for k, v in vals.items():
+        df[v] = pd.to_numeric(df[v])
+        df_sub = df[df[v].notna()].copy()
+        vData.append(df_sub[v].to_list())
+        k_label = "\\textbf{" + k + "}"
+        # k_label = k
+        vLabels.append(k_label)
+        m = df_sub[v].max()
+        rmse = df_sub[v].apply(lambda x: x**2).mean() ** 0.5
+        mae = df_sub[v].apply(lambda x: abs(x)).mean()
+        max_pos_error = df_sub[v].apply(lambda x: x).max()
+        max_neg_error = df_sub[v].apply(lambda x: x).min()
+        text = r"\textit{%.2f}" % mae
+        text += "\n"
+        text += r"\textbf{%.2f}" % rmse
+        text += "\n"
+        text += r"\textrm{%.2f}" % max_pos_error
+        text += "\n"
+        text += r"\textrm{%.2f}" % max_neg_error
+        annotations.append((cnt, m, text))
+        cnt += 1
+
+    pd.set_option("display.max_columns", None)
+    # print(df[vals.values()].describe(include="all"))
+    # transparent figure
+    fig = plt.figure(dpi=dpi)
+    if figure_size is not None:
+        plt.figure(figsize=figure_size)
+    gs = gridspec.GridSpec(2, 1, height_ratios=[0.22, 1])  # Adjust height ratios to change the size of subplots
+
+    # Create the main violin plot axis
+    ax = plt.subplot(gs[1])  # This will create the subplot for the main violin plot.
+    # ax = plt.subplot(111)
+    vplot = ax.violinplot(
+        vData,
+        showmeans=True,
+        showmedians=False,
+        showextrema=False,
+        quantiles=[[0.05, 0.95] for i in range(len(vData))],
+        widths=widths,
+    )
+    # for partname in ('cbars', 'cmins', 'cmaxes', 'cmeans', 'cmedians'):
+    for n, partname in enumerate(["cmeans"]):
+        vp = vplot[partname]
+        vp.set_edgecolor("black")
+        vp.set_linewidth(1)
+        vp.set_alpha(1)
+    quantile_color = "red"
+    quantile_style = "-"
+    quantile_linewidth = 0.8
+    for n, partname in enumerate(["cquantiles"]):
+        vp = vplot[partname]
+        vp.set_edgecolor(quantile_color)
+        vp.set_linewidth(quantile_linewidth)
+        vp.set_linestyle(quantile_style)
+        vp.set_alpha(1)
+
+    colors = ["blue" if i % 2 == 0 else "green" for i in range(len(vLabels))]
+    for n, pc in enumerate(vplot["bodies"], 1):
+        pc.set_facecolor(colors[n - 1])
+        pc.set_alpha(0.6)
+
+    vLabels.insert(0, "")
+    xs = [i for i in range(len(vLabels))]
+    xs_error = [i for i in range(-1, len(vLabels) + 1)]
+    ax.plot(
+        xs_error,
+        [1 for i in range(len(xs_error))],
+        "k--",
+        label=r"$\pm$1 $\mathrm{kcal\cdot mol^{-1}}$",
+        zorder=0,
+        linewidth=0.6,
+    )
+    ax.plot(
+        xs_error,
+        [0 for i in range(len(xs_error))],
+        "k--",
+        linewidth=0.5,
+        alpha=0.5,
+        # label=r"Reference Energy",
+        zorder=0,
+    )
+    ax.plot(
+        xs_error,
+        [-1 for i in range(len(xs_error))],
+        "k--",
+        zorder=0,
+        linewidth=0.6,
+    )
+    ax.plot(
+        [],
+        [],
+        linestyle=quantile_style,
+        color=quantile_color,
+        linewidth=quantile_linewidth,
+        label=r"5-95th Percentile",
+    )
+    # TODO: fix minor ticks to be between
+    ax.set_xticks(xs)
+    # minor_yticks = np.arange(ylim[0], ylim[1], 2)
+    # ax.set_yticks(minor_yticks, minor=True)
+
+    plt.setp(ax.set_xticklabels(vLabels), rotation=90, fontsize="10")
+    ax.set_xlim((0, len(vLabels)))
+    ax.set_ylim(ylim)
+
+    minor_yticks = create_minor_y_ticks(ylim)
+    ax.set_yticks(minor_yticks, minor=True)
+
+    lg = ax.legend(loc=legend_loc, edgecolor="black", fontsize="9")
+    # lg.get_frame().set_alpha(None)
+    # lg.get_frame().set_facecolor((1, 1, 1, 0.0))
+
+    if set_xlable:
+        ax.set_xlabel("Level of Theory", color="k", fontsize="12")
+    # ax.set_ylabel(r"Error ($\mathrm{kcal\cdot mol^{-1}}$)", color="k", fontsize="14")
+    ax.set_ylabel(r"Error (kcal$\cdot$mol$^{-1}$)", color="k", fontsize="14")
+
+    ax.grid(color="#54585A", which="major", linewidth=0.5, alpha=0.5, axis="y")
+    ax.grid(color="#54585A", which="minor", linewidth=0.5, alpha=0.5)
+    # Annotations of RMSE
+
+
+
+    plt.setp(ax.set_xticklabels(vLabels), rotation=90, fontsize="10")
+    ax.set_xlim((0, len(vLabels)))
+    ax.set_ylim(ylim)
+
+    minor_yticks = create_minor_y_ticks(ylim)
+    ax.set_yticks(minor_yticks, minor=True)
+
+    lg = ax.legend(loc=legend_loc, edgecolor="black", fontsize="9")
+    if set_xlable:
+        ax.set_xlabel("Level of Theory", color="k", fontsize="12")
+    ax.set_ylabel(r"Error (kcal$\cdot$mol$^{-1}$)", color="k", fontsize="14")
+    ax.grid(color="#54585A", which="major", linewidth=0.5, alpha=0.5, axis="y")
+    ax.grid(color="#54585A", which="minor", linewidth=0.5, alpha=0.5)
+
+    for n, xtick in enumerate(ax.get_xticklabels()):
+        xtick.set_color(colors[n - 1])
+        xtick.set_alpha(0.8)
+
+    ax_error = plt.subplot(gs[0], sharex=ax)
+    # ax_error.spines['top'].set_visible(False)
+    ax_error.spines['right'].set_visible(False)
+    ax_error.spines['left'].set_visible(False)
+    ax_error.spines['bottom'].set_visible(False)
+    ax_error.tick_params(left=False, labelleft=False, bottom=False, labelbottom=False)
+
+    # Synchronize the x-limits with the main subplot
+    ax_error.set_xlim((0, len(vLabels)))
+    ax_error.set_ylim(0, 1)  # Assuming the upper subplot should have no y range
+    # Populate ax_error with error statistics through annotations
+        # text = r"\textit{%.2f}" % mae
+        # text += r"\textbf{%.2f}" % rmse
+        # text += r"\textrm{%.2f}" % max_error
+    error_labels = r"\textit{MAE}"
+    error_labels += "\n"
+    error_labels += r"\textbf{RMSE}" 
+    error_labels += "\n"
+    error_labels += r"\textrm{MaxE}" 
+    error_labels += "\n"
+    error_labels += r"\textrm{MinE}" 
+    ax_error.annotate(
+        error_labels,
+        xy=(0, 1),  # Position at the vertical center of the narrow subplot
+        xytext=(0, 0.2),
+        color="black",
+        fontsize="8",
+        ha="center",
+        va="center",
+    )
+    for idx, (x, y, text) in enumerate(annotations):
+        ax_error.annotate(
+            text,
+            xy=(x, 1),  # Position at the vertical center of the narrow subplot
+            # xytext=(0, 0),
+            xytext=(x, 0.2),
             color="black",
             fontsize="8",
             ha="center",
