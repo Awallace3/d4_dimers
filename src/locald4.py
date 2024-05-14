@@ -94,6 +94,7 @@ def calc_dftd4_c6_c8_pairDisp2(
         str(charges[0]),
         "--pair-resolved",
     ]
+    # print(" ".join(args))
     v = subprocess.call(
         args=args,
         shell=False,
