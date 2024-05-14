@@ -505,6 +505,32 @@ def plot_basis_sets_d4(df, build_df=False, df_out: str = "basis_study", df_name=
         f"{selected}_d4",
         bottom=0.30,
     )
+    plot_violin_d3_d4_ALL_zoomed_min_max(
+        df,
+        {
+            "0/DZ": "SAPT0_dz_3_IE_diff",
+            "0-D4/DZ": "SAPT0_dz_3_IE_d4_diff",
+            "0/jDZ": "SAPT0_jdz_3_IE_diff",
+            "0-D4/jDZ": "SAPT0_jdz_3_IE_d4_diff",
+            "0/aDZ": "SAPT0_adz_3_IE_diff",
+            "0-D4/aDZ": "SAPT0_adz_3_IE_d4_diff",
+            "0/TZ": "SAPT0_tz_3_IE_diff",
+            "0-D4/TZ": "SAPT0_tz_3_IE_d4_diff",
+            "0/mTZ": "SAPT0_mtz_3_IE_diff",
+            "0-D4/mTZ": "SAPT0_mtz_3_IE_d4_diff",
+            "0/jTZ": "SAPT0_jtz_3_IE_diff",
+            "0-D4/jTZ": "SAPT0_jtz_3_IE_d4_diff",
+            "0/aTZ": "SAPT0_atz_3_IE_diff",
+            "0-D4/aTZ": "SAPT0_atz_3_IE_d4_diff",
+        },
+        "",# f"All Dimers (8299)",
+        f"{selected}_d4_zoomed",
+        bottom=0.45,
+        ylim=[-5, 5],
+        legend_loc="lower right",
+        transparent=False,
+        # figure_size=(6, 6),
+    )
     plot_violin_d3_d4_ALL(
         df,
         {
@@ -686,6 +712,32 @@ def plot_basis_sets_d3(df, build_df=False, df_out: str = "basis_study"):
         f"{selected}_d3",
         bottom=0.30,
     )
+    plot_violin_d3_d4_ALL_zoomed_min_max(
+            df,
+        {
+            "0/DZ": "SAPT0_dz_3_IE_diff",
+            "0-D3/DZ": "SAPT0_dz_3_IE_d3_diff",
+            "0/jDZ": "SAPT0_jdz_3_IE_diff",
+            "0-D3/jDZ": "SAPT0_jdz_3_IE_d3_diff",
+            "0/aDZ": "SAPT0_adz_3_IE_diff",
+            "0-D3/aDZ": "SAPT0_adz_3_IE_d3_diff",
+            "0/TZ": "SAPT0_tz_3_IE_diff",
+            "0-D3/TZ": "SAPT0_tz_3_IE_d3_diff",
+            "0/mTZ": "SAPT0_mtz_3_IE_diff",
+            "0-D3/mTZ": "SAPT0_mtz_3_IE_d3_diff",
+            "0/jTZ": "SAPT0_jtz_3_IE_diff",
+            "0-D3/jTZ": "SAPT0_jtz_3_IE_d3_diff",
+            "0/aTZ": "SAPT0_atz_3_IE_diff",
+            "0-D3/aTZ": "SAPT0_atz_3_IE_d3_diff",
+        },
+            "",# f"All Dimers (8299)",
+            f"{selected}_d3_zoomed",
+            bottom=0.45,
+            ylim=[-5, 5],
+            legend_loc="lower right",
+            transparent=False,
+            # figure_size=(6, 6),
+        )
     plot_violin_d3_d4_ALL(
         df,
         {
@@ -1193,6 +1245,28 @@ def plotting_setup_dft_ddft(
         # df["SAPT0_atz_exch"] = df["SAPT0 EXCH ENERGY"] * h2kcalmol
         # df["SAPT0_atz_indu"] = df["SAPT0 IND ENERGY"] * h2kcalmol
         # df["SAPT0_atz_disp"] = df["SAPT0 DISP ENERGY"] * h2kcalmol
+        df['SAPT0_adz'] = df.apply(
+                lambda x: np.array([
+                    x['SAPT0 ELST ENERGY adz']+
+                    x['SAPT0 EXCH ENERGY adz']+
+                    x['SAPT0 IND ENERGY adz']+
+                    x['SAPT0 DISP ENERGY adz'],
+                    x['SAPT0 ELST ENERGY adz'],
+                    x['SAPT0 EXCH ENERGY adz'],
+                    x['SAPT0 IND ENERGY adz'],
+                    x['SAPT0 DISP ENERGY adz'],
+                ]), axis=1)
+        df['SAPT0_atz'] = df.apply(
+                lambda x: np.array([
+                    x['SAPT0 ELST ENERGY atz']+
+                    x['SAPT0 EXCH ENERGY atz']+
+                    x['SAPT0 IND ENERGY atz']+
+                    x['SAPT0 DISP ENERGY atz'],
+                    x['SAPT0 ELST ENERGY atz'],
+                    x['SAPT0 EXCH ENERGY atz'],
+                    x['SAPT0 IND ENERGY atz'],
+                    x['SAPT0 DISP ENERGY atz'],
+                ]), axis=1)
 
         df["SAPT0_atz_total"] = df["SAPT0_atz"].apply(lambda x: x[0])
         df["SAPT0_atz_elst"] = df["SAPT0_atz"].apply(lambda x: x[1])
@@ -1239,7 +1313,7 @@ def plotting_setup_dft_ddft(
     print(f"Lenght of df: {len(df)}")
     plot_violin_SAPT0_DFT_components(
         df,
-        pfn=f"{basename_selected}_saptdft_components",
+        pfn=f"{basename_selected}_saptdft_components2",
         elst_vals={
             "name": "Electrostatics",
             "reference": [f"{reference}/{ref_basis} Ref.", f"{reference} ELST ENERGY"],

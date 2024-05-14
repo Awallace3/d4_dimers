@@ -17,11 +17,11 @@ def main():
         (df, df_name),
         False,
     )
-    return
-    df = src.plotting.plotting_setup_dft(
-        (df, df_name),
-        build_df=True,
-    )
+    # return
+    # df = src.plotting.plotting_setup_dft(
+    #     (df, df_name),
+    #     build_df=True,
+    # )
     print(df['SAPT_DFT_atz'][0])
     df['size'] = df.apply(lambda x: len(x['Geometry']), axis=1)
     print(df['size'].describe())
@@ -31,16 +31,16 @@ def main():
     # return
     df = src.plotting.plot_basis_sets_d4(
         df,
-        True,
+        False,
     )
     df = src.plotting.plot_basis_sets_d3(
         df,
-        True,
+        False,
     )
-    df = src.plotting.plotting_setup(
-        (df, df_name),
-        True,
-    )
+    # df = src.plotting.plotting_setup(
+    #     (df, df_name),
+    #     True,
+    # )
     # return
     return
 
