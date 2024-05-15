@@ -32,4 +32,4 @@ serve as a place to use the functions in the `src` directory.
 
 ## Contact
 If you want to use this codebase and would like assistance, please contact me
-via email at <a href="mailto:austinwallace196@gmail.com">austinwallace196@gmail.com</a>
+via email at <a href="mailto:awallace43@gatech.edu">awallace43@gatech.edu</a>
