@@ -1343,12 +1343,12 @@ def plotting_setup_dft_ddft(
             "vals": {
                 "SAPT0/aDZ": "SAPT0_adz_total",
                 "SAPT0-D4/aDZ": "SAPT0-D4/aDZ",
-                "SAPT0/aTZ": "SAPT0_atz_total",
+                # "SAPT0/aTZ": "SAPT0_atz_total",
                 "SAPT0-D4/aDZ": "SAPT0_adz_d4",
                 "SAPT(DFT)/aDZ": "SAPT_DFT_pbe0_adz_total",
-                "SAPT(DFT)D4/aDZ": "SAPT_DFT_D4_pbe0_adz_total",
-                # "PBE0-D4/aDZ IE": "SAPT_DFT_D4_pbe0_adz_total",
-                f"SAPT2+3(CCD)DMP2/{ref_basis}": "SAPT2+3(CCD)DMP2 TOTAL ENERGY",
+                # "SAPT(DFT)D4/aDZ": "SAPT_DFT_D4_pbe0_adz_total",
+                "PBE0-D4/aDZ IE": "SAPT_DFT_D4_pbe0_adz_total",
+                # f"SAPT2+3(CCD)DMP2/{ref_basis}": "SAPT2+3(CCD)DMP2 TOTAL ENERGY",
                 # "SAPT(DFT)-D4/aDZ": "SAPT_DFT_adz_3_IE_d4",
                 # "SAPT(DFT)-D4(ATM)/aDZ": "SAPT_DFT_adz_3_IE_d4_ATM",
                 # "SAPT(DFT)/aTZ": "SAPT_DFT_atz_total",
@@ -1506,8 +1506,8 @@ def plot_violin_d3_d4_ALL_zoomed(
     # colors = [color_gt_bold_blue if i % 2 == 0 else color_gt_olympic_teal for i in range(len(vLabels))]
     for n, pc in enumerate(vplot["bodies"], 1):
         pc.set_facecolor(colors[n - 1])
-        # pc.set_alpha(0.6)
-        pc.set_alpha(1)
+        pc.set_alpha(0.6)
+        # pc.set_alpha(1)
 
     vLabels.insert(0, "")
     xs = [i for i in range(len(vLabels))]
@@ -1674,7 +1674,7 @@ def plot_component_violin_zoomed(
     dpi=600,
     transparent=True,
     legend_loc='upper right',
-    pfn="los_SAPTDFT",
+    pfn="los_SAPTDFT_sherrill",
     set_xlable=False,
     pdf=False,
 ):
@@ -1684,7 +1684,7 @@ def plot_component_violin_zoomed(
     fig = plt.figure(dpi=dpi)
     if figure_size is not None:
         plt.figure(figsize=figure_size)
-    gs = gridspec.GridSpec(2, 1, height_ratios=[0.08, 1])  # Adjust height ratios to change the size of subplots
+    gs = gridspec.GridSpec(2, 1, height_ratios=[0.15, 1])  # Adjust height ratios to change the size of subplots
 
     # Create the main violin plot axis
     ax = plt.subplot(gs[1])  # This will create the subplot for the main violin plot.
@@ -1725,10 +1725,11 @@ def plot_component_violin_zoomed(
     color_gt_olympic_teal = (0 /255, 140/255,  149/255)  # Olympic teal
     color_gt_bold_blue = (58/255, 93/255, 174/255)
     colors = [color_gt_bold_blue if i % 2 == 0 else color_gt_olympic_teal for i in range(len(vLabels))]
+    colors = ["blue" if i % 2 == 0 else "green" for i in range(len(vLabels))]
     for n, pc in enumerate(vplot["bodies"], 1):
         pc.set_facecolor(colors[n - 1])
-        # pc.set_alpha(0.6)
-        pc.set_alpha(1)
+        pc.set_alpha(0.6)
+        # pc.set_alpha(1)
 
     # vLabels.insert(0, "")
     xs = [i for i in range(len(vLabels))]
@@ -1835,7 +1836,7 @@ def plot_component_violin_zoomed(
     ax_error.annotate(
         error_labels,
         xy=(0, 1),  # Position at the vertical center of the narrow subplot
-        xytext=(0, -0.10),
+        xytext=(0, 0.15),
         color="black",
         fontsize="10",
         ha="center",
@@ -1846,7 +1847,7 @@ def plot_component_violin_zoomed(
             text,
             xy=(x, 1),  # Position at the vertical center of the narrow subplot
             # xytext=(0, 0),
-            xytext=(x, -0.10),
+            xytext=(x, 0.15),
             color="black",
             fontsize="10",
             ha="center",
@@ -1875,7 +1876,7 @@ def plot_component_violin_zoomed(
             print(f"Error: {fn_png}-1.png does not exist")
     else:
         plt.savefig(
-            f"plots/{pfn}_dbs_violin.png",
+            f"plots/{pfn}_dbs_violin.{img_ext}",
             transparent=transparent,
             bbox_inches="tight",
             dpi=dpi,
@@ -1896,13 +1897,15 @@ def plot_violin_d3_d4_ALL_zoomed_min_max(
     set_xlable=False,
     dpi=800,
     pdf=False,
+    jpeg=True,
     legend_loc='upper left',
 ) -> None:
     print(f"Plotting {pfn}")
-    dbs = list(set(df["DB"].to_list()))
-    dbs = sorted(dbs, key=lambda x: x.lower())
-    vLabels, vData = [], []
+    image_ext = "png"
+    if jpeg:
+        image_ext = "jpeg"
 
+    vLabels, vData = [], []
     annotations = []  # [(x, y, text), ...]
     cnt = 1
     for k, v in vals.items():
@@ -1968,8 +1971,8 @@ def plot_violin_d3_d4_ALL_zoomed_min_max(
     # colors = [color_gt_bold_blue if i % 2 == 0 else color_gt_olympic_teal for i in range(len(vLabels))]
     for n, pc in enumerate(vplot["bodies"], 1):
         pc.set_facecolor(colors[n - 1])
-        # pc.set_alpha(0.6)
-        pc.set_alpha(1)
+        pc.set_alpha(0.6)
+        # pc.set_alpha(1)
 
     vLabels.insert(0, "")
     xs = [i for i in range(len(vLabels))]
@@ -2113,7 +2116,7 @@ def plot_violin_d3_d4_ALL_zoomed_min_max(
             print(f"Error: {fn_png}-1.png does not exist")
     else:
         plt.savefig(
-            f"plots/{pfn}_dbs_violin.png",
+            f"plots/{pfn}_dbs_violin.{image_ext}",
             transparent=transparent,
             bbox_inches="tight",
             dpi=dpi,
@@ -2134,12 +2137,14 @@ def plot_violin_d3_d4_ALL(
     set_xlable=False,
     dpi=600,
     pdf=False,
+    jpeg=True,
     legend_loc='upper left',
 ) -> None:
     """ """
     print(f"Plotting {pfn}")
-    dbs = list(set(df["DB"].to_list()))
-    dbs = sorted(dbs, key=lambda x: x.lower())
+    image_ext = "png"
+    if jpeg:
+        image_ext = "jpeg"
     vLabels, vData = [], []
 
     annotations = []  # [(x, y, text), ...]
@@ -2298,7 +2303,7 @@ def plot_violin_d3_d4_ALL(
             print(f"Error: {fn_png}-1.png does not exist")
     else:
         plt.savefig(
-            f"plots/{pfn}_dbs_violin.png",
+            f"plots/{pfn}_dbs_violin.{image_ext}",
             transparent=transparent,
             bbox_inches="tight",
             dpi=dpi,
@@ -2736,8 +2741,8 @@ def plot_violin_SAPT0_DFT_components(
             widths=widths,
             sub_rotation=20,
             fontsize=28,
-            figure_size=(6, 6),
-            ylim=[-5, 5],
+            figure_size=(5, 4),
+            ylim=[-4, 6],
         )
         # plt.savefig(
         #     f"plots/{pfn}_TOTAL.png", transparent=transparent, bbox_inches="tight"
@@ -2759,10 +2764,14 @@ def plot_dbs_d3_d4(
     transparent=True,
     dpi=800,
     pdf=False,
+    jpeg=True,
     verbose=False,
     ylim=None,
 ) -> None:
     print(f"Plotting {pfn}")
+    image_ext = "png"
+    if jpeg:
+        image_ext = "jpeg"
     dbs = list(set(df["DB"].to_list()))
     dbs = sorted(dbs, key=lambda x: x.lower())
     vLabels, vData, vDataErrors = [], [], []
@@ -2895,7 +2904,7 @@ def plot_dbs_d3_d4(
             print(f"Error: {fn_png}-1.png does not exist")
     else:
         plt.savefig(
-            f"plots/{pfn}_dbs_violin.png",
+            f"plots/{pfn}_dbs_violin.{image_ext}",
             transparent=transparent,
             bbox_inches="tight",
             dpi=dpi,
