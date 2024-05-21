@@ -153,6 +153,7 @@ def compute_d4_from_opt_params(
         ["SAPT0_jtz_IE", "SAPT0_jtz_3_IE", "SAPT0_jtz_3_IE_2B", "SAPT0_jtz_3_IE"],
         ["SAPT0_atz_IE", "SAPT0_atz_3_IE", "SAPT0_atz_3_IE_2B", "SAPT0_atz_3_IE"],
     ],
+    benchmark_label='Benchmark',
 ) -> pd.DataFrame:
     """
     compute_D3_D4_values_for_params
@@ -181,8 +182,8 @@ def compute_d4_from_opt_params(
         )
         diff = f"{i[1]}_diff"
         d4_diff = f"{i[1]}_d4_diff"
-        df[diff] = df["Benchmark"] - df[i[0]]
-        df[d4_diff] = df["Benchmark"] - df[i[3]] - df[f"-D4 ({i[1]})"]
+        df[diff] = df[benchmark_label] - df[i[0]]
+        df[d4_diff] = df[benchmark_label] - df[i[3]] - df[f"-D4 ({i[1]})"]
         print(f'"{diff}",')
         print(f'"{d4_diff}",')
     return df
@@ -1190,7 +1191,7 @@ def plotting_setup_dft_ddft(
             + x["SAPT_DFT_pbe0_adz"][3]
             + x["SAPT_DFT_pbe0_adz_D4_IE"]
             + x["SAPT_DFT_pbe0_adz_dDFT"]
-            # - x["SAPT_DFT_pbe0_adz_dHF"]
+            - x["SAPT_DFT_pbe0_adz_dHF"]
             ,
             axis=1,
         )
@@ -1256,6 +1257,12 @@ def plotting_setup_dft_ddft(
                     x['SAPT0 IND ENERGY adz'],
                     x['SAPT0 DISP ENERGY adz'],
                 ]), axis=1)
+        df['SAPT0_adz_3_IE'] = df.apply(
+                lambda x: np.array([
+                    x['SAPT0 ELST ENERGY adz']+
+                    x['SAPT0 EXCH ENERGY adz']+
+                    x['SAPT0 IND ENERGY adz'],
+                ]), axis=1)
         df['SAPT0_atz'] = df.apply(
                 lambda x: np.array([
                     x['SAPT0 ELST ENERGY atz']+
@@ -1266,6 +1273,12 @@ def plotting_setup_dft_ddft(
                     x['SAPT0 EXCH ENERGY atz'],
                     x['SAPT0 IND ENERGY atz'],
                     x['SAPT0 DISP ENERGY atz'],
+                ]), axis=1)
+        df['SAPT0_atz_3_IE'] = df.apply(
+                lambda x: np.array([
+                    x['SAPT0 ELST ENERGY atz']+
+                    x['SAPT0 EXCH ENERGY atz']+
+                    x['SAPT0 IND ENERGY atz'],
                 ]), axis=1)
 
         df["SAPT0_atz_total"] = df["SAPT0_atz"].apply(lambda x: x[0])
@@ -1280,28 +1293,29 @@ def plotting_setup_dft_ddft(
         df["SAPT0_adz_indu"] = df["SAPT0_adz"].apply(lambda x: x[3])
         df["SAPT0_adz_disp"] = df["SAPT0_adz"].apply(lambda x: x[4])
 
-        df[f"{reference} ELST ENERGY"] = df[f"{reference} ELST ENERGY"] * h2kcalmol
+        df[f"{reference} ELST ENERGY"] = df[f"{reference} ELST ENERGY {ref_basis.lower()}"] * h2kcalmol
         # print(df[f"{reference} ELST ENERGY"])
-        df[f"{reference} EXCH ENERGY"] = df[f"{reference} EXCH ENERGY"] * h2kcalmol
-        df[f"{reference} IND ENERGY"] = df[f"{reference} IND ENERGY"] * h2kcalmol
-        df[f"{reference} DISP ENERGY"] = df[f"{reference} DISP ENERGY"] * h2kcalmol
-        df[f"{reference} TOTAL ENERGY"] = df[f"{reference} TOTAL ENERGY"] * h2kcalmol
+        df[f"{reference} EXCH ENERGY"] = df[f"{reference} EXCH ENERGY {ref_basis.lower()}"] * h2kcalmol
+        df[f"{reference} IND ENERGY"] = df[f"{reference} IND ENERGY {ref_basis.lower()}"] * h2kcalmol
+        df[f"{reference} DISP ENERGY"] = df[f"{reference} DISP ENERGY {ref_basis.lower()}"] * h2kcalmol
+        df[f"{reference} TOTAL ENERGY"] = df[f"{reference} TOTAL ENERGY {ref_basis.lower()}"] * h2kcalmol
         df = compute_d4_from_opt_params(
             df,
             bases=[
                 [
-                    "SAPT0_adz_IE",
+                    "SAPT0_adz_total",
                     "SAPT0_adz_3_IE",
                     "SAPT0_adz_3_IE_2B",
                     "SAPT0_adz_3_IE",
                 ],
                 [
-                    "SAPT0_atz_IE",
+                    "SAPT0_atz_total",
                     "SAPT0_atz_3_IE",
                     "SAPT0_atz_3_IE_2B",
                     "SAPT0_atz_3_IE",
                 ],
             ],
+            benchmark_label='benchmark ref energy'
         )
         df["SAPT0-D4/aDZ"] = df.apply(
             lambda row: row["SAPT0_adz_3_IE"] + row["-D4 (SAPT0_adz_3_IE)"], axis=1
@@ -1372,7 +1386,7 @@ def plotting_setup_dft_ddft(
                 "SAPT(DFT)/aDZ": "SAPT_DFT_pbe0_adz_total",
                 "SAPT(DFT)D4/aDZ": "SAPT_DFT_D4_pbe0_adz_total",
                 "PBE0-D4/aDZ IE": "SAPT_DFT_D4_pbe0_adz_total",
-                f"SAPT2+3(CCD)DMP2/{ref_basis}": "SAPT2+3(CCD)DMP2 TOTAL ENERGY",
+                f"SAPT2+3(CCD)DMP2/{ref_basis}": "SAPT2+3(CCD)DMP2 TOTAL ENERGY atz",
                 # "SAPT(DFT)-D4/aDZ": "SAPT_DFT_adz_3_IE_d4",
                 # "SAPT(DFT)-D4(ATM)/aDZ": "SAPT_DFT_adz_3_IE_d4_ATM",
                 # "SAPT(DFT)/aTZ": "SAPT_DFT_atz_total",

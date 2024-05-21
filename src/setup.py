@@ -323,7 +323,7 @@ def generate_D4_data(df):
         disp_a,
         disp_b,
     ) = calc_c6s_c8s_pairDisp2_for_df(xyzs, monAs, monBs, charges)
-    df["C6"] = C6s
+    df["C6s"] = C6s
     df["C6_A"] = C6_A
     df["C6_B"] = C6_B
     df["C6_ATM"] = C6_ATMs
