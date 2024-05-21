@@ -1,5 +1,9 @@
 import src
 import pandas as pd
+import numpy as np
+import qcelemental as qcel
+
+h2kcalmol = qcel.constants.conversion_factor("hartree", "kcal/mol")
 
 def merge_basis_study():
     df = pd.read_pickle("./plots/basis_study.pkl")
@@ -34,7 +38,6 @@ def main():
     df.to_pickle(df_name)
     df.dropna(subset=['SAPT_DFT_pbe0_adz', 'SAPT_DFT_pbe0_atz', "C6s"], inplace=True)
     # return
-
         
     src.plotting.plotting_setup_dft_ddft(
         df_name,

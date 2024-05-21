@@ -529,7 +529,7 @@ def plot_basis_sets_d4(df, build_df=False, df_out: str = "basis_study", df_name=
         bottom=0.45,
         ylim=[-5, 5],
         legend_loc="lower right",
-        transparent=False,
+        transparent=True,
         # figure_size=(6, 6),
     )
     plot_violin_d3_d4_ALL(
@@ -736,7 +736,7 @@ def plot_basis_sets_d3(df, build_df=False, df_out: str = "basis_study"):
             bottom=0.45,
             ylim=[-5, 5],
             legend_loc="lower right",
-            transparent=False,
+            transparent=True,
             # figure_size=(6, 6),
         )
     plot_violin_d3_d4_ALL(
@@ -919,11 +919,12 @@ def plotting_setup(
                 "SAPT(DFT)/aTZ": "SAPT_DFT_atz_3_IE_diff",
             },
             "",# f"All Dimers (8299)",
+            # f"8299 Dimer Dataset",
             f"{selected}_ATM2",
             bottom=0.45,
             ylim=[-5, 5],
             legend_loc="upper right",
-            transparent=False,
+            transparent=True,
             # figure_size=(6, 6),
         )
         plot_violin_d3_d4_ALL(
@@ -966,7 +967,8 @@ def plotting_setup(
                 "SAPT(DFT)/aTZ": "SAPT_DFT_atz_3_IE_diff",
                 "SAPT(DFT)-D4/aTZ": "SAPT_DFT_atz_3_IE_d4_diff",
             },
-            f"All Dimers (8299)",
+            # f"All Dimers (8299)",
+            "",
             f"{selected}_saptdft_d4_dhf",
             bottom=0.45,
             ylim=[-18, 26],
@@ -1180,9 +1182,6 @@ def plotting_setup_dft_ddft(
     ref_basis = "aTZ"
     if build_df:
         df = pd.read_pickle(selected)
-        if 'SAPT0_adz' not in df.columns:
-            ref_df = pd.read_pickle("plots/basis_study.pkl")
-            print(ref_df)
         print(df.columns.values)
         df = df[df["SAPT_DFT_pbe0_adz"].notna()].copy()
         df["SAPT_DFT_D4_pbe0_adz_total"] = df.apply(
@@ -1196,10 +1195,12 @@ def plotting_setup_dft_ddft(
             axis=1,
         )
         df["SAPT_DFT_pbe0_adz_total"] = df.apply(
-            lambda x: x["SAPT_DFT_pbe0_adz"][1]
-            + x["SAPT_DFT_pbe0_adz"][2]
-            + x["SAPT_DFT_pbe0_adz"][3]
-            + x["SAPT_DFT_pbe0_adz"][4],
+            lambda x: 
+            x["SAPT_DFT_pbe0_adz"][0]
+            # + x["SAPT_DFT_pbe0_adz"][2]
+            # + x["SAPT_DFT_pbe0_adz"][3]
+            # + x["SAPT_DFT_pbe0_adz"][4]
+            ,
             axis=1,
         )
 
@@ -1226,9 +1227,13 @@ def plotting_setup_dft_ddft(
             + df["SAPT_DFT_pbe0_adz_indu"]
         )
         df["SAPT_DFT_pbe0_adz_d4_disp"] = df.apply(
-            lambda x: x["SAPT_DFT_pbe0_adz_D4_IE"]
-            + x["SAPT_DFT_pbe0_adz_dDFT"]
-            - x["SAPT_DFT_pbe0_adz_dHF"],
+            lambda x: 
+            # x['SAPT_DFT_pbe0_adz_elst'] +
+            # x['SAPT_DFT_pbe0_adz_exch'] +
+            # x['SAPT_DFT_pbe0_adz_indu'] +
+            x["SAPT_DFT_pbe0_adz_dDFT"] - 
+            x["SAPT_DFT_pbe0_adz_dHF"] +
+            x["SAPT_DFT_pbe0_adz_D4_IE"],
             axis=1,
         )
 
@@ -1317,6 +1322,14 @@ def plotting_setup_dft_ddft(
             ],
             benchmark_label='benchmark ref energy'
         )
+        df[f"SAPT0_adz_d4"] = df.apply(
+            lambda x: x[f"SAPT0_adz_3_IE"] + x[f"-D4 (SAPT0_adz_3_IE)"], axis=1
+        )
+        df[f"SAPT0_atz_d4"] = df.apply(
+            lambda x: x[f"SAPT0_atz_3_IE"] + x[f"-D4 (SAPT0_atz_3_IE)"], axis=1
+        )
+        df.dropna(subset=["-D4 (SAPT0_adz_3_IE)"], inplace=True)
+        df.dropna(subset=["-D4 (SAPT0_atz_3_IE)"], inplace=True)
         df["SAPT0-D4/aDZ"] = df.apply(
             lambda row: row["SAPT0_adz_3_IE"] + row["-D4 (SAPT0_adz_3_IE)"], axis=1
         )
@@ -1324,7 +1337,8 @@ def plotting_setup_dft_ddft(
         df = pd.read_pickle(df_out)
     basename_selected = selected.split("/")[-1].split(".")[0]
     assert df['SAPT_DFT_pbe0_adz_elst'].isnull().sum() == 0
-    print(f"Lenght of df: {len(df)}")
+    print(f"Length of df prior plotting: {len(df)}")
+    # plot_violin_SAPT0_DFT_components(
     plot_violin_SAPT0_DFT_components(
         df,
         pfn=f"{basename_selected}_saptdft_components2",
@@ -1361,7 +1375,7 @@ def plotting_setup_dft_ddft(
             "vals": {
                 # "SAPT0/aDZ": "SAPT0_adz_indu",
                 # "SAPT0/aTZ": "SAPT0_atz_indu",
-                "SAPT0-D4/aDZ": "-D4 (SAPT0_adz_3_IE)",
+                # "SAPT0-D4/aDZ": "-D4 (SAPT0_adz_3_IE)",
                 "SAPT(DFT)/aDZ": "SAPT_DFT_pbe0_adz_disp",
                 "SAPT(DFT)-D4/aDZ": "SAPT_DFT_pbe0_adz_d4_disp",
             },
@@ -1376,15 +1390,15 @@ def plotting_setup_dft_ddft(
             },
         },
         total_vals={
-            "name": "(Elst. + Exch. + Indu. + Disp.)",
+            "name": "4337 Dimer Dataset",
             "reference": ["CCSD(T)/CBS IE Ref.", "benchmark ref energy"],
             "vals": {
                 "SAPT0/aDZ": "SAPT0_adz_total",
                 "SAPT0-D4/aDZ": "SAPT0-D4/aDZ",
-                "SAPT0/aTZ": "SAPT0_atz_total",
-                # "SAPT0-D4/aDZ": "SAPT0_adz_d4",
+                # "SAPT0/aTZ": "SAPT0_atz_total",
+                "SAPT0-D4/aDZ": "SAPT0_adz_d4",
                 "SAPT(DFT)/aDZ": "SAPT_DFT_pbe0_adz_total",
-                "SAPT(DFT)D4/aDZ": "SAPT_DFT_D4_pbe0_adz_total",
+                # "SAPT(DFT)D4/aDZ": "SAPT_DFT_D4_pbe0_adz_total",
                 "PBE0-D4/aDZ IE": "SAPT_DFT_D4_pbe0_adz_total",
                 f"SAPT2+3(CCD)DMP2/{ref_basis}": "SAPT2+3(CCD)DMP2 TOTAL ENERGY atz",
                 # "SAPT(DFT)-D4/aDZ": "SAPT_DFT_adz_3_IE_d4",
@@ -1539,9 +1553,13 @@ def plot_violin_d3_d4_ALL_zoomed(
         vp.set_alpha(1)
 
     colors = ["blue" if i % 2 == 0 else "green" for i in range(len(vLabels))]
+    # color_gt_olympic_teal = (0 /255, 140/255,  149/255)  # Olympic teal
+    # color_gt_bold_blue = (58/255, 93/255, 174/255)
+    # colors = [color_gt_bold_blue if i % 2 == 0 else color_gt_olympic_teal for i in range(len(vLabels))]
     for n, pc in enumerate(vplot["bodies"], 1):
         pc.set_facecolor(colors[n - 1])
         pc.set_alpha(0.6)
+        # pc.set_alpha(1)
 
     vLabels.insert(0, "")
     xs = [i for i in range(len(vLabels))]
@@ -1695,6 +1713,229 @@ def plot_violin_d3_d4_ALL_zoomed(
     plt.clf()
     return
 
+def plot_component_violin_zoomed(
+    vData,
+    vLabels,
+    annotations,
+    title_name,
+    widths=0.85,
+    fontsize=8,
+    sub_rotation=45,
+    ylim=None,
+    figure_size=None,
+    dpi=600,
+    transparent=True,
+    legend_loc='upper right',
+    pfn="los_SAPTDFT_sherrill",
+    set_xlable=False,
+    pdf=False,
+):
+    color1 = (220/255, 198/255, 135/255)  # Original color (yellow)
+    print(f"Plotting {pfn}")
+    # fig = plt.figure(facecolor=color1)
+    fig = plt.figure(dpi=dpi)
+    if figure_size is not None:
+        plt.figure(figsize=figure_size)
+    gs = gridspec.GridSpec(2, 1, height_ratios=[0.15, 1])  # Adjust height ratios to change the size of subplots
+
+    # Create the main violin plot axis
+    ax = plt.subplot(gs[1])  # This will create the subplot for the main violin plot.
+    # ax = plt.subplot(111)
+    vplot = ax.violinplot(
+        vData,
+        showmeans=True,
+        showmedians=False,
+        showextrema=False,
+        quantiles=[[0.05, 0.95] for i in range(len(vData))],
+        widths=widths,
+    )
+    # for partname in ('cbars', 'cmins', 'cmaxes', 'cmeans', 'cmedians'):
+    for n, partname in enumerate(["cmeans"]):
+        vp = vplot[partname]
+        vp.set_edgecolor("black")
+        vp.set_linewidth(1)
+        vp.set_alpha(1)
+    quantile_color = "red"
+    quantile_style = "-"
+    quantile_linewidth = 0.8
+    for n, partname in enumerate(["cquantiles"]):
+        vp = vplot[partname]
+        vp.set_edgecolor(quantile_color)
+        vp.set_linewidth(quantile_linewidth)
+        vp.set_linestyle(quantile_style)
+        vp.set_alpha(1)
+
+    color1 = (220/255, 198/255, 135/255)  # Original color (yellow)
+    color2 = (35/255, 57/255, 120/255)    # Complementary color (deep blue)
+    color3 = (220/255, 135/255, 135/255)  # Analogous color (red)
+    color4 = (220/255, 220/255, 135/255)  # Analogous color (green)
+    color5 = (135/255, 220/255, 198/255)  # Triadic color (teal)
+    color6 = (198/255, 135/255, 220/255)  # Triadic color (purple)
+    color_gt_blue = (0/255, 0/255, 128/255)  # Dark blue
+    # color_gt_olympic_teal = (100 /255, 204/255,  201/255)  # Olympic teal
+    darker_purple = (4/255, 36/255, 51/255)
+    color_gt_olympic_teal = (0 /255, 140/255,  149/255)  # Olympic teal
+    color_gt_bold_blue = (58/255, 93/255, 174/255)
+    colors = [color_gt_bold_blue if i % 2 == 0 else color_gt_olympic_teal for i in range(len(vLabels))]
+    colors = ["blue" if i % 2 == 0 else "green" for i in range(len(vLabels))]
+    for n, pc in enumerate(vplot["bodies"], 1):
+        pc.set_facecolor(colors[n - 1])
+        pc.set_alpha(0.6)
+        # pc.set_alpha(1)
+
+    # vLabels.insert(0, "")
+    xs = [i for i in range(len(vLabels))]
+    print(xs, vLabels, len(vData))
+    xs_error = [i for i in range(-1, len(vLabels) + 1)]
+    ax.plot(
+        xs_error,
+        [1 for i in range(len(xs_error))],
+        "k--",
+        label=r"$\pm$1 $\mathrm{kcal\cdot mol^{-1}}$",
+        zorder=0,
+        linewidth=0.6,
+    )
+    ax.plot(
+        xs_error,
+        [0 for i in range(len(xs_error))],
+        "k--",
+        linewidth=0.5,
+        alpha=0.5,
+        # label=r"Reference Energy",
+        zorder=0,
+    )
+    ax.plot(
+        xs_error,
+        [-1 for i in range(len(xs_error))],
+        "k--",
+        zorder=0,
+        linewidth=0.6,
+    )
+    ax.plot(
+        [],
+        [],
+        linestyle=quantile_style,
+        color=quantile_color,
+        linewidth=quantile_linewidth,
+        label=r"5-95th Percentile",
+    )
+    # TODO: fix minor ticks to be between
+    ax.set_xticks(xs)
+    # minor_yticks = np.arange(ylim[0], ylim[1], 2)
+    # ax.set_yticks(minor_yticks, minor=True)
+
+    plt.setp(ax.set_xticklabels(vLabels), rotation=90, fontsize="12")
+    ax.set_xlim((0, len(vLabels)))
+    ax.set_ylim(ylim)
+
+    minor_yticks = create_minor_y_ticks(ylim)
+    ax.set_yticks(minor_yticks, minor=True)
+
+    lg = ax.legend(loc=legend_loc, edgecolor="black", fontsize="9")
+    # lg.get_frame().set_alpha(None)
+    # lg.get_frame().set_facecolor((1, 1, 1, 0.0))
+
+    if set_xlable:
+        ax.set_xlabel("Level of Theory", color="k", fontsize="12")
+    # ax.set_ylabel(r"Error ($\mathrm{kcal\cdot mol^{-1}}$)", color="k", fontsize="14")
+    ax.set_ylabel(r"Error (kcal$\cdot$mol$^{-1}$)", color="k", fontsize="16")
+
+    ax.grid(color="#54585A", which="major", linewidth=0.5, alpha=0.5, axis="y")
+    ax.grid(color="#54585A", which="minor", linewidth=0.5, alpha=0.5)
+    # Annotations of RMSE
+
+    plt.setp(ax.set_xticklabels(vLabels), rotation=90, fontsize="12")
+    ax.set_xlim((0, len(vLabels)))
+    ax.set_ylim(ylim)
+
+    minor_yticks = create_minor_y_ticks(ylim)
+    ax.set_yticks(minor_yticks, minor=True)
+
+    lg = ax.legend(loc=legend_loc, edgecolor="black", fontsize="9")
+    lg.get_frame().set_facecolor('none')  # Make the legend background transparent
+    # legend.get_frame().set_alpha(0.5)  # Adjust the transparency level (0.0 to 1.0)
+    if set_xlable:
+        ax.set_xlabel("Level of Theory", color="k", fontsize="12")
+    ax.set_ylabel(r"Error (kcal$\cdot$mol$^{-1}$)", color="k", fontsize="16")
+    ax.grid(color="#54585A", which="major", linewidth=0.5, alpha=0.5, axis="y")
+    ax.grid(color="#54585A", which="minor", linewidth=0.5, alpha=0.5)
+
+    for n, xtick in enumerate(ax.get_xticklabels()):
+        xtick.set_color(colors[n - 1])
+        xtick.set_alpha(0.8)
+
+    ax_error = plt.subplot(gs[0], sharex=ax)
+    # ax_error.spines['top'].set_visible(False)
+    ax_error.spines['right'].set_visible(False)
+    ax_error.spines['left'].set_visible(False)
+    ax_error.spines['bottom'].set_visible(False)
+    ax_error.tick_params(left=False, labelleft=False, bottom=False, labelbottom=False)
+
+    # Synchronize the x-limits with the main subplot
+    ax_error.set_xlim((0, len(vLabels)))
+    ax_error.set_ylim(0, 1)  # Assuming the upper subplot should have no y range
+    # Populate ax_error with error statistics through annotations
+        # text = r"\textit{%.2f}" % mae
+        # text += r"\textbf{%.2f}" % rmse
+        # text += r"\textrm{%.2f}" % max_error
+    error_labels = r"\textit{MAE}"
+    error_labels += "\n"
+    error_labels += r"\textbf{RMSE}" 
+    error_labels += "\n"
+    error_labels += r"\textrm{MaxE}" 
+    error_labels += "\n"
+    error_labels += r"\textrm{MinE}" 
+    ax_error.annotate(
+        error_labels,
+        xy=(0, 1),  # Position at the vertical center of the narrow subplot
+        xytext=(0, 0.15),
+        color="black",
+        fontsize="10",
+        ha="center",
+        va="center",
+    )
+    for idx, (x, y, text) in enumerate(annotations):
+        ax_error.annotate(
+            text,
+            xy=(x, 1),  # Position at the vertical center of the narrow subplot
+            # xytext=(0, 0),
+            xytext=(x, 0.15),
+            color="black",
+            fontsize="10",
+            ha="center",
+            va="center",
+        )
+
+    if title_name is not None:
+        plt.title(f"{title_name}", fontsize="16")
+    # fig.subplots_adjust(bottom=bottom)
+
+    if pdf:
+        fn_pdf = f"plots/{pfn}_components_TOTAL.pdf"
+        fn_png = f"plots/{pfn}_components_TOTAL.png"
+        plt.savefig(
+            fn_pdf,
+            transparent=transparent,
+            bbox_inches="tight",
+            dpi=dpi,
+        )
+        if os.path.exists(fn_png):
+            os.system(f"rm {fn_png}")
+        os.system(f"pdftoppm -png -r 400 {fn_pdf} {fn_png}")
+        if os.path.exists(f"{fn_png}-1.png"):
+            os.system(f"mv {fn_png}-1.png {fn_png}")
+        else:
+            print(f"Error: {fn_png}-1.png does not exist")
+    else:
+        plt.savefig(
+            f"plots/{pfn}_dbs_violin.{img_ext}",
+            transparent=transparent,
+            bbox_inches="tight",
+            dpi=dpi,
+        )
+    plt.clf()
+    return
+
 def plot_violin_d3_d4_ALL_zoomed_min_max(
     df,
     vals: {},
@@ -1708,13 +1949,15 @@ def plot_violin_d3_d4_ALL_zoomed_min_max(
     set_xlable=False,
     dpi=800,
     pdf=False,
+    jpeg=True,
     legend_loc='upper left',
 ) -> None:
     print(f"Plotting {pfn}")
-    dbs = list(set(df["DB"].to_list()))
-    dbs = sorted(dbs, key=lambda x: x.lower())
-    vLabels, vData = [], []
+    image_ext = "png"
+    if jpeg:
+        image_ext = "jpeg"
 
+    vLabels, vData = [], []
     annotations = []  # [(x, y, text), ...]
     cnt = 1
     for k, v in vals.items():
@@ -1775,9 +2018,13 @@ def plot_violin_d3_d4_ALL_zoomed_min_max(
         vp.set_alpha(1)
 
     colors = ["blue" if i % 2 == 0 else "green" for i in range(len(vLabels))]
+    # color_gt_olympic_teal = (0 /255, 140/255,  149/255)  # Olympic teal
+    # color_gt_bold_blue = (58/255, 93/255, 174/255)
+    # colors = [color_gt_bold_blue if i % 2 == 0 else color_gt_olympic_teal for i in range(len(vLabels))]
     for n, pc in enumerate(vplot["bodies"], 1):
         pc.set_facecolor(colors[n - 1])
         pc.set_alpha(0.6)
+        # pc.set_alpha(1)
 
     vLabels.insert(0, "")
     xs = [i for i in range(len(vLabels))]
@@ -1838,8 +2085,6 @@ def plot_violin_d3_d4_ALL_zoomed_min_max(
     ax.grid(color="#54585A", which="major", linewidth=0.5, alpha=0.5, axis="y")
     ax.grid(color="#54585A", which="minor", linewidth=0.5, alpha=0.5)
     # Annotations of RMSE
-
-
 
     plt.setp(ax.set_xticklabels(vLabels), rotation=90, fontsize="10")
     ax.set_xlim((0, len(vLabels)))
@@ -1923,7 +2168,7 @@ def plot_violin_d3_d4_ALL_zoomed_min_max(
             print(f"Error: {fn_png}-1.png does not exist")
     else:
         plt.savefig(
-            f"plots/{pfn}_dbs_violin.png",
+            f"plots/{pfn}_dbs_violin.{image_ext}",
             transparent=transparent,
             bbox_inches="tight",
             dpi=dpi,
@@ -1944,12 +2189,14 @@ def plot_violin_d3_d4_ALL(
     set_xlable=False,
     dpi=600,
     pdf=False,
+    jpeg=True,
     legend_loc='upper left',
 ) -> None:
     """ """
     print(f"Plotting {pfn}")
-    dbs = list(set(df["DB"].to_list()))
-    dbs = sorted(dbs, key=lambda x: x.lower())
+    image_ext = "png"
+    if jpeg:
+        image_ext = "jpeg"
     vLabels, vData = [], []
 
     annotations = []  # [(x, y, text), ...]
@@ -2004,9 +2251,13 @@ def plot_violin_d3_d4_ALL(
         vp.set_alpha(1)
 
     colors = ["blue" if i % 2 == 0 else "green" for i in range(len(vLabels))]
+    # color_gt_olympic_teal = (0 /255, 140/255,  149/255)  # Olympic teal
+    # color_gt_bold_blue = (58/255, 93/255, 174/255)
+    # colors = [color_gt_bold_blue if i % 2 == 0 else color_gt_olympic_teal for i in range(len(vLabels))]
     for n, pc in enumerate(vplot["bodies"], 1):
         pc.set_facecolor(colors[n - 1])
-        pc.set_alpha(0.6)
+        # pc.set_alpha(0.6)
+        pc.set_alpha(1)
 
     vLabels.insert(0, "")
     xs = [i for i in range(len(vLabels))]
@@ -2104,7 +2355,7 @@ def plot_violin_d3_d4_ALL(
             print(f"Error: {fn_png}-1.png does not exist")
     else:
         plt.savefig(
-            f"plots/{pfn}_dbs_violin.png",
+            f"plots/{pfn}_dbs_violin.{image_ext}",
             transparent=transparent,
             bbox_inches="tight",
             dpi=dpi,
@@ -2113,12 +2364,18 @@ def plot_violin_d3_d4_ALL(
     return
 
 
-def collect_component_data(df, vals, verbose=False):
+def collect_component_data(df, vals, extended_errors=False, verbose=False):
     vLabels, vData = [], []
     annotations = []  # [(x, y, text), ...]
     cnt = 1
     for k, v in vals["vals"].items():
-        df[v] = pd.to_numeric(df[v])
+        print(k)
+        try:
+            df[v] = pd.to_numeric(df[v])
+        except Exception as e:
+            print(e)
+            print(df[v])
+            SystemExit()
         df[f"{v}_diff"] = df[vals["reference"][1]] - df[v]
         df_sub = df[df[f"{v}_diff"].notna()].copy()
         vData.append(df_sub[f"{v}_diff"].to_list())
@@ -2126,12 +2383,23 @@ def collect_component_data(df, vals, verbose=False):
         m = df_sub[f"{v}_diff"].max()
         rmse = df_sub[f"{v}_diff"].apply(lambda x: x**2).mean() ** 0.5
         mae = df_sub[f"{v}_diff"].apply(lambda x: abs(x)).mean()
-        max_error = df_sub[f"{v}_diff"].apply(lambda x: abs(x)).max()
-        text = r"\textit{%.2f}" % mae
-        text += "\n"
-        text += r"\textbf{%.2f}" % rmse
-        text += "\n"
-        text += r"\textrm{%.2f}" % max_error
+        if extended_errors:
+            max_pos_error = df_sub[f"{v}_diff"].apply(lambda x: x).max()
+            max_neg_error = df_sub[f"{v}_diff"].apply(lambda x: x).min()
+            text = r"\textit{%.2f}" % mae
+            text += "\n"
+            text += r"\textbf{%.2f}" % rmse
+            text += "\n"
+            text += r"\textrm{%.2f}" % max_pos_error
+            text += "\n"
+            text += r"\textrm{%.2f}" % max_neg_error
+        else:
+            max_error = df_sub[f"{v}_diff"].apply(lambda x: abs(x)).max()
+            text = r"\textit{%.2f}" % mae
+            text += "\n"
+            text += r"\textbf{%.2f}" % rmse
+            text += "\n"
+            text += r"\textrm{%.2f}" % max_error
         annotations.append((cnt, m, text))
         cnt += 1
     if verbose:
@@ -2404,10 +2672,12 @@ def plot_violin_SAPT0_DFT_components(
     indu_data, indu_labels, indu_annotations = collect_component_data(df, indu_vals)
     print("\nDISP")
     disp_data, disp_labels, disp_annotations = collect_component_data(df, disp_vals)
+    print("\n3-TOTAL")
     three_total_data, three_total_labels, three_total_annotations = (
         collect_component_data(df, three_total_vals)
     )
-    total_data, total_labels, total_annotations = collect_component_data(df, total_vals)
+    print("\nTOTAL")
+    total_data, total_labels, total_annotations = collect_component_data(df, total_vals, extended_errors=True)
 
     # Plot violins
     plot_component_violin(
@@ -2503,6 +2773,32 @@ def plot_violin_SAPT0_DFT_components(
         plt.savefig(
             f"plots/{pfn}_TOTAL.png", transparent=transparent, bbox_inches="tight"
         )
+        # plot_component_violin_zoomed(
+        #     df,
+        #     total_vals['vals'],
+        #     title_name="Levels of SAPT (4569)",# f"All Dimers (8299)",
+        #     f"los_SAPTDFT_components_TOTAL",
+        #     ylim=[-5, 5],
+        #     legend_loc="upper right",
+        #     transparent=True,
+        #     # figure_size=(6, 6),
+        # )
+
+        plot_component_violin_zoomed(
+            total_data,
+            total_labels,
+            total_annotations,
+            total_vals["name"],
+            # total_vals["reference"][0],
+            widths=widths,
+            sub_rotation=20,
+            fontsize=28,
+            figure_size=(5, 4),
+            ylim=[-4, 6],
+        )
+        # plt.savefig(
+        #     f"plots/{pfn}_TOTAL.png", transparent=transparent, bbox_inches="tight"
+        # )
         plt.clf()
     return
 
@@ -2520,10 +2816,14 @@ def plot_dbs_d3_d4(
     transparent=True,
     dpi=800,
     pdf=False,
+    jpeg=True,
     verbose=False,
     ylim=None,
 ) -> None:
     print(f"Plotting {pfn}")
+    image_ext = "png"
+    if jpeg:
+        image_ext = "jpeg"
     dbs = list(set(df["DB"].to_list()))
     dbs = sorted(dbs, key=lambda x: x.lower())
     vLabels, vData, vDataErrors = [], [], []
@@ -2656,7 +2956,7 @@ def plot_dbs_d3_d4(
             print(f"Error: {fn_png}-1.png does not exist")
     else:
         plt.savefig(
-            f"plots/{pfn}_dbs_violin.png",
+            f"plots/{pfn}_dbs_violin.{image_ext}",
             transparent=transparent,
             bbox_inches="tight",
             dpi=dpi,
