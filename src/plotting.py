@@ -153,7 +153,7 @@ def compute_d4_from_opt_params(
         ["SAPT0_jtz_IE", "SAPT0_jtz_3_IE", "SAPT0_jtz_3_IE_2B", "SAPT0_jtz_3_IE"],
         ["SAPT0_atz_IE", "SAPT0_atz_3_IE", "SAPT0_atz_3_IE_2B", "SAPT0_atz_3_IE"],
     ],
-    benchmark_label='Benchmark',
+    benchmark_label="Benchmark",
 ) -> pd.DataFrame:
     """
     compute_D3_D4_values_for_params
@@ -524,7 +524,7 @@ def plot_basis_sets_d4(df, build_df=False, df_out: str = "basis_study", df_name=
             "0/aTZ": "SAPT0_atz_3_IE_diff",
             "0-D4/aTZ": "SAPT0_atz_3_IE_d4_diff",
         },
-        "",# f"All Dimers (8299)",
+        "",  # f"All Dimers (8299)",
         f"{selected}_d4_zoomed",
         bottom=0.45,
         ylim=[-5, 5],
@@ -714,7 +714,7 @@ def plot_basis_sets_d3(df, build_df=False, df_out: str = "basis_study"):
         bottom=0.30,
     )
     plot_violin_d3_d4_ALL_zoomed_min_max(
-            df,
+        df,
         {
             "0/DZ": "SAPT0_dz_3_IE_diff",
             "0-D3/DZ": "SAPT0_dz_3_IE_d3_diff",
@@ -731,14 +731,14 @@ def plot_basis_sets_d3(df, build_df=False, df_out: str = "basis_study"):
             "0/aTZ": "SAPT0_atz_3_IE_diff",
             "0-D3/aTZ": "SAPT0_atz_3_IE_d3_diff",
         },
-            "",# f"All Dimers (8299)",
-            f"{selected}_d3_zoomed",
-            bottom=0.45,
-            ylim=[-5, 5],
-            legend_loc="lower right",
-            transparent=True,
-            # figure_size=(6, 6),
-        )
+        "",  # f"All Dimers (8299)",
+        f"{selected}_d3_zoomed",
+        bottom=0.45,
+        ylim=[-5, 5],
+        legend_loc="lower right",
+        transparent=True,
+        # figure_size=(6, 6),
+    )
     plot_violin_d3_d4_ALL(
         df,
         {
@@ -765,23 +765,25 @@ def plot_basis_sets_d3(df, build_df=False, df_out: str = "basis_study"):
     )
 
     return df
+
+
 def plot_ie_curve(
-        df,
-        elst_col,
-        exch_col,
-        indu_col,
-        disp_col,
-        db='NBC10',
-        system_num=0,
-    ):
-    df_sys = df[(df['DB'] == db) & (df['System #'] == system_num)]
+    df,
+    elst_col,
+    exch_col,
+    indu_col,
+    disp_col,
+    db="NBC10",
+    system_num=0,
+):
+    df_sys = df[(df["DB"] == db) & (df["System #"] == system_num)]
     print(df_sys.columns.values)
-    df_sys.sort_values(by='R', inplace=True)
+    df_sys.sort_values(by="R", inplace=True)
     df.reset_index(drop=True, inplace=True)
-    pd.set_option('display.max_columns', None)
+    pd.set_option("display.max_columns", None)
     tools.print_cartesians(df_sys.iloc[0]["Geometry"])
     print()
-    print(df_sys['R'].to_list())
+    print(df_sys["R"].to_list())
     tools.print_cartesians(df_sys.iloc[len(df_sys) - 1]["Geometry"])
     print(df_sys)
     return
@@ -896,7 +898,7 @@ def plotting_setup(
     #     pdf=False,
     # )
     if True:
-        print(df[['SAPT_DFT_atz_3_IE_diff', 'SAPT_DFT_adz_3_IE_diff']])
+        print(df[["SAPT_DFT_atz_3_IE_diff", "SAPT_DFT_adz_3_IE_diff"]])
         # plot_violin_d3_d4_ALL_zoomed(
         plot_violin_d3_d4_ALL_zoomed_min_max(
             df,
@@ -910,7 +912,7 @@ def plotting_setup(
                 "0-D4/aDZ": "SAPT0_adz_3_IE_d4_diff",
                 # "0-D4(ATM)/aDZ": "SAPT0_dz_3_IE_ATM_SHARED_d4_diff",
                 "0-D4(ATM)/aDZ": "SAPT0_adz_ATM_opt_all_diff",
-                "0-D4(ATMu)/aDZ": "adz_diff_d4_ATM", # (2B ATM) renamed to (ATMu)
+                "0-D4(ATMu)/aDZ": "adz_diff_d4_ATM",  # (2B ATM) renamed to (ATMu)
                 # "0-D4(2B@G ATM)/aDZ": "adz_diff_d4_2B@ATM_G",
                 # "0-D4(2B@G ATM@G)/aDZ": "adz_diff_d4_ATM_G",
                 # "0-D4(ATM TT ALL)/aDZ": "SAPT0_adz_3_IE_TT_ALL_d4_diff",
@@ -918,7 +920,7 @@ def plotting_setup(
                 # "SAPT(DFT)-D4/aDZ": "SAPT_DFT_adz_3_IE_d4_diff",
                 "SAPT(DFT)/aTZ": "SAPT_DFT_atz_3_IE_diff",
             },
-            "",# f"All Dimers (8299)",
+            "",  # f"All Dimers (8299)",
             # f"8299 Dimer Dataset",
             f"{selected}_ATM2",
             bottom=0.45,
@@ -939,7 +941,7 @@ def plotting_setup(
                 "0-D4/aDZ": "SAPT0_adz_3_IE_d4_diff",
                 # "0-D4(ATM)/aDZ": "SAPT0_dz_3_IE_ATM_SHARED_d4_diff",
                 "0-D4(ATM)/aDZ": "SAPT0_adz_ATM_opt_all_diff",
-                "0-D4(ATMu)/aDZ": "adz_diff_d4_ATM", # (2B ATM) renamed to (ATMu)
+                "0-D4(ATMu)/aDZ": "adz_diff_d4_ATM",  # (2B ATM) renamed to (ATMu)
                 # "0-D4(2B@G ATM)/aDZ": "adz_diff_d4_2B@ATM_G",
                 # "0-D4(2B@G ATM@G)/aDZ": "adz_diff_d4_ATM_G",
                 # "0-D4(ATM TT ALL)/aDZ": "SAPT0_adz_3_IE_TT_ALL_d4_diff",
@@ -947,7 +949,7 @@ def plotting_setup(
                 # "SAPT(DFT)-D4/aDZ": "SAPT_DFT_adz_3_IE_d4_diff",
                 "SAPT(DFT)/aTZ": "SAPT_DFT_atz_3_IE_diff",
             },
-            "",# f"All Dimers (8299)",
+            "",  # f"All Dimers (8299)",
             f"{selected}_ATM",
             bottom=0.45,
             ylim=[-18, 26],
@@ -1011,7 +1013,7 @@ def plotting_setup(
         df_charged = get_charged_df(df)
         # ensure that SAPT_DFT_atz_3_IE_diff does not have NaN values
         pd.set_option("display.max_rows", None)
-        df_charged['SAPT_DFT_adz_t'] = df_charged['SAPT_DFT_adz'].apply(lambda x: x[0])
+        df_charged["SAPT_DFT_adz_t"] = df_charged["SAPT_DFT_adz"].apply(lambda x: x[0])
         assert df_charged["SAPT_DFT_adz_3_IE_diff"].isnull().sum() == 0
         assert df_charged["SAPT_DFT_atz_3_IE_diff"].isnull().sum() == 0
         plot_violin_d3_d4_ALL(
@@ -1055,8 +1057,7 @@ def plotting_setup_dft(
     if build_df:
         for basis in ["adz", "atz"]:
             df[f"SAPT_DFT_{basis}_3_IE"] = df.apply(
-                lambda x: 
-                  x[f"SAPT_DFT_{basis}"][1]
+                lambda x: x[f"SAPT_DFT_{basis}"][1]
                 + x[f"SAPT_DFT_{basis}"][2]
                 + x[f"SAPT_DFT_{basis}"][3],
                 axis=1,
@@ -1182,25 +1183,31 @@ def plotting_setup_dft_ddft(
     ref_basis = "aTZ"
     if build_df:
         df = pd.read_pickle(selected)
-        print(df.columns.values)
+        len_before = len(df)
+        df.dropna(subset=['SAPT_DFT_pbe0_adz', 'SAPT_DFT_pbe0_atz', "C6s"], inplace=True)
+        print(f"Removed {len_before - len(df)} NaN values")
+
         df = df[df["SAPT_DFT_pbe0_adz"].notna()].copy()
+
+        def compute_saptdft_ddft_ie(r, b):
+            return r[f"SAPT_DFT_pbe0_{b}"][1] + r[f"SAPT_DFT_pbe0_{b}"][2] + r[f"SAPT_DFT_pbe0_{b}"][3] + r[f"SAPT_DFT_pbe0_{b}_D4_IE"] + r[f"SAPT_DFT_pbe0_{b}_dDFT"] - r[f"SAPT_DFT_pbe0_{b}_dHF"]
+
+        # SAPT(DFT) - aDZ
+        # df["SAPT_DFT_D4_pbe0_adz_total"] = df.apply(
+        #     lambda x: x["SAPT_DFT_pbe0_adz"][1]
+        #     + x["SAPT_DFT_pbe0_adz"][2]
+        #     + x["SAPT_DFT_pbe0_adz"][3]
+        #     + x["SAPT_DFT_pbe0_adz_D4_IE"]
+        #     + x["SAPT_DFT_pbe0_adz_dDFT"]
+        #     - x["SAPT_DFT_pbe0_adz_dHF"],
+        #     axis=1,
+        # )
         df["SAPT_DFT_D4_pbe0_adz_total"] = df.apply(
-            lambda x: x["SAPT_DFT_pbe0_adz"][1]
-            + x["SAPT_DFT_pbe0_adz"][2]
-            + x["SAPT_DFT_pbe0_adz"][3]
-            + x["SAPT_DFT_pbe0_adz_D4_IE"]
-            + x["SAPT_DFT_pbe0_adz_dDFT"]
-            - x["SAPT_DFT_pbe0_adz_dHF"]
-            ,
+            lambda x: compute_saptdft_ddft_ie(x, "adz"), 
             axis=1,
         )
         df["SAPT_DFT_pbe0_adz_total"] = df.apply(
-            lambda x: 
-            x["SAPT_DFT_pbe0_adz"][0]
-            # + x["SAPT_DFT_pbe0_adz"][2]
-            # + x["SAPT_DFT_pbe0_adz"][3]
-            # + x["SAPT_DFT_pbe0_adz"][4]
-            ,
+            lambda x: x["SAPT_DFT_pbe0_adz"][0],
             axis=1,
         )
 
@@ -1210,8 +1217,15 @@ def plotting_setup_dft_ddft(
         )
         # print(df[["SAPT_DFT_D4_pbe0_adz_total", "DFT-D4/aDZ"]])
         for n, i in df.iterrows():
-            if not np.allclose(i['SAPT_DFT_D4_pbe0_adz_total'], i["DFT-D4/aDZ"], atol=1e-6):
-                print(n, i['benchmark ref energy'], i['SAPT_DFT_D4_pbe0_adz_total'], i['DFT-D4/aDZ'])
+            if not np.allclose(
+                i["SAPT_DFT_D4_pbe0_adz_total"], i["DFT-D4/aDZ"], atol=1e-6
+            ):
+                print(
+                    n,
+                    i["benchmark ref energy"],
+                    i["SAPT_DFT_D4_pbe0_adz_total"],
+                    i["DFT-D4/aDZ"],
+                )
         df.dropna(subset=["SAPT_DFT_D4_pbe0_adz_total"], inplace=True)
 
         assert np.allclose(
@@ -1227,83 +1241,130 @@ def plotting_setup_dft_ddft(
             + df["SAPT_DFT_pbe0_adz_indu"]
         )
         df["SAPT_DFT_pbe0_adz_d4_disp"] = df.apply(
-            lambda x: 
-            # x['SAPT_DFT_pbe0_adz_elst'] +
-            # x['SAPT_DFT_pbe0_adz_exch'] +
-            # x['SAPT_DFT_pbe0_adz_indu'] +
-            x["SAPT_DFT_pbe0_adz_dDFT"] - 
-            x["SAPT_DFT_pbe0_adz_dHF"] +
-            x["SAPT_DFT_pbe0_adz_D4_IE"],
+            lambda x:
+            x["SAPT_DFT_pbe0_adz_dDFT"]
+            - x["SAPT_DFT_pbe0_adz_dHF"]
+            + x["SAPT_DFT_pbe0_adz_D4_IE"],
+            axis=1,
+        )
+        df["SAPT0_adz"] = df.apply(
+            lambda x: np.array(
+                [
+                    x["SAPT0 ELST ENERGY adz"]
+                    + x["SAPT0 EXCH ENERGY adz"]
+                    + x["SAPT0 IND ENERGY adz"]
+                    + x["SAPT0 DISP ENERGY adz"],
+                    x["SAPT0 ELST ENERGY adz"],
+                    x["SAPT0 EXCH ENERGY adz"],
+                    x["SAPT0 IND ENERGY adz"],
+                    x["SAPT0 DISP ENERGY adz"],
+                ]
+            ) * h2kcalmol,
+            axis=1,
+        )
+        df["SAPT0_adz_3_IE"] = df.apply(
+            lambda x: (x["SAPT0 ELST ENERGY adz"]
+            + x["SAPT0 EXCH ENERGY adz"]
+            + x["SAPT0 IND ENERGY adz"]) * h2kcalmol,
+            axis=1,
+        )
+        df["SAPT0_adz_total"] = df["SAPT0_adz"].apply(lambda x: x[0])
+        df["SAPT0_adz_elst"] = df["SAPT0_adz"].apply(lambda x: x[1])
+        df["SAPT0_adz_exch"] = df["SAPT0_adz"].apply(lambda x: x[2])
+        df["SAPT0_adz_indu"] = df["SAPT0_adz"].apply(lambda x: x[3])
+        df["SAPT0_adz_disp"] = df["SAPT0_adz"].apply(lambda x: x[4])
+        print(df['SAPT_DFT_pbe0_atz'])
+
+        # SAPT(DFT) - aTZ
+        df["SAPT_DFT_D4_pbe0_atz_total"] = df.apply(
+            lambda x: compute_saptdft_ddft_ie(x, "atz"),
+            axis=1,
+        )
+        df["SAPT_DFT_pbe0_atz_total"] = df.apply(
+            lambda x: x["SAPT_DFT_pbe0_atz"][0],
             axis=1,
         )
 
-        # Seems like SAPT0 EXCH ENERGY, etc. are actually adz and not atz, meaning that perhaps SAPT2+3 are also adz
-        # df["SAPT0_atz_3_IE"] = (
-        #     df["SAPT0 ELST ENERGY"] + df["SAPT0 EXCH ENERGY"] + df["SAPT0 IND ENERGY"]
-        # ) * h2kcalmol
-        # df["SAPT0_atz_total"] = (
-        #     df["SAPT0 ELST ENERGY"]
-        #     + df["SAPT0 EXCH ENERGY"]
-        #     + df["SAPT0 IND ENERGY"]
-        #     + df["SAPT0 DISP ENERGY"]
-        # ) * h2kcalmol
-        # df["SAPT0_atz_elst"] = df["SAPT0 ELST ENERGY"] * h2kcalmol
-        # df["SAPT0_atz_exch"] = df["SAPT0 EXCH ENERGY"] * h2kcalmol
-        # df["SAPT0_atz_indu"] = df["SAPT0 IND ENERGY"] * h2kcalmol
-        # df["SAPT0_atz_disp"] = df["SAPT0 DISP ENERGY"] * h2kcalmol
-        df['SAPT0_adz'] = df.apply(
-                lambda x: np.array([
-                    x['SAPT0 ELST ENERGY adz']+
-                    x['SAPT0 EXCH ENERGY adz']+
-                    x['SAPT0 IND ENERGY adz']+
-                    x['SAPT0 DISP ENERGY adz'],
-                    x['SAPT0 ELST ENERGY adz'],
-                    x['SAPT0 EXCH ENERGY adz'],
-                    x['SAPT0 IND ENERGY adz'],
-                    x['SAPT0 DISP ENERGY adz'],
-                ]), axis=1)
-        df['SAPT0_adz_3_IE'] = df.apply(
-                lambda x: np.array([
-                    x['SAPT0 ELST ENERGY adz']+
-                    x['SAPT0 EXCH ENERGY adz']+
-                    x['SAPT0 IND ENERGY adz'],
-                ]), axis=1)
-        df['SAPT0_atz'] = df.apply(
-                lambda x: np.array([
-                    x['SAPT0 ELST ENERGY atz']+
-                    x['SAPT0 EXCH ENERGY atz']+
-                    x['SAPT0 IND ENERGY atz']+
-                    x['SAPT0 DISP ENERGY atz'],
-                    x['SAPT0 ELST ENERGY atz'],
-                    x['SAPT0 EXCH ENERGY atz'],
-                    x['SAPT0 IND ENERGY atz'],
-                    x['SAPT0 DISP ENERGY atz'],
-                ]), axis=1)
-        df['SAPT0_atz_3_IE'] = df.apply(
-                lambda x: np.array([
-                    x['SAPT0 ELST ENERGY atz']+
-                    x['SAPT0 EXCH ENERGY atz']+
-                    x['SAPT0 IND ENERGY atz'],
-                ]), axis=1)
+        df["DFT-D4/aTZ"] = df.apply(
+            lambda x: x["SAPT_DFT_pbe0_atz_DFT_IE"] + x["SAPT_DFT_pbe0_atz_D4_IE"],
+            axis=1,
+        )
+        # print(df[["SAPT_DFT_D4_pbe0_atz_total", "DFT-D4/atz"]])
+        for n, i in df.iterrows():
+            if not np.allclose(
+                i["SAPT_DFT_D4_pbe0_atz_total"], i["DFT-D4/aTZ"], atol=1e-6
+            ):
+                print(
+                    n,
+                    i["benchmark ref energy"],
+                    i["SAPT_DFT_D4_pbe0_atz_total"],
+                    i["DFT-D4/aTZ"],
+                )
+        df.dropna(subset=["SAPT_DFT_D4_pbe0_atz_total"], inplace=True)
 
+        assert np.allclose(
+            df["SAPT_DFT_D4_pbe0_atz_total"], df["DFT-D4/aTZ"], atol=1e-6
+        )
+        df["SAPT_DFT_pbe0_atz_elst"] = df["SAPT_DFT_pbe0_atz"].apply(lambda x: x[1])
+        df["SAPT_DFT_pbe0_atz_exch"] = df["SAPT_DFT_pbe0_atz"].apply(lambda x: x[2])
+        df["SAPT_DFT_pbe0_atz_indu"] = df["SAPT_DFT_pbe0_atz"].apply(lambda x: x[3])
+        df["SAPT_DFT_pbe0_atz_disp"] = df["SAPT_DFT_pbe0_atz"].apply(lambda x: x[4])
+        df["SAPT_DFT_pbe0_atz_3_IE"] = (
+            df["SAPT_DFT_pbe0_atz_elst"]
+            + df["SAPT_DFT_pbe0_atz_exch"]
+            + df["SAPT_DFT_pbe0_atz_indu"]
+        )
+        df["SAPT_DFT_pbe0_atz_d4_disp"] = df.apply(
+            lambda x:
+            x["SAPT_DFT_pbe0_atz_dDFT"]
+            - x["SAPT_DFT_pbe0_atz_dHF"]
+            + x["SAPT_DFT_pbe0_atz_D4_IE"],
+            axis=1,
+        )
+        df[f"{reference} TOTAL ENERGY adz"] = df[f"{reference} TOTAL ENERGY adz"] * h2kcalmol
+        df["SAPT0_atz"] = df.apply(
+            lambda x: np.array(
+                [
+                    x["SAPT0 ELST ENERGY atz"]
+                    + x["SAPT0 EXCH ENERGY atz"]
+                    + x["SAPT0 IND ENERGY atz"]
+                    + x["SAPT0 DISP ENERGY atz"],
+                    x["SAPT0 ELST ENERGY atz"],
+                    x["SAPT0 EXCH ENERGY atz"],
+                    x["SAPT0 IND ENERGY atz"],
+                    x["SAPT0 DISP ENERGY atz"],
+                ]
+            ) * h2kcalmol,
+            axis=1,
+        )
+        df["SAPT0_atz_3_IE"] = df.apply(
+            lambda x: (x["SAPT0 ELST ENERGY atz"]
+            + x["SAPT0 EXCH ENERGY atz"]
+            + x["SAPT0 IND ENERGY atz"]) * h2kcalmol,
+            axis=1,
+        )
         df["SAPT0_atz_total"] = df["SAPT0_atz"].apply(lambda x: x[0])
         df["SAPT0_atz_elst"] = df["SAPT0_atz"].apply(lambda x: x[1])
         df["SAPT0_atz_exch"] = df["SAPT0_atz"].apply(lambda x: x[2])
         df["SAPT0_atz_indu"] = df["SAPT0_atz"].apply(lambda x: x[3])
         df["SAPT0_atz_disp"] = df["SAPT0_atz"].apply(lambda x: x[4])
 
-        df["SAPT0_adz_total"] = df["SAPT0_adz"].apply(lambda x: x[0])
-        df["SAPT0_adz_elst"] = df["SAPT0_adz"].apply(lambda x: x[1])
-        df["SAPT0_adz_exch"] = df["SAPT0_adz"].apply(lambda x: x[2])
-        df["SAPT0_adz_indu"] = df["SAPT0_adz"].apply(lambda x: x[3])
-        df["SAPT0_adz_disp"] = df["SAPT0_adz"].apply(lambda x: x[4])
-
-        df[f"{reference} ELST ENERGY"] = df[f"{reference} ELST ENERGY {ref_basis.lower()}"] * h2kcalmol
+        df[f"{reference} ELST ENERGY"] = (
+            df[f"{reference} ELST ENERGY {ref_basis.lower()}"] * h2kcalmol
+        )
         # print(df[f"{reference} ELST ENERGY"])
-        df[f"{reference} EXCH ENERGY"] = df[f"{reference} EXCH ENERGY {ref_basis.lower()}"] * h2kcalmol
-        df[f"{reference} IND ENERGY"] = df[f"{reference} IND ENERGY {ref_basis.lower()}"] * h2kcalmol
-        df[f"{reference} DISP ENERGY"] = df[f"{reference} DISP ENERGY {ref_basis.lower()}"] * h2kcalmol
-        df[f"{reference} TOTAL ENERGY"] = df[f"{reference} TOTAL ENERGY {ref_basis.lower()}"] * h2kcalmol
+        df[f"{reference} EXCH ENERGY"] = (
+            df[f"{reference} EXCH ENERGY {ref_basis.lower()}"] * h2kcalmol
+        )
+        df[f"{reference} IND ENERGY"] = (
+            df[f"{reference} IND ENERGY {ref_basis.lower()}"] * h2kcalmol
+        )
+        df[f"{reference} DISP ENERGY"] = (
+            df[f"{reference} DISP ENERGY {ref_basis.lower()}"] * h2kcalmol
+        )
+        df[f"{reference} TOTAL ENERGY"] = (
+            df[f"{reference} TOTAL ENERGY {ref_basis.lower()}"] * h2kcalmol
+        )
         df = compute_d4_from_opt_params(
             df,
             bases=[
@@ -1320,7 +1381,7 @@ def plotting_setup_dft_ddft(
                     "SAPT0_atz_3_IE",
                 ],
             ],
-            benchmark_label='benchmark ref energy'
+            benchmark_label="benchmark ref energy",
         )
         df[f"SAPT0_adz_d4"] = df.apply(
             lambda x: x[f"SAPT0_adz_3_IE"] + x[f"-D4 (SAPT0_adz_3_IE)"], axis=1
@@ -1336,8 +1397,9 @@ def plotting_setup_dft_ddft(
     else:
         df = pd.read_pickle(df_out)
     basename_selected = selected.split("/")[-1].split(".")[0]
-    assert df['SAPT_DFT_pbe0_adz_elst'].isnull().sum() == 0
+    assert df["SAPT_DFT_pbe0_adz_elst"].isnull().sum() == 0
     print(f"Length of df prior plotting: {len(df)}")
+    dimer_dataset_size = len(df)
     # plot_violin_SAPT0_DFT_components(
     plot_violin_SAPT0_DFT_components(
         df,
@@ -1390,7 +1452,7 @@ def plotting_setup_dft_ddft(
             },
         },
         total_vals={
-            "name": "4337 Dimer Dataset",
+            "name": f"{dimer_dataset_size} Dimer Dataset",
             "reference": ["CCSD(T)/CBS IE Ref.", "benchmark ref energy"],
             "vals": {
                 "SAPT0/aDZ": "SAPT0_adz_total",
@@ -1400,7 +1462,10 @@ def plotting_setup_dft_ddft(
                 "SAPT(DFT)/aDZ": "SAPT_DFT_pbe0_adz_total",
                 # "SAPT(DFT)D4/aDZ": "SAPT_DFT_D4_pbe0_adz_total",
                 "PBE0-D4/aDZ IE": "SAPT_DFT_D4_pbe0_adz_total",
-                f"SAPT2+3(CCD)DMP2/{ref_basis}": "SAPT2+3(CCD)DMP2 TOTAL ENERGY atz",
+                "SAPT(DFT)/aTZ": "SAPT_DFT_pbe0_atz_total",
+                "PBE0-D4/aTZ IE": "SAPT_DFT_D4_pbe0_atz_total",
+                f"SAPT2+3(CCD)DMP2/aDZ": f"SAPT2+3(CCD)DMP2 TOTAL ENERGY adz",
+                f"SAPT2+3(CCD)DMP2/{ref_basis}": f"{reference} TOTAL ENERGY",
                 # "SAPT(DFT)-D4/aDZ": "SAPT_DFT_adz_3_IE_d4",
                 # "SAPT(DFT)-D4(ATM)/aDZ": "SAPT_DFT_adz_3_IE_d4_ATM",
                 # "SAPT(DFT)/aTZ": "SAPT_DFT_atz_total",
@@ -1476,6 +1541,7 @@ def plotting_setup_G(
     )
     return
 
+
 def plot_violin_d3_d4_ALL_zoomed(
     df,
     vals: {},
@@ -1489,7 +1555,7 @@ def plot_violin_d3_d4_ALL_zoomed(
     set_xlable=False,
     dpi=600,
     pdf=False,
-    legend_loc='upper left',
+    legend_loc="upper left",
 ) -> None:
     print(f"Plotting {pfn}")
     dbs = list(set(df["DB"].to_list()))
@@ -1523,7 +1589,9 @@ def plot_violin_d3_d4_ALL_zoomed(
     fig = plt.figure(dpi=dpi)
     if figure_size is not None:
         plt.figure(figsize=figure_size)
-    gs = gridspec.GridSpec(2, 1, height_ratios=[0.15, 1])  # Adjust height ratios to change the size of subplots
+    gs = gridspec.GridSpec(
+        2, 1, height_ratios=[0.15, 1]
+    )  # Adjust height ratios to change the size of subplots
 
     # Create the main violin plot axis
     ax = plt.subplot(gs[1])  # This will create the subplot for the main violin plot.
@@ -1621,8 +1689,6 @@ def plot_violin_d3_d4_ALL_zoomed(
     ax.grid(color="#54585A", which="minor", linewidth=0.5, alpha=0.5)
     # Annotations of RMSE
 
-
-
     plt.setp(ax.set_xticklabels(vLabels), rotation=90, fontsize="10")
     ax.set_xlim((0, len(vLabels)))
     ax.set_ylim(ylim)
@@ -1643,9 +1709,9 @@ def plot_violin_d3_d4_ALL_zoomed(
 
     ax_error = plt.subplot(gs[0], sharex=ax)
     # ax_error.spines['top'].set_visible(False)
-    ax_error.spines['right'].set_visible(False)
-    ax_error.spines['left'].set_visible(False)
-    ax_error.spines['bottom'].set_visible(False)
+    ax_error.spines["right"].set_visible(False)
+    ax_error.spines["left"].set_visible(False)
+    ax_error.spines["bottom"].set_visible(False)
     ax_error.tick_params(left=False, labelleft=False, bottom=False, labelbottom=False)
 
     # Synchronize the x-limits with the main subplot
@@ -1653,14 +1719,14 @@ def plot_violin_d3_d4_ALL_zoomed(
     ax_error.set_ylim(0, 1)  # Assuming the upper subplot should have no y range
     print(f"ax_error xlim: {ax_error.get_xlim()}")
     # Populate ax_error with error statistics through annotations
-        # text = r"\textit{%.2f}" % mae
-        # text += r"\textbf{%.2f}" % rmse
-        # text += r"\textrm{%.2f}" % max_error
+    # text = r"\textit{%.2f}" % mae
+    # text += r"\textbf{%.2f}" % rmse
+    # text += r"\textrm{%.2f}" % max_error
     error_labels = r"\textit{MAE}"
     error_labels += "\n"
-    error_labels += r"\textbf{RMSE}" 
+    error_labels += r"\textbf{RMSE}"
     error_labels += "\n"
-    error_labels += r"\textrm{MaxAE}" 
+    error_labels += r"\textrm{MaxAE}"
     ax_error.annotate(
         error_labels,
         xy=(0, 1),  # Position at the vertical center of the narrow subplot
@@ -1713,6 +1779,7 @@ def plot_violin_d3_d4_ALL_zoomed(
     plt.clf()
     return
 
+
 def plot_component_violin_zoomed(
     vData,
     vLabels,
@@ -1725,18 +1792,24 @@ def plot_component_violin_zoomed(
     figure_size=None,
     dpi=600,
     transparent=True,
-    legend_loc='upper right',
-    pfn="los_SAPTDFT_sherrill",
+    legend_loc="upper right",
+    pfn="los_SAPTDFT_zoomed",
     set_xlable=False,
     pdf=False,
+    jpeg=True,
 ):
-    color1 = (220/255, 198/255, 135/255)  # Original color (yellow)
+    image_ext = "png"
+    if jpeg:
+        image_ext = "jpeg"
+    color1 = (220 / 255, 198 / 255, 135 / 255)  # Original color (yellow)
     print(f"Plotting {pfn}")
     # fig = plt.figure(facecolor=color1)
     fig = plt.figure(dpi=dpi)
     if figure_size is not None:
         plt.figure(figsize=figure_size)
-    gs = gridspec.GridSpec(2, 1, height_ratios=[0.15, 1])  # Adjust height ratios to change the size of subplots
+    gs = gridspec.GridSpec(
+        2, 1, height_ratios=[0.15, 1]
+    )  # Adjust height ratios to change the size of subplots
 
     # Create the main violin plot axis
     ax = plt.subplot(gs[1])  # This will create the subplot for the main violin plot.
@@ -1765,18 +1838,21 @@ def plot_component_violin_zoomed(
         vp.set_linestyle(quantile_style)
         vp.set_alpha(1)
 
-    color1 = (220/255, 198/255, 135/255)  # Original color (yellow)
-    color2 = (35/255, 57/255, 120/255)    # Complementary color (deep blue)
-    color3 = (220/255, 135/255, 135/255)  # Analogous color (red)
-    color4 = (220/255, 220/255, 135/255)  # Analogous color (green)
-    color5 = (135/255, 220/255, 198/255)  # Triadic color (teal)
-    color6 = (198/255, 135/255, 220/255)  # Triadic color (purple)
-    color_gt_blue = (0/255, 0/255, 128/255)  # Dark blue
+    color1 = (220 / 255, 198 / 255, 135 / 255)  # Original color (yellow)
+    color2 = (35 / 255, 57 / 255, 120 / 255)  # Complementary color (deep blue)
+    color3 = (220 / 255, 135 / 255, 135 / 255)  # Analogous color (red)
+    color4 = (220 / 255, 220 / 255, 135 / 255)  # Analogous color (green)
+    color5 = (135 / 255, 220 / 255, 198 / 255)  # Triadic color (teal)
+    color6 = (198 / 255, 135 / 255, 220 / 255)  # Triadic color (purple)
+    color_gt_blue = (0 / 255, 0 / 255, 128 / 255)  # Dark blue
     # color_gt_olympic_teal = (100 /255, 204/255,  201/255)  # Olympic teal
-    darker_purple = (4/255, 36/255, 51/255)
-    color_gt_olympic_teal = (0 /255, 140/255,  149/255)  # Olympic teal
-    color_gt_bold_blue = (58/255, 93/255, 174/255)
-    colors = [color_gt_bold_blue if i % 2 == 0 else color_gt_olympic_teal for i in range(len(vLabels))]
+    darker_purple = (4 / 255, 36 / 255, 51 / 255)
+    color_gt_olympic_teal = (0 / 255, 140 / 255, 149 / 255)  # Olympic teal
+    color_gt_bold_blue = (58 / 255, 93 / 255, 174 / 255)
+    colors = [
+        color_gt_bold_blue if i % 2 == 0 else color_gt_olympic_teal
+        for i in range(len(vLabels))
+    ]
     colors = ["blue" if i % 2 == 0 else "green" for i in range(len(vLabels))]
     for n, pc in enumerate(vplot["bodies"], 1):
         pc.set_facecolor(colors[n - 1])
@@ -1852,7 +1928,7 @@ def plot_component_violin_zoomed(
     ax.set_yticks(minor_yticks, minor=True)
 
     lg = ax.legend(loc=legend_loc, edgecolor="black", fontsize="9")
-    lg.get_frame().set_facecolor('none')  # Make the legend background transparent
+    lg.get_frame().set_facecolor("none")  # Make the legend background transparent
     # legend.get_frame().set_alpha(0.5)  # Adjust the transparency level (0.0 to 1.0)
     if set_xlable:
         ax.set_xlabel("Level of Theory", color="k", fontsize="12")
@@ -1866,25 +1942,25 @@ def plot_component_violin_zoomed(
 
     ax_error = plt.subplot(gs[0], sharex=ax)
     # ax_error.spines['top'].set_visible(False)
-    ax_error.spines['right'].set_visible(False)
-    ax_error.spines['left'].set_visible(False)
-    ax_error.spines['bottom'].set_visible(False)
+    ax_error.spines["right"].set_visible(False)
+    ax_error.spines["left"].set_visible(False)
+    ax_error.spines["bottom"].set_visible(False)
     ax_error.tick_params(left=False, labelleft=False, bottom=False, labelbottom=False)
 
     # Synchronize the x-limits with the main subplot
     ax_error.set_xlim((0, len(vLabels)))
     ax_error.set_ylim(0, 1)  # Assuming the upper subplot should have no y range
     # Populate ax_error with error statistics through annotations
-        # text = r"\textit{%.2f}" % mae
-        # text += r"\textbf{%.2f}" % rmse
-        # text += r"\textrm{%.2f}" % max_error
+    # text = r"\textit{%.2f}" % mae
+    # text += r"\textbf{%.2f}" % rmse
+    # text += r"\textrm{%.2f}" % max_error
     error_labels = r"\textit{MAE}"
     error_labels += "\n"
-    error_labels += r"\textbf{RMSE}" 
+    error_labels += r"\textbf{RMSE}"
     error_labels += "\n"
-    error_labels += r"\textrm{MaxE}" 
+    error_labels += r"\textrm{MaxE}"
     error_labels += "\n"
-    error_labels += r"\textrm{MinE}" 
+    error_labels += r"\textrm{MinE}"
     ax_error.annotate(
         error_labels,
         xy=(0, 1),  # Position at the vertical center of the narrow subplot
@@ -1928,13 +2004,14 @@ def plot_component_violin_zoomed(
             print(f"Error: {fn_png}-1.png does not exist")
     else:
         plt.savefig(
-            f"plots/{pfn}_dbs_violin.{img_ext}",
+            f"plots/{pfn}_dbs_violin.{image_ext}",
             transparent=transparent,
             bbox_inches="tight",
             dpi=dpi,
         )
     plt.clf()
     return
+
 
 def plot_violin_d3_d4_ALL_zoomed_min_max(
     df,
@@ -1950,7 +2027,7 @@ def plot_violin_d3_d4_ALL_zoomed_min_max(
     dpi=800,
     pdf=False,
     jpeg=True,
-    legend_loc='upper left',
+    legend_loc="upper left",
 ) -> None:
     print(f"Plotting {pfn}")
     image_ext = "png"
@@ -1988,7 +2065,9 @@ def plot_violin_d3_d4_ALL_zoomed_min_max(
     fig = plt.figure(dpi=dpi)
     if figure_size is not None:
         plt.figure(figsize=figure_size)
-    gs = gridspec.GridSpec(2, 1, height_ratios=[0.22, 1])  # Adjust height ratios to change the size of subplots
+    gs = gridspec.GridSpec(
+        2, 1, height_ratios=[0.22, 1]
+    )  # Adjust height ratios to change the size of subplots
 
     # Create the main violin plot axis
     ax = plt.subplot(gs[1])  # This will create the subplot for the main violin plot.
@@ -2106,25 +2185,25 @@ def plot_violin_d3_d4_ALL_zoomed_min_max(
 
     ax_error = plt.subplot(gs[0], sharex=ax)
     # ax_error.spines['top'].set_visible(False)
-    ax_error.spines['right'].set_visible(False)
-    ax_error.spines['left'].set_visible(False)
-    ax_error.spines['bottom'].set_visible(False)
+    ax_error.spines["right"].set_visible(False)
+    ax_error.spines["left"].set_visible(False)
+    ax_error.spines["bottom"].set_visible(False)
     ax_error.tick_params(left=False, labelleft=False, bottom=False, labelbottom=False)
 
     # Synchronize the x-limits with the main subplot
     ax_error.set_xlim((0, len(vLabels)))
     ax_error.set_ylim(0, 1)  # Assuming the upper subplot should have no y range
     # Populate ax_error with error statistics through annotations
-        # text = r"\textit{%.2f}" % mae
-        # text += r"\textbf{%.2f}" % rmse
-        # text += r"\textrm{%.2f}" % max_error
+    # text = r"\textit{%.2f}" % mae
+    # text += r"\textbf{%.2f}" % rmse
+    # text += r"\textrm{%.2f}" % max_error
     error_labels = r"\textit{MAE}"
     error_labels += "\n"
-    error_labels += r"\textbf{RMSE}" 
+    error_labels += r"\textbf{RMSE}"
     error_labels += "\n"
-    error_labels += r"\textrm{MaxE}" 
+    error_labels += r"\textrm{MaxE}"
     error_labels += "\n"
-    error_labels += r"\textrm{MinE}" 
+    error_labels += r"\textrm{MinE}"
     ax_error.annotate(
         error_labels,
         xy=(0, 1),  # Position at the vertical center of the narrow subplot
@@ -2176,6 +2255,7 @@ def plot_violin_d3_d4_ALL_zoomed_min_max(
     plt.clf()
     return
 
+
 def plot_violin_d3_d4_ALL(
     df,
     vals: {},
@@ -2190,7 +2270,7 @@ def plot_violin_d3_d4_ALL(
     dpi=600,
     pdf=False,
     jpeg=True,
-    legend_loc='upper left',
+    legend_loc="upper left",
 ) -> None:
     """ """
     print(f"Plotting {pfn}")
@@ -2523,7 +2603,9 @@ def plot_component_violin(
         label=r"5-95th Percentile",
     )
     ax.set_xticks(xs)
-    plt.setp(ax.set_xticklabels(vLabels), rotation=sub_rotation, fontsize=f"{fontsize-2}")
+    plt.setp(
+        ax.set_xticklabels(vLabels), rotation=sub_rotation, fontsize=f"{fontsize-2}"
+    )
     ax.set_xlim((0, len(vLabels)))
     # lg = ax.legend(loc="upper left", edgecolor="black", fontsize="8")
     # lg.get_frame().set_facecolor((1, 1, 1, 0.0))
@@ -2642,7 +2724,9 @@ def plot_violin_SAPT0_DFT_components(
 ) -> None:
     print(f"Plotting {pfn}")
     if split_components:
-        fig, axs = plt.subplots(nrows=1, ncols=4, figsize=(20, 5), dpi=1000, constrained_layout=True)
+        fig, axs = plt.subplots(
+            nrows=1, ncols=4, figsize=(20, 5), dpi=1000, constrained_layout=True
+        )
         three_total_ax = None
         total_ax = None
         exch_vals["reference"][0] = None
@@ -2677,7 +2761,9 @@ def plot_violin_SAPT0_DFT_components(
         collect_component_data(df, three_total_vals)
     )
     print("\nTOTAL")
-    total_data, total_labels, total_annotations = collect_component_data(df, total_vals, extended_errors=True)
+    total_data, total_labels, total_annotations = collect_component_data(
+        df, total_vals, extended_errors=True
+    )
 
     # Plot violins
     plot_component_violin(
