@@ -1411,6 +1411,7 @@ def plotting_setup_dft_ddft(
                 "SAPT0/aDZ": "SAPT0_adz_elst",
                 "SAPT0/aTZ": "SAPT0_atz_elst",
                 "SAPT(DFT)/aDZ": "SAPT_DFT_pbe0_adz_elst",
+                "SAPT(DFT)/aTZ": "SAPT_DFT_pbe0_atz_elst",
             },
         },
         exch_vals={
@@ -1420,6 +1421,7 @@ def plotting_setup_dft_ddft(
                 "SAPT0/aDZ": "SAPT0_adz_exch",
                 "SAPT0/aTZ": "SAPT0_atz_exch",
                 "SAPT(DFT)/aDZ": "SAPT_DFT_pbe0_adz_exch",
+                "SAPT(DFT)/aTZ": "SAPT_DFT_pbe0_atz_exch",
             },
         },
         indu_vals={
@@ -1429,6 +1431,7 @@ def plotting_setup_dft_ddft(
                 "SAPT0/aDZ": "SAPT0_adz_indu",
                 "SAPT0/aTZ": "SAPT0_atz_indu",
                 "SAPT(DFT)/aDZ": "SAPT_DFT_pbe0_adz_indu",
+                "SAPT(DFT)/aTZ": "SAPT_DFT_pbe0_atz_indu",
             },
         },
         disp_vals={
@@ -1439,7 +1442,9 @@ def plotting_setup_dft_ddft(
                 # "SAPT0/aTZ": "SAPT0_atz_indu",
                 # "SAPT0-D4/aDZ": "-D4 (SAPT0_adz_3_IE)",
                 "SAPT(DFT)/aDZ": "SAPT_DFT_pbe0_adz_disp",
+                "SAPT(DFT)/aTZ": "SAPT_DFT_pbe0_atz_disp",
                 "SAPT(DFT)-D4/aDZ": "SAPT_DFT_pbe0_adz_d4_disp",
+                "SAPT(DFT)-D4/aTZ": "SAPT_DFT_pbe0_atz_d4_disp",
             },
         },
         three_total_vals={
@@ -1447,6 +1452,7 @@ def plotting_setup_dft_ddft(
             "reference": ["CCSD(T)/CBS IE Ref.", "benchmark ref energy"],
             "vals": {
                 "SAPT(DFT)/aDZ": "SAPT_DFT_pbe0_adz_3_IE",
+                "SAPT(DFT)/aTZ": "SAPT_DFT_pbe0_atz_3_IE",
                 "SAPT0/aDZ": "SAPT0_adz_3_IE",
                 "SAPT0/aTZ": "SAPT0_atz_3_IE",
             },
@@ -2776,7 +2782,7 @@ def plot_violin_SAPT0_DFT_components(
         widths,
         fontsize=sub_fontsize,
         sub_rotation=sub_rotation,
-        ylim=[-4, 6],
+        ylim=[-4, 10],
     )
     plot_component_violin(
         exch_ax,
@@ -2788,7 +2794,7 @@ def plot_violin_SAPT0_DFT_components(
         widths,
         fontsize=sub_fontsize,
         sub_rotation=sub_rotation,
-        ylim=[-4, 25],
+        ylim=[-4, 50],
     )
     plot_component_violin(
         indu_ax,
