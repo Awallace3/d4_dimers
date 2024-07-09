@@ -29,6 +29,10 @@ def main():
     id_max = df['size'].idxmax()
     print(f"Max size molecule: {df['size'][id_max]} {id_max = }")
     # return
+    df = src.plotting.plot_basis_sets_d4_TT(
+        df,
+        False,
+    )
     df = src.plotting.plot_basis_sets_d4(
         df,
         False,

@@ -418,6 +418,83 @@ def get_charged_df(df) -> pd.DataFrame:
     df = df.drop(inds)
     return df
 
+def plot_basis_sets_d4_TT(df, build_df=False, df_out: str = "basis_study", df_name=""):
+    selected = df_out
+    df_out = f"plots/{df_out}.pkl"
+    if build_df:
+        df = compute_d4_from_opt_params(
+            df,
+            bases=[
+                [
+                    "SAPT0_dz_IE",
+                    "SAPT0_dz_3_IE_TT_ADZ",
+                    "SAPT0_adz_3_IE_TT_2B",
+                    "SAPT0_dz_3_IE_TT",
+                ],
+                [
+                    "SAPT0_jdz_IE",
+                    "SAPT0_jdz_3_IE_TT_ADZ",
+                    "SAPT0_adz_3_IE_TT_2B",
+                    "SAPT0_jdz_3_IE_TT",
+                ],
+                [
+                    "SAPT0_adz_IE",
+                    "SAPT0_adz_3_IE_TT_ADZ",
+                    "SAPT0_adz_3_IE_TT_2B",
+                    "SAPT0_adz_3_IE_TT",
+                ],
+                [
+                    "SAPT0_tz_IE",
+                    "SAPT0_tz_3_IE_TT_ADZ",
+                    "SAPT0_adz_3_IE_TT_2B",
+                    "SAPT0_tz_3_IE_TT",
+                ],
+                [
+                    "SAPT0_mtz_IE",
+                    "SAPT0_mtz_3_IE_TT_ADZ",
+                    "SAPT0_adz_3_IE_TT_2B",
+                    "SAPT0_mtz_3_IE_TT",
+                ],
+                [
+                    "SAPT0_jtz_IE",
+                    "SAPT0_jtz_3_IE_TT_ADZ",
+                    "SAPT0_adz_3_IE_TT_2B",
+                    "SAPT0_jtz_3_IE_TT",
+                ],
+                [
+                    "SAPT0_atz_IE",
+                    "SAPT0_atz_3_IE_TT_ADZ",
+                    "SAPT0_adz_3_IE_TT_2B",
+                    "SAPT0_atz_3_IE_TT",
+                ],
+            ],
+        )
+        df.to_pickle(df_out)
+    else:
+        df = pd.read_pickle(df_out)
+    plot_violin_d3_d4_ALL(
+        df,
+        {
+            "0/DZ": "SAPT0_dz_3_IE_TT_diff",
+            "0-D4/DZ": "SAPT0_dz_3_IE_TT_d4_diff",
+            "0/jDZ": "SAPT0_jdz_3_IE_TT_diff",
+            "0-D4/jDZ": "SAPT0_jdz_3_IE_TT_d4_diff",
+            "0/aDZ": "SAPT0_adz_3_IE_TT_diff",
+            "0-D4/aDZ": "SAPT0_adz_3_IE_TT_d4_diff",
+            "0/TZ": "SAPT0_tz_3_IE_TT_diff",
+            "0-D4/TZ": "SAPT0_tz_3_IE_TT_d4_diff",
+            "0/mTZ": "SAPT0_mtz_3_IE_TT_diff",
+            "0-D4/mTZ": "SAPT0_mtz_3_IE_TT_d4_diff",
+            "0/jTZ": "SAPT0_jtz_3_IE_TT_diff",
+            "0-D4/jTZ": "SAPT0_jtz_3_IE_TT_d4_diff",
+            "0/aTZ": "SAPT0_atz_3_IE_TT_diff",
+            "0-D4/aTZ": "SAPT0_atz_3_IE_TT_d4_diff",
+        },
+        None,
+        f"{selected}_d4_TT",
+        bottom=0.30,
+    )
+    return
 
 def plot_basis_sets_d4(df, build_df=False, df_out: str = "basis_study", df_name=""):
     selected = df_out
