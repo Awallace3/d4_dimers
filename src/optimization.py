@@ -548,8 +548,12 @@ def compute_int_energy_DISP_2B_TT_ATM_TT(
         if len(params) == 3:
             params_2B = np.array([1.0, params[0], params[1], params[2], 0.0])
             params_ATM = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
+        elif len(params) == 1:
+            # To optimize s8 for 2B TT
+            params_2B = np.array([1.0, params[0], -0.33, 4.39, 0.0])
+            params_ATM = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
         else:
-            raise ValueError("params must be of length 3")
+            raise ValueError("params must be of length 1 or 3")
     # print(f"compute_int_energy_DISP_TT:\n{params_2B = }\n{params_ATM = }")
 
     rmse = 0
@@ -904,6 +908,8 @@ def optimization(
     elif version["compute_energy"] == "compute_int_energy_DISP_2B_TT_ATM_TT":
         compute = compute_int_energy_DISP_2B_TT_ATM_TT
         # bounds = [(-1.0, -0.001), (3.0, 6.0)]
+        if type(params[0]) == float and len(params) == 1:
+            bounds = [(0.0, 1.0)]
         if len(params) == 2:
             bounds = [(-1.0, -0.001), (3.0, 6.0)]
         elif len(params) == 3:
