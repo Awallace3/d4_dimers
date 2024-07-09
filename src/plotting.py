@@ -154,6 +154,7 @@ def compute_d4_from_opt_params(
         ["SAPT0_atz_IE", "SAPT0_atz_3_IE", "SAPT0_atz_3_IE_2B", "SAPT0_atz_3_IE"],
     ],
     benchmark_label="Benchmark",
+    disp_compute=locald4.compute_disp_2B_BJ_ATM_CHG_dimer,
 ) -> pd.DataFrame:
     """
     compute_D3_D4_values_for_params
@@ -173,7 +174,7 @@ def compute_d4_from_opt_params(
         params_d4 = params_dict[i[2]]
         params_2B, params_ATM = paramsTable.generate_2B_ATM_param_subsets(params_d4)
         df[f"-D4 ({i[1]})"] = df.apply(
-            lambda row: locald4.compute_disp_2B_BJ_ATM_CHG_dimer(
+            lambda row: disp_compute(
                 row,
                 params_2B,
                 params_ATM,
@@ -427,72 +428,77 @@ def plot_basis_sets_d4_TT(df, build_df=False, df_out: str = "basis_study", df_na
             bases=[
                 [
                     "SAPT0_dz_IE",
-                    "SAPT0_dz_3_IE_TT_ADZ",
-                    "SAPT0_adz_3_IE_TT_2B",
                     "SAPT0_dz_3_IE_TT",
+                    "SAPT0_dz_3_IE_2B_TT",
+                    "SAPT0_dz_3_IE",
                 ],
                 [
                     "SAPT0_jdz_IE",
-                    "SAPT0_jdz_3_IE_TT_ADZ",
-                    "SAPT0_adz_3_IE_TT_2B",
                     "SAPT0_jdz_3_IE_TT",
+                    "SAPT0_jdz_3_IE_2B_TT",
+                    "SAPT0_jdz_3_IE",
                 ],
                 [
                     "SAPT0_adz_IE",
-                    "SAPT0_adz_3_IE_TT_ADZ",
-                    "SAPT0_adz_3_IE_TT_2B",
                     "SAPT0_adz_3_IE_TT",
+                    "SAPT0_adz_3_IE_2B_TT",
+                    "SAPT0_adz_3_IE",
                 ],
                 [
                     "SAPT0_tz_IE",
-                    "SAPT0_tz_3_IE_TT_ADZ",
-                    "SAPT0_adz_3_IE_TT_2B",
                     "SAPT0_tz_3_IE_TT",
+                    "SAPT0_tz_3_IE_2B_TT",
+                    "SAPT0_tz_3_IE",
                 ],
                 [
                     "SAPT0_mtz_IE",
-                    "SAPT0_mtz_3_IE_TT_ADZ",
-                    "SAPT0_adz_3_IE_TT_2B",
                     "SAPT0_mtz_3_IE_TT",
+                    "SAPT0_mtz_3_IE_2B_TT",
+                    "SAPT0_mtz_3_IE",
                 ],
                 [
                     "SAPT0_jtz_IE",
-                    "SAPT0_jtz_3_IE_TT_ADZ",
-                    "SAPT0_adz_3_IE_TT_2B",
                     "SAPT0_jtz_3_IE_TT",
+                    "SAPT0_jtz_3_IE_2B_TT",
+                    "SAPT0_jtz_3_IE",
                 ],
                 [
                     "SAPT0_atz_IE",
-                    "SAPT0_atz_3_IE_TT_ADZ",
-                    "SAPT0_adz_3_IE_TT_2B",
                     "SAPT0_atz_3_IE_TT",
+                    "SAPT0_atz_3_IE_2B_TT",
+                    "SAPT0_atz_3_IE",
                 ],
             ],
+            disp_compute=locald4.compute_disp_2B_TT_ATM_TT_dimer,
         )
         df.to_pickle(df_out)
     else:
         df = pd.read_pickle(df_out)
-    plot_violin_d3_d4_ALL(
+    plot_violin_d3_d4_ALL_zoomed_min_max(
         df,
         {
-            "0/DZ": "SAPT0_dz_3_IE_TT_diff",
-            "0-D4/DZ": "SAPT0_dz_3_IE_TT_d4_diff",
-            "0/jDZ": "SAPT0_jdz_3_IE_TT_diff",
-            "0-D4/jDZ": "SAPT0_jdz_3_IE_TT_d4_diff",
-            "0/aDZ": "SAPT0_adz_3_IE_TT_diff",
-            "0-D4/aDZ": "SAPT0_adz_3_IE_TT_d4_diff",
-            "0/TZ": "SAPT0_tz_3_IE_TT_diff",
-            "0-D4/TZ": "SAPT0_tz_3_IE_TT_d4_diff",
-            "0/mTZ": "SAPT0_mtz_3_IE_TT_diff",
-            "0-D4/mTZ": "SAPT0_mtz_3_IE_TT_d4_diff",
-            "0/jTZ": "SAPT0_jtz_3_IE_TT_diff",
-            "0-D4/jTZ": "SAPT0_jtz_3_IE_TT_d4_diff",
-            "0/aTZ": "SAPT0_atz_3_IE_TT_diff",
-            "0-D4/aTZ": "SAPT0_atz_3_IE_TT_d4_diff",
+            "0-D4(BJ)/DZ": "SAPT0_dz_3_IE_d4_diff",
+            "0-D4(TT)/DZ": "SAPT0_dz_3_IE_TT_d4_diff",
+            "0-D4(BJ)/jDZ": "SAPT0_jdz_3_IE_d4_diff",
+            "0-D4(TT)/jDZ": "SAPT0_jdz_3_IE_TT_d4_diff",
+            "0-D4(BJ)/aDZ": "SAPT0_adz_3_IE_d4_diff",
+            "0-D4(TT)/aDZ": "SAPT0_adz_3_IE_TT_d4_diff",
+            "0-D4(BJ)/TZ": "SAPT0_tz_3_IE_d4_diff",
+            "0-D4(TT)/TZ": "SAPT0_tz_3_IE_TT_d4_diff",
+            "0-D4(BJ)/mTZ": "SAPT0_mtz_3_IE_d4_diff",
+            "0-D4(TT)/mTZ": "SAPT0_mtz_3_IE_TT_d4_diff",
+            "0-D4(BJ)/jTZ": "SAPT0_jtz_3_IE_d4_diff",
+            "0-D4(TT)/jTZ": "SAPT0_jtz_3_IE_TT_d4_diff",
+            "0-D4(BJ)/aTZ": "SAPT0_atz_3_IE_d4_diff",
+            "0-D4(TT)/aTZ": "SAPT0_atz_3_IE_TT_d4_diff",
         },
-        None,
-        f"{selected}_d4_TT",
-        bottom=0.30,
+        "",  # f"All Dimers (8299)",
+        f"{selected}_d4_zoomed_TT",
+        bottom=0.45,
+        ylim=[-5, 5],
+        legend_loc="upper right",
+        transparent=True,
+        # figure_size=(6, 6),
     )
     return
 

@@ -13,24 +13,13 @@ def main():
         subprocess.call("mv basis_study.pkl plots/basis_study.pkl", shell=True)
     df = pd.read_pickle(df_name)
     # print(df.columns.values)
-    df = src.plotting.plotting_setup(
-        (df, df_name),
-        False,
-    )
-    # return
-    # df = src.plotting.plotting_setup_dft(
-    #     (df, df_name),
-    #     build_df=True,
-    # )
-    print(df['SAPT_DFT_atz'][0])
-    df['size'] = df.apply(lambda x: len(x['Geometry']), axis=1)
-    print(df['size'].describe())
-    # get id of largest molecule
-    id_max = df['size'].idxmax()
-    print(f"Max size molecule: {df['size'][id_max]} {id_max = }")
-    # return
     df = src.plotting.plot_basis_sets_d4_TT(
         df,
+        True,
+    )
+    return
+    df = src.plotting.plotting_setup(
+        (df, df_name),
         False,
     )
     df = src.plotting.plot_basis_sets_d4(
