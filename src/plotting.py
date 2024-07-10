@@ -1015,9 +1015,9 @@ def plotting_setup(
         plot_violin_d3_d4_ALL_zoomed_min_max_TOC(
             df,
             {
-                "SAPT0/jDZ": "SAPT0_jdz_3_IE_diff",
+                # "SAPT0/jDZ": "SAPT0_jdz_3_IE_diff",
                 "SAPT0/aDZ": "SAPT0_adz_3_IE_diff",
-                "SAPT0-D3/jDZ": "SAPT0_jdz_3_IE_d3_diff",
+                # "SAPT0-D3/jDZ": "SAPT0_jdz_3_IE_d3_diff",
                 #SAPT "0-D3MBJ(ATM)/jDZ": "jdz_diff_d3mbj_atm",
                 "SAPT0-D3/aDZ": "SAPT0_adz_3_IE_d3_diff",
                 #SAPT "0-D3MBJ(ATM)/aDZ": "adz_diff_d3mbj_atm",
@@ -1039,8 +1039,8 @@ def plotting_setup(
             ylim=[-3, 3],
             legend_loc="upper right",
             transparent=True,
-            figure_size=(8, 2.0),
-            
+            figure_size=(6, 2.0),
+            jpeg=False,
         )
         plot_violin_d3_d4_ALL(
             df,
@@ -2257,7 +2257,7 @@ def plot_violin_d3_d4_ALL_zoomed_min_max_TOC(
     # minor_yticks = np.arange(ylim[0], ylim[1], 2)
     # ax.set_yticks(minor_yticks, minor=True)
 
-    plt.setp(ax.set_xticklabels(vLabels), rotation=-45, fontsize="16", ha="left")
+    # plt.setp(ax.set_xticklabels(vLabels), rotation=-45, fontsize="16", ha="left")
     ax.set_xlim((0, len(vLabels)))
     ax.set_ylim(ylim)
 
@@ -2277,7 +2277,7 @@ def plot_violin_d3_d4_ALL_zoomed_min_max_TOC(
     ax.grid(color="#54585A", which="minor", linewidth=0.5, alpha=0.5)
     # Annotations of RMSE
 
-    plt.setp(ax.set_xticklabels(vLabels), rotation=-45, fontsize="16", ha="left")
+    plt.setp(ax.set_xticklabels(vLabels), rotation=35, fontsize="16", ha="right")
     ax.set_xlim((0, len(vLabels)))
     ax.set_ylim(ylim)
 
