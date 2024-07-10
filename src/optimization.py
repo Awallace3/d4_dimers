@@ -344,6 +344,109 @@ def compute_int_energy_stats_DISP_2B_BJ_ATM_TT(
         print("        4. MD   = %.4f" % mean_dif)
     return mae, rmse, max_e, mad, mean_dif
 
+def compute_int_energy_stats_DISP_2B_BJ_supra(
+    params: [float],
+    df: pd.DataFrame,
+    hf_key: str = "HF INTERACTION ENERGY",
+    parallel=False,
+    print_results=False,
+    chunk_count=1000,
+    force_ATM_on=False,
+) -> (float, float, float,):
+    t = df[hf_key].isna().sum()
+    assert t == 0, f"The HF_col provided has np.nan values present, {t}"
+    # params_2B, params_ATM = paramsTable.generate_2B_ATM_param_subsets(params)
+    # params_2B, params_ATM = paramsTable.get_params("SAPT0_adz_3_IE_2B")
+    if force_ATM_on:
+        if len(params) == 5:
+            params_2B = np.array([1.0, params[0], params[1], params[2], 1.0])
+            params_ATM = np.array([0.0, 0.0, params[3], params[4], 1.0])
+        else:
+            raise ValueError("params must be of length 5")
+    else:
+        if len(params) == 3:
+            params_2B = np.array([1.0, params[0], params[1], params[2], 0.0])
+            params_ATM = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
+        else:
+            raise ValueError("params must be of length 3")
+    # print(f"compute_int_energy_stats_DISP_TT:\n{params_2B = }\n{params_ATM = }")
+
+    diff = np.zeros(len(df))
+    r4r2_ls = r4r2.r4r2_vals_ls()
+    df["d4"] = df.apply(
+        lambda row: locald4.compute_disp_2B_BJ_dimer_supra(
+            row,
+            params_2B,
+            params_ATM,
+        ),
+        axis=1,
+    )
+    df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
+    mae = df["diff"].abs().mean()
+    rmse = (df["diff"] ** 2).mean() ** 0.5
+    max_e = df["diff"].abs().max()
+    mad = abs(df["diff"] - df["diff"].mean()).mean()
+    mean_dif = df["diff"].mean()
+    if print_results:
+        print("        1. MAE  = %.4f" % mae)
+        print("        2. RMSE = %.4f" % rmse)
+        print("        3. MAX  = %.4f" % max_e)
+        print("        4. MAD  = %.4f" % mad)
+        print("        4. MD   = %.4f" % mean_dif)
+    return mae, rmse, max_e, mad, mean_dif
+
+def compute_int_energy_stats_DISP_2B_TT_supra(
+    params: [float],
+    df: pd.DataFrame,
+    hf_key: str = "HF INTERACTION ENERGY",
+    parallel=False,
+    print_results=False,
+    chunk_count=1000,
+    force_ATM_on=False,
+) -> (float, float, float,):
+    t = df[hf_key].isna().sum()
+    assert t == 0, f"The HF_col provided has np.nan values present, {t}"
+    # params_2B, params_ATM = paramsTable.generate_2B_ATM_param_subsets(params)
+    # params_2B, params_ATM = paramsTable.get_params("SAPT0_adz_3_IE_2B")
+    if force_ATM_on:
+        if len(params) == 5:
+            params_2B = np.array([1.0, params[0], params[1], params[2], 1.0])
+            params_ATM = np.array([0.0, 0.0, params[3], params[4], 1.0])
+        else:
+            raise ValueError("params must be of length 5")
+    else:
+        if len(params) == 3:
+            params_2B = np.array([1.0, params[0], params[1], params[2], 0.0])
+            params_ATM = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
+        else:
+            raise ValueError("params must be of length 3")
+
+    # print(f"compute_int_energy_stats_DISP_TT:\n{params_2B = }\n{params_ATM = }")
+
+    diff = np.zeros(len(df))
+    r4r2_ls = r4r2.r4r2_vals_ls()
+    df["d4"] = df.apply(
+        lambda row: locald4.compute_disp_2B_TT_dimer_supra(
+            row,
+            params_2B,
+            params_ATM,
+        ),
+        axis=1,
+    )
+    df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
+    mae = df["diff"].abs().mean()
+    rmse = (df["diff"] ** 2).mean() ** 0.5
+    max_e = df["diff"].abs().max()
+    mad = abs(df["diff"] - df["diff"].mean()).mean()
+    mean_dif = df["diff"].mean()
+    if print_results:
+        print("        1. MAE  = %.4f" % mae)
+        print("        2. RMSE = %.4f" % rmse)
+        print("        3. MAX  = %.4f" % max_e)
+        print("        4. MAD  = %.4f" % mad)
+        print("        4. MD   = %.4f" % mean_dif)
+    return mae, rmse, max_e, mad, mean_dif
+
 
 def compute_int_energy_stats_DISP_SR(
     params: [float],
@@ -559,6 +662,74 @@ def compute_int_energy_DISP_2B_TT_ATM_TT(
     rmse = 0
     df["d4"] = df.apply(
         lambda row: locald4.compute_disp_2B_TT_ATM_TT_dimer(
+            row,
+            params_2B,
+            params_ATM,
+        ),
+        axis=1,
+    )
+    df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
+    rmse = (df["diff"] ** 2).mean() ** 0.5
+    print("%.8f\t" % rmse, params.tolist())
+    if np.isnan(rmse):
+        return 10
+    return rmse
+
+def compute_int_energy_DISP_2B_BJ_supra(
+    params,
+    df: pd.DataFrame,
+    hf_key: str = "HF INTERACTION ENERGY",
+    force_ATM_on: bool = False,
+):
+    if force_ATM_on:
+        if len(params) == 5:
+            params_2B = np.array([1.0, params[0], params[1], params[2], 1.0])
+            params_ATM = np.array([0.0, 0.0, params[3], params[4], 1.0])
+        else:
+            raise ValueError("params must be of length 5")
+    else:
+        if len(params) == 3:
+            params_2B = np.array([1.0, params[0], params[1], params[2], 0.0])
+            params_ATM = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
+        else:
+            raise ValueError("params must be of length 3")
+    rmse = 0
+    df["d4"] = df.apply(
+        lambda row: locald4.compute_disp_2B_BJ_dimer_supra(
+            row,
+            params_2B,
+            params_ATM,
+        ),
+        axis=1,
+    )
+    df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
+    rmse = (df["diff"] ** 2).mean() ** 0.5
+    print("%.8f\t" % rmse, params.tolist())
+    if np.isnan(rmse):
+        return 10
+    return rmse
+
+def compute_int_energy_DISP_2B_TT_supra(
+    params,
+    df: pd.DataFrame,
+    hf_key: str = "HF INTERACTION ENERGY",
+    force_ATM_on: bool = False,
+):
+    if force_ATM_on:
+        if len(params) == 5:
+            params_2B = np.array([1.0, params[0], params[1], params[2], 1.0])
+            params_ATM = np.array([0.0, 0.0, params[3], params[4], 1.0])
+        else:
+            raise ValueError("params must be of length 5")
+    else:
+        if len(params) == 3:
+            params_2B = np.array([1.0, params[0], params[1], params[2], 0.0])
+            params_ATM = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
+        else:
+            raise ValueError("params must be of length 3")
+    rmse = 0
+    df["d4"] = df.apply(
+        lambda row: locald4.compute_disp_2B_TT_dimer_supra(
             row,
             params_2B,
             params_ATM,
@@ -896,6 +1067,10 @@ def optimization(
         compute = compute_int_energy_DISP
     elif version["compute_energy"] == "compute_int_energy_DISP_C6_only":
         compute = compute_int_energy_DISP_C6_only
+    elif version["compute_energy"] == "compute_int_energy_DISP_2B_BJ_supra":
+        compute = compute_int_energy_DISP_2B_BJ_supra
+    elif version["compute_energy"] == "compute_int_energy_DISP_2B_TT_supra":
+        compute = compute_int_energy_DISP_2B_TT_supra
     elif version["compute_energy"] == "compute_int_energy_DISP_2B_BJ_ATM_TT":
         compute = compute_int_energy_DISP_2B_BJ_ATM_TT
         # bounds = [(-1.0, -0.001), (3.0, 6.0)]
@@ -999,6 +1174,10 @@ def opt_val_no_folds(
         compute_stats = compute_int_energy_stats_DISP_C6_only
     elif version["compute_stats"] == "compute_int_energy_DISP_2B_BJ_ATM_TT":
         compute_stats = compute_int_energy_stats_DISP_2B_BJ_ATM_TT
+    elif version["compute_stats"] == "compute_int_energy_stats_DISP_2B_BJ_supra":
+        compute_stats = compute_int_energy_stats_DISP_2B_BJ_supra
+    elif version["compute_stats"] == "compute_int_energy_stats_DISP_2B_TT_supra":
+        compute_stats = compute_int_energy_stats_DISP_2B_TT_supra
     elif version["compute_stats"] == "compute_int_energy_DISP_2B_TT_ATM_TT":
         compute_stats = compute_int_energy_stats_DISP_2B_TT_ATM_TT
     elif version["compute_stats"] == "compute_int_energy_stats":
@@ -1023,6 +1202,7 @@ def opt_val_no_folds(
     stats = {
         "method": [f"{hf_key} full"],
         # "Optimization Algorithm": [opt_type],
+        "MAE": [mmae],
         "RMSE": [mrmse],
         "MAD": [mmad],
         "MD": [mmean_diff],
