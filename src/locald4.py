@@ -477,6 +477,55 @@ def compute_disp_ATM_CHG_dimer(
     )
     return e_total * mult_out
 
+def compute_disp_2B_BJ_dimer_supra(
+    r,
+    params_2B,
+    params_ATM,
+    mult_out=hartree_to_kcalmol,
+):
+    pos, carts = (
+        np.array(r["Geometry_bohr"][:, 0], dtype=np.int32),
+        r["Geometry_bohr"][:, 1:],
+    )
+    monAs, monBs = r["monAs"], r["monBs"]
+    monAs = np.array(monAs, dtype=np.int32)
+    monBs = np.array(monBs, dtype=np.int32)
+    pA, cA = pos[monAs], carts[monAs, :]
+    pB, cB = pos[monBs], carts[monBs, :]
+    e_total = disp.disp_2B_BJ_supra(
+        pos,
+        carts,
+        r["C6s"],
+        monAs,
+        monBs,
+        params_2B,
+    )
+    return e_total * mult_out
+
+def compute_disp_2B_TT_dimer_supra(
+    r,
+    params_2B,
+    params_ATM,
+    mult_out=hartree_to_kcalmol,
+):
+    pos, carts = (
+        np.array(r["Geometry_bohr"][:, 0], dtype=np.int32),
+        r["Geometry_bohr"][:, 1:],
+    )
+    monAs, monBs = r["monAs"], r["monBs"]
+    monAs = np.array(monAs, dtype=np.int32)
+    monBs = np.array(monBs, dtype=np.int32)
+    pA, cA = pos[monAs], carts[monAs, :]
+    pB, cB = pos[monBs], carts[monBs, :]
+    e_total = disp.disp_2B_TT_supra(
+        pos,
+        carts,
+        r["C6s"],
+        monAs,
+        monBs,
+        params_2B,
+    )
+    return e_total * mult_out
 
 def compute_disp_2B_BJ_ATM_CHG_dimer(
     r,
