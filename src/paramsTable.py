@@ -250,6 +250,16 @@ def paramsDict() -> {}:
             ],
             dtype=np.float64,
         ),
+        "2B_TT_START6": np.array(
+            # [s8, b1, b2], optimized s8 for -0.33 and 4.39 params
+            [
+                0.3198134761933507,
+                -0.33,
+                4.39,
+            ],
+            # parameter for scaling of vdw?
+            dtype=np.float64,
+        ),
         "2B_TT_ATM_TT_START": np.array(
             # [s8, b1, b2, b3, b4]
             [

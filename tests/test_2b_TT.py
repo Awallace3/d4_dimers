@@ -15,8 +15,7 @@ ang_to_bohr = src.constants.Constants().g_aatoau()
 hartree_to_kcalmol = qcel.constants.conversion_factor("hartree", "kcal/mol")
 
 # You will need to build https://github.com/Awallace3/dftd4 for pytest to pass
-dftd4_bin = "/theoryfs2/ds/amwalla3/.local/bin/dftd4"
-data_pkl = "/theoryfs2/ds/amwalla3/projects/d4_corrections/tests/data/test.pkl"
+data_pkl = "/Users/austinwallace/papers_gt/dftd4_sapt0_paper/sapt0d4_code/tests/data/test.pkl"
 
 
 def test_compute_2B_TT():
