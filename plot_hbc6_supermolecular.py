@@ -54,23 +54,29 @@ def plot_hbc6_1():
         ]
     )
     # plt usetex
-    # for db in df["DB"].unique():
-    sys_numbers = df_hbc6['System #'].unique()
-    for i in sys_numbers:
-        df_sys = df_hbc6[df_hbc6['System #'] == i]
-        print(df_sys[["SAPT0_disp", "d4_supra", "d4_super", "E_res", "System #", "distance (A)"]])
-        df_sys = df_sys.sort_values("distance (A)")
-        plt.plot(df_sys["distance (A)"], df_sys["d4_supra"], label=f"-D4 Non-Super", marker="o", markersize=2.0)
-        plt.plot(df_sys["distance (A)"], df_sys["d4_super"], label=f"-D4 Super", marker="o", markersize=2.0)
-        plt.plot(df_sys["distance (A)"], df_sys["SAPT0_disp"], label=f"SAPT0 Disp.", marker="o", markersize=2.0)
-        plt.plot(df_sys["distance (A)"], df_sys["E_res"], label=r"E_{res}", marker="o", markersize=2.0)
-        plt.title(f"HBC6 System {i}")
-        plt.xlabel("Distance (A)", fontsize=16)
-        plt.ylabel("Error (kcal/mol)", fontsize=16)
-        plt.tick_params(axis="both", which="major", labelsize=14)
-        plt.legend()
-        plt.savefig(f"./plots/hbc1/{i}_d4_super.png")
-        plt.clf()
+    for db in df["DB"].unique():
+        print(db)
+        df_db = df[df["DB"] == db]
+        sys_numbers = df_db['System #'].unique()
+        if len(sys_numbers) > 0:
+            os.makedirs(f"./plots/disp_curves/{db}", exist_ok=True)
+            for i in sys_numbers:
+                df_sys = df_db[df_db['System #'] == i]
+                if len(df_sys) < 4:
+                    continue
+                print(df_sys[["SAPT0_disp", "d4_supra", "d4_super", "E_res", "System #", "distance (A)"]])
+                df_sys = df_sys.sort_values("distance (A)")
+                plt.plot(df_sys["distance (A)"], df_sys["d4_supra"], label=f"-D4 Non-Super", marker="o", markersize=2.0)
+                plt.plot(df_sys["distance (A)"], df_sys["d4_super"], label=f"-D4 Super", marker="o", markersize=2.0)
+                plt.plot(df_sys["distance (A)"], df_sys["SAPT0_disp"], label=f"SAPT0 Disp.", marker="o", markersize=2.0)
+                plt.plot(df_sys["distance (A)"], df_sys["E_res"], label=r"E_{res}", marker="o", markersize=2.0)
+                plt.title(f"{db} System {i}")
+                plt.xlabel("Distance (A)", fontsize=16)
+                plt.ylabel("Error (kcal/mol)", fontsize=16)
+                plt.tick_params(axis="both", which="major", labelsize=14)
+                plt.legend()
+                plt.savefig(f"./plots/disp_curves/{db}/{i}_d4_super.png")
+                plt.clf()
     return
 
 
