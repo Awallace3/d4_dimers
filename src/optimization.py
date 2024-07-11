@@ -1071,15 +1071,23 @@ def optimization(
         compute = compute_int_energy_DISP_2B_BJ_supra
     elif version["compute_energy"] == "compute_int_energy_DISP_2B_TT_supra":
         compute = compute_int_energy_DISP_2B_TT_supra
+        if type(params[0]) == float and len(params) == 1:
+            bounds = [(0.0, 1.0)]
+        if len(params) == 2:
+            bounds = [(-1.0, -0.001), (3.0, 6.0)]
+        elif len(params) == 3:
+            bounds = [(-1.0, 1.0),(-1.0, -0.001), (1.0, 6.0)]
+        else:
+            bounds = [(-1.0, 1.0),(-1.0, -0.001), (1.0, 6.0), (-1.0, -0.001), (1.0, 6.0)]
     elif version["compute_energy"] == "compute_int_energy_DISP_2B_BJ_ATM_TT":
         compute = compute_int_energy_DISP_2B_BJ_ATM_TT
         # bounds = [(-1.0, -0.001), (3.0, 6.0)]
         if len(params) == 2:
-            bounds = [(-1.0, -0.001), (3.0, 6.0)]
+            bounds = [(-1.0, -0.001), (1.0, 6.0)]
         elif len(params) == 3:
-            bounds = [(-3.0, 6.0),(-1.0, -0.001), (-3.0, 6.0)]
+            bounds = [(-3.0, 6.0),(-1.0, -0.001), (1.0, 6.0)]
         else:
-            bounds = [(-3.0, 6.0),(-3.0, 6.0), (-3.0, 6.0), (-1.0, -0.001), (-3.0, 6.0)]
+            bounds = [(0.0, 1.0),(1.0, 6.0), (1.0, 6.0), (-1.0, -0.001), (1.0, 6.0)]
     elif version["compute_energy"] == "compute_int_energy_DISP_2B_TT_ATM_TT":
         compute = compute_int_energy_DISP_2B_TT_ATM_TT
         # bounds = [(-1.0, -0.001), (3.0, 6.0)]
@@ -1088,9 +1096,9 @@ def optimization(
         if len(params) == 2:
             bounds = [(-1.0, -0.001), (3.0, 6.0)]
         elif len(params) == 3:
-            bounds = [(-3.0, 6.0),(-1.0, -0.001), (-3.0, 6.0)]
+            bounds = [(0.0, 1.0),(-1.0, -0.001), (1.0, 6.0)]
         else:
-            bounds = [(-3.0, 6.0),(-1.0, -0.001), (-3.0, 6.0), (-1.0, -0.001), (-3.0, 6.0)]
+            bounds = [(0.0, 1.0),(-1.0, -0.001), (1.0, 6.0), (-1.0, -0.001), (1.0, 6.0)]
     elif version["compute_energy"] == "compute_int_energy":
         compute = compute_int_energy
     elif version["compute_energy"] == "compute_int_energy_ATM":

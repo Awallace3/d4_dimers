@@ -13,15 +13,16 @@ def main():
         subprocess.call("mv basis_study.pkl plots/basis_study.pkl", shell=True)
     df = pd.read_pickle(df_name)
     # print(df.columns.values)
+    df = src.plotting.plot_basis_sets_d4_TT(
+        df,
+        True,
+    )
+    return
     df = src.plotting.plotting_setup(
         (df, df_name),
         False,
     )
     return
-    df = src.plotting.plot_basis_sets_d4_TT(
-        df,
-        True,
-    )
     df = src.plotting.plot_basis_sets_d4(
         df,
         False,
