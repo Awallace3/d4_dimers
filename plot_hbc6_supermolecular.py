@@ -15,7 +15,7 @@ plt.rcParams.update(
     }
 )
 
-def plot_hbc6_1():
+def df_setup():
     df = pd.read_pickle("./plots/basis_study.pkl")
     # pp(df.columns.values.tolist())
     p_2b, p_atm = paramsTable.param_lookup("sadz_supra")
@@ -44,8 +44,32 @@ def plot_hbc6_1():
         ),
         axis=1,
     )
+
+    # p_2b, p_atm = paramsTable.param_lookup("SAPT0_adz_3_IE_2B_TT")
+    # df["d4_supra_TT"] = df.apply(
+    #     lambda row: locald4.compute_disp_2B_BJ_dimer_supra(
+    #         row,
+    #         p_2b,
+    #         p_atm,
+    #     ),
+    #     axis=1,
+    # )
+    # p_2b, p_atm = paramsTable.param_lookup("sadz")
+    # df["d4_super_TT"] = df.apply(
+    #     lambda row: locald4.compute_disp_2B_BJ_ATM_CHG_dimer(
+    #         row,
+    #         p_2b,
+    #         p_atm,
+    #     ),
+    #     axis=1,
+    # )
+
     df["SAPT0_disp"] = df.apply(lambda r: r["SAPT0_adz"][-1], axis=1)
     df["E_res"] = df.apply(lambda r: r["Benchmark"] - sum(r["SAPT0_adz"][1:-1]), axis=1)
+    return df
+
+
+def plot_hbc6_1(df):
     print(df["DB"].unique())
     df_hbc6 = df[df["DB"] == "HBC1"]
     print(
@@ -56,6 +80,8 @@ def plot_hbc6_1():
     # plt usetex
     for db in df["DB"].unique():
         print(db)
+        if db.lower() == "achc":
+            continue
         df_db = df[df["DB"] == db]
         sys_numbers = df_db['System #'].unique()
         if len(sys_numbers) > 0:
@@ -72,7 +98,7 @@ def plot_hbc6_1():
                 plt.plot(df_sys["distance (A)"], df_sys["E_res"], label=r"E_{res}", marker="o", markersize=2.0)
                 plt.title(f"{db} System {i}")
                 plt.xlabel("Distance (A)", fontsize=16)
-                plt.ylabel("Error (kcal/mol)", fontsize=16)
+                plt.ylabel("Energy (kcal/mol)", fontsize=16)
                 plt.tick_params(axis="both", which="major", labelsize=14)
                 plt.legend()
                 plt.savefig(f"./plots/disp_curves/{db}/{i}_d4_super.png")
@@ -81,7 +107,20 @@ def plot_hbc6_1():
 
 
 def main():
-    plot_hbc6_1()
+    df = df_setup()
+    df_x40by10 = df[df["DB"] == "X40by10"]
+    df_x40by10_1 = df_x40by10[df_x40by10["System #"] == 1]
+    r1 = df_x40by10_1.iloc[0]
+    tools.print_cartesians(r1['Geometry'])
+    for n, r in df_x40by10_1.iterrows():
+        print()
+        print(r['distance (A)'])
+        print(r['C6s'])
+        print(r['C6_A'])
+        print(r['C6_B'])
+
+    # plot_hbc6_1()
+
     return
 
 
