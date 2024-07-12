@@ -69,7 +69,7 @@ def df_setup():
     return df
 
 
-def plot_hbc6_1(df):
+def plot_all_curves(df):
     print(df["DB"].unique())
     df_hbc6 = df[df["DB"] == "HBC1"]
     print(
@@ -105,21 +105,55 @@ def plot_hbc6_1(df):
                 plt.clf()
     return
 
+def plot_hbc6(df):
+    print(df["DB"].unique())
+    df_db = df[df["DB"] == "HBC1"]
+    print(
+        df_db[
+            ["SAPT0_disp", "d4_supra", "d4_super", "E_res", "System #", "distance (A)"]
+        ]
+    )
+    # plt usetex
+    sys_numbers = df_db['System #'].unique()
+    fig, ax = plt.subplots(2, 3, figsize=(12, 8))
+    ax = ax.flatten()
+    if len(sys_numbers) > 0:
+        os.makedirs(f"./plots/disp_curves/HBC1/", exist_ok=True)
+        for n, i in enumerate(sys_numbers):
+            print(n)
+            df_sys = df_db[df_db['System #'] == i]
+            print(df_sys[["SAPT0_disp", "d4_supra", "d4_super", "E_res", "System #", "distance (A)"]])
+            df_sys = df_sys.sort_values("distance (A)")
+
+
+
+            ax[n].plot(df_sys["distance (A)"], df_sys["d4_supra"], label=f"-D4 Non-Super", marker="o", markersize=2.0)
+            ax[n].plot(df_sys["distance (A)"], df_sys["d4_super"], label=f"-D4 Super", marker="o", markersize=2.0)
+            ax[n].plot(df_sys["distance (A)"], df_sys["SAPT0_disp"], label=f"SAPT0 Disp.", marker="o", markersize=2.0)
+            ax[n].plot(df_sys["distance (A)"], df_sys["E_res"], label=r"E$_{\rm res}$", marker="o", markersize=2.0)
+            sys_name = df_sys["System"].iloc[0]
+            ax[n].set_title(f"{sys_name}")
+            if n == 0:
+                ax[n].legend(loc="lower right")
+            if n % 3 == 0:
+                ax[n].set_ylabel(r"Disp. IE Energy (kcal$\cdot$mol$^{-1}$)", color="k", fontsize="14")
+            if n >= 3:
+                ax[n].set_xlabel("Distance (\AA)", fontsize=14)
+            ax[n].set_ylim([-17.5, 0.2])
+            if n ==0:
+                ax[n].set_ylim([-20, 0.2])
+            ax[n].tick_params(axis="both", which="major", labelsize=14)
+            # set minor ticks
+            ax[n].minorticks_on()
+            # plt.legend()
+        plt.savefig(f"./plots/disp_curves/HBC1/HBC1_all_d4_super.png")
+        plt.clf()
+    return
+
 
 def main():
     df = df_setup()
-    df_x40by10 = df[df["DB"] == "X40by10"]
-    df_x40by10_1 = df_x40by10[df_x40by10["System #"] == 1]
-    r1 = df_x40by10_1.iloc[0]
-    tools.print_cartesians(r1['Geometry'])
-    for n, r in df_x40by10_1.iterrows():
-        print()
-        print(r['distance (A)'])
-        print(r['C6s'])
-        print(r['C6_A'])
-        print(r['C6_B'])
-
-    # plot_hbc6_1()
+    plot_hbc6(df)
 
     return
 
