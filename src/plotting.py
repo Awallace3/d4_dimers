@@ -502,6 +502,89 @@ def plot_basis_sets_d4_TT(df, build_df=False, df_out: str = "basis_study", df_na
     )
     return
 
+def plot_basis_sets_d4_Inter_vs_Super(df, build_df=False, df_out: str = "basis_study", df_name=""):
+    selected = df_out
+    df_out = f"plots/{df_out}.pkl"
+    if build_df:
+        df = compute_d4_from_opt_params(
+            df,
+            bases=[
+                [
+                    "SAPT0_dz_IE",
+                    "SAPT0_dz_3_IE_BJ_inter",
+                    "SAPT0_dz_3_IE_2B_BJ_inter",
+                    "SAPT0_dz_3_IE",
+                ],
+                [
+                    "SAPT0_jdz_IE",
+                    "SAPT0_jdz_3_IE_BJ_inter",
+                    "SAPT0_jdz_3_IE_2B_BJ_inter",
+                    "SAPT0_jdz_3_IE",
+                ],
+                [
+                    "SAPT0_adz_IE",
+                    "SAPT0_adz_3_IE_BJ_inter",
+                    "SAPT0_adz_3_IE_2B_BJ_inter",
+                    "SAPT0_adz_3_IE",
+                ],
+                [
+                    "SAPT0_tz_IE",
+                    "SAPT0_tz_3_IE_BJ_inter",
+                    "SAPT0_tz_3_IE_2B_BJ_inter",
+                    "SAPT0_tz_3_IE",
+                ],
+                [
+                    "SAPT0_mtz_IE",
+                    "SAPT0_mtz_3_IE_BJ_inter",
+                    "SAPT0_mtz_3_IE_2B_BJ_inter",
+                    "SAPT0_mtz_3_IE",
+                ],
+                [
+                    "SAPT0_jtz_IE",
+                    "SAPT0_jtz_3_IE_BJ_inter",
+                    "SAPT0_jtz_3_IE_2B_BJ_inter",
+                    "SAPT0_jtz_3_IE",
+                ],
+                [
+                    "SAPT0_atz_IE",
+                    "SAPT0_atz_3_IE_BJ_inter",
+                    "SAPT0_atz_3_IE_2B_BJ_inter",
+                    "SAPT0_atz_3_IE",
+                ],
+            ],
+            disp_compute=locald4.compute_disp_2B_BJ_dimer_supra,
+        )
+        df.to_pickle(df_out)
+    else:
+        df = pd.read_pickle(df_out)
+    plot_violin_d3_d4_ALL_zoomed_min_max(
+        df,
+        {
+            "0-D4(BJ Super)/DZ": "SAPT0_dz_3_IE_d4_diff",
+            "0-D4(BJ Intermol)/DZ": "SAPT0_dz_3_IE_BJ_inter_d4_diff",
+            "0-D4(BJ Super)/jDZ": "SAPT0_jdz_3_IE_d4_diff",
+            "0-D4(BJ Intermol)/jDZ": "SAPT0_jdz_3_IE_BJ_inter_d4_diff",
+            "0-D4(BJ Super)/aDZ": "SAPT0_adz_3_IE_d4_diff",
+            "0-D4(BJ Intermol)/aDZ": "SAPT0_adz_3_IE_BJ_inter_d4_diff",
+            "0-D4(BJ Super)/TZ": "SAPT0_tz_3_IE_d4_diff",
+            "0-D4(BJ Intermol)/TZ": "SAPT0_tz_3_IE_BJ_inter_d4_diff",
+            "0-D4(BJ Super)/mTZ": "SAPT0_mtz_3_IE_d4_diff",
+            "0-D4(BJ Intermol)/mTZ": "SAPT0_mtz_3_IE_BJ_inter_d4_diff",
+            "0-D4(BJ Super)/jTZ": "SAPT0_jtz_3_IE_d4_diff",
+            "0-D4(BJ Intermol)/jTZ": "SAPT0_jtz_3_IE_BJ_inter_d4_diff",
+            "0-D4(BJ Super)/aTZ": "SAPT0_atz_3_IE_d4_diff",
+            "0-D4(BJ Intermol)/aTZ": "SAPT0_atz_3_IE_BJ_inter_d4_diff",
+        },
+        "",  # f"All Dimers (8299)",
+        f"{selected}_d4_zoomed_Inter_vs_Super",
+        bottom=0.45,
+        ylim=[-3, 3],
+        legend_loc="upper right",
+        transparent=True,
+        # figure_size=(6, 6),
+    )
+    return
+
 def plot_basis_sets_d4(df, build_df=False, df_out: str = "basis_study", df_name=""):
     selected = df_out
     df_out = f"plots/{df_out}.pkl"
