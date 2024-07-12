@@ -125,12 +125,10 @@ def plot_hbc6(df):
             print(df_sys[["SAPT0_disp", "d4_supra", "d4_super", "E_res", "System #", "distance (A)"]])
             df_sys = df_sys.sort_values("distance (A)")
 
-
-
+            ax[n].plot(df_sys["distance (A)"], df_sys["E_res"], label=r"E$_{\rm res}$", marker="o", markersize=2.0, color='k')
             ax[n].plot(df_sys["distance (A)"], df_sys["d4_supra"], label=f"-D4 Non-Super", marker="o", markersize=2.0)
             ax[n].plot(df_sys["distance (A)"], df_sys["d4_super"], label=f"-D4 Super", marker="o", markersize=2.0)
             ax[n].plot(df_sys["distance (A)"], df_sys["SAPT0_disp"], label=f"SAPT0 Disp.", marker="o", markersize=2.0)
-            ax[n].plot(df_sys["distance (A)"], df_sys["E_res"], label=r"E$_{\rm res}$", marker="o", markersize=2.0)
             sys_name = df_sys["System"].iloc[0]
             ax[n].set_title(f"{sys_name}")
             if n == 0:
