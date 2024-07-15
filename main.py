@@ -224,6 +224,78 @@ def optimize_paramaters(
                 )
             extra_added = extra
 
+        if D4["powell_2B_BJ_supramolecular"]:
+            print("D4 powell 2B BJ supramolecular")
+            extra_added += "powell_2B_BJ_supramolecular_"
+            if ATM:
+                print("ATM ON")
+                extra_added += "ATM_"
+            else:
+                print("ATM OFF")
+                extra_added += "2B_"
+            version = {
+                "method": "powell",
+                "compute_energy": "compute_int_energy_DISP_2B_BJ_supra",
+                "compute_stats": "compute_int_energy_stats_DISP_2B_BJ_supra",
+            }
+
+            if five_fold:
+                src.optimization.opt_cross_val(
+                    df,
+                    nfolds=5,
+                    start_params=params,
+                    hf_key=i,
+                    output_l_marker="D4_" + extra_added,
+                    version=version,
+                    force_ATM_on=ATM,
+                )
+            else:
+                src.optimization.opt_val_no_folds(
+                    df,
+                    start_params=params,
+                    hf_key=i,
+                    version=version,
+                    output_marker="powell_2B_BJ",
+                    force_ATM_on=ATM,
+                )
+            extra_added = extra
+
+        if D4["powell_2B_TT_supramolecular"]:
+            print("D4 powell 2B TT supramolecular")
+            extra_added += "powell_2B_TT_supramolecular_"
+            if ATM:
+                print("ATM ON")
+                extra_added += "ATM_"
+            else:
+                print("ATM OFF")
+                extra_added += "2B_"
+            version = {
+                "method": "powell",
+                "compute_energy": "compute_int_energy_DISP_2B_TT_supra",
+                "compute_stats": "compute_int_energy_stats_DISP_2B_TT_supra",
+            }
+
+            if five_fold:
+                src.optimization.opt_cross_val(
+                    df,
+                    nfolds=5,
+                    start_params=params,
+                    hf_key=i,
+                    output_l_marker="D4_" + extra_added,
+                    version=version,
+                    force_ATM_on=ATM,
+                )
+            else:
+                src.optimization.opt_val_no_folds(
+                    df,
+                    start_params=params,
+                    hf_key=i,
+                    version=version,
+                    output_marker="powell_2B_TT",
+                    force_ATM_on=ATM,
+                )
+            extra_added = extra
+
         if D4["least_squares"]:
             print("D4 least_squares")
             version = {
@@ -368,6 +440,19 @@ def main():
         help="Extra label to add to the output file from 5-fold (Default: None)",
         default="",
     )
+    parser.add_argument(
+        "--supramolecular_BJ",
+        help="Flag for supramolecular dipsersion interaction energy only using dimer C6s (Default: False)",
+        action="store_true",
+        default=False,
+    )
+    parser.add_argument(
+        "--supramolecular_TT",
+        help="Flag for supramolecular dipsersion interaction energy only using dimer C6s (Default: False)",
+        action="store_true",
+        default=False,
+    )
+
 
     args = parser.parse_args()
     print(args)
@@ -381,6 +466,8 @@ def main():
             "powell_2B_BJ_ATM_TT": args.powell_2B_BJ_ATM_TT,
             "powell_C6_only": args.powell_C6_only,
             "powell_2B_TT_ATM_TT": args.powell_2B_TT_ATM_TT,
+            "powell_2B_BJ_supramolecular": args.supramolecular_BJ,
+            "powell_2B_TT_supramolecular": args.supramolecular_TT,
         },
         D3={"powell": args.D3},
         ATM=args.ATM,
