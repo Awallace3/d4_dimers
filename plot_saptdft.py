@@ -2,6 +2,7 @@ import src
 import pandas as pd
 import numpy as np
 import qcelemental as qcel
+from pprint import pprint as pp
 
 h2kcalmol = qcel.constants.conversion_factor("hartree", "kcal/mol")
 
@@ -12,40 +13,31 @@ def merge_basis_study():
     return
 
 def check_c6s(df):
+    if 'C6s' not in df.columns.values:
+        df = src.setup.generate_D4_data(df)
+        return df
     if df.iloc[0]['C6s'] is None:
         df = src.setup.generate_D4_data(df)
     return df
 
 def main():
-    # merge_basis_study()
-    # return
     # df_name = "./dfs/los_adz_candidacy_s0atz.pkl"
-    df_name = "./dfs/los_saptdft_adz_3.pkl"
-    # df_name = "./dfs/los_adz_candidacy_s0atz.pkl"
+    # df_name = "./dfs/los_saptdft_adz_3.pkl"
+    df_name = "./dfs/los_all.pkl"
     df = pd.read_pickle(df_name)
-    print(df.columns.values)
-    # return
-    df = check_c6s(df)
-    # df_name = "./dfs/los_adz_candidacy_s0atz.pkl"
-    # df.to_pickle(df_name)
-    # print('null c6s:', df['C6s'].isnull().count())
-    assert df['C6s'].notnull().all()
-
-    # df_name = "./dfs/los_adz_candidacy_s0atz.pkl"
     # df = check_c6s(df)
-    # df.to_pickle(df_name)
-    print(f"{df_name = }")
     # df = src.misc.make_geometry_bohr_column_df(df)
     # df.to_pickle(df_name)
-    # df.dropna(subset=['SAPT_DFT_pbe0_adz', 'SAPT_DFT_pbe0_atz', "C6s"], inplace=True)
+    # assert df['C6s'].notnull().all()
 
-    # return
-        
-    src.plotting.plotting_setup_dft_ddft(
+    df = src.plotting.plotting_setup_dft_ddft(
         df_name,
-        build_df=True,
+        build_df=False,
         split_components=True,
+        original_plot=False,
     )
+    pp(df.columns.values.tolist())
+    src.plotting.plot_LoS_saptdft(df)
     return
 
 

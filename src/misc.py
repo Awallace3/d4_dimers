@@ -227,7 +227,7 @@ def make_bohr(geometry, ang_to_bohr_convert):
 
 def make_geometry_bohr_column_df(df):
     tools.print_cartesians(df.iloc[0]["Geometry"])
-    df["Geometry_bohr"] = df.apply(lambda x: make_bohr(x["Geometry"], True), axis=1)
+    df["Geometry_bohr"] = df.apply(lambda x: make_bohr(np.array(x["Geometry"]), True), axis=1)
     print()
     tools.print_cartesians(df.iloc[0]["Geometry_bohr"])
     print(df.columns.values)

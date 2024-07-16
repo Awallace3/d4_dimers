@@ -1374,6 +1374,7 @@ def plotting_setup_dft_ddft(
     build_df=False,
     df_out: str = "plots/ddft_study.pkl",
     split_components=False,
+    original_plot=False,
 ):
     reference = "SAPT2+3(CCD)DMP2"
     ref_basis = "aTZ"
@@ -1388,16 +1389,6 @@ def plotting_setup_dft_ddft(
         def compute_saptdft_ddft_ie(r, b):
             return r[f"SAPT_DFT_pbe0_{b}"][1] + r[f"SAPT_DFT_pbe0_{b}"][2] + r[f"SAPT_DFT_pbe0_{b}"][3] + r[f"SAPT_DFT_pbe0_{b}_D4_IE"] + r[f"SAPT_DFT_pbe0_{b}_dDFT"] - r[f"SAPT_DFT_pbe0_{b}_dHF"]
 
-        # SAPT(DFT) - aDZ
-        # df["SAPT_DFT_D4_pbe0_adz_total"] = df.apply(
-        #     lambda x: x["SAPT_DFT_pbe0_adz"][1]
-        #     + x["SAPT_DFT_pbe0_adz"][2]
-        #     + x["SAPT_DFT_pbe0_adz"][3]
-        #     + x["SAPT_DFT_pbe0_adz_D4_IE"]
-        #     + x["SAPT_DFT_pbe0_adz_dDFT"]
-        #     - x["SAPT_DFT_pbe0_adz_dHF"],
-        #     axis=1,
-        # )
         df["SAPT_DFT_D4_pbe0_adz_total"] = df.apply(
             lambda x: compute_saptdft_ddft_ie(x, "adz"), 
             axis=1,
@@ -1590,6 +1581,7 @@ def plotting_setup_dft_ddft(
         df["SAPT0-D4/aDZ"] = df.apply(
             lambda row: row["SAPT0_adz_3_IE"] + row["-D4 (SAPT0_adz_3_IE)"], axis=1
         )
+        df.to_pickle(df_out)
     else:
         df = pd.read_pickle(df_out)
     basename_selected = selected.split("/")[-1].split(".")[0]
@@ -1597,88 +1589,89 @@ def plotting_setup_dft_ddft(
     print(f"Length of df prior plotting: {len(df)}")
     dimer_dataset_size = len(df)
     # plot_violin_SAPT0_DFT_components(
-    plot_violin_SAPT0_DFT_components(
-        df,
-        pfn=f"{basename_selected}_saptdft_components2",
-        elst_vals={
-            "name": "Electrostatics",
-            "reference": [f"{reference}/{ref_basis} Ref.", f"{reference} ELST ENERGY"],
-            "vals": {
-                "SAPT0/aDZ": "SAPT0_adz_elst",
-                "SAPT0/aTZ": "SAPT0_atz_elst",
-                "SAPT(DFT)/aDZ": "SAPT_DFT_pbe0_adz_elst",
-                "SAPT(DFT)/aTZ": "SAPT_DFT_pbe0_atz_elst",
+    if original_plot:
+        plot_violin_SAPT0_DFT_components(
+            df,
+            pfn=f"{basename_selected}_saptdft_components2",
+            elst_vals={
+                "name": "Electrostatics",
+                "reference": [f"{reference}/{ref_basis} Ref.", f"{reference} ELST ENERGY"],
+                "vals": {
+                    "SAPT0/aDZ": "SAPT0_adz_elst",
+                    "SAPT0/aTZ": "SAPT0_atz_elst",
+                    "SAPT(DFT)/aDZ": "SAPT_DFT_pbe0_adz_elst",
+                    "SAPT(DFT)/aTZ": "SAPT_DFT_pbe0_atz_elst",
+                },
             },
-        },
-        exch_vals={
-            "name": "Exchange",
-            "reference": [f"{reference}/{ref_basis} Ref.", f"{reference} EXCH ENERGY"],
-            "vals": {
-                "SAPT0/aDZ": "SAPT0_adz_exch",
-                "SAPT0/aTZ": "SAPT0_atz_exch",
-                "SAPT(DFT)/aDZ": "SAPT_DFT_pbe0_adz_exch",
-                "SAPT(DFT)/aTZ": "SAPT_DFT_pbe0_atz_exch",
+            exch_vals={
+                "name": "Exchange",
+                "reference": [f"{reference}/{ref_basis} Ref.", f"{reference} EXCH ENERGY"],
+                "vals": {
+                    "SAPT0/aDZ": "SAPT0_adz_exch",
+                    "SAPT0/aTZ": "SAPT0_atz_exch",
+                    "SAPT(DFT)/aDZ": "SAPT_DFT_pbe0_adz_exch",
+                    "SAPT(DFT)/aTZ": "SAPT_DFT_pbe0_atz_exch",
+                },
             },
-        },
-        indu_vals={
-            "name": "Induction",
-            "reference": [f"{reference}/{ref_basis} Ref.", f"{reference} IND ENERGY"],
-            "vals": {
-                "SAPT0/aDZ": "SAPT0_adz_indu",
-                "SAPT0/aTZ": "SAPT0_atz_indu",
-                "SAPT(DFT)/aDZ": "SAPT_DFT_pbe0_adz_indu",
-                "SAPT(DFT)/aTZ": "SAPT_DFT_pbe0_atz_indu",
+            indu_vals={
+                "name": "Induction",
+                "reference": [f"{reference}/{ref_basis} Ref.", f"{reference} IND ENERGY"],
+                "vals": {
+                    "SAPT0/aDZ": "SAPT0_adz_indu",
+                    "SAPT0/aTZ": "SAPT0_atz_indu",
+                    "SAPT(DFT)/aDZ": "SAPT_DFT_pbe0_adz_indu",
+                    "SAPT(DFT)/aTZ": "SAPT_DFT_pbe0_atz_indu",
+                },
             },
-        },
-        disp_vals={
-            "name": "Dispersion",
-            "reference": [f"{reference}/{ref_basis} Ref.", f"{reference} DISP ENERGY"],
-            "vals": {
-                # "SAPT0/aDZ": "SAPT0_adz_indu",
-                # "SAPT0/aTZ": "SAPT0_atz_indu",
-                # "SAPT0-D4/aDZ": "-D4 (SAPT0_adz_3_IE)",
-                "SAPT(DFT)/aDZ": "SAPT_DFT_pbe0_adz_disp",
-                "SAPT(DFT)/aTZ": "SAPT_DFT_pbe0_atz_disp",
-                "SAPT(DFT)-D4/aDZ": "SAPT_DFT_pbe0_adz_d4_disp",
-                "SAPT(DFT)-D4/aTZ": "SAPT_DFT_pbe0_atz_d4_disp",
+            disp_vals={
+                "name": "Dispersion",
+                "reference": [f"{reference}/{ref_basis} Ref.", f"{reference} DISP ENERGY"],
+                "vals": {
+                    # "SAPT0/aDZ": "SAPT0_adz_indu",
+                    # "SAPT0/aTZ": "SAPT0_atz_indu",
+                    # "SAPT0-D4/aDZ": "-D4 (SAPT0_adz_3_IE)",
+                    "SAPT(DFT)/aDZ": "SAPT_DFT_pbe0_adz_disp",
+                    "SAPT(DFT)/aTZ": "SAPT_DFT_pbe0_atz_disp",
+                    "SAPT(DFT)-D4/aDZ": "SAPT_DFT_pbe0_adz_d4_disp",
+                    "SAPT(DFT)-D4/aTZ": "SAPT_DFT_pbe0_atz_d4_disp",
+                },
             },
-        },
-        three_total_vals={
-            "name": "(Elst. + Exch. + Indu.)",
-            "reference": ["CCSD(T)/CBS IE Ref.", "benchmark ref energy"],
-            "vals": {
-                "SAPT(DFT)/aDZ": "SAPT_DFT_pbe0_adz_3_IE",
-                "SAPT(DFT)/aTZ": "SAPT_DFT_pbe0_atz_3_IE",
-                "SAPT0/aDZ": "SAPT0_adz_3_IE",
-                "SAPT0/aTZ": "SAPT0_atz_3_IE",
+            three_total_vals={
+                "name": "(Elst. + Exch. + Indu.)",
+                "reference": ["CCSD(T)/CBS IE Ref.", "benchmark ref energy"],
+                "vals": {
+                    "SAPT(DFT)/aDZ": "SAPT_DFT_pbe0_adz_3_IE",
+                    "SAPT(DFT)/aTZ": "SAPT_DFT_pbe0_atz_3_IE",
+                    "SAPT0/aDZ": "SAPT0_adz_3_IE",
+                    "SAPT0/aTZ": "SAPT0_atz_3_IE",
+                },
             },
-        },
-        total_vals={
-            "name": f"{dimer_dataset_size} Dimer Dataset",
-            "reference": ["CCSD(T)/CBS IE Ref.", "benchmark ref energy"],
-            "vals": {
-                "SAPT0/aDZ": "SAPT0_adz_total",
-                "SAPT0-D4/aDZ": "SAPT0-D4/aDZ",
-                # "SAPT0/aTZ": "SAPT0_atz_total",
-                "SAPT0-D4/aDZ": "SAPT0_adz_d4",
-                "SAPT(DFT)/aDZ": "SAPT_DFT_pbe0_adz_total",
-                # "SAPT(DFT)D4/aDZ": "SAPT_DFT_D4_pbe0_adz_total",
-                "PBE0-D4/aDZ IE": "SAPT_DFT_D4_pbe0_adz_total",
-                "SAPT(DFT)/aTZ": "SAPT_DFT_pbe0_atz_total",
-                "PBE0-D4/aTZ IE": "SAPT_DFT_D4_pbe0_atz_total",
-                f"SAPT2+3(CCD)DMP2/aDZ": f"SAPT2+3(CCD)DMP2 TOTAL ENERGY adz",
-                f"SAPT2+3(CCD)DMP2/{ref_basis}": f"{reference} TOTAL ENERGY",
-                # "SAPT(DFT)-D4/aDZ": "SAPT_DFT_adz_3_IE_d4",
-                # "SAPT(DFT)-D4(ATM)/aDZ": "SAPT_DFT_adz_3_IE_d4_ATM",
-                # "SAPT(DFT)/aTZ": "SAPT_DFT_atz_total",
-                # "SAPT(DFT)-D4/aTZ": "SAPT_DFT_atz_3_IE_d4",
-                # "SAPT(DFT)-D4(ATM)/aTZ": "SAPT_DFT_atz_3_IE_d4_ATM",
+            total_vals={
+                "name": f"{dimer_dataset_size} Dimer Dataset",
+                "reference": ["CCSD(T)/CBS IE Ref.", "benchmark ref energy"],
+                "vals": {
+                    "SAPT0/aDZ": "SAPT0_adz_total",
+                    "SAPT0-D4/aDZ": "SAPT0-D4/aDZ",
+                    # "SAPT0/aTZ": "SAPT0_atz_total",
+                    "SAPT0-D4/aDZ": "SAPT0_adz_d4",
+                    "SAPT(DFT)/aDZ": "SAPT_DFT_pbe0_adz_total",
+                    # "SAPT(DFT)D4/aDZ": "SAPT_DFT_D4_pbe0_adz_total",
+                    "PBE0-D4/aDZ IE": "SAPT_DFT_D4_pbe0_adz_total",
+                    "SAPT(DFT)/aTZ": "SAPT_DFT_pbe0_atz_total",
+                    "PBE0-D4/aTZ IE": "SAPT_DFT_D4_pbe0_atz_total",
+                    f"SAPT2+3(CCD)DMP2/aDZ": f"SAPT2+3(CCD)DMP2 TOTAL ENERGY adz",
+                    f"SAPT2+3(CCD)DMP2/{ref_basis}": f"{reference} TOTAL ENERGY",
+                    # "SAPT(DFT)-D4/aDZ": "SAPT_DFT_adz_3_IE_d4",
+                    # "SAPT(DFT)-D4(ATM)/aDZ": "SAPT_DFT_adz_3_IE_d4_ATM",
+                    # "SAPT(DFT)/aTZ": "SAPT_DFT_atz_total",
+                    # "SAPT(DFT)-D4/aTZ": "SAPT_DFT_atz_3_IE_d4",
+                    # "SAPT(DFT)-D4(ATM)/aTZ": "SAPT_DFT_atz_3_IE_d4_ATM",
+                },
             },
-        },
-        split_components=split_components,
-        sub_fontsize=24,
-        sub_rotation=35,
-    )
+            split_components=split_components,
+            sub_fontsize=24,
+            sub_rotation=35,
+        )
     return df
 
 
@@ -3492,4 +3485,197 @@ def plot_dbs_d3_d4(
             dpi=dpi,
         )
     plt.clf()
+    return
+
+def compute_CRE(
+    row,
+    energy_col="SAPT0 TOTAL ENERGY",
+    r_eq_col="R",
+    benchmark_col="benchmark ref energy",
+    benchmark_col_system="E_R_eq",
+    gamma=0.2,
+    convert_energy_col=True,
+    benchmark_col_weight=None,
+    benchmark_col_system_weight=None,
+    debug=False,
+):
+    """
+    Compute CRE for a given row to compute MCURE
+    If benchmark_col_weight=None and benchmark_col_system_weight=None, then
+    use energy for CRE for E_weight as well.
+    """
+    if benchmark_col_system_weight is None or benchmark_col_weight is None:
+        benchmark_col_system_weight = benchmark_col_system
+        benchmark_col_weight = benchmark_col
+    if convert_energy_col:
+        row_E = row[energy_col] * h2kcalmol
+    if debug:
+        sys_id = row["system_id"]
+        db = row["DB"]
+        ref = row[benchmark_col]
+        print(f"{sys_id = }, {db = }, {ref = }")
+    if row["DB"].lower() == "ion43" or row["DB"].lower() == "ssi":
+        E_weight = max(abs(row[benchmark_col_weight]), 0.5)
+    else:
+        E_weight = max(
+            abs(row[benchmark_col_weight]),
+            gamma
+            * abs(row[benchmark_col_weight] - row[benchmark_col_system_weight])
+            / row[r_eq_col] ** 3,
+        )
+    CRE = (row_E - row[benchmark_col]) / E_weight
+    if debug:
+        # print only 2 decimal places
+        ref = row[benchmark_col]
+        sys_id = row["system_id"]
+        print(
+            f"{sys_id = } {row_E = :.2f}, {ref = :.2f} {E_weight = :.2f}, {CRE = :.2f}"
+        )
+    return CRE
+
+
+def violin_plots_multi(df):
+    sapt_methods = [
+        "MP2 IE",
+        "SAPT0 TOTAL ENERGY",
+        "SSAPT0 TOTAL ENERGY",
+        "SAPT2 TOTAL ENERGY",
+        "SAPT2+ TOTAL ENERGY",
+        "SAPT2+(3) TOTAL ENERGY",
+        "SAPT2+3 TOTAL ENERGY",
+        "SAPT2+(CCD) TOTAL ENERGY",
+        "SAPT2+(3)(CCD) TOTAL ENERGY",
+        "SAPT2+3(CCD) TOTAL ENERGY",
+        "SAPT2+DMP2 TOTAL ENERGY",
+        "SAPT2+(3)DMP2 TOTAL ENERGY",
+        "SAPT2+3DMP2 TOTAL ENERGY",
+        "SAPT2+(CCD)DMP2 TOTAL ENERGY",
+        "SAPT2+(3)(CCD)DMP2 TOTAL ENERGY",
+        "SAPT2+3(CCD)DMP2 TOTAL ENERGY",
+        'SAPT0-D4 TOTAL ENERGY',
+    ]
+    reference = "benchmark ref energy"
+    copy_cols_start = [
+        "DB",
+        "system_id",
+        "benchmark ref energy",
+        "E_R_eq",
+        "R",
+        "Ref_elst_atz",
+        "E_R_eq_elst_atz",
+        "Ref_exch_atz",
+        "E_R_eq_exch_atz",
+        "Ref_ind_atz",
+        "E_R_eq_ind_atz",
+        "Ref_disp_atz",
+        "E_R_eq_disp_atz",
+        # local methods
+        ## saptdft
+        "SAPT_DFT_D4_pbe0_adz_total",
+        "SAPT_DFT_pbe0_adz_total",
+        "SAPT_DFT_D4_pbe0_atz_total",
+        "SAPT_DFT_pbe0_atz_total",
+    ]
+    df['SAPT0-D4 TOTAL ENERGY adz'] = df.apply(
+        lambda r: (
+            r['SAPT0_adz_3_IE'] + r['-D4 (SAPT0_adz_3_IE)']
+        ), axis=1
+    )
+    df['SAPT0-D4 TOTAL ENERGY atz'] = df.apply(
+        lambda r: (
+            r['SAPT0_atz_3_IE'] + r['-D4 (SAPT0_atz_3_IE)']
+        ), axis=1
+    )
+    copy_cols = copy_cols_start.copy()
+    copy_cols.extend([f"{c} adz" for c in sapt_methods])
+    df_adz = df[copy_cols].copy()
+    df_adz.columns = [c.replace(" adz", "") for c in df_adz.columns]
+    df_adz.rename(
+        columns={
+            "SAPT_DFT_D4_pbe0_adz_total": "PBE0-D4 TOTAL ENERGY",
+            "SAPT_DFT_pbe0_adz_total": "SAPT(DFT) TOTAL ENERGY",
+        },
+        inplace=True,
+    )
+
+
+    copy_cols = copy_cols_start.copy()
+    copy_cols.extend([f"{c} atz" for c in sapt_methods])
+    df_atz = df[copy_cols].copy()
+    df_atz.columns = [c.replace(" atz", "") for c in df_atz.columns]
+    df_atz.rename(
+        columns={
+            "SAPT_DFT_D4_pbe0_atz_total": "PBE0-D4 TOTAL ENERGY",
+            "SAPT_DFT_pbe0_atz_total": "SAPT(DFT) TOTAL ENERGY",
+        },
+        inplace=True,
+    )
+    local_methods = ["PBE0-D4 TOTAL ENERGY", "SAPT(DFT) TOTAL ENERGY", "SAPT0-D4 TOTAL ENERGY"]
+    sapt_methods.extend(
+        local_methods
+    )
+    for i in sapt_methods:
+        if i in local_methods:
+            df_adz[f"{i} Error"] = df_adz[i] - df_adz[reference]
+            df_atz[f"{i} Error"] = df_atz[i] - df_atz[reference]
+        elif i == "SAPT2+3(CCD)DMP2 TOTAL ENERGY":
+            df_adz[f"{i} Error"] = df_adz[i] - df_adz[reference]
+            df_atz[f"{i} Error"] = df_atz[i] * h2kcalmol - df_atz[reference]
+        else:
+            df_adz[f"{i} Error"] = df_adz[i] * h2kcalmol - df_adz[reference]
+            df_atz[f"{i} Error"] = df_atz[i] * h2kcalmol - df_atz[reference]
+
+    dfs = [
+        {"df": df_adz, "label": "aug-cc-pVDZ", "ylim": [-4, 4]},
+        {"df": df_atz, "label": "aug-cc-pVTZ", "ylim": [-4, 4]},
+    ]
+    df_labels_and_columns = {
+        # "SAPT2+3(CCD)DMP2": "SAPT2+3(CCD)DMP2 TOTAL ENERGY Error",
+        "MP2": "MP2 IE Error",
+        "SAPT0": "SAPT0 TOTAL ENERGY Error",
+        "SAPT0-D4": "SAPT0-D4 TOTAL ENERGY Error",
+        # "SSAPT0": "SSAPT0 TOTAL ENERGY Error",
+        "SAPT2": "SAPT2 TOTAL ENERGY Error",
+        "SAPT2+": "SAPT2+ TOTAL ENERGY Error",
+        "SAPT2+(3)": "SAPT2+(3) TOTAL ENERGY Error",
+        "SAPT2+3": "SAPT2+3 TOTAL ENERGY Error",
+        "SAPT2+(CCD)": "SAPT2+(CCD) TOTAL ENERGY Error",
+        "SAPT2+(3)(CCD)": "SAPT2+(3)(CCD) TOTAL ENERGY Error",
+        "SAPT2+3(CCD)": "SAPT2+3(CCD) TOTAL ENERGY Error",
+        "SAPT2+DMP2": "SAPT2+DMP2 TOTAL ENERGY Error",
+        "SAPT2+(3)DMP2": "SAPT2+(3)DMP2 TOTAL ENERGY Error",
+        "SAPT2+3DMP2": "SAPT2+3DMP2 TOTAL ENERGY Error",
+        "SAPT2+(CCD)DMP2": "SAPT2+(CCD)DMP2 TOTAL ENERGY Error",
+        "SAPT2+(3)(CCD)DMP2": "SAPT2+(3)(CCD)DMP2 TOTAL ENERGY Error",
+        "SAPT2+3(CCD)DMP2": "SAPT2+3(CCD)DMP2 TOTAL ENERGY Error",
+        "SAPT(DFT)": "SAPT(DFT) TOTAL ENERGY Error",
+        "PBE0-D4": "PBE0-D4 TOTAL ENERGY Error",
+    }
+    mcure_labels = {}
+    for k, v in df_labels_and_columns.items():
+        mcure_labels[k] = []
+        for d in dfs:
+            v = v.replace(" Error", "")
+            d["df"]["CRE"] = d["df"].apply(
+                lambda r: compute_CRE(r, energy_col=v), axis=1
+            )
+            mcure = d["df"]["CRE"].abs().mean() * 100
+            mcure_labels[k].append(mcure)
+
+    import cdsg_plot
+    cdsg_plot.error_statistics.violin_plot_table_multi(
+        dfs,
+        df_labels_and_columns,
+        f"./plots/LoS_all_adz_atz_saptdft.jpg",
+        table_fontsize=7,
+        usetex=True,
+        legend_loc="lower right",
+        figure_size=(8,10),
+        mcure=mcure_labels,
+    )
+    return
+
+
+def plot_LoS_saptdft(df):
+    violin_plots_multi(df)
     return

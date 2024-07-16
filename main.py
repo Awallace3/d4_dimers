@@ -370,7 +370,7 @@ def main():
         type=str,
         help="Pandas Column Name for the level of theory to optimize for (Default: SAPT0_adz_3_IE)",
         nargs="+",
-        default="SAPT0_adz_3_IE",
+        default=["SAPT0_adz_3_IE"],
     )
     parser.add_argument(
         "--start_params_d4_key",
