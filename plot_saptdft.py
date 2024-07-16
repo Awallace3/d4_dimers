@@ -24,7 +24,7 @@ def main():
     # df_name = "./dfs/los_adz_candidacy_s0atz.pkl"
     # df_name = "./dfs/los_saptdft_adz_3.pkl"
     df_name = "./dfs/los_all.pkl"
-    df = pd.read_pickle(df_name)
+    # df = pd.read_pickle(df_name)
     # df = check_c6s(df)
     # df = src.misc.make_geometry_bohr_column_df(df)
     # df.to_pickle(df_name)
