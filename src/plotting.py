@@ -1442,6 +1442,13 @@ def plotting_setup_dft_ddft(
             + df["SAPT_DFT_pbe0_adz_exch"]
             + df["SAPT_DFT_pbe0_adz_indu"]
         )
+        df["SAPT_DFT_pbe0_adz_3_IE_pre_d4"] = (
+            df["SAPT_DFT_pbe0_adz_elst"]
+            + df["SAPT_DFT_pbe0_adz_exch"]
+            + df["SAPT_DFT_pbe0_adz_indu"]
+            + df["SAPT_DFT_pbe0_adz_dDFT"]
+            - df["SAPT_DFT_pbe0_adz_dHF"]
+        )
         df["SAPT_DFT_pbe0_adz_d4_disp"] = df.apply(
             lambda x: x["SAPT_DFT_pbe0_adz_dDFT"]
             - x["SAPT_DFT_pbe0_adz_dHF"]
@@ -1518,6 +1525,13 @@ def plotting_setup_dft_ddft(
             df["SAPT_DFT_pbe0_atz_elst"]
             + df["SAPT_DFT_pbe0_atz_exch"]
             + df["SAPT_DFT_pbe0_atz_indu"]
+        )
+        df["SAPT_DFT_pbe0_atz_3_IE_pre_d4"] = (
+            df["SAPT_DFT_pbe0_atz_elst"]
+            + df["SAPT_DFT_pbe0_atz_exch"]
+            + df["SAPT_DFT_pbe0_atz_indu"]
+            + df["SAPT_DFT_pbe0_atz_dDFT"]
+            - df["SAPT_DFT_pbe0_atz_dHF"]
         )
         df["SAPT_DFT_pbe0_atz_d4_disp"] = df.apply(
             lambda x: x["SAPT_DFT_pbe0_atz_dDFT"]
@@ -3094,9 +3108,9 @@ def plot_component_violin(
     if title_name == "Electrostatics":
         title_color = "red"
     elif title_name == "Exchange":
-        title_color = "blue"
-    elif title_name == "Induction":
         title_color = "green"
+    elif title_name == "Induction":
+        title_color = "blue"
     elif title_name == "Dispersion":
         title_color = "orange"
     ax.set_title(title_name, color=title_color, fontsize=f"{fontsize + 1}")

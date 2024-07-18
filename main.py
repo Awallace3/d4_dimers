@@ -348,19 +348,18 @@ def df_names(i):
 
 
 def main():
-    df, selected = df_names(0)
-
-    bases = [
-        "SAPT0_adz_3_IE",
-        # "SAPT_DFT_adz_3_IE",
-        # "SAPT_DFT_atz_3_IE",
-        # "SAPT0_jdz_3_IE",
-        # "SAPT0_mtz_3_IE",
-        # "SAPT0_jtz_3_IE",
-        # "SAPT0_dz_3_IE",
-        # "SAPT0_atz_3_IE",
-        # "SAPT0_tz_3_IE",
-    ]
+    # df, selected = df_names(0)
+    # bases = [
+    #     "SAPT0_adz_3_IE",
+    #     # "SAPT_DFT_adz_3_IE",
+    #     # "SAPT_DFT_atz_3_IE",
+    #     # "SAPT0_jdz_3_IE",
+    #     # "SAPT0_mtz_3_IE",
+    #     # "SAPT0_jtz_3_IE",
+    #     # "SAPT0_dz_3_IE",
+    #     # "SAPT0_atz_3_IE",
+    #     # "SAPT0_tz_3_IE",
+    # ]
 
     parser = argparse.ArgumentParser(
         description="main.py for optimizing D3 and D4 dispersion parameters."
@@ -453,9 +452,16 @@ def main():
         default=False,
     )
 
+    parser.add_argument(
+        "--df_path",
+        type=str,
+        help="pd.DataFrame Pickle file path (Default: None)",
+        default="dfs/schr_dft2.pkl",
+    )
 
     args = parser.parse_args()
     print(args)
+    df = pd.read_pickle(args.df_path)
     optimize_paramaters(
         df=df,
         level_theories=args.level_theories,
