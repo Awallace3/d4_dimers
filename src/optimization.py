@@ -104,13 +104,18 @@ def compute_int_energy_stats_dftd4_key(
     df: pd.DataFrame,
     hf_key: str = "HF_jdz",
     dftd4_key: str = "HF_jdz_dftd4",
-) -> (float, float, float,):
+) -> (
+    float,
+    float,
+    float,
+):
     """
     stats for atm
     """
     params = [1.61679827, 0.44959224, 3.35743605]
-    t = df[hf_key].isna().sum()
-    assert t == 0, f"The HF_col provided has np.nan values present, {t}"
+    if hf_key != "":
+        t = df[hf_key].isna().sum()
+        assert t == 0, f"The HF_col provided has np.nan values present, {t}"
     t = df[dftd4_key].isna().sum()
     assert t == 0, f"The HF_col provided has np.nan values present, {t}"
     r4r2_ls = r4r2.r4r2_vals_ls()
@@ -127,6 +132,21 @@ def compute_int_energy_stats_dftd4_key(
     return
 
 
+def evaluate_energy(
+    df,
+    hf_key: str = "HF INTERACTION ENERGY",
+    energy_target="Benchmark",
+    fit_dispersion_term=False,
+):
+    if fit_dispersion_term and hf_key == "":
+        df["diff"] = df.apply(lambda r: r[energy_target] - (r["d4"]), axis=1)
+    else:
+        df["diff"] = df.apply(
+            lambda r: r[energy_target] - (r[hf_key] + r["d4"]), axis=1
+        )
+    return df
+
+
 def compute_int_energy_stats_DISP(
     params: [float],
     df: pd.DataFrame,
@@ -135,9 +155,16 @@ def compute_int_energy_stats_DISP(
     print_results=False,
     chunk_count=1000,
     force_ATM_on=False,
-) -> (float, float, float,):
-    t = df[hf_key].isna().sum()
-    assert t == 0, f"The HF_col provided has np.nan values present, {t}"
+    energy_target="Benchmark",
+    fit_dispersion_term=False,
+) -> (
+    float,
+    float,
+    float,
+):
+    if hf_key != "":
+        t = df[hf_key].isna().sum()
+        assert t == 0, f"The HF_col provided has np.nan values present, {t}"
     params_2B, params_ATM = paramsTable.generate_2B_ATM_param_subsets(
         params, force_ATM_on=force_ATM_on
     )
@@ -169,7 +196,13 @@ def compute_int_energy_stats_DISP(
             ),
             axis=1,
         )
-    df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
+    # df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
+    df = evaluate_energy(
+        df,
+        hf_key=hf_key,
+        energy_target=energy_target,
+        fit_dispersion_term=fit_dispersion_term,
+    )
     mae = df["diff"].abs().mean()
     rmse = (df["diff"] ** 2).mean() ** 0.5
     max_e = df["diff"].abs().max()
@@ -183,6 +216,7 @@ def compute_int_energy_stats_DISP(
         print("        4. MD   = %.4f" % mean_dif)
     return mae, rmse, max_e, mad, mean_dif
 
+
 def compute_int_energy_stats_DISP_C6_only(
     params: [float],
     df: pd.DataFrame,
@@ -191,9 +225,16 @@ def compute_int_energy_stats_DISP_C6_only(
     print_results=False,
     chunk_count=1000,
     force_ATM_on=False,
-) -> (float, float, float,):
-    t = df[hf_key].isna().sum()
-    assert t == 0, f"The HF_col provided has np.nan values present, {t}"
+    energy_target="Benchmark",
+    fit_dispersion_term=False,
+) -> (
+    float,
+    float,
+    float,
+):
+    if hf_key != "":
+        t = df[hf_key].isna().sum()
+        assert t == 0, f"The HF_col provided has np.nan values present, {t}"
     params_2B, params_ATM = paramsTable.generate_2B_ATM_param_subsets(
         params, force_ATM_on=force_ATM_on
     )
@@ -225,7 +266,13 @@ def compute_int_energy_stats_DISP_C6_only(
             ),
             axis=1,
         )
-    df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
+    # df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
+    df = evaluate_energy(
+        df,
+        hf_key=hf_key,
+        energy_target=energy_target,
+        fit_dispersion_term=fit_dispersion_term,
+    )
     mae = df["diff"].abs().mean()
     rmse = (df["diff"] ** 2).mean() ** 0.5
     max_e = df["diff"].abs().max()
@@ -248,9 +295,16 @@ def compute_int_energy_stats_DISP_2B_TT_ATM_TT(
     print_results=False,
     chunk_count=1000,
     force_ATM_on=False,
-) -> (float, float, float,):
-    t = df[hf_key].isna().sum()
-    assert t == 0, f"The HF_col provided has np.nan values present, {t}"
+    energy_target="Benchmark",
+    fit_dispersion_term=False,
+) -> (
+    float,
+    float,
+    float,
+):
+    if hf_key != "":
+        t = df[hf_key].isna().sum()
+        assert t == 0, f"The HF_col provided has np.nan values present, {t}"
     # params_2B, params_ATM = paramsTable.generate_2B_ATM_param_subsets(params)
     # params_2B, params_ATM = paramsTable.get_params("SAPT0_adz_3_IE_2B")
     if force_ATM_on:
@@ -301,9 +355,16 @@ def compute_int_energy_stats_DISP_2B_BJ_ATM_TT(
     print_results=False,
     chunk_count=1000,
     force_ATM_on=False,
-) -> (float, float, float,):
-    t = df[hf_key].isna().sum()
-    assert t == 0, f"The HF_col provided has np.nan values present, {t}"
+    energy_target="Benchmark",
+    fit_dispersion_term=False,
+) -> (
+    float,
+    float,
+    float,
+):
+    if hf_key != "":
+        t = df[hf_key].isna().sum()
+        assert t == 0, f"The HF_col provided has np.nan values present, {t}"
     # params_2B, params_ATM = paramsTable.generate_2B_ATM_param_subsets(params)
     # params_2B, params_ATM = paramsTable.get_params("SAPT0_adz_3_IE_2B")
     if force_ATM_on:
@@ -330,7 +391,13 @@ def compute_int_energy_stats_DISP_2B_BJ_ATM_TT(
         ),
         axis=1,
     )
-    df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
+    # df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
+    df = evaluate_energy(
+        df,
+        hf_key=hf_key,
+        energy_target=energy_target,
+        fit_dispersion_term=fit_dispersion_term,
+    )
     mae = df["diff"].abs().mean()
     rmse = (df["diff"] ** 2).mean() ** 0.5
     max_e = df["diff"].abs().max()
@@ -344,6 +411,7 @@ def compute_int_energy_stats_DISP_2B_BJ_ATM_TT(
         print("        4. MD   = %.4f" % mean_dif)
     return mae, rmse, max_e, mad, mean_dif
 
+
 def compute_int_energy_stats_DISP_2B_BJ_supra(
     params: [float],
     df: pd.DataFrame,
@@ -352,9 +420,16 @@ def compute_int_energy_stats_DISP_2B_BJ_supra(
     print_results=False,
     chunk_count=1000,
     force_ATM_on=False,
-) -> (float, float, float,):
-    t = df[hf_key].isna().sum()
-    assert t == 0, f"The HF_col provided has np.nan values present, {t}"
+    energy_target="Benchmark",
+    fit_dispersion_term=False,
+) -> (
+    float,
+    float,
+    float,
+):
+    if hf_key != "":
+        t = df[hf_key].isna().sum()
+        assert t == 0, f"The HF_col provided has np.nan values present, {t}"
     # params_2B, params_ATM = paramsTable.generate_2B_ATM_param_subsets(params)
     # params_2B, params_ATM = paramsTable.get_params("SAPT0_adz_3_IE_2B")
     if force_ATM_on:
@@ -395,6 +470,7 @@ def compute_int_energy_stats_DISP_2B_BJ_supra(
         print("        4. MD   = %.4f" % mean_dif)
     return mae, rmse, max_e, mad, mean_dif
 
+
 def compute_int_energy_stats_DISP_2B_TT_supra(
     params: [float],
     df: pd.DataFrame,
@@ -403,9 +479,16 @@ def compute_int_energy_stats_DISP_2B_TT_supra(
     print_results=False,
     chunk_count=1000,
     force_ATM_on=False,
-) -> (float, float, float,):
-    t = df[hf_key].isna().sum()
-    assert t == 0, f"The HF_col provided has np.nan values present, {t}"
+    energy_target="Benchmark",
+    fit_dispersion_term=False,
+) -> (
+    float,
+    float,
+    float,
+):
+    if hf_key != "":
+        t = df[hf_key].isna().sum()
+        assert t == 0, f"The HF_col provided has np.nan values present, {t}"
     # params_2B, params_ATM = paramsTable.generate_2B_ATM_param_subsets(params)
     # params_2B, params_ATM = paramsTable.get_params("SAPT0_adz_3_IE_2B")
     if force_ATM_on:
@@ -455,9 +538,14 @@ def compute_int_energy_stats_DISP_SR(
     SR_func=dispersion.disp.disp_SR_1,
     print_results=False,
     chunk_count=1000,
-) -> (float, float, float,):
-    t = df[hf_key].isna().sum()
-    assert t == 0, f"The HF_col provided has np.nan values present, {t}"
+) -> (
+    float,
+    float,
+    float,
+):
+    if hf_key != "":
+        t = df[hf_key].isna().sum()
+        assert t == 0, f"The HF_col provided has np.nan values present, {t}"
     params_2B, params_ATM = paramsTable.generate_2B_ATM_param_subsets(params)
     print("SETTING s9=1.0 for SR ATM to be non-zero!")
 
@@ -525,6 +613,8 @@ def compute_int_energy_DISP(
     df: pd.DataFrame,
     hf_key: str = "HF INTERACTION ENERGY",
     force_ATM_on: bool = False,
+    energy_target="Benchmark",
+    fit_dispersion_term=False,
     prevent_negative_params: bool = False,
     parallel=False,
     chunk_count=1000,
@@ -567,18 +657,27 @@ def compute_int_energy_DISP(
             ),
             axis=1,
         )
-    df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
+    # df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
+    df = evaluate_energy(
+        df,
+        hf_key=hf_key,
+        energy_target=energy_target,
+        fit_dispersion_term=fit_dispersion_term,
+    )
     rmse = (df["diff"] ** 2).mean() ** 0.5
     if np.isnan(rmse):
         return 1000
     print("%.8f\t" % rmse, params.tolist())
     return rmse
 
+
 def compute_int_energy_DISP_C6_only(
     params,
     df: pd.DataFrame,
     hf_key: str = "HF INTERACTION ENERGY",
     force_ATM_on: bool = False,
+    energy_target="Benchmark",
+    fit_dispersion_term=False,
     prevent_negative_params: bool = False,
     parallel=False,
     chunk_count=1000,
@@ -623,18 +722,27 @@ def compute_int_energy_DISP_C6_only(
             ),
             axis=1,
         )
-    df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
+    # df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
+    df = evaluate_energy(
+        df,
+        hf_key=hf_key,
+        energy_target=energy_target,
+        fit_dispersion_term=fit_dispersion_term,
+    )
     rmse = (df["diff"] ** 2).mean() ** 0.5
     print("%.8f\t" % rmse, params.tolist())
     if np.isnan(rmse):
         return 1000
     return rmse
 
+
 def compute_int_energy_DISP_2B_TT_ATM_TT(
     params,
     df: pd.DataFrame,
     hf_key: str = "HF INTERACTION ENERGY",
     force_ATM_on: bool = False,
+    energy_target="Benchmark",
+    fit_dispersion_term=False,
 ):
     """
     compute_int_energy_DISP_TT is used to optimize paramaters for damping function in dftd4 with TT damping ATM function
@@ -668,18 +776,27 @@ def compute_int_energy_DISP_2B_TT_ATM_TT(
         ),
         axis=1,
     )
-    df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
+    # df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
+    df = evaluate_energy(
+        df,
+        hf_key=hf_key,
+        energy_target=energy_target,
+        fit_dispersion_term=fit_dispersion_term,
+    )
     rmse = (df["diff"] ** 2).mean() ** 0.5
     print("%.8f\t" % rmse, params.tolist())
     if np.isnan(rmse):
         return 10
     return rmse
 
+
 def compute_int_energy_DISP_2B_BJ_supra(
     params,
     df: pd.DataFrame,
     hf_key: str = "HF INTERACTION ENERGY",
     force_ATM_on: bool = False,
+    energy_target="Benchmark",
+    fit_dispersion_term=False,
 ):
     if force_ATM_on:
         if len(params) == 5:
@@ -702,18 +819,27 @@ def compute_int_energy_DISP_2B_BJ_supra(
         ),
         axis=1,
     )
-    df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
+    # df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
+    df = evaluate_energy(
+        df,
+        hf_key=hf_key,
+        energy_target=energy_target,
+        fit_dispersion_term=fit_dispersion_term,
+    )
     rmse = (df["diff"] ** 2).mean() ** 0.5
     print("%.8f\t" % rmse, params.tolist())
     if np.isnan(rmse):
         return 10
     return rmse
 
+
 def compute_int_energy_DISP_2B_TT_supra(
     params,
     df: pd.DataFrame,
     hf_key: str = "HF INTERACTION ENERGY",
     force_ATM_on: bool = False,
+    energy_target="Benchmark",
+    fit_dispersion_term=False,
 ):
     if force_ATM_on:
         if len(params) == 5:
@@ -736,7 +862,13 @@ def compute_int_energy_DISP_2B_TT_supra(
         ),
         axis=1,
     )
-    df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
+    # df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
+    df = evaluate_energy(
+        df,
+        hf_key=hf_key,
+        energy_target=energy_target,
+        fit_dispersion_term=fit_dispersion_term,
+    )
     rmse = (df["diff"] ** 2).mean() ** 0.5
     print("%.8f\t" % rmse, params.tolist())
     if np.isnan(rmse):
@@ -744,12 +876,13 @@ def compute_int_energy_DISP_2B_TT_supra(
     return rmse
 
 
-
 def compute_int_energy_DISP_2B_BJ_ATM_TT(
     params,
     df: pd.DataFrame,
     hf_key: str = "HF INTERACTION ENERGY",
     force_ATM_on: bool = False,
+    energy_target="Benchmark",
+    fit_dispersion_term=False,
 ):
     """
     compute_int_energy_DISP_TT is used to optimize paramaters for damping function in dftd4 with TT damping ATM function
@@ -777,7 +910,13 @@ def compute_int_energy_DISP_2B_BJ_ATM_TT(
         ),
         axis=1,
     )
-    df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
+    # df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
+    df = evaluate_energy(
+        df,
+        hf_key=hf_key,
+        energy_target=energy_target,
+        fit_dispersion_term=fit_dispersion_term,
+    )
     rmse = (df["diff"] ** 2).mean() ** 0.5
     print("%.8f\t" % rmse, params.tolist())
     if np.isnan(rmse):
@@ -793,9 +932,16 @@ def compute_int_energy_stats(
     print_results=False,
     ATM=False,
     chunk_count=1000,
-) -> (float, float, float,):
-    t = df[hf_key].isna().sum()
-    assert t == 0, f"The HF_col provided has np.nan values present, {t}"
+    energy_target="Benchmark",
+    fit_dispersion_term=False,
+) -> (
+    float,
+    float,
+    float,
+):
+    if hf_key != "":
+        t = df[hf_key].isna().sum()
+        assert t == 0, f"The HF_col provided has np.nan values present, {t}"
     compute_bj = locald4.compute_bj_dimer_f90
     if ATM:
         compute_bj = locald4.compute_bj_dimer_f90_ATM
@@ -825,7 +971,13 @@ def compute_int_energy_stats(
             ),
             axis=1,
         )
-    df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
+    # df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
+    df = evaluate_energy(
+        df,
+        hf_key=hf_key,
+        energy_target=energy_target,
+        fit_dispersion_term=fit_dispersion_term,
+    )
     mae = df["diff"].abs().mean()
     rmse = (df["diff"] ** 2).mean() ** 0.5
     max_e = df["diff"].abs().max()
@@ -846,6 +998,8 @@ def compute_int_energy_least_squares(
     hf_key: str = "HF INTERACTION ENERGY",
     force_ATM_on: bool = False,
     # ban_neg_params: bool = False,
+    energy_target="Benchmark",
+    fit_dispersion_term=False,
 ):
     """
     compute_int_energy_least_squares is used to optimize paramaters for damping function in dftd4 with levenberg-Marquedt needing a difference list returned to optimizer
@@ -876,6 +1030,8 @@ def compute_int_energy_least_squares_ATM(
     df: pd.DataFrame,
     hf_key: str = "HF INTERACTION ENERGY",
     force_ATM_on: bool = False,
+    energy_target="Benchmark",
+    fit_dispersion_term=False,
     # ban_neg_params: bool = False,
 ):
     """
@@ -895,7 +1051,13 @@ def compute_int_energy_least_squares_ATM(
         ),
         axis=1,
     )
-    df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
+    # df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
+    df = evaluate_energy(
+        df,
+        hf_key=hf_key,
+        energy_target=energy_target,
+        fit_dispersion_term=fit_dispersion_term,
+    )
     rmse = (df["diff"] ** 2).mean() ** 0.5
     print("%.8f\t" % rmse, params.tolist())
     return df["diff"].tolist()
@@ -906,6 +1068,8 @@ def compute_int_energy(
     df: pd.DataFrame,
     hf_key: str = "HF INTERACTION ENERGY",
     force_ATM_on: bool = False,
+    energy_target="Benchmark",
+    fit_dispersion_term=False,
     prevent_negative_params: bool = False,
     parallel=False,
     chunk_count=1000,
@@ -946,7 +1110,13 @@ def compute_int_energy(
             ),
             axis=1,
         )
-    df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
+    # df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
+    df = evaluate_energy(
+        df,
+        hf_key=hf_key,
+        energy_target=energy_target,
+        fit_dispersion_term=fit_dispersion_term,
+    )
     rmse = (df["diff"] ** 2).mean() ** 0.5
     print("%.8f\t" % rmse, params.tolist())
     if np.isnan(rmse):
@@ -959,6 +1129,8 @@ def compute_int_energy_ATM(
     df: pd.DataFrame,
     hf_key: str = "HF INTERACTION ENERGY",
     force_ATM_on: bool = False,
+    energy_target="Benchmark",
+    fit_dispersion_term=False,
     prevent_negative_params: bool = False,
     parallel=False,
     chunk_count=1000,
@@ -995,7 +1167,13 @@ def compute_int_energy_ATM(
             ),
             axis=1,
         )
-    df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
+    # df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d4"]), axis=1)
+    df = evaluate_energy(
+        df,
+        hf_key=hf_key,
+        energy_target=energy_target,
+        fit_dispersion_term=fit_dispersion_term,
+    )
     rmse = (df["diff"] ** 2).mean() ** 0.5
     print("%.8f\t" % rmse, params.tolist())
     if np.isnan(rmse):
@@ -1061,8 +1239,10 @@ def optimization(
     },
     force_ATM_on=False,
     bounds=(-3.0, 12.0),
+    energy_target="Benchmark",
+    fit_dispersion_term=False,
 ):
-    bounds=[bounds for i in range(len(params))]
+    bounds = [bounds for i in range(len(params))]
     if version["compute_energy"] == "compute_int_energy_DISP":
         compute = compute_int_energy_DISP
     elif version["compute_energy"] == "compute_int_energy_DISP_C6_only":
@@ -1076,18 +1256,24 @@ def optimization(
         if len(params) == 2:
             bounds = [(-1.0, -0.001), (3.0, 6.0)]
         elif len(params) == 3:
-            bounds = [(-1.0, 1.0),(-1.0, -0.001), (1.0, 6.0)]
+            bounds = [(-1.0, 1.0), (-1.0, -0.001), (1.0, 6.0)]
         else:
-            bounds = [(-1.0, 1.0),(-1.0, -0.001), (1.0, 6.0), (-1.0, -0.001), (1.0, 6.0)]
+            bounds = [
+                (-1.0, 1.0),
+                (-1.0, -0.001),
+                (1.0, 6.0),
+                (-1.0, -0.001),
+                (1.0, 6.0),
+            ]
     elif version["compute_energy"] == "compute_int_energy_DISP_2B_BJ_ATM_TT":
         compute = compute_int_energy_DISP_2B_BJ_ATM_TT
         # bounds = [(-1.0, -0.001), (3.0, 6.0)]
         if len(params) == 2:
             bounds = [(-1.0, -0.001), (1.0, 6.0)]
         elif len(params) == 3:
-            bounds = [(-3.0, 6.0),(-1.0, -0.001), (1.0, 6.0)]
+            bounds = [(-3.0, 6.0), (-1.0, -0.001), (1.0, 6.0)]
         else:
-            bounds = [(0.0, 1.0),(1.0, 6.0), (1.0, 6.0), (-1.0, -0.001), (1.0, 6.0)]
+            bounds = [(0.0, 1.0), (1.0, 6.0), (1.0, 6.0), (-1.0, -0.001), (1.0, 6.0)]
     elif version["compute_energy"] == "compute_int_energy_DISP_2B_TT_ATM_TT":
         compute = compute_int_energy_DISP_2B_TT_ATM_TT
         # bounds = [(-1.0, -0.001), (3.0, 6.0)]
@@ -1096,9 +1282,15 @@ def optimization(
         if len(params) == 2:
             bounds = [(-1.0, -0.001), (3.0, 6.0)]
         elif len(params) == 3:
-            bounds = [(0.0, 1.0),(-1.0, -0.001), (1.0, 6.0)]
+            bounds = [(0.0, 1.0), (-1.0, -0.001), (1.0, 6.0)]
         else:
-            bounds = [(0.0, 1.0),(-1.0, -0.001), (1.0, 6.0), (-1.0, -0.001), (1.0, 6.0)]
+            bounds = [
+                (0.0, 1.0),
+                (-1.0, -0.001),
+                (1.0, 6.0),
+                (-1.0, -0.001),
+                (1.0, 6.0),
+            ]
     elif version["compute_energy"] == "compute_int_energy":
         compute = compute_int_energy
     elif version["compute_energy"] == "compute_int_energy_ATM":
@@ -1113,9 +1305,10 @@ def optimization(
         raise Exception("compute_energy not defined")
     print(f"{bounds = }")
     print("RMSE\t\tparams")
+    print(compute)
     ret = opt.minimize(
         compute,
-        args=(df, hf_key, force_ATM_on),
+        args=(df, hf_key, force_ATM_on, energy_target, fit_dispersion_term),
         x0=params,
         method=version["method"],
         bounds=bounds,
@@ -1158,6 +1351,7 @@ def avg_matrix(
     out[-1] = np.amax(arr[:, -1])
     return out
 
+
 def opt_val_no_folds(
     df: pd.DataFrame,
     start_params: [] = [3.02227550, 0.47396846, 4.49845309],
@@ -1169,7 +1363,9 @@ def opt_val_no_folds(
     },
     force_ATM_on=False,
     output_marker="",
-    output_file='./out_params.out',
+    output_file="./out_params.out",
+    energy_target="Benchmark",
+    fit_dispersion_term=False,
 ) -> None:
     """
     opt_cross_val performs n-fold cross validation on opt*.pkl df from
@@ -1198,14 +1394,31 @@ def opt_val_no_folds(
     print(f"{hf_key = }")
     print(f"{version = }")
 
-    nans = df[hf_key].isna().sum()
-    inds = df.index[df[hf_key].isna()]
-    assert nans == 0, f"The HF_col provided has np.nan values present with {inds} nans"
+    if hf_key != "":
+        nans = df[hf_key].isna().sum()
+        inds = df.index[df[hf_key].isna()]
+        assert (
+            nans == 0
+        ), f"The HF_col provided has np.nan values present with {inds} nans"
     start = time.time()
     print(start_params)
-    mp = optimization(df, start_params, hf_key, version, force_ATM_on=force_ATM_on)
+    print(f"{energy_target = }, {fit_dispersion_term = }")
+    mp = optimization(
+        df,
+        start_params,
+        hf_key,
+        version,
+        force_ATM_on=force_ATM_on,
+        energy_target=energy_target,
+        fit_dispersion_term=fit_dispersion_term,
+    )
     mmae, mrmse, mmax_e, mmad, mmean_diff = compute_stats(
-        mp, df, hf_key, force_ATM_on=force_ATM_on
+        mp,
+        df,
+        hf_key,
+        force_ATM_on=force_ATM_on,
+        energy_target=energy_target,
+        fit_dispersion_term=fit_dispersion_term,
     )
     stats = {
         "method": [f"{hf_key} full"],
@@ -1223,14 +1436,17 @@ def opt_val_no_folds(
     print("\nStats")
     print(stats)
     print("\nFinal Parameters for the whole data set\n")
-    params_2B, params_ATM = paramsTable.generate_2B_ATM_param_subsets(mp, force_ATM_on=force_ATM_on)
+    params_2B, params_ATM = paramsTable.generate_2B_ATM_param_subsets(
+        mp, force_ATM_on=force_ATM_on
+    )
     all_params = repr(np.array([params_2B, params_ATM], np.float64))
     print(f'"{hf_key}": np.{all_params},')
-    with open(output_file, 'w') as f:
+    with open(output_file, "w") as f:
         f.write(f"{output_marker = }\n")
         f.write(f'"{hf_key}": np.{all_params},')
         f.write(f"\n{stats = }\n----------------\n")
     return
+
 
 def opt_cross_val(
     df: pd.DataFrame,
@@ -1244,6 +1460,8 @@ def opt_cross_val(
         "compute_stats": "compute_int_energy_stats_DISP",
     },
     force_ATM_on=False,
+    # energy_target="Benchmark",
+    # fit_dispersion_term=False,
 ) -> None:
     """
     opt_cross_val performs n-fold cross validation on opt*.pkl df from

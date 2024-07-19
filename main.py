@@ -7,6 +7,7 @@ import argparse
 
 # TODO: implement powell_2B_BJ_ATM_TT and powell_2B_TT_ATM_TT in optimzation.py
 
+
 def optimize_paramaters(
     df,
     level_theories,
@@ -28,6 +29,8 @@ def optimize_paramaters(
     drop_na=False,
     five_fold=False,
     omp_threads=18,
+    energy_target="Benchmark",
+    fit_dispersion_term=False,
 ) -> None:
     """
     Optimize the parameters for the D3 and D4 dispersion models.
@@ -38,21 +41,6 @@ def optimize_paramaters(
     params = src.paramsTable.get_params(start_params_d4_key)
     dispersion.omp_set_num_threads(omp_threads)
     print(f"Starting Key: {start_params_d4_key}")
-    subset = [
-        "Geometry_bohr",
-        *level_theories,
-        "D3Data",
-        "Benchmark",
-        "charges",
-        "monAs",
-        "monBs",
-        "C6s",
-        "C6_A",
-        "C6_B",
-        "C6_ATM",
-        "C6_ATM_A",
-        "C6_ATM_B",
-    ]
     if drop_na:
         df = df[df[level_theories].notna().all(axis=1)].copy()
         print(f"Dropped NaNs, new size: {len(df)}")
@@ -80,6 +68,8 @@ def optimize_paramaters(
                 hf_key=i,
                 output_l_marker="D3_" + extra_added,
                 version=version,
+                # energy_target=energy_target,
+                # fit_dispersion_term=fit_dispersion_term,
             )
             extra_added = extra
         if D4["powell"]:
@@ -115,6 +105,8 @@ def optimize_paramaters(
                     hf_key=i,
                     version=version,
                     force_ATM_on=ATM,
+                    energy_target=energy_target,
+                    fit_dispersion_term=fit_dispersion_term,
                 )
             extra_added = extra
 
@@ -149,6 +141,8 @@ def optimize_paramaters(
                     hf_key=i,
                     version=version,
                     force_ATM_on=ATM,
+                    energy_target=energy_target,
+                    fit_dispersion_term=fit_dispersion_term,
                 )
             extra_added = extra
 
@@ -185,6 +179,8 @@ def optimize_paramaters(
                     version=version,
                     output_marker="powell_2B_BJ_ATM_TT",
                     force_ATM_on=ATM,
+                    energy_target=energy_target,
+                    fit_dispersion_term=fit_dispersion_term,
                 )
             extra_added = extra
 
@@ -221,6 +217,8 @@ def optimize_paramaters(
                     version=version,
                     output_marker="powell_2B_TT_ATM_TT",
                     force_ATM_on=ATM,
+                    energy_target=energy_target,
+                    fit_dispersion_term=fit_dispersion_term,
                 )
             extra_added = extra
 
@@ -257,6 +255,8 @@ def optimize_paramaters(
                     version=version,
                     output_marker="powell_2B_BJ",
                     force_ATM_on=ATM,
+                    energy_target=energy_target,
+                    fit_dispersion_term=fit_dispersion_term,
                 )
             extra_added = extra
 
@@ -293,6 +293,8 @@ def optimize_paramaters(
                     version=version,
                     output_marker="powell_2B_TT",
                     force_ATM_on=ATM,
+                    energy_target=energy_target,
+                    fit_dispersion_term=fit_dispersion_term,
                 )
             extra_added = extra
 
@@ -369,7 +371,8 @@ def main():
         type=str,
         help="Pandas Column Name for the level of theory to optimize for (Default: SAPT0_adz_3_IE)",
         nargs="+",
-        default=["SAPT0_adz_3_IE"],
+        # default=["SAPT0_adz_3_IE"],
+        default=[""],
     )
     parser.add_argument(
         "--start_params_d4_key",
@@ -459,9 +462,34 @@ def main():
         default="dfs/schr_dft2.pkl",
     )
 
+    parser.add_argument(
+        "--energy_target",
+        help="If you want to fit to a different energy than CCSD(T)/CBS total interaction energy, specify the target column that is has units of kcal/mol (Default: CCSD(T)/CBS)",
+        type=str,
+        default="CCSD(T)/CBS",
+    )
+
+    parser.add_argument(
+        "--fit_dispersion_term",
+        help="Enable this flag if you want to fit perhaps a higher-level SAPT's dispersion term instead of a total interaction energy to avoid corrupting dispersion. Note this argument is designed to work with --energy_target and should not be enabled unless --energy_target is set. (Default: False",
+        action="store_true",
+        default=False,
+    )
+
     args = parser.parse_args()
     print(args)
     df = pd.read_pickle(args.df_path)
+    if args.energy_target == "CCSD(T)/CBS":
+        args.energy_target = "Benchmark"
+    if args.energy_target == "CCSD(T)/CBS" and args.fit_dispersion_term:
+        raise ValueError(
+            "Cannot fit a dispersion term to a total interaction energy. Please specify a different --energy_target value."
+        )
+    if args.level_theories == [""] and not args.fit_dispersion_term:
+        raise ValueError(
+            "Please specify a level of theory to optimize for using --level_theories or enable --fit_dispersion_term explictly."
+        )
+
     optimize_paramaters(
         df=df,
         level_theories=args.level_theories,
@@ -480,6 +508,8 @@ def main():
         extra=args.extra_label,
         use_2B_C6s=args.use_2B_C6s,
         five_fold=args.five_fold,
+        energy_target=args.energy_target,
+        fit_dispersion_term=args.fit_dispersion_term,
     )
     return
 

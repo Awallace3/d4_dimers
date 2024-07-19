@@ -596,6 +596,13 @@ def paramsDict() -> {}:
                 [1.0, 0.56063068, 0.65540802, 1.06422537, 0.0],
             ]
         ),
+        # This still requires computing SAPT(DFT)'s dispersion; however, since the compoent error versus SAPT2+3(CCD)/aTZ is entirely positive, -D4 can correct the dispersion energy to be in more agreement with the more negative SAPT2+3(CCD)/aTZ's dispersion
+        "SAPT_DFT_disp+D4_2B_BJ": np.array(
+            [
+                [1.0, 1.008696065273114, 0.641405005135184, 1.1802057605885923, 0.0],
+                [1.0, 1.008696065273114, 0.641405005135184, 1.1802057605885923, 0.0],
+            ]
+        )
     }
     return params_dict
 
