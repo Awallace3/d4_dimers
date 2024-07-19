@@ -1244,6 +1244,11 @@ def optimization(
 ):
     bounds = [bounds for i in range(len(params))]
     if version["compute_energy"] == "compute_int_energy_DISP":
+        bounds=(0.0, 8.0)
+        if len(params) == 5 and params[0] < 0:
+            bounds = [(-1.0, 0,0), (-1.0, 0.0), (0.0, 8.0), (0.0, 8.0), (0.0, 0.0)]
+        else:
+            bounds = [bounds for i in range(len(params))]
         compute = compute_int_energy_DISP
     elif version["compute_energy"] == "compute_int_energy_DISP_C6_only":
         compute = compute_int_energy_DISP_C6_only

@@ -597,12 +597,23 @@ def paramsDict() -> {}:
             ]
         ),
         # This still requires computing SAPT(DFT)'s dispersion; however, since the compoent error versus SAPT2+3(CCD)/aTZ is entirely positive, -D4 can correct the dispersion energy to be in more agreement with the more negative SAPT2+3(CCD)/aTZ's dispersion
-        "SAPT_DFT_disp+D4_2B_BJ": np.array(
+        # "SAPT_DFT_pbe0_adz_disp_targeting_SAPT2+3(CCD)dMP2_start": [1.20065498, 0.40085597, 5.02928789],
+        # "SAPT_DFT_pbe0_adz_disp_targeting_SAPT2+3(CCD)dMP2_start": [0.0, 0.0, 0.40085597, 5.02928789, 0.0],
+        "SAPT_DFT_pbe0_adz_disp_targeting_SAPT2+3(CCD)dMP2_start": [-0.23095958578661743, -0.18443826348996134, 0.3463438405577171, 4.878388538302256, 0.0],
+        "D4_2B_BJ_targeting_SAPT_DFT_pbe0_atz_disp": np.array(
             [
                 [1.0, 1.008696065273114, 0.641405005135184, 1.1802057605885923, 0.0],
                 [1.0, 1.008696065273114, 0.641405005135184, 1.1802057605885923, 0.0],
             ]
-        )
+        ),
+        "SAPT_DFT_disp+D4_2B_BJ_targeting_SAPT_DFT_pbe0_atz_disp": np.array(
+            [
+                # negative because need to correct for positive error in SAPT(DFT) dispersion
+                # RMSE = 0.59901103 against 
+                [-0.14663919646483953, -0.018746226738138975, 0.24053884708311168, 2.3074390765683193, 0.0]
+                [-0.14663919646483953, -0.018746226738138975, 0.24053884708311168, 2.3074390765683193, 0.0]
+            ]
+        ),
     }
     return params_dict
 
@@ -680,7 +691,8 @@ def generate_2B_ATM_param_subsets(
         # print("Special 5 ATM")
         params_2B = np.array(params, dtype=np.float64)
         params_ATM = np.array(params, dtype=np.float64)
-    elif len(params) == 5 and abs(params[-1]) < 1e-6 and abs(params[0] - 1.0) < 1e-6:
+    # elif len(params) == 5 and abs(params[-1]) < 1e-6 and abs(params[0] - 1.0) < 1e-6:
+    elif len(params) == 5 and (abs(params[-1]) < 1e-6 or abs(params[0] - 1.0) < 1e-6):
         # print("Special 5 2body")
         params_2B = np.array(params, dtype=np.float64)
         params_ATM = np.array(params, dtype=np.float64)

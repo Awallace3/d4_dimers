@@ -32,10 +32,11 @@ def main():
 
     df = src.plotting.plotting_setup_dft_ddft(
         df_name,
-        build_df=False,
+        build_df=True,
         split_components=True,
         original_plot=False,
     )
+    return
     pp(df.columns.values.tolist())
     src.plotting.plot_LoS_saptdft(df)
     return

@@ -1616,6 +1616,17 @@ def plotting_setup_dft_ddft(
         df["SAPT0-D4/aDZ"] = df.apply(
             lambda row: row["SAPT0_adz_3_IE"] + row["-D4 (SAPT0_adz_3_IE)"], axis=1
         )
+
+        # Dispersion Term fittings...
+        df['SAPT_DFT_pbe0_adz_DIFF_SAPT2+3(CCD)DMP2'] = df.apply(
+            lambda r: r['SAPT_DFT_pbe0_adz'][0] - r[f'SAPT2+3(CCD)DMP2 TOTAL ENERGY atz'] * h2kcalmol, axis=1
+        )
+
+        df['SAPT_DFT_pbe0_atz_DIFF_SAPT2+3(CCD)DMP2'] = df.apply(
+            lambda r: r['SAPT_DFT_pbe0_atz'][0] - r[f'SAPT2+3(CCD)DMP2 TOTAL ENERGY atz'] * h2kcalmol, axis=1
+        )
+
+
         df.to_pickle(df_out)
     else:
         df = pd.read_pickle(df_out)
