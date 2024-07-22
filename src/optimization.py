@@ -1249,6 +1249,8 @@ def optimization(
             bounds = [(-1.0, 0,0), (-1.0, 0.0), (0.0, 8.0), (0.0, 8.0), (0.0, 0.0)]
         else:
             bounds = [bounds for i in range(len(params))]
+        if not force_ATM_on:
+            bounds[-1] = (0.0, 0.0)
         compute = compute_int_energy_DISP
     elif version["compute_energy"] == "compute_int_energy_DISP_C6_only":
         compute = compute_int_energy_DISP_C6_only

@@ -599,19 +599,30 @@ def paramsDict() -> {}:
         # This still requires computing SAPT(DFT)'s dispersion; however, since the compoent error versus SAPT2+3(CCD)/aTZ is entirely positive, -D4 can correct the dispersion energy to be in more agreement with the more negative SAPT2+3(CCD)/aTZ's dispersion
         # "SAPT_DFT_pbe0_adz_disp_targeting_SAPT2+3(CCD)dMP2_start": [1.20065498, 0.40085597, 5.02928789],
         # "SAPT_DFT_pbe0_adz_disp_targeting_SAPT2+3(CCD)dMP2_start": [0.0, 0.0, 0.40085597, 5.02928789, 0.0],
-        "SAPT_DFT_pbe0_adz_disp_targeting_SAPT2+3(CCD)dMP2_start": [-0.23095958578661743, -0.18443826348996134, 0.3463438405577171, 4.878388538302256, 0.0],
-        "D4_2B_BJ_targeting_SAPT_DFT_pbe0_atz_disp": np.array(
+        # "SAPT_DFT_pbe0_adz_disp_targeting_SAPT2+3(CCD)dMP2_start": [-0.23095958578661743, -0.18443826348996134, 0.3463438405577171, 4.878388538302256, 0.0],
+        "SAPT_DFT_pbe0_adz_disp_targeting_SAPT2+3(CCD)dMP2_start": [0.0, 0.0, 0.40085597, 5.02928789, 0.0],
+        "SAPT_DFT_pbe0_adz_disp_targeting_SAPT2+3(CCD)dMP2": np.array(
             [
-                [1.0, 1.008696065273114, 0.641405005135184, 1.1802057605885923, 0.0],
-                [1.0, 1.008696065273114, 0.641405005135184, 1.1802057605885923, 0.0],
+                [0.3127985513427802, 4.382567094981157e-05, 0.34154812069039975, 4.873940531648635, 0.0],
+                [0.3127985513427802, 4.382567094981157e-05, 0.34154812069039975, 4.873940531648635, 0.0],
             ]
         ),
-        "SAPT_DFT_disp+D4_2B_BJ_targeting_SAPT_DFT_pbe0_atz_disp": np.array(
+        "SAPT_DFT_pbe0_atz_disp_targeting_SAPT2+3(CCD)dMP2": np.array(
             [
-                # negative because need to correct for positive error in SAPT(DFT) dispersion
-                # RMSE = 0.59901103 against 
-                [-0.14663919646483953, -0.018746226738138975, 0.24053884708311168, 2.3074390765683193, 0.0]
-                [-0.14663919646483953, -0.018746226738138975, 0.24053884708311168, 2.3074390765683193, 0.0]
+                [0.050672908681464575, 4.382567094981157e-05, 0.5022181161998547, 4.427151551784336, 0.0],
+                [0.050672908681464575, 4.382567094981157e-05, 0.5022181161998547, 4.427151551784336, 0.0],
+            ]
+        ),
+        "D4_2B_BJ_targeting_SAPT_DFT_pbe0_atz_disp": np.array(
+            [
+                [1.0, 1.1935300819461523, 0.6455474850772446, 1.1203694226056238, 0.0],
+                [1.0, 1.1935300819461523, 0.6455474850772446, 1.1203694226056238, 0.0],
+            ]
+        ),
+        "D4_2B_BJ_ATM_CHG_targeting_SAPT_DFT_pbe0_atz_disp_start": np.array(
+            [
+                [1.1935300819461523, 0.6455474850772446, 1.1203694226056238],
+                [1.1935300819461523, 0.6455474850772446, 1.1203694226056238],
             ]
         ),
     }

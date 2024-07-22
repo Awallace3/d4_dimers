@@ -21,3 +21,8 @@ try:
 except ImportError as e:
     print(e)
     pass
+
+try:
+    from . import dispml_calls
+except ImportError as e:
+    pass

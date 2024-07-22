@@ -11,3 +11,6 @@
 	path = paper-figure-tools
 	url = git@github.com:SherrillGroup/paper-figure-tools.git
 	branch = sapt_errors
+[submodule "dispml"]
+	path = dispml
+	url = git@github.com:Awallace3/dispml.git

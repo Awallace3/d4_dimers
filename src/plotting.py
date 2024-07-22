@@ -1619,11 +1619,11 @@ def plotting_setup_dft_ddft(
 
         # Dispersion Term fittings...
         df['SAPT_DFT_pbe0_adz_DIFF_SAPT2+3(CCD)DMP2'] = df.apply(
-            lambda r: r['SAPT_DFT_pbe0_adz'][0] - r[f'SAPT2+3(CCD)DMP2 TOTAL ENERGY atz'] * h2kcalmol, axis=1
+            lambda r: -(r['SAPT_DFT_pbe0_adz'][0] - r[f'SAPT2+3(CCD)DMP2 TOTAL ENERGY atz'] * h2kcalmol), axis=1
         )
 
         df['SAPT_DFT_pbe0_atz_DIFF_SAPT2+3(CCD)DMP2'] = df.apply(
-            lambda r: r['SAPT_DFT_pbe0_atz'][0] - r[f'SAPT2+3(CCD)DMP2 TOTAL ENERGY atz'] * h2kcalmol, axis=1
+            lambda r: -(r['SAPT_DFT_pbe0_atz'][0] - r[f'SAPT2+3(CCD)DMP2 TOTAL ENERGY atz'] * h2kcalmol), axis=1
         )
 
 
