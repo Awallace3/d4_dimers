@@ -1387,12 +1387,20 @@ def plotting_setup_dft_ddft(
     if build_df:
         df = pd.read_pickle(selected)
         len_before = len(df)
+        df_c6s = pd.read_pickle('./dfs/los_c6s.pkl')
+        df = df.merge(df_c6s, on="system_id", how="left", suffixes=("", "_drop"))
+        df.drop([c for c in df.columns if "drop" in c], axis=1, inplace=True)
         df.dropna(
             subset=["SAPT_DFT_pbe0_adz", "SAPT_DFT_pbe0_atz", "C6s"], inplace=True
         )
         print(f"Removed {len_before - len(df)} NaN values")
 
         df = df[df["SAPT_DFT_pbe0_adz"].notna()].copy()
+
+        df_disp = pd.read_pickle('./dfs/dispml.pkl')
+        df_disp = df_disp[["D3-ML", "system_id"]].copy()
+        print(df_disp)
+        df = df.merge(df_disp, on="system_id")
 
         def compute_saptdft_ddft_ie(r, b):
             return (
@@ -1618,14 +1626,37 @@ def plotting_setup_dft_ddft(
         )
 
         # Dispersion Term fittings...
-        df['SAPT_DFT_pbe0_adz_DIFF_SAPT2+3(CCD)DMP2'] = df.apply(
-            lambda r: -(r['SAPT_DFT_pbe0_adz'][0] - r[f'SAPT2+3(CCD)DMP2 TOTAL ENERGY atz'] * h2kcalmol), axis=1
+        df["SAPT_DFT_pbe0_adz_DIFF_SAPT2+3(CCD)DMP2"] = df.apply(
+            lambda r: -(
+                r["SAPT_DFT_pbe0_adz"][0]
+                - r[f"SAPT2+3(CCD)DMP2 TOTAL ENERGY atz"] * h2kcalmol
+            ),
+            axis=1,
         )
 
-        df['SAPT_DFT_pbe0_atz_DIFF_SAPT2+3(CCD)DMP2'] = df.apply(
-            lambda r: -(r['SAPT_DFT_pbe0_atz'][0] - r[f'SAPT2+3(CCD)DMP2 TOTAL ENERGY atz'] * h2kcalmol), axis=1
+        df["SAPT_DFT_pbe0_atz_DIFF_SAPT2+3(CCD)DMP2"] = df.apply(
+            lambda r: -(
+                r["SAPT_DFT_pbe0_atz"][0]
+                - r[f"SAPT2+3(CCD)DMP2 TOTAL ENERGY atz"] * h2kcalmol
+            ),
+            axis=1,
         )
+        # df['D3-ML'] = df['D3-ML'].apply(
+        #     lambda v: float(v) / h2kcalmol if not np.isnan(v) else v
+        # )
 
+        df["SAPT(DFT)D3-ML TOTAL ENERGY adz"] = df.apply(
+            lambda r: sum(r["SAPT_DFT_pbe0_adz"][1:4]) / h2kcalmol + r["D3-ML"] / h2kcalmol, axis=1
+        )
+        df["SAPT(DFT)D3-ML TOTAL ENERGY atz"] = df.apply(
+            lambda r: sum(r["SAPT_DFT_pbe0_atz"][1:4]) / h2kcalmol + r["D3-ML"]/ h2kcalmol, axis=1
+        )
+        df["D3-ML DISP ENERGY adz"] = df.apply(
+            lambda r: r["D3-ML"] / h2kcalmol, axis=1
+        )
+        df["D3-ML DISP ENERGY atz"] = df.apply(
+            lambda r: r["D3-ML"] / h2kcalmol, axis=1
+        )
 
         df.to_pickle(df_out)
     else:
@@ -3595,7 +3626,14 @@ def compute_CRE(
     return CRE
 
 
-def violin_plots_multi(df):
+def violin_plots_multi(df, limit_to_column_not_nan=None):
+    if limit_to_column_not_nan is not None:
+
+        size_prior = len(df)
+        df = df[df[limit_to_column_not_nan].notna()].copy()
+        print(
+            f"Limiting to {limit_to_column_not_nan} not NaN: {size_prior} -> {len(df)}"
+        )
     sapt_methods = [
         "MP2 IE",
         "SAPT0 TOTAL ENERGY",
@@ -3614,6 +3652,8 @@ def violin_plots_multi(df):
         "SAPT2+(3)(CCD)DMP2 TOTAL ENERGY",
         "SAPT2+3(CCD)DMP2 TOTAL ENERGY",
         "SAPT0-D4 TOTAL ENERGY",
+        "SAPT TOTAL ENERGY",
+        "SAPT(DFT)D3-ML TOTAL ENERGY"
     ]
     reference = "benchmark ref energy"
     copy_cols_start = [
@@ -3636,6 +3676,7 @@ def violin_plots_multi(df):
         "SAPT_DFT_pbe0_adz_total",
         "SAPT_DFT_D4_pbe0_atz_total",
         "SAPT_DFT_pbe0_atz_total",
+        # "SAPT_DFT_D3-ML_total",
     ]
     copy_cols = copy_cols_start.copy()
     copy_cols.extend([f"{c} adz" for c in sapt_methods])
@@ -3645,6 +3686,7 @@ def violin_plots_multi(df):
         columns={
             "SAPT_DFT_D4_pbe0_adz_total": "PBE0-D4 TOTAL ENERGY",
             "SAPT_DFT_pbe0_adz_total": "SAPT(DFT) TOTAL ENERGY",
+            # "SAPT_DFT_D3-ML_total": "SAPT(DFT)D3-ML TOTAL ENERGY"
         },
         inplace=True,
     )
@@ -3657,10 +3699,13 @@ def violin_plots_multi(df):
         columns={
             "SAPT_DFT_D4_pbe0_atz_total": "PBE0-D4 TOTAL ENERGY",
             "SAPT_DFT_pbe0_atz_total": "SAPT(DFT) TOTAL ENERGY",
+            # "SAPT_DFT_D3-ML_total": "SAPT(DFT)D3-ML TOTAL ENERGY"
         },
         inplace=True,
     )
-    local_methods = ["PBE0-D4 TOTAL ENERGY", "SAPT(DFT) TOTAL ENERGY"]
+    local_methods = ["PBE0-D4 TOTAL ENERGY", "SAPT(DFT) TOTAL ENERGY", 
+                     # "SAPT(DFT)D3-ML TOTAL ENERGY"
+                     ]
     # for i in local_methods:
     #     df_adz[i] /= h2kcalmol
     #     df_atz[i] /= h2kcalmol
@@ -3694,6 +3739,7 @@ def violin_plots_multi(df):
         "SAPT2+3(CCD)DMP2": "SAPT2+3(CCD)DMP2 TOTAL ENERGY Error",
         "SAPT(DFT)": "SAPT(DFT) TOTAL ENERGY Error",
         "PBE0-D4": "PBE0-D4 TOTAL ENERGY Error",
+        "SAPT(DFT)D3-ML": "SAPT(DFT)D3-ML TOTAL ENERGY Error",
     }
     mcure_labels = {}
     for k, v in df_labels_and_columns.items():
@@ -3738,26 +3784,54 @@ def sapt_error_comp(df, df_ref, sapt_reference, sapt_methods):
     return df
 
 
-def violin_plots_multi_components(df):
-    df['SAPT_DFT_pbe0_adz'] = df.apply(lambda r: np.array(r['SAPT_DFT_pbe0_adz']) / h2kcalmol, axis=1)
-    df['SAPT_DFT_pbe0_atz'] = df.apply(lambda r: np.array(r['SAPT_DFT_pbe0_atz']) / h2kcalmol, axis=1)
+def violin_plots_multi_components(df, limit_to_column_not_nan=None):
+    if limit_to_column_not_nan is not None:
 
-    df["SAPT(DFT) ELST ENERGY adz"] = df.apply(lambda r: r["SAPT_DFT_pbe0_adz"][1], axis=1)
-    df["SAPT(DFT) EXCH ENERGY adz"] = df.apply(lambda r: r["SAPT_DFT_pbe0_adz"][2], axis=1)
-    df["SAPT(DFT) IND ENERGY adz"] = df.apply(lambda r: r["SAPT_DFT_pbe0_adz"][3], axis=1)
-    df["SAPT(DFT) DISP ENERGY adz"] = df.apply(lambda r: r["SAPT_DFT_pbe0_adz"][4], axis=1)
+        size_prior = len(df)
+        df = df[df[limit_to_column_not_nan].notna()].copy()
+        print(
+            f"Limiting to {limit_to_column_not_nan} not NaN: {size_prior} -> {len(df)}"
+        )
+    df["SAPT_DFT_pbe0_adz"] = df.apply(
+        lambda r: np.array(r["SAPT_DFT_pbe0_adz"]) / h2kcalmol, axis=1
+    )
+    df["SAPT_DFT_pbe0_atz"] = df.apply(
+        lambda r: np.array(r["SAPT_DFT_pbe0_atz"]) / h2kcalmol, axis=1
+    )
 
-    df["SAPT(DFT) ELST ENERGY atz"] = df.apply(lambda r: r["SAPT_DFT_pbe0_atz"][1], axis=1)
-    df["SAPT(DFT) EXCH ENERGY atz"] = df.apply(lambda r: r["SAPT_DFT_pbe0_atz"][2], axis=1)
-    df["SAPT(DFT) IND ENERGY atz"] = df.apply(lambda r: r["SAPT_DFT_pbe0_atz"][3], axis=1)
-    df["SAPT(DFT) DISP ENERGY atz"] = df.apply(lambda r: r["SAPT_DFT_pbe0_atz"][4], axis=1)
+    df["SAPT(DFT) ELST ENERGY adz"] = df.apply(
+        lambda r: r["SAPT_DFT_pbe0_adz"][1], axis=1
+    )
+    df["SAPT(DFT) EXCH ENERGY adz"] = df.apply(
+        lambda r: r["SAPT_DFT_pbe0_adz"][2], axis=1
+    )
+    df["SAPT(DFT) IND ENERGY adz"] = df.apply(
+        lambda r: r["SAPT_DFT_pbe0_adz"][3], axis=1
+    )
+    df["SAPT(DFT) DISP ENERGY adz"] = df.apply(
+        lambda r: r["SAPT_DFT_pbe0_adz"][4], axis=1
+    )
+
+    df["SAPT(DFT) ELST ENERGY atz"] = df.apply(
+        lambda r: r["SAPT_DFT_pbe0_atz"][1], axis=1
+    )
+    df["SAPT(DFT) EXCH ENERGY atz"] = df.apply(
+        lambda r: r["SAPT_DFT_pbe0_atz"][2], axis=1
+    )
+    df["SAPT(DFT) IND ENERGY atz"] = df.apply(
+        lambda r: r["SAPT_DFT_pbe0_atz"][3], axis=1
+    )
+    df["SAPT(DFT) DISP ENERGY atz"] = df.apply(
+        lambda r: r["SAPT_DFT_pbe0_atz"][4], axis=1
+    )
 
     df["PBE0-D4 DISP ENERGY adz"] = df.apply(
         lambda r: (
             r[f"SAPT_DFT_pbe0_adz_D4_IE"]
             + r[f"SAPT_DFT_pbe0_adz_dDFT"]
             - r[f"SAPT_DFT_pbe0_adz_dHF"]
-        ) / h2kcalmol,
+        )
+        / h2kcalmol,
         axis=1,
     )
 
@@ -3766,7 +3840,8 @@ def violin_plots_multi_components(df):
             r[f"SAPT_DFT_pbe0_atz_D4_IE"]
             + r[f"SAPT_DFT_pbe0_atz_dDFT"]
             - r[f"SAPT_DFT_pbe0_atz_dHF"]
-        )/ h2kcalmol,
+        )
+        / h2kcalmol,
         axis=1,
     )
 
@@ -3799,6 +3874,7 @@ def violin_plots_multi_components(df):
         "SAPT0-D4 DISP ENERGY",
         "PBE0-D4 DISP ENERGY",
         "SAPT(DFT) DISP ENERGY",
+        "D3-ML DISP ENERGY",
     ]
     sapt_reference = {
         "ELST": "SAPT2+3(CCD)DMP2 ELST ENERGY",
@@ -3830,7 +3906,6 @@ def violin_plots_multi_components(df):
         # "SAPT_DFT_pbe0_adz_disp",
         # "SAPT_DFT_pbe0d4_adz_disp",
         # "SAPT0-D4 adz",
-
         # "SAPT_DFT_pbe0_atz_elst",
         # "SAPT_DFT_pbe0_atz_exch",
         # "SAPT_DFT_pbe0_atz_ind",
@@ -3886,7 +3961,7 @@ def violin_plots_multi_components(df):
         0.4,
         2,
     ]
-    grid_widths = [0.9, 0.7, 1.2, 2.0]
+    grid_widths = [0.75, 0.65, 1.0, 2.0]
     mcures_labels_start = [
         {
             "SAPT0,sSAPT0": "SAPT0 ELST ENERGY Error",
@@ -3959,6 +4034,9 @@ def violin_plots_multi_components(df):
         },
         {
             "SAPT0-D4": "SAPT0-D4 DISP ENERGY Error",
+        },
+        {
+            "D3-ML": "D3-ML DISP ENERGY Error",
         },
     ]
     mcure_labels = {
@@ -4063,6 +4141,7 @@ def violin_plots_multi_components(df):
         },
         df_labels_and_columns_disp={
             "SAPT0,SAPT2": "SAPT0 DISP ENERGY Error",
+            "SAPT0-D4": "SAPT0-D4 DISP ENERGY Error",
             # "sSAPT0": "SSAPT0 DISP ENERGY Error",
             "SAPT2+": "SAPT2+ DISP ENERGY Error",
             "SAPT2+(3)": "SAPT2+(3) DISP ENERGY Error",
@@ -4072,7 +4151,7 @@ def violin_plots_multi_components(df):
             "SAPT2+3(CCD)": "SAPT2+3(CCD) DISP ENERGY Error",
             "SAPT(DFT)": "SAPT(DFT) DISP ENERGY Error",
             "PBE0-D4": "PBE0-D4 DISP ENERGY Error",
-            "SAPT0-D4": "SAPT0-D4 DISP ENERGY Error",
+            "D3-ML": "D3-ML DISP ENERGY Error",
         },
         output_filename=f"./plots/LoS_components_adz_atz.jpg",
         table_fontsize=8,
@@ -4103,6 +4182,6 @@ def plot_LoS_saptdft(df):
     ]
     for c in conv:
         df[c] /= h2kcalmol
-    violin_plots_multi_components(df)
+    violin_plots_multi_components(df, limit_to_column_not_nan="D3-ML")
     violin_plots_multi(df)
     return

@@ -24,20 +24,21 @@ def main():
     # df_name = "./dfs/los_adz_candidacy_s0atz.pkl"
     # df_name = "./dfs/los_saptdft_adz_3.pkl"
     df_name = "./dfs/los_all.pkl"
+    # df_name = "./dfs/ddft_study.pkl"
     # df = pd.read_pickle(df_name)
     # df = check_c6s(df)
     # df = src.misc.make_geometry_bohr_column_df(df)
     # df.to_pickle(df_name)
     # assert df['C6s'].notnull().all()
 
+    # pp(df.columns.values.tolist())
     df = src.plotting.plotting_setup_dft_ddft(
         df_name,
         build_df=True,
         split_components=True,
         original_plot=False,
     )
-    return
-    pp(df.columns.values.tolist())
+    # return
     src.plotting.plot_LoS_saptdft(df)
     return
 
