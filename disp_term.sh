@@ -22,4 +22,5 @@ echo "Starting 2B BJ super DISP TERM fitting"
 
 echo "Fitting SAPT(DFT)-D4 ENERGY" >> saptdftd4.log
 
-python3 -u main.py --level_theories SAPT_DFT_pbe0_adz_3_IE SAPT_DFT_pbe0_atz_3_IE --start_params_d4_key 'SAPT_DFT_pbe0_IE_start' --powell --df_path ./plots/ddft_study.pkl >> saptdftd4.log
+# python3 -u main.py --level_theories SAPT_DFT_pbe0_adz_3_IE SAPT_DFT_pbe0_atz_3_IE --start_params_d4_key 'SAPT_DFT_pbe0_IE_start' --powell --df_path ./plots/ddft_study.pkl >> saptdftd4.log
+python3 -u main.py --level_theories SAPT_DFT_pbe0_aqz_3_IE --start_params_d4_key 'SAPT_DFT_pbe0_IE_start' --powell --df_path ./plots/ddft_study.pkl >> saptdftd4.log
