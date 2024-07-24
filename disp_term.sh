@@ -16,6 +16,10 @@ echo "Starting 2B BJ super DISP TERM fitting"
 #
 # python3 -u main.py --start_params_d4_key 'HF_OPT_2B_START' --powell --fit_dispersion_term --df_path ./plots/ddft_study.pkl --energy_target 'SAPT2+3(CCD)DMP2 DISP ENERGY' >> disp_term.log
 
-echo "Fitting -D4 BJ+CHG to SAPT2+3(CCD)DMP2 DISP ENERGY" >> disp_term.log
+# echo "Fitting -D4 BJ+CHG to SAPT2+3(CCD)DMP2 DISP ENERGY" >> disp_term.log
+#
+# python3 -u main.py --start_params_d4_key 'HF_OPT_2B_START' --powell --ATM --fit_dispersion_term --df_path ./plots/ddft_study.pkl --energy_target 'SAPT2+3(CCD)DMP2 DISP ENERGY' >> disp_term.log
 
-python3 -u main.py --start_params_d4_key 'HF_OPT_2B_START' --powell --ATM --fit_dispersion_term --df_path ./plots/ddft_study.pkl --energy_target 'SAPT2+3(CCD)DMP2 DISP ENERGY' >> disp_term.log
+echo "Fitting SAPT(DFT)-D4 ENERGY" >> saptdftd4.log
+
+python3 -u main.py --level_theories SAPT_DFT_pbe0_adz_3_IE SAPT_DFT_pbe0_atz_3_IE --start_params_d4_key 'SAPT_DFT_pbe0_IE_start' --powell --df_path ./plots/ddft_study.pkl >> saptdftd4.log
