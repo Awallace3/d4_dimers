@@ -1866,16 +1866,32 @@ def plotting_setup_dft_ddft(
         # DFT IEs
         df["PBE0 IE adz"] = df.apply(
             lambda r: (
-                r["SAPT_DFT_pbe0_adz_dDFT"] + sum(r["SAPT_DFT_pbe0_adz"][1:4]) - r['SAPT_DFT_pbe0_adz_dHF']
-                # + r['SAPT_DFT_pbe0_adz_D4_IE']
+                r["SAPT_DFT_pbe0_adz_dDFT"] 
+                + r["SAPT_DFT_pbe0_adz_elst"] 
+                + r["SAPT_DFT_pbe0_adz_exch"]
+                + r["SAPT_DFT_pbe0_adz_indu"]
+                - r['SAPT_DFT_pbe0_adz_dHF']
                 if r["SAPT_DFT_pbe0_adz"]
                 else np.nan
             ),
             axis=1,
         )
+        df["PBE0-D4 IE adz"] = df.apply(
+            lambda r: (
+                r['PBE0 IE adz'] + r['SAPT_DFT_pbe0_adz_D4_IE']
+                if r["SAPT_DFT_pbe0_adz"]
+                else np.nan
+            ),
+            axis=1,
+        )
+        assert np.allclose(df['PBE0-D4 IE adz'], df['SAPT_DFT_D4_pbe0_adz_total'], atol=1e-16)
         df["PBE0 IE atz"] = df.apply(
             lambda r: (
-                r["SAPT_DFT_pbe0_atz_dDFT"] + sum(r["SAPT_DFT_pbe0_atz"][1:4]) - r['SAPT_DFT_pbe0_atz_dHF']
+                r["SAPT_DFT_pbe0_atz_dDFT"] 
+                + r["SAPT_DFT_pbe0_atz_elst"] 
+                + r["SAPT_DFT_pbe0_atz_exch"]
+                + r["SAPT_DFT_pbe0_atz_indu"]
+                - r['SAPT_DFT_pbe0_atz_dHF']
 
                 if r["SAPT_DFT_pbe0_atz"]
                 else np.nan
@@ -1884,7 +1900,11 @@ def plotting_setup_dft_ddft(
         )
         df["PBE0 IE aqz"] = df.apply(
             lambda r: (
-                r["SAPT_DFT_pbe0_aqz_dDFT"] + sum(r["SAPT_DFT_pbe0_aqz"][1:4]) - r['SAPT_DFT_pbe0_aqz_dHF']
+                r["SAPT_DFT_pbe0_aqz_dDFT"] 
+                + r["SAPT_DFT_pbe0_aqz_elst"] 
+                + r["SAPT_DFT_pbe0_aqz_exch"]
+                + r["SAPT_DFT_pbe0_aqz_indu"]
+                - r['SAPT_DFT_pbe0_aqz_dHF']
 
                 if r["SAPT_DFT_pbe0_aqz"]
                 else np.nan
