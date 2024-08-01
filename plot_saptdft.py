@@ -35,11 +35,12 @@ def main():
     # pp(df.columns.values.tolist())
     df = src.plotting.plotting_setup_dft_ddft(
         df_name,
-        build_df=True,
+        build_df=False,
         split_components=True,
         original_plot=False,
     )
     # return
+    print(df[['SAPT_DFT_pbe0_adz_total', "SAPT_DFT_b3lyp_adz_total"]])
     src.plotting.plot_LoS_saptdft(df)
     return
 

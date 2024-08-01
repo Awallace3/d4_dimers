@@ -1393,7 +1393,7 @@ def prepare_saptdft_columns(df, functional, basis_set):
     if f"SAPT_DFT_{functional}_{basis_set}" not in df.columns:
         print(f"Zeroing SAPT_DFT_{functional}_{basis_set} because not found...")
         df[f"SAPT_DFT_{functional}_{basis_set}"] = df.apply(
-            lambda x: np.array([0,0,0,0,0]), axis=1
+            lambda x: [0,0,0,0,0], axis=1
         )
         df[f"SAPT_DFT_{functional}_{basis_set}_dDFT"] = df.apply(
             lambda x: 0, axis=1
@@ -1407,11 +1407,11 @@ def prepare_saptdft_columns(df, functional, basis_set):
         df[f"SAPT_DFT_{functional}_{basis_set}_DFT_IE"] = df.apply(
             lambda x: 0, axis=1
         )
-    else:
-        print(df[f"SAPT_DFT_{functional}_{basis_set}"])
+    # else:
+    #     print(df[f"SAPT_DFT_{functional}_{basis_set}"])
 
     df[f"SAPT_DFT_D4_{functional}_{basis_set}_total"] = df.apply(
-        lambda x: compute_saptdft_ddft_ie(x, f"{basis_set}"),
+        lambda x: compute_saptdft_ddft_ie(x, f"{basis_set}", functional=functional),
         axis=1,
     )
     df[f"DFT-D4/{basis_set}"] = df.apply(
@@ -1513,7 +1513,6 @@ def plotting_setup_dft_ddft(
 
         df.dropna(subset=[f"SAPT_DFT_D4_{functional}_{basis_set}_total"], inplace=True)
 
-        print(df[['SAPT_DFT_pbe0_adz_3_IE', "SAPT_DFT_pbe0_adz_elst"]])
 
         df = prepare_saptdft_columns(df, "pbe0", "atz")
         df = prepare_saptdft_columns(df, "pbe0", "aqz")
@@ -1923,7 +1922,33 @@ def plotting_setup_dft_ddft(
             ),
             axis=1,
         )
-        print(df[['SAPT_DFT_pbe0_adz', "SAPT_DFT_pbe0_adz_D4_IE"]])
+
+        df["B3LYP IE adz"] = df.apply(
+            lambda r: (
+                r["SAPT_DFT_b3lyp_adz_dDFT"]
+                + r["SAPT_DFT_b3lyp_adz_elst"]
+                + r["SAPT_DFT_b3lyp_adz_exch"]
+                + r["SAPT_DFT_b3lyp_adz_indu"]
+                - r["SAPT_DFT_b3lyp_adz_dHF"]
+                if r["SAPT_DFT_D4_b3lyp_adz_total"]
+                else np.nan
+            ),
+            axis=1,
+        )
+
+        df["B2PLYP IE adz"] = df.apply(
+            lambda r: (
+                r["SAPT_DFT_b2plyp_adz_dDFT"]
+                + r["SAPT_DFT_b2plyp_adz_elst"]
+                + r["SAPT_DFT_b2plyp_adz_exch"]
+                + r["SAPT_DFT_b2plyp_adz_indu"]
+                - r["SAPT_DFT_b2plyp_adz_dHF"]
+                if r["SAPT_DFT_D4_b2plyp_adz_total"]
+                else np.nan
+            ),
+            axis=1,
+        )
+
         df["PBE0-D4 IE adz"] = df.apply(
             lambda r: (
                 r["PBE0 IE adz"] + r["SAPT_DFT_pbe0_adz_D4_IE"]
@@ -1932,20 +1957,44 @@ def plotting_setup_dft_ddft(
             ),
             axis=1,
         )
-        print(df['PBE0-D4 IE adz'])
+
+        df["PBE0-D4 IE adz"] = df.apply(
+            lambda r: (
+                r["PBE0 IE adz"] + r["SAPT_DFT_pbe0_adz_D4_IE"]
+                if r["SAPT_DFT_D4_pbe0_adz_total"]
+                else np.nan
+            ),
+            axis=1,
+        )
+
+        df["B2PLYP-D4 IE adz"] = df.apply(
+            lambda r: (
+                r["B2PLYP IE adz"] + r["SAPT_DFT_b2plyp_adz_D4_IE"]
+                if r["SAPT_DFT_D4_b2plyp_adz_total"]
+                else np.nan
+            ),
+            axis=1,
+        )
+
+        df["B3LYP-D4 IE adz"] = df.apply(
+            lambda r: (
+                r["B3LYP IE adz"] + r["SAPT_DFT_b3lyp_adz_D4_IE"]
+                if r["SAPT_DFT_D4_b3lyp_adz_total"]
+                else np.nan
+            ),
+            axis=1,
+        )
+
         for n, r in df.iterrows():
-            if np.abs(r["SAPT_DFT_pbe0_adz_total"] - r["PBE0-D4 IE adz"]) > 1e-16:
+            if np.abs(r["SAPT_DFT_D4_pbe0_adz_total"] - r["PBE0-D4 IE adz"]) > 1e-16:
                 print(
                     n,
                     r["benchmark ref energy"],
                     r["SAPT_DFT_pbe0_adz_total"],
                     r["PBE0-D4 IE adz"],
                 )
-        print(len(df))
         df_test = df.dropna(subset=["SAPT_DFT_D4_pbe0_adz_total"])
-        print(len(df_test))
         df_test = df_test.dropna(subset=["PBE0-D4 IE adz"])
-        print(len(df_test))
         assert np.allclose(
             df_test["PBE0-D4 IE adz"], df_test["SAPT_DFT_D4_pbe0_adz_total"], atol=1e-16
         )
@@ -3953,6 +4002,8 @@ def violin_plots_multi(df, limit_to_column_not_nan=None):
     sapt_methods = [
         "MP2 IE",
         "PBE0 IE",
+        "B3LYP IE",
+        "B2PLYP IE",
         "SAPT0 TOTAL ENERGY",
         "SSAPT0 TOTAL ENERGY",
         "SAPT2 TOTAL ENERGY",
@@ -3995,7 +4046,18 @@ def violin_plots_multi(df, limit_to_column_not_nan=None):
         "SAPT_DFT_pbe0_adz_total",
         "SAPT_DFT_D4_pbe0_atz_total",
         "SAPT_DFT_pbe0_atz_total",
+
+        "SAPT_DFT_D4_b3lyp_adz_total",
+        "SAPT_DFT_b3lyp_adz_total",
+        "SAPT_DFT_D4_b3lyp_atz_total",
+        "SAPT_DFT_b3lyp_atz_total",
+
+        "SAPT_DFT_D4_b2plyp_adz_total",
+        "SAPT_DFT_b2plyp_adz_total",
+        "SAPT_DFT_D4_b2plyp_atz_total",
+        "SAPT_DFT_b2plyp_atz_total",
     ]
+    print(df[["SAPT_DFT_D4_pbe0_adz_total", "SAPT_DFT_D4_b3lyp_adz_total",]])
     copy_cols = copy_cols_start.copy()
     copy_cols.extend([f"{c} adz" for c in sapt_methods])
     df_adz = df[copy_cols].copy()
@@ -4003,7 +4065,13 @@ def violin_plots_multi(df, limit_to_column_not_nan=None):
     df_adz.rename(
         columns={
             "SAPT_DFT_D4_pbe0_adz_total": "PBE0-D4 TOTAL ENERGY",
-            "SAPT_DFT_pbe0_adz_total": "SAPT(DFT) TOTAL ENERGY",
+            "SAPT_DFT_pbe0_adz_total": "SAPT(DFT) [PBE0] TOTAL ENERGY",
+
+            "SAPT_DFT_D4_b2plyp_adz_total": "B2PLYP-D4 TOTAL ENERGY",
+            "SAPT_DFT_b2plyp_adz_total": "SAPT(DFT) [B2PLYP] TOTAL ENERGY",
+
+            "SAPT_DFT_D4_b3lyp_adz_total": "B3LYP-D4 TOTAL ENERGY",
+            "SAPT_DFT_b3lyp_adz_total": "SAPT(DFT) [B3LYP] TOTAL ENERGY",
         },
         inplace=True,
     )
@@ -4015,13 +4083,24 @@ def violin_plots_multi(df, limit_to_column_not_nan=None):
     df_atz.rename(
         columns={
             "SAPT_DFT_D4_pbe0_atz_total": "PBE0-D4 TOTAL ENERGY",
-            "SAPT_DFT_pbe0_atz_total": "SAPT(DFT) TOTAL ENERGY",
+            "SAPT_DFT_pbe0_atz_total": "SAPT(DFT) [PBE0] TOTAL ENERGY",
+
+            "SAPT_DFT_D4_b2plyp_atz_total": "B2PLYP-D4 TOTAL ENERGY",
+            "SAPT_DFT_b2plyp_atz_total": "SAPT(DFT) [B2PLYP] TOTAL ENERGY",
+
+            "SAPT_DFT_D4_b3lyp_atz_total": "B3LYP-D4 TOTAL ENERGY",
+            "SAPT_DFT_b3lyp_atz_total": "SAPT(DFT) [B3LYP] TOTAL ENERGY",
+
         },
         inplace=True,
     )
     local_methods = [
         "PBE0-D4 TOTAL ENERGY",
-        "SAPT(DFT) TOTAL ENERGY",
+        "B3LYP-D4 TOTAL ENERGY",
+        "B2PLYP-D4 TOTAL ENERGY",
+        "SAPT(DFT) [PBE0] TOTAL ENERGY",
+        "SAPT(DFT) [B3LYP] TOTAL ENERGY",
+        "SAPT(DFT) [B2PLYP] TOTAL ENERGY",
     ]
     sapt_methods.extend(local_methods)
     for i in sapt_methods:
@@ -4036,6 +4115,8 @@ def violin_plots_multi(df, limit_to_column_not_nan=None):
         # "SAPT2+3(CCD)DMP2": "SAPT2+3(CCD)DMP2 TOTAL ENERGY Error",
         "MP2": "MP2 IE Error",
         "PBE0": "PBE0 IE Error",
+        "B3LYP": "B3LYP IE Error",
+        "B2PLYP": "B2PLYP IE Error",
         "SAPT0": "SAPT0 TOTAL ENERGY Error",
         "SAPT0-D4": "SAPT0-D4 TOTAL ENERGY Error",
         # "SSAPT0": "SSAPT0 TOTAL ENERGY Error",
@@ -4053,9 +4134,13 @@ def violin_plots_multi(df, limit_to_column_not_nan=None):
         "SAPT2+(3)(CCD)DMP2": "SAPT2+(3)(CCD)DMP2 TOTAL ENERGY Error",
         "SAPT2+3(CCD)DMP2": "SAPT2+3(CCD)DMP2 TOTAL ENERGY Error",
         "SAPT(DFT)-D4": "SAPT(DFT)-D4 TOTAL ENERGY Error",
-        "SAPT(DFT)": "SAPT(DFT) TOTAL ENERGY Error",
+        "SAPT(DFT) [PBE0]": "SAPT(DFT) [PBE0] TOTAL ENERGY Error",
+        "SAPT(DFT) [B3LYP]": "SAPT(DFT) [B3LYP] TOTAL ENERGY Error",
+        "SAPT(DFT) [B2PLYP]": "SAPT(DFT) [B2PLYP] TOTAL ENERGY Error",
         "SAPT(DFT)+D4": "SAPT(DFT)+D4 TOTAL ENERGY Error",
         "PBE0-D4": "PBE0-D4 TOTAL ENERGY Error",
+        "B3LYP-D4": "B3LYP-D4 TOTAL ENERGY Error",
+        "B2PLYP-D4": "B2PLYP-D4 TOTAL ENERGY Error",
         "SAPT(DFT)D3-ML": "SAPT(DFT)D3-ML TOTAL ENERGY Error",
     }
     mcure_labels = {}
@@ -4075,7 +4160,7 @@ def violin_plots_multi(df, limit_to_column_not_nan=None):
         dfs,
         df_labels_and_columns,
         f"./plots/LoS_all_adz_atz_saptdft.jpg",
-        table_fontsize=7,
+        table_fontsize=6,
         usetex=True,
         legend_loc="lower right",
         figure_size=(7, 7),
