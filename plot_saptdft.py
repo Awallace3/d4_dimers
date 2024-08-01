@@ -23,6 +23,7 @@ def check_c6s(df):
 def main():
     # df_name = "./dfs/los_adz_candidacy_s0atz.pkl"
     # df_name = "./dfs/los_saptdft_adz_3.pkl"
+    # df_name = "./dfs/los_all.pkl"
     df_name = "./dfs/los_all.pkl"
     # df_name = "./dfs/ddft_study.pkl"
     # df = pd.read_pickle(df_name)

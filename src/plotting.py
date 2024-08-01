@@ -1375,6 +1375,112 @@ def plotting_setup_dft(
     return df
 
 
+def compute_saptdft_ddft_ie(r, b, functional="pbe0"):
+    if r[f"SAPT_DFT_{functional}_{b}"]:
+        return (
+            r[f"SAPT_DFT_{functional}_{b}"][1]
+            + r[f"SAPT_DFT_{functional}_{b}"][2]
+            + r[f"SAPT_DFT_{functional}_{b}"][3]
+            + r[f"SAPT_DFT_{functional}_{b}_D4_IE"]
+            + r[f"SAPT_DFT_{functional}_{b}_dDFT"]
+            - r[f"SAPT_DFT_{functional}_{b}_dHF"]
+        )
+    else:
+        return np.nan
+
+
+def prepare_saptdft_columns(df, functional, basis_set):
+    if f"SAPT_DFT_{functional}_{basis_set}" not in df.columns:
+        print(f"Zeroing SAPT_DFT_{functional}_{basis_set} because not found...")
+        df[f"SAPT_DFT_{functional}_{basis_set}"] = df.apply(
+            lambda x: np.array([0,0,0,0,0]), axis=1
+        )
+        df[f"SAPT_DFT_{functional}_{basis_set}_dDFT"] = df.apply(
+            lambda x: 0, axis=1
+        )
+        df[f"SAPT_DFT_{functional}_{basis_set}_dHF"] = df.apply(
+            lambda x: 0, axis=1
+        )
+        df[f"SAPT_DFT_{functional}_{basis_set}_D4_IE"] = df.apply(
+            lambda x: 0, axis=1
+        )
+        df[f"SAPT_DFT_{functional}_{basis_set}_DFT_IE"] = df.apply(
+            lambda x: 0, axis=1
+        )
+    else:
+        print(df[f"SAPT_DFT_{functional}_{basis_set}"])
+
+    df[f"SAPT_DFT_D4_{functional}_{basis_set}_total"] = df.apply(
+        lambda x: compute_saptdft_ddft_ie(x, f"{basis_set}"),
+        axis=1,
+    )
+    df[f"DFT-D4/{basis_set}"] = df.apply(
+        lambda x: (
+            x[f"SAPT_DFT_{functional}_{basis_set}_DFT_IE"]
+            + x[f"SAPT_DFT_{functional}_{basis_set}_D4_IE"]
+            if x[f"SAPT_DFT_D4_{functional}_{basis_set}_total"]
+            else np.nan
+        ),
+        axis=1,
+    )
+    df[f"SAPT_DFT_{functional}_{basis_set}_total"] = df[
+        f"SAPT_DFT_{functional}_{basis_set}"
+    ].apply(lambda x: x[0] if isinstance(x, np.ndarray) or isinstance(x, list) else np.nan)
+    df[f"SAPT_DFT_{functional}_{basis_set}_elst"] = df[
+        f"SAPT_DFT_{functional}_{basis_set}"
+    ].apply(lambda x: x[1] if isinstance(x, np.ndarray)  or isinstance(x, list) else np.nan)
+    df[f"SAPT_DFT_{functional}_{basis_set}_exch"] = df[
+        f"SAPT_DFT_{functional}_{basis_set}"
+    ].apply(lambda x: x[2] if isinstance(x, np.ndarray) or isinstance(x, list)  else np.nan)
+    df[f"SAPT_DFT_{functional}_{basis_set}_indu"] = df[
+        f"SAPT_DFT_{functional}_{basis_set}"
+    ].apply(lambda x: x[3] if isinstance(x, np.ndarray) or isinstance(x, list)  else np.nan)
+    df[f"SAPT_DFT_{functional}_{basis_set}_disp"] = df[
+        f"SAPT_DFT_{functional}_{basis_set}"
+    ].apply(lambda x: x[4] if isinstance(x, np.ndarray) or isinstance(x, list)  else np.nan)
+
+    df[f"SAPT_DFT_{functional}_{basis_set}_3_IE"] = (
+        df[f"SAPT_DFT_{functional}_{basis_set}_elst"]
+        + df[f"SAPT_DFT_{functional}_{basis_set}_exch"]
+        + df[f"SAPT_DFT_{functional}_{basis_set}_indu"]
+    )
+    df[f"SAPT_DFT_{functional}_{basis_set}_3_IE_pre_d4"] = (
+        df[f"SAPT_DFT_{functional}_{basis_set}_elst"]
+        + df[f"SAPT_DFT_{functional}_{basis_set}_exch"]
+        + df[f"SAPT_DFT_{functional}_{basis_set}_indu"]
+        + df[f"SAPT_DFT_{functional}_{basis_set}_dDFT"]
+        - df[f"SAPT_DFT_{functional}_{basis_set}_dHF"]
+    )
+    df[f"SAPT_DFT_{functional}_{basis_set}_d4_disp"] = df.apply(
+        lambda x: x[f"SAPT_DFT_{functional}_{basis_set}_dDFT"]
+        - x[f"SAPT_DFT_{functional}_{basis_set}_dHF"]
+        + x[f"SAPT_DFT_{functional}_{basis_set}_D4_IE"]
+        ,
+        axis=1,
+    )
+    df[f"{functional.upper()} IE {basis_set}"] = df.apply(
+        lambda r: (
+            r[f"SAPT_DFT_{functional}_{basis_set}_dDFT"]
+            + r[f"SAPT_DFT_{functional}_{basis_set}_elst"]
+            + r[f"SAPT_DFT_{functional}_{basis_set}_exch"]
+            + r[f"SAPT_DFT_{functional}_{basis_set}_indu"]
+            - r[f"SAPT_DFT_{functional}_{basis_set}_dHF"]
+            if r[f"SAPT_DFT_D4_{functional}_{basis_set}_total"]
+            else np.nan
+        ),
+        axis=1,
+    )
+    df[f"{functional.upper()}-D4 IE {basis_set}"] = df.apply(
+        lambda r: (
+            r[f"{functional.upper()} IE {basis_set}"] + r[f"SAPT_DFT_{functional}_{basis_set}_D4_IE"]
+            if r[f"SAPT_DFT_D4_{functional}_{basis_set}_total"]
+            else np.nan
+        ),
+        axis=1,
+    )
+    return df
+
+
 def plotting_setup_dft_ddft(
     selected,
     build_df=False,
@@ -1399,105 +1505,55 @@ def plotting_setup_dft_ddft(
 
         df_disp = pd.read_pickle("./dfs/dispml.pkl")
         df_disp = df_disp[["D3-ML", "system_id"]].copy()
-        print(df_disp)
         df = df.merge(df_disp, on="system_id")
+        basis_set = "adz"
+        functional = "pbe0"
+        df = prepare_saptdft_columns(df, "pbe0", "adz")
+        pp(df.columns.tolist())
 
-        def compute_saptdft_ddft_ie(r, b):
-            if r[f"SAPT_DFT_pbe0_{b}"]:
-                return (
-                    r[f"SAPT_DFT_pbe0_{b}"][1]
-                    + r[f"SAPT_DFT_pbe0_{b}"][2]
-                    + r[f"SAPT_DFT_pbe0_{b}"][3]
-                    + r[f"SAPT_DFT_pbe0_{b}_D4_IE"]
-                    + r[f"SAPT_DFT_pbe0_{b}_dDFT"]
-                    - r[f"SAPT_DFT_pbe0_{b}_dHF"]
-                )
-            else:
-                return np.nan
+        df.dropna(subset=[f"SAPT_DFT_D4_{functional}_{basis_set}_total"], inplace=True)
 
-        df["SAPT_DFT_D4_pbe0_adz_total"] = df.apply(
-            lambda x: compute_saptdft_ddft_ie(x, "adz"),
-            axis=1,
-        )
+        print(df[['SAPT_DFT_pbe0_adz_3_IE', "SAPT_DFT_pbe0_adz_elst"]])
 
-        df["DFT-D4/aDZ"] = df.apply(
-            lambda x: x["SAPT_DFT_pbe0_adz_DFT_IE"] + x["SAPT_DFT_pbe0_adz_D4_IE"],
-            axis=1,
-        )
-        # print(df[["SAPT_DFT_D4_pbe0_adz_total", "DFT-D4/aDZ"]])
-        for n, i in df.iterrows():
-            if not np.allclose(
-                i["SAPT_DFT_D4_pbe0_adz_total"], i["DFT-D4/aDZ"], atol=1e-6
-            ):
-                print(
-                    n,
-                    i["benchmark ref energy"],
-                    i["SAPT_DFT_D4_pbe0_adz_total"],
-                    i["DFT-D4/aDZ"],
-                )
-        df.dropna(subset=["SAPT_DFT_D4_pbe0_adz_total"], inplace=True)
+        df = prepare_saptdft_columns(df, "pbe0", "atz")
+        df = prepare_saptdft_columns(df, "pbe0", "aqz")
 
-        assert np.allclose(
-            df["SAPT_DFT_D4_pbe0_adz_total"], df["DFT-D4/aDZ"], atol=1e-6
-        )
-        df["SAPT_DFT_pbe0_adz_total"] = df["SAPT_DFT_pbe0_adz"].apply(lambda x: x[0])
-        df["SAPT_DFT_pbe0_adz_elst"] = df["SAPT_DFT_pbe0_adz"].apply(lambda x: x[1])
-        df["SAPT_DFT_pbe0_adz_exch"] = df["SAPT_DFT_pbe0_adz"].apply(lambda x: x[2])
-        df["SAPT_DFT_pbe0_adz_indu"] = df["SAPT_DFT_pbe0_adz"].apply(lambda x: x[3])
-        df["SAPT_DFT_pbe0_adz_disp"] = df["SAPT_DFT_pbe0_adz"].apply(lambda x: x[4])
-        df["SAPT_DFT_pbe0_adz_3_IE"] = (
-            df["SAPT_DFT_pbe0_adz_elst"]
-            + df["SAPT_DFT_pbe0_adz_exch"]
-            + df["SAPT_DFT_pbe0_adz_indu"]
-        )
-        df["SAPT_DFT_pbe0_adz_3_IE_pre_d4"] = (
-            df["SAPT_DFT_pbe0_adz_elst"]
-            + df["SAPT_DFT_pbe0_adz_exch"]
-            + df["SAPT_DFT_pbe0_adz_indu"]
-            + df["SAPT_DFT_pbe0_adz_dDFT"]
-            - df["SAPT_DFT_pbe0_adz_dHF"]
-        )
-        df["SAPT_DFT_pbe0_adz_d4_disp"] = df.apply(
-            lambda x: x["SAPT_DFT_pbe0_adz_dDFT"]
-            - x["SAPT_DFT_pbe0_adz_dHF"]
-            + x["SAPT_DFT_pbe0_adz_D4_IE"],
-            axis=1,
-        )
-        df["SAPT0_adz"] = df.apply(
+        df = prepare_saptdft_columns(df, "b3lyp", "adz")
+        df = prepare_saptdft_columns(df, "b3lyp", "atz")
+        df = prepare_saptdft_columns(df, "b3lyp", "aqz")
+
+        df = prepare_saptdft_columns(df, "b2plyp", "adz")
+        df = prepare_saptdft_columns(df, "b2plyp", "atz")
+        df = prepare_saptdft_columns(df, "b2plyp", "aqz")
+
+        df[f"SAPT0_{basis_set}"] = df.apply(
             lambda x: np.array(
                 [
-                    x["SAPT0 ELST ENERGY adz"]
-                    + x["SAPT0 EXCH ENERGY adz"]
-                    + x["SAPT0 IND ENERGY adz"]
-                    + x["SAPT0 DISP ENERGY adz"],
-                    x["SAPT0 ELST ENERGY adz"],
-                    x["SAPT0 EXCH ENERGY adz"],
-                    x["SAPT0 IND ENERGY adz"],
-                    x["SAPT0 DISP ENERGY adz"],
+                    x[f"SAPT0 ELST ENERGY {basis_set}"]
+                    + x[f"SAPT0 EXCH ENERGY {basis_set}"]
+                    + x[f"SAPT0 IND ENERGY {basis_set}"]
+                    + x[f"SAPT0 DISP ENERGY {basis_set}"],
+                    x[f"SAPT0 ELST ENERGY {basis_set}"],
+                    x[f"SAPT0 EXCH ENERGY {basis_set}"],
+                    x[f"SAPT0 IND ENERGY {basis_set}"],
+                    x[f"SAPT0 DISP ENERGY {basis_set}"],
                 ]
             )
             * h2kcalmol,
             axis=1,
         )
-        df["SAPT0_adz_3_IE"] = df.apply(
+        df[f"SAPT0_{basis_set}_total"] = df[f"SAPT0_{basis_set}"].apply(lambda x: x[0])
+        df[f"SAPT0_{basis_set}_elst"] = df[f"SAPT0_{basis_set}"].apply(lambda x: x[1])
+        df[f"SAPT0_{basis_set}_exch"] = df[f"SAPT0_{basis_set}"].apply(lambda x: x[2])
+        df[f"SAPT0_{basis_set}_indu"] = df[f"SAPT0_{basis_set}"].apply(lambda x: x[3])
+        df[f"SAPT0_{basis_set}_disp"] = df[f"SAPT0_{basis_set}"].apply(lambda x: x[4])
+        df[f"SAPT0_{basis_set}_3_IE"] = df.apply(
             lambda x: (
-                x["SAPT0 ELST ENERGY adz"]
-                + x["SAPT0 EXCH ENERGY adz"]
-                + x["SAPT0 IND ENERGY adz"]
+                x[f"SAPT0 ELST ENERGY {basis_set}"]
+                + x[f"SAPT0 EXCH ENERGY {basis_set}"]
+                + x[f"SAPT0 IND ENERGY {basis_set}"]
             )
             * h2kcalmol,
-            axis=1,
-        )
-        df["SAPT0_adz_total"] = df["SAPT0_adz"].apply(lambda x: x[0])
-        df["SAPT0_adz_elst"] = df["SAPT0_adz"].apply(lambda x: x[1])
-        df["SAPT0_adz_exch"] = df["SAPT0_adz"].apply(lambda x: x[2])
-        df["SAPT0_adz_indu"] = df["SAPT0_adz"].apply(lambda x: x[3])
-        df["SAPT0_adz_disp"] = df["SAPT0_adz"].apply(lambda x: x[4])
-        print(df["SAPT_DFT_pbe0_atz"])
-
-        # SAPT(DFT) - aTZ
-        df["SAPT_DFT_D4_pbe0_atz_total"] = df.apply(
-            lambda x: compute_saptdft_ddft_ie(x, "atz"),
             axis=1,
         )
 
@@ -1517,32 +1573,8 @@ def plotting_setup_dft_ddft(
                     i["DFT-D4/aTZ"],
                 )
         df.dropna(subset=["SAPT_DFT_D4_pbe0_atz_total"], inplace=True)
-
         assert np.allclose(
             df["SAPT_DFT_D4_pbe0_atz_total"], df["DFT-D4/aTZ"], atol=1e-6
-        )
-        df["SAPT_DFT_pbe0_atz_total"] = df["SAPT_DFT_pbe0_atz"].apply(lambda x: x[0])
-        df["SAPT_DFT_pbe0_atz_elst"] = df["SAPT_DFT_pbe0_atz"].apply(lambda x: x[1])
-        df["SAPT_DFT_pbe0_atz_exch"] = df["SAPT_DFT_pbe0_atz"].apply(lambda x: x[2])
-        df["SAPT_DFT_pbe0_atz_indu"] = df["SAPT_DFT_pbe0_atz"].apply(lambda x: x[3])
-        df["SAPT_DFT_pbe0_atz_disp"] = df["SAPT_DFT_pbe0_atz"].apply(lambda x: x[4])
-        df["SAPT_DFT_pbe0_atz_3_IE"] = (
-            df["SAPT_DFT_pbe0_atz_elst"]
-            + df["SAPT_DFT_pbe0_atz_exch"]
-            + df["SAPT_DFT_pbe0_atz_indu"]
-        )
-        df["SAPT_DFT_pbe0_atz_3_IE_pre_d4"] = (
-            df["SAPT_DFT_pbe0_atz_elst"]
-            + df["SAPT_DFT_pbe0_atz_exch"]
-            + df["SAPT_DFT_pbe0_atz_indu"]
-            + df["SAPT_DFT_pbe0_atz_dDFT"]
-            - df["SAPT_DFT_pbe0_atz_dHF"]
-        )
-        df["SAPT_DFT_pbe0_atz_d4_disp"] = df.apply(
-            lambda x: x["SAPT_DFT_pbe0_atz_dDFT"]
-            - x["SAPT_DFT_pbe0_atz_dHF"]
-            + x["SAPT_DFT_pbe0_atz_D4_IE"],
-            axis=1,
         )
         # df[f"{reference} TOTAL ENERGY adz"] = df[f"{reference} TOTAL ENERGY adz"] * h2kcalmol
         df["SAPT0_atz"] = df.apply(
@@ -1577,15 +1609,15 @@ def plotting_setup_dft_ddft(
         df["SAPT0_atz_disp"] = df["SAPT0_atz"].apply(lambda x: x[4])
 
         # SAPT(DFT) - aQZ
-        df["SAPT_DFT_D4_pbe0_aqz_total"] = df.apply(
-            lambda x: compute_saptdft_ddft_ie(x, "aqz"),
-            axis=1,
-        )
-
-        df["DFT-D4/aqz"] = df.apply(
-            lambda x: x["SAPT_DFT_pbe0_aqz_DFT_IE"] + x["SAPT_DFT_pbe0_aqz_D4_IE"],
-            axis=1,
-        )
+        # df["SAPT_DFT_D4_pbe0_aqz_total"] = df.apply(
+        #     lambda x: compute_saptdft_ddft_ie(x, "aqz"),
+        #     axis=1,
+        # )
+        #
+        # df["DFT-D4/aqz"] = df.apply(
+        #     lambda x: x["SAPT_DFT_pbe0_aqz_DFT_IE"] + x["SAPT_DFT_pbe0_aqz_D4_IE"],
+        #     axis=1,
+        # )
         df["MP2 IE aqz"] = df.apply(
             lambda r: (
                 r["SAPT MP2(2) ENERGY aqz"] + r["SAPT2 TOTAL ENERGY aqz"]
@@ -1596,39 +1628,39 @@ def plotting_setup_dft_ddft(
         )
 
         # print(df[["SAPT_DFT_D4_pbe0_aqz_total", "DFT-D4/aqz"]])
-        df["SAPT_DFT_pbe0_aqz_total"] = df["SAPT_DFT_pbe0_aqz"].apply(
-            lambda x: x[0] if x else np.nan
-        )
-        df["SAPT_DFT_pbe0_aqz_elst"] = df["SAPT_DFT_pbe0_aqz"].apply(
-            lambda x: x[1] if x else np.nan
-        )
-        df["SAPT_DFT_pbe0_aqz_exch"] = df["SAPT_DFT_pbe0_aqz"].apply(
-            lambda x: x[2] if x else np.nan
-        )
-        df["SAPT_DFT_pbe0_aqz_indu"] = df["SAPT_DFT_pbe0_aqz"].apply(
-            lambda x: x[3] if x else np.nan
-        )
-        df["SAPT_DFT_pbe0_aqz_disp"] = df["SAPT_DFT_pbe0_aqz"].apply(
-            lambda x: x[4] if x else np.nan
-        )
-        df["SAPT_DFT_pbe0_aqz_3_IE"] = (
-            df["SAPT_DFT_pbe0_aqz_elst"]
-            + df["SAPT_DFT_pbe0_aqz_exch"]
-            + df["SAPT_DFT_pbe0_aqz_indu"]
-        )
-        df["SAPT_DFT_pbe0_aqz_3_IE_pre_d4"] = (
-            df["SAPT_DFT_pbe0_aqz_elst"]
-            + df["SAPT_DFT_pbe0_aqz_exch"]
-            + df["SAPT_DFT_pbe0_aqz_indu"]
-            + df["SAPT_DFT_pbe0_aqz_dDFT"]
-            - df["SAPT_DFT_pbe0_aqz_dHF"]
-        )
-        df["SAPT_DFT_pbe0_aqz_d4_disp"] = df.apply(
-            lambda x: x["SAPT_DFT_pbe0_aqz_dDFT"]
-            - x["SAPT_DFT_pbe0_aqz_dHF"]
-            + x["SAPT_DFT_pbe0_aqz_D4_IE"],
-            axis=1,
-        )
+        # df["SAPT_DFT_pbe0_aqz_total"] = df["SAPT_DFT_pbe0_aqz"].apply(
+        #     lambda x: x[0] if x else np.nan
+        # )
+        # df["SAPT_DFT_pbe0_aqz_elst"] = df["SAPT_DFT_pbe0_aqz"].apply(
+        #     lambda x: x[1] if x else np.nan
+        # )
+        # df["SAPT_DFT_pbe0_aqz_exch"] = df["SAPT_DFT_pbe0_aqz"].apply(
+        #     lambda x: x[2] if x else np.nan
+        # )
+        # df["SAPT_DFT_pbe0_aqz_indu"] = df["SAPT_DFT_pbe0_aqz"].apply(
+        #     lambda x: x[3] if x else np.nan
+        # )
+        # df["SAPT_DFT_pbe0_aqz_disp"] = df["SAPT_DFT_pbe0_aqz"].apply(
+        #     lambda x: x[4] if x else np.nan
+        # )
+        # df["SAPT_DFT_pbe0_aqz_3_IE"] = (
+        #     df["SAPT_DFT_pbe0_aqz_elst"]
+        #     + df["SAPT_DFT_pbe0_aqz_exch"]
+        #     + df["SAPT_DFT_pbe0_aqz_indu"]
+        # )
+        # df["SAPT_DFT_pbe0_aqz_3_IE_pre_d4"] = (
+        #     df["SAPT_DFT_pbe0_aqz_elst"]
+        #     + df["SAPT_DFT_pbe0_aqz_exch"]
+        #     + df["SAPT_DFT_pbe0_aqz_indu"]
+        #     + df["SAPT_DFT_pbe0_aqz_dDFT"]
+        #     - df["SAPT_DFT_pbe0_aqz_dHF"]
+        # )
+        # df["SAPT_DFT_pbe0_aqz_d4_disp"] = df.apply(
+        #     lambda x: x["SAPT_DFT_pbe0_aqz_dDFT"]
+        #     - x["SAPT_DFT_pbe0_aqz_dHF"]
+        #     + x["SAPT_DFT_pbe0_aqz_D4_IE"],
+        #     axis=1,
+        # )
         # df[f"{reference} TOTAL ENERGY adz"] = df[f"{reference} TOTAL ENERGY adz"] * h2kcalmol
         df["SAPT0_aqz"] = df.apply(
             lambda x: np.array(
@@ -1761,22 +1793,37 @@ def plotting_setup_dft_ddft(
         df = compute_d4_from_opt_params(
             df,
             bases=[
+                # [
+                #     "SAPT_DFT_b3lyp_adz_total",
+                #     "SAPT_DFT_b3lyp_adz_3_IE",
+                #     "b3lyp",
+                #     "SAPT_DFT_b3lyp_adz_3_IE",
+                # ],
+                # [
+                #     "SAPT_DFT_b2plyp_adz_total",
+                #     "SAPT_DFT_b2plyp_adz_3_IE",
+                #     "b2plyp",
+                #     "SAPT_DFT_b2plyp_adz_3_IE",
+                # ],
                 [
                     "SAPT_DFT_pbe0_adz_total",
                     "SAPT_DFT_pbe0_adz_3_IE",
                     "SAPT_DFT_pbe0_adz_3_IE",
+                    # "pbe0",
                     "SAPT_DFT_pbe0_adz_3_IE",
                 ],
                 [
                     "SAPT_DFT_pbe0_atz_total",
                     "SAPT_DFT_pbe0_atz_3_IE",
                     "SAPT_DFT_pbe0_atz_3_IE",
+                    # "pbe0",
                     "SAPT_DFT_pbe0_atz_3_IE",
                 ],
                 [
                     "SAPT_DFT_pbe0_aqz_total",
                     "SAPT_DFT_pbe0_aqz_3_IE",
                     "SAPT_DFT_pbe0_atz_3_IE",
+                    # "pbe0",
                     "SAPT_DFT_pbe0_aqz_3_IE",
                 ],
                 [
@@ -1866,47 +1913,62 @@ def plotting_setup_dft_ddft(
         # DFT IEs
         df["PBE0 IE adz"] = df.apply(
             lambda r: (
-                r["SAPT_DFT_pbe0_adz_dDFT"] 
-                + r["SAPT_DFT_pbe0_adz_elst"] 
+                r["SAPT_DFT_pbe0_adz_dDFT"]
+                + r["SAPT_DFT_pbe0_adz_elst"]
                 + r["SAPT_DFT_pbe0_adz_exch"]
                 + r["SAPT_DFT_pbe0_adz_indu"]
-                - r['SAPT_DFT_pbe0_adz_dHF']
-                if r["SAPT_DFT_pbe0_adz"]
+                - r["SAPT_DFT_pbe0_adz_dHF"]
+                if r["SAPT_DFT_D4_pbe0_adz_total"]
                 else np.nan
             ),
             axis=1,
         )
+        print(df[['SAPT_DFT_pbe0_adz', "SAPT_DFT_pbe0_adz_D4_IE"]])
         df["PBE0-D4 IE adz"] = df.apply(
             lambda r: (
-                r['PBE0 IE adz'] + r['SAPT_DFT_pbe0_adz_D4_IE']
-                if r["SAPT_DFT_pbe0_adz"]
+                r["PBE0 IE adz"] + r["SAPT_DFT_pbe0_adz_D4_IE"]
+                if r["SAPT_DFT_D4_pbe0_adz_total"]
                 else np.nan
             ),
             axis=1,
         )
-        assert np.allclose(df['PBE0-D4 IE adz'], df['SAPT_DFT_D4_pbe0_adz_total'], atol=1e-16)
+        print(df['PBE0-D4 IE adz'])
+        for n, r in df.iterrows():
+            if np.abs(r["SAPT_DFT_pbe0_adz_total"] - r["PBE0-D4 IE adz"]) > 1e-16:
+                print(
+                    n,
+                    r["benchmark ref energy"],
+                    r["SAPT_DFT_pbe0_adz_total"],
+                    r["PBE0-D4 IE adz"],
+                )
+        print(len(df))
+        df_test = df.dropna(subset=["SAPT_DFT_D4_pbe0_adz_total"])
+        print(len(df_test))
+        df_test = df_test.dropna(subset=["PBE0-D4 IE adz"])
+        print(len(df_test))
+        assert np.allclose(
+            df_test["PBE0-D4 IE adz"], df_test["SAPT_DFT_D4_pbe0_adz_total"], atol=1e-16
+        )
         df["PBE0 IE atz"] = df.apply(
             lambda r: (
-                r["SAPT_DFT_pbe0_atz_dDFT"] 
-                + r["SAPT_DFT_pbe0_atz_elst"] 
+                r["SAPT_DFT_pbe0_atz_dDFT"]
+                + r["SAPT_DFT_pbe0_atz_elst"]
                 + r["SAPT_DFT_pbe0_atz_exch"]
                 + r["SAPT_DFT_pbe0_atz_indu"]
-                - r['SAPT_DFT_pbe0_atz_dHF']
-
-                if r["SAPT_DFT_pbe0_atz"]
+                - r["SAPT_DFT_pbe0_atz_dHF"]
+                if r["SAPT_DFT_pbe0_atz_total"]
                 else np.nan
             ),
             axis=1,
         )
         df["PBE0 IE aqz"] = df.apply(
             lambda r: (
-                r["SAPT_DFT_pbe0_aqz_dDFT"] 
-                + r["SAPT_DFT_pbe0_aqz_elst"] 
+                r["SAPT_DFT_pbe0_aqz_dDFT"]
+                + r["SAPT_DFT_pbe0_aqz_elst"]
                 + r["SAPT_DFT_pbe0_aqz_exch"]
                 + r["SAPT_DFT_pbe0_aqz_indu"]
-                - r['SAPT_DFT_pbe0_aqz_dHF']
-
-                if r["SAPT_DFT_pbe0_aqz"]
+                - r["SAPT_DFT_pbe0_aqz_dHF"]
+                if r["SAPT_DFT_pbe0_aqz_total"]
                 else np.nan
             ),
             axis=1,
@@ -1915,6 +1977,7 @@ def plotting_setup_dft_ddft(
     else:
         df = pd.read_pickle(df_out)
     basename_selected = selected.split("/")[-1].split(".")[0]
+    print(len(df), df["SAPT_DFT_pbe0_adz_elst"].isnull().sum())
     assert df["SAPT_DFT_pbe0_adz_elst"].isnull().sum() == 0
     print(f"Length of df prior plotting: {len(df)}")
     dimer_dataset_size = len(df)
@@ -5061,6 +5124,14 @@ def plot_LoS_saptdft(df):
         "PBE0 IE adz",
         "PBE0 IE atz",
         "PBE0 IE aqz",
+        #
+        "SAPT_DFT_D4_b3lyp_adz_total",
+        "SAPT_DFT_b3lyp_adz_total",
+        "B3LYP IE adz",
+        #
+        "SAPT_DFT_D4_b2plyp_adz_total",
+        "SAPT_DFT_b2plyp_adz_total",
+        "B2PLYP IE adz",
     ]
     for c in conv:
         df[c] /= h2kcalmol
