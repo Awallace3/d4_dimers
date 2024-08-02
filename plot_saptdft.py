@@ -40,7 +40,6 @@ def main():
         original_plot=False,
     )
     # return
-    print(df[['SAPT_DFT_pbe0_adz_total', "SAPT_DFT_b3lyp_adz_total"]])
     src.plotting.plot_LoS_saptdft(df)
     return
 
