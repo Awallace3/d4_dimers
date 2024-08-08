@@ -40,8 +40,8 @@ def main():
         original_plot=False,
     )
     # return
-    # src.plotting.plot_components_sapt0_saptdft(df)
-    # return
+    src.plotting.plot_components_sapt0_saptdft(df)
+    return
     src.plotting.plot_LoS_saptdft(df)
     return
 
