@@ -12,11 +12,19 @@ def main():
         subprocess.call("rm plots/basis_study.pkl.tar.gz", shell=True)
         subprocess.call("mv basis_study.pkl plots/basis_study.pkl", shell=True)
     df = pd.read_pickle(df_name)
+    # print np.array with commas
+    import numpy as np
+    # np.set_printoptions()
+    print(df.iloc[2500]['D3Data'])
+    print(df.iloc[2500]['D3Data'].shape)
+    print(len(df.iloc[2500]['monAs']))
+    print(len(df.iloc[2500]['monBs']))
     # print(df.columns.values)
     # df = src.plotting.plot_basis_sets_d4_Inter_vs_Super(
     #     df,
     #     True,
     # )
+    return
     df = src.plotting.plot_components_sapt0_saptdft(
         df
     )
