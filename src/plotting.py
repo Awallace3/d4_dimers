@@ -1064,6 +1064,40 @@ def plotting_setup(
     #     pdf=False,
     # )
     if True:
+        # charged
+        assert df["SAPT_DFT_adz_3_IE_diff"].isnull().sum() == 0
+        assert df["SAPT_DFT_atz_3_IE_diff"].isnull().sum() == 0
+        df_charged = get_charged_df(df)
+        # ensure that SAPT_DFT_atz_3_IE_diff does not have NaN values
+        pd.set_option("display.max_rows", None)
+        df_charged["SAPT_DFT_adz_t"] = df_charged["SAPT_DFT_adz"].apply(lambda x: x[0])
+        assert df_charged["SAPT_DFT_adz_3_IE_diff"].isnull().sum() == 0
+        assert df_charged["SAPT_DFT_atz_3_IE_diff"].isnull().sum() == 0
+        # plot_violin_d3_d4_ALL(
+        plot_violin_d3_d4_ALL_zoomed_min_max(
+            df_charged,
+            {
+                "0/jDZ": "SAPT0_jdz_3_IE_diff",
+                "0/aDZ": "SAPT0_adz_3_IE_diff",
+                "0-D3/jDZ": "jdz_diff_d3",
+                "0-D3/aDZ": "adz_diff_d3",
+                # "0-D3MBJ(ATM)/jDZ": "jdz_diff_d3mbj_atm",
+                # "0-D3MBJ(ATM)/aDZ": "adz_diff_d3mbj_atm",
+                "0-D4/jDZ": "jdz_diff_d4",
+                "0-D4/aDZ": "adz_diff_d4",
+                # "0-D4(2B@G ATM@G)/jDZ": "jdz_diff_d4_ATM_G",
+                # "0-D4(2B@G ATM@G)/aDZ": "adz_diff_d4_ATM_G",
+                "SAPT(DFT)/aDZ": "SAPT_DFT_adz_3_IE_diff",
+                "SAPT(DFT)/aTZ": "SAPT_DFT_atz_3_IE_diff",
+            },
+            # f"Charged Dimers ({len(df_charged)})",
+            None,
+            f"{selected}_charged",
+            legend_loc="upper right",
+            bottom=0.42,
+            ylim=[-5, 5],
+        )
+        # return
         print(df[["SAPT_DFT_atz_3_IE_diff", "SAPT_DFT_adz_3_IE_diff"]])
         # plot_violin_d3_d4_ALL_zoomed(
         plot_violin_d3_d4_ALL_zoomed_min_max(
@@ -1202,37 +1236,6 @@ def plotting_setup(
             # "All Dimers (8299)",
             None,
             f"{selected}_basis_set",
-        )
-        # charged
-        assert df["SAPT_DFT_adz_3_IE_diff"].isnull().sum() == 0
-        assert df["SAPT_DFT_atz_3_IE_diff"].isnull().sum() == 0
-        df_charged = get_charged_df(df)
-        # ensure that SAPT_DFT_atz_3_IE_diff does not have NaN values
-        pd.set_option("display.max_rows", None)
-        df_charged["SAPT_DFT_adz_t"] = df_charged["SAPT_DFT_adz"].apply(lambda x: x[0])
-        assert df_charged["SAPT_DFT_adz_3_IE_diff"].isnull().sum() == 0
-        assert df_charged["SAPT_DFT_atz_3_IE_diff"].isnull().sum() == 0
-        plot_violin_d3_d4_ALL(
-            df_charged,
-            {
-                "0/jDZ": "SAPT0_jdz_3_IE_diff",
-                "0/aDZ": "SAPT0_adz_3_IE_diff",
-                "0-D3/jDZ": "jdz_diff_d3",
-                "0-D3/aDZ": "adz_diff_d3",
-                # "0-D3MBJ(ATM)/jDZ": "jdz_diff_d3mbj_atm",
-                # "0-D3MBJ(ATM)/aDZ": "adz_diff_d3mbj_atm",
-                "0-D4/jDZ": "jdz_diff_d4",
-                "0-D4/aDZ": "adz_diff_d4",
-                # "0-D4(2B@G ATM@G)/jDZ": "jdz_diff_d4_ATM_G",
-                # "0-D4(2B@G ATM@G)/aDZ": "adz_diff_d4_ATM_G",
-                "SAPT(DFT)/aDZ": "SAPT_DFT_adz_3_IE_diff",
-                "SAPT(DFT)/aTZ": "SAPT_DFT_atz_3_IE_diff",
-            },
-            # f"Charged Dimers ({len(df_charged)})",
-            None,
-            f"{selected}_charged",
-            bottom=0.42,
-            ylim=[-10, 15],
         )
     return df
 
