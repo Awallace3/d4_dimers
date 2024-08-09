@@ -782,11 +782,25 @@ def compute_d3_from_opt_params(
 ) -> pd.DataFrame:
     """
     compute_D3_D4_values_for_params
+    each bases element should be a list of 4 strings:
+    [[
+        df_column_for_IE_method_diff,
+        df_column_for_label,
+        params_name,
+        df_column_for_elst_exch_indu_sum
+    ]
+    ...
+    ]
     """
     params_dict = paramsTable.paramsDict()
     plot_vals = {}
     for i in bases:
-        params_d3 = params_dict[i[2]][0][1:4]
+        params_d3 = params_dict[i[2]]
+        if len(params_d3) == 2:
+            params_d3 = params_dict[i[2]][0][1:4]
+        else:
+            params_d3, _ = paramsTable.generate_2B_ATM_param_subsets(params_d3)
+        # Need to write function for computing D3Data for LoS dataset...
         print(params_d3)
         df[f"-D3 ({i[1]})"] = df.apply(
             lambda row: jeff.compute_BJ_CPP(
@@ -4534,6 +4548,12 @@ def violin_plots_multi_components_sapt0d4(df):
     df["SAPT0-D4 (Super.) DISP ENERGY atz"] = df["-D4 (SAPT0_atz_3_IE_BJ_inter)"] / h2kcalmol
     df["SAPT0-D4 (Super.) DISP ENERGY aqz"] = df["-D4 (SAPT0_atz_3_IE_BJ_inter)"] / h2kcalmol
 
+    df["SAPT0-D3 (Super.) DISP ENERGY adz"] = df["-D3 (SAPT0_adz_3_IE)"] / h2kcalmol
+    df["SAPT0-D3 (Super.) DISP ENERGY atz"] = df["-D3 (SAPT0_atz_3_IE)"] / h2kcalmol
+    df["SAPT0-D3 (Super.) DISP ENERGY aqz"] = df["-D3 (SAPT0_atz_3_IE)"] / h2kcalmol
+
+
+
     sapt_methods = [
         "SAPT0 ELST ENERGY",
         "SAPT2 ELST ENERGY",
@@ -4557,6 +4577,7 @@ def violin_plots_multi_components_sapt0d4(df):
         "SAPT2+(3)(CCD) DISP ENERGY",
         "SAPT2+3(CCD) DISP ENERGY",
         # local disp
+        "SAPT0-D3 (Super.) DISP ENERGY",
         "SAPT0-D4 (Intermol.) DISP ENERGY",
         "SAPT0-D4 (Super.) DISP ENERGY",
         "SAPT(DFT) [PBE0] DISP ENERGY",
@@ -4696,6 +4717,9 @@ def violin_plots_multi_components_sapt0d4(df):
         {
             "SAPT0-D4 (Super.)": "SAPT0-D4 (Super.) DISP ENERGY Error",
         },
+        {
+            "SAPT0-D3 (Super.)": "SAPT0-D3 DISP ENERGY Error",
+        },
     ]
     mcure_labels = {
         "ELST": {},
@@ -4799,6 +4823,7 @@ def violin_plots_multi_components_sapt0d4(df):
         df_labels_and_columns_disp={
             "SAPT(DFT) [PBE0]": "SAPT(DFT) [PBE0] DISP ENERGY Error",
             "SAPT0": "SAPT0 DISP ENERGY Error",
+            "SAPT0-D3 (Super.)": "SAPT0-D3 DISP ENERGY Error",
             "SAPT0-D4 (Intermol.)": "SAPT0-D4 (Intermol.) DISP ENERGY Error",
             "SAPT0-D4 (Super.)": "SAPT0-D4 (Super.) DISP ENERGY Error",
             "sSAPT0": "SSAPT0 DISP ENERGY Error",
@@ -4841,6 +4866,10 @@ def violin_plots_multi_components_subset_sapt0d4(df):
     df["SAPT0-D4 (Super.) DISP ENERGY atz"] = df["-D4 (SAPT0_atz_3_IE_BJ_inter)"] / h2kcalmol
     df["SAPT0-D4 (Super.) DISP ENERGY aqz"] = df["-D4 (SAPT0_atz_3_IE_BJ_inter)"] / h2kcalmol
 
+    df["SAPT0-D3 (Super.) DISP ENERGY adz"] = df["-D3 (SAPT0_adz_3_IE)"] / h2kcalmol
+    df["SAPT0-D3 (Super.) DISP ENERGY atz"] = df["-D3 (SAPT0_atz_3_IE)"] / h2kcalmol
+    df["SAPT0-D3 (Super.) DISP ENERGY aqz"] = df["-D3 (SAPT0_atz_3_IE)"] / h2kcalmol
+
     sapt_methods = [
         "SAPT0 ELST ENERGY",
         "SAPT2 ELST ENERGY",
@@ -4864,6 +4893,7 @@ def violin_plots_multi_components_subset_sapt0d4(df):
         "SAPT2+(3)(CCD) DISP ENERGY",
         "SAPT2+3(CCD) DISP ENERGY",
         # local disp
+        "SAPT0-D3 (Super.) DISP ENERGY",
         "SAPT0-D4 (Intermol.) DISP ENERGY",
         "SAPT0-D4 (Super.) DISP ENERGY",
         "SAPT(DFT) [PBE0] DISP ENERGY",
@@ -5010,6 +5040,9 @@ def violin_plots_multi_components_subset_sapt0d4(df):
         {
             "SAPT0-D4 (Super.)": "SAPT0-D4 (Super.) DISP ENERGY Error",
         },
+        {
+            "SAPT0-D3 (Super.)": "SAPT0-D3 DISP ENERGY Error",
+        },
     ]
     mcure_labels = {
         "ELST": {},
@@ -5113,6 +5146,7 @@ def violin_plots_multi_components_subset_sapt0d4(df):
         df_labels_and_columns_disp={
             "SAPT(DFT) [PBE0]": "SAPT(DFT) [PBE0] DISP ENERGY Error",
             "SAPT0": "SAPT0 DISP ENERGY Error",
+            "SAPT0-D3 (Super.)": "SAPT0-D3 DISP ENERGY Error",
             "SAPT0-D4 (Intermol.)": "SAPT0-D4 (Intermol.) DISP ENERGY Error",
             "SAPT0-D4 (Super.)": "SAPT0-D4 (Super.) DISP ENERGY Error",
             "sSAPT0": "SSAPT0 DISP ENERGY Error",
@@ -6024,6 +6058,23 @@ def plot_components_sapt0_saptdft(df):
             ],
         ],
         disp_compute=locald4.compute_disp_2B_BJ_dimer_supra,
+    )
+    df = compute_d3_from_opt_params(
+        df,
+        bases=[
+            [
+                "SAPT0_adz_3_IE",
+                "SAPT0_adz_3_IE",
+                "sadz",
+                "SAPT0_adz_3_IE",
+            ],
+            [
+                "SAPT0_atz_3_IE",
+                "SAPT0_atz_3_IE",
+                "satz",
+                "SAPT0_atz_3_IE",
+            ],
+        ],
     )
     violin_plots_multi_components_subset_sapt0d4(df)
     violin_plots_multi_components_sapt0d4(df)
