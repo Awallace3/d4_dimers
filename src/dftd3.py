@@ -63,8 +63,10 @@ def collect_bjm_d3data(pos, carts, ATM=False, s_dftd3_bin=None):
         cmd = ["s-dftd3", "--bj", "hf", "--pair-resolved", "--atm", "tmp.xyz"]
     else:
         cmd = ["s-dftd3", "--bj", "hf", "--pair-resolved",  "tmp.xyz"]
-    proc1 = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-    proc1.wait()
+    # proc1 = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+    # proc1.wait()
+    subprocess.run(cmd, stdout=subprocess.PIPE)
+    
     # print(proc1.stdout.read())
     data = tools.json_to_dict("d3data.json")
     os.remove("tmp.xyz")
@@ -84,12 +86,16 @@ def collect_bjm_d3data(pos, carts, ATM=False, s_dftd3_bin=None):
     return data, np.array(output)
 
 def collect_bjm_d3data_dimer(pos, carts, monAs, monBs, ATM=False, s_dftd3_bin=None):
-    _, dimer_d3data = collect_bjm_d3data(pos, carts, ATM=False, s_dftd3_bin=s_dftd3_bin)
-    _, monA_d3data = collect_bjm_d3data(pos[monAs], carts[monAs], ATM=False, s_dftd3_bin=s_dftd3_bin)
-    monA_d3data[:, -2:] *= -1
-    _, monB_d3data = collect_bjm_d3data(pos[monBs], carts[monBs], ATM=False, s_dftd3_bin=s_dftd3_bin)
-    monB_d3data[:, -2:] *= -1
-    return np.concatenate([dimer_d3data, monA_d3data, monB_d3data])
+    try:
+        _, dimer_d3data = collect_bjm_d3data(pos, carts, ATM=False, s_dftd3_bin=s_dftd3_bin)
+        _, monA_d3data = collect_bjm_d3data(pos[monAs], carts[monAs], ATM=False, s_dftd3_bin=s_dftd3_bin)
+        monA_d3data[:, -2:] *= -1
+        _, monB_d3data = collect_bjm_d3data(pos[monBs], carts[monBs], ATM=False, s_dftd3_bin=s_dftd3_bin)
+        monB_d3data[:, -2:] *= -1
+        return np.concatenate([dimer_d3data, monA_d3data, monB_d3data])
+    except Exception as e:
+        print(e)
+        return None
 
 def dftd3_bjm_og(pos, carts, ATM=False):
     with open("tmp.xyz", "w") as f:
