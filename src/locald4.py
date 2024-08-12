@@ -11,24 +11,24 @@ from pprint import pprint as pp
 hartree_to_kcalmol = qcel.constants.conversion_factor("hartree", "kcal/mol")
 
 
-def compute_psi4_d4(geom, Ma, Mb, memory: str = "4 GB", basis="jun-cc-pvdz"):
-    ma, mb = split_dimer(geom, Ma, Mb)
-    ma = tools.np_carts_to_string(ma)
-    mb = tools.np_carts_to_string(mb)
-    geom = "0 1\n%s--\n0 1\n%s" % (ma, mb)
-    print(geom)
-    psi4.geometry(geom)
-    psi4.set_memory(memory)
-    psi4.set_options(
-        {
-            "basis": basis,
-            "freeze_core": "true",
-            "guess": "sad",
-            "scf_type": "df",
-        }
-    )
-    v = psi4.energy("hf-d4", bsse_type="cp")
-    return
+# def compute_psi4_d4(geom, Ma, Mb, memory: str = "4 GB", basis="jun-cc-pvdz"):
+#     ma, mb = split_dimer(geom, Ma, Mb)
+#     ma = tools.np_carts_to_string(ma)
+#     mb = tools.np_carts_to_string(mb)
+#     geom = "0 1\n%s--\n0 1\n%s" % (ma, mb)
+#     print(geom)
+#     psi4.geometry(geom)
+#     psi4.set_memory(memory)
+#     psi4.set_options(
+#         {
+#             "basis": basis,
+#             "freeze_core": "true",
+#             "guess": "sad",
+#             "scf_type": "df",
+#         }
+#     )
+#     v = psi4.energy("hf-d4", bsse_type="cp")
+#     return
 
 
 def get_monomer_C6s_from_dimer(C6s_dimer, monN) -> np.array:

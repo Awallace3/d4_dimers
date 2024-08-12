@@ -1,23 +1,24 @@
 from . import plotting
 from . import paramsTable
+from . import structs
+from . import r4r2
+from . import locald4
+from . import constants
+from . import jeff
+from . import tools
+from . import optimization
+from . import saptdft
+from . import water_data
+from . import dftd3
+from . import sr
+
 try:
     from . import setup
-    from . import tools
-    from . import misc
-    from . import structs
-    from . import optimization
-    from . import constants
-    from . import jeff
     from . import grimme_setup
+    from . import misc
     from . import harvest
-    from . import saptdft
     from . import stats
-    from . import r4r2
-    from . import locald4
-    from . import water_data
     from . import ssi_data
-    from . import sr
-    from . import dftd3
 except ImportError as e:
     print(e)
     pass

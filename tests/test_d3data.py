@@ -6,9 +6,17 @@ import pandas as pd
 import sys, os
 from dispersion import disp
 import os
+from pprint import pprint as pp
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ""))
 import src
+
+from pathlib import Path
+
+d3data_path = Path("~/gits/simple-dftd3/_build/app/s-dftd3").expanduser()
+print(d3data_path)
+
+data_pkl = Path(__file__).parent / "../plots/basis_study.pkl"
 
 @pytest.fixture
 def water1():
@@ -37,9 +45,37 @@ def water1():
 )
 
 def test_d3data_generation():    
+    """
+    For test to pass, require `git clone -b d3data git@github.com:awallace3/simple-dftd3.git`
+    """
     df = pd.read_pickle(data_pkl)
     row = df.iloc[2500]
-    params = src.paramsTable.paramsDict()["sadz"]
-    print(params)    
-    src.dftd3.set_dftd3_params("D3MBJ")
+    target = np.array(row['D3Data'])
+    print("TARGET")
+    print(target)
+    pos, carts = row['Geometry'][:, 0], row['Geometry'][:, 1:]
+    d3data = src.dftd3.collect_bjm_d3data_dimer(pos, carts, row['monAs'], row['monBs'], ATM=False, s_dftd3_bin=d3data_path)
+    print("D3Data")
+    print(d3data)
+    print(len(d3data), len(target))
+    print('rs')
+    np.testing.assert_allclose(d3data[:, 2], target[:, 2], atol=1e-4)
+    assert np.allclose(d3data[:, 2], target[:, 2], atol=1e-4)
+    # Don't need to compare r0s because jeff.py calculates r0 from c6s and c8s before use
+    # print('r0s')
+    # np.testing.assert_allclose(d3data[:, 3], target[:, 3], atol=1e-4)
+    print('c6s')
+    np.testing.assert_allclose(d3data[:, 4], target[:, 4], atol=1e-4)
+    assert np.allclose(d3data[:, 4], target[:, 4], atol=1e-4)
+    print('c8s')
+    np.testing.assert_allclose(d3data[:, 5], target[:, 5], atol=1e-4)
+    assert np.allclose(d3data[:, 5], target[:, 5], atol=1e-4)
+
+    test_bj = src.jeff.compute_BJ_CPP(np.array([0.713190, 0.079541, 3.627854]), d3data)
+    actual_bj = src.jeff.compute_BJ_CPP(np.array([0.713190, 0.079541, 3.627854]), target)
+    print(test_bj, actual_bj)
+    assert np.allclose(test_bj, actual_bj, atol=1e-8)
     return
+
+if __name__ == "__main__":
+    test_d3data_generation()

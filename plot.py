@@ -12,6 +12,8 @@ def main():
         subprocess.call("rm plots/basis_study.pkl.tar.gz", shell=True)
         subprocess.call("mv basis_study.pkl plots/basis_study.pkl", shell=True)
     df = pd.read_pickle(df_name)
+    print(df)
+    return
     # print np.array with commas
     import numpy as np
     # np.set_printoptions()

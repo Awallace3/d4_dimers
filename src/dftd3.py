@@ -54,6 +54,42 @@ def dftd3_bjm(pos, carts, params, ATM=False):
     os.remove("tmp.xyz")
     return e_disp
 
+def collect_bjm_d3data(pos, carts, ATM=False, s_dftd3_bin=None):
+    if s_dftd3_bin is None:
+        s_dftd3_bin = "s-dftd3"
+    with open("tmp.xyz", "w") as f:
+        f.write(tools.carts_to_xyz(pos, carts))
+    if ATM:
+        cmd = ["s-dftd3", "--bj", "hf", "--pair-resolved", "--atm", "tmp.xyz"]
+    else:
+        cmd = ["s-dftd3", "--bj", "hf", "--pair-resolved",  "tmp.xyz"]
+    proc1 = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+    proc1.wait()
+    # print(proc1.stdout.read())
+    data = tools.json_to_dict("d3data.json")
+    os.remove("tmp.xyz")
+    os.remove("d3data.json")
+    output = []
+    n = len(pos)
+    for i in range(n):
+        for j in range(i+1, n):
+            output.append(
+                [i + 1, j + 1, 
+                data['rs'][j, i], 
+                data['r0s'][j, i], 
+                data['c6s'][j, i], 
+                data['c8s'][j, i],
+                 ]
+            )
+    return data, np.array(output)
+
+def collect_bjm_d3data_dimer(pos, carts, monAs, monBs, ATM=False, s_dftd3_bin=None):
+    _, dimer_d3data = collect_bjm_d3data(pos, carts, ATM=False, s_dftd3_bin=s_dftd3_bin)
+    _, monA_d3data = collect_bjm_d3data(pos[monAs], carts[monAs], ATM=False, s_dftd3_bin=s_dftd3_bin)
+    monA_d3data[:, -2:] *= -1
+    _, monB_d3data = collect_bjm_d3data(pos[monBs], carts[monBs], ATM=False, s_dftd3_bin=s_dftd3_bin)
+    monB_d3data[:, -2:] *= -1
+    return np.concatenate([dimer_d3data, monA_d3data, monB_d3data])
 
 def dftd3_bjm_og(pos, carts, ATM=False):
     with open("tmp.xyz", "w") as f:
