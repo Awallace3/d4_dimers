@@ -806,7 +806,7 @@ def compute_d3_from_opt_params(
             lambda row: jeff.compute_BJ_CPP(
                 params_d3,
                 row["D3Data"],
-            ),
+            ) if row['D3Data'] is not None else np.nan,
             axis=1,
         )
         print(df[f"-D3 ({i[1]})"])
@@ -1520,6 +1520,10 @@ def plotting_setup_dft_ddft(
         df_disp = pd.read_pickle("./dfs/dispml.pkl")
         df_disp = df_disp[["D3-ML", "system_id"]].copy()
         df = df.merge(df_disp, on="system_id")
+
+        df_d3data = pd.read_pickle("./dfs/los_d3data.pkl")
+        df_d3data = df_d3data[["D3Data", "system_id"]].copy()
+        df = df.merge(df_d3data, on="system_id")
         basis_set = "adz"
         functional = "pbe0"
         df = prepare_saptdft_columns(df, "pbe0", "adz")
@@ -4718,7 +4722,7 @@ def violin_plots_multi_components_sapt0d4(df):
             "SAPT0-D4 (Super.)": "SAPT0-D4 (Super.) DISP ENERGY Error",
         },
         {
-            "SAPT0-D3 (Super.)": "SAPT0-D3 DISP ENERGY Error",
+            "SAPT0-D3 (Super.)": "SAPT0-D3 (Super.) DISP ENERGY Error",
         },
     ]
     mcure_labels = {
@@ -4823,7 +4827,7 @@ def violin_plots_multi_components_sapt0d4(df):
         df_labels_and_columns_disp={
             "SAPT(DFT) [PBE0]": "SAPT(DFT) [PBE0] DISP ENERGY Error",
             "SAPT0": "SAPT0 DISP ENERGY Error",
-            "SAPT0-D3 (Super.)": "SAPT0-D3 DISP ENERGY Error",
+            "SAPT0-D3 (Super.)": "SAPT0-D3 (Super.) DISP ENERGY Error",
             "SAPT0-D4 (Intermol.)": "SAPT0-D4 (Intermol.) DISP ENERGY Error",
             "SAPT0-D4 (Super.)": "SAPT0-D4 (Super.) DISP ENERGY Error",
             "sSAPT0": "SSAPT0 DISP ENERGY Error",
@@ -5041,7 +5045,7 @@ def violin_plots_multi_components_subset_sapt0d4(df):
             "SAPT0-D4 (Super.)": "SAPT0-D4 (Super.) DISP ENERGY Error",
         },
         {
-            "SAPT0-D3 (Super.)": "SAPT0-D3 DISP ENERGY Error",
+            "SAPT0-D3 (Super.)": "SAPT0-D3 (Super.) DISP ENERGY Error",
         },
     ]
     mcure_labels = {
@@ -5146,7 +5150,7 @@ def violin_plots_multi_components_subset_sapt0d4(df):
         df_labels_and_columns_disp={
             "SAPT(DFT) [PBE0]": "SAPT(DFT) [PBE0] DISP ENERGY Error",
             "SAPT0": "SAPT0 DISP ENERGY Error",
-            "SAPT0-D3 (Super.)": "SAPT0-D3 DISP ENERGY Error",
+            "SAPT0-D3 (Super.)": "SAPT0-D3 (Super.) DISP ENERGY Error",
             "SAPT0-D4 (Intermol.)": "SAPT0-D4 (Intermol.) DISP ENERGY Error",
             "SAPT0-D4 (Super.)": "SAPT0-D4 (Super.) DISP ENERGY Error",
             "sSAPT0": "SSAPT0 DISP ENERGY Error",
@@ -6041,6 +6045,23 @@ def violin_plots_multi_components_subset(df, limit_to_column_not_nan=None):
     return
 
 def plot_components_sapt0_saptdft(df):
+    df = compute_d3_from_opt_params(
+        df,
+        bases=[
+            [
+                "SAPT0_adz_3_IE",
+                "SAPT0_adz_3_IE",
+                "sadz",
+                "SAPT0_adz_3_IE",
+            ],
+            [
+                "SAPT0_atz_3_IE",
+                "SAPT0_atz_3_IE",
+                "satz",
+                "SAPT0_atz_3_IE",
+            ],
+        ],
+    )
     df = compute_d4_from_opt_params(
         df,
         bases=[
@@ -6058,23 +6079,6 @@ def plot_components_sapt0_saptdft(df):
             ],
         ],
         disp_compute=locald4.compute_disp_2B_BJ_dimer_supra,
-    )
-    df = compute_d3_from_opt_params(
-        df,
-        bases=[
-            [
-                "SAPT0_adz_3_IE",
-                "SAPT0_adz_3_IE",
-                "sadz",
-                "SAPT0_adz_3_IE",
-            ],
-            [
-                "SAPT0_atz_3_IE",
-                "SAPT0_atz_3_IE",
-                "satz",
-                "SAPT0_atz_3_IE",
-            ],
-        ],
     )
     violin_plots_multi_components_subset_sapt0d4(df)
     violin_plots_multi_components_sapt0d4(df)
