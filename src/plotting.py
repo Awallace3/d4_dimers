@@ -18,6 +18,9 @@ warnings.simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
 
 
 # plt.rcParams["text.usetex"] = True
+import matplotlib.font_manager as fm
+font_path = "/usr/share/texlive/texmf-dist/fonts/tfm/adobe/helvetic/phvr7t.tfm"
+my_font = fm.FontProperties(fname=font_path)
 plt.rcParams.update(
     {
         "text.usetex": True,
@@ -4223,12 +4226,19 @@ def violin_plots_multi(df, limit_to_column_not_nan=None):
         dfs,
         df_labels_and_columns,
         f"./plots/LoS_all_adz_atz_saptdft.jpg",
-        table_fontsize=6,
+        table_fontsize=8,
         usetex=True,
         legend_loc="lower right",
-        figure_size=(7, 7),
-        mcure=mcure_labels,
+        figure_size=(10, 8),
+        # mcure=mcure_labels,
         error_labels_position=(-0.3, 0.25),
+        grid_widths=[1.0],
+        grid_heights=[
+            0.35,
+            2,
+            0.35,
+            2,
+        ],
     )
     return
 
@@ -4455,20 +4465,20 @@ def violin_plots_multi_subset(df, limit_to_column_not_nan=None):
         dfs,
         df_labels_and_columns,
         f"./plots/LoS_all_adz_atz_aqz_saptdft_subset.jpg",
-        table_fontsize=7,
+        table_fontsize=8,
         usetex=True,
         legend_loc="lower right",
-        figure_size=(8, 8),
-        mcure=mcure_labels,
+        figure_size=(10, 8),
+        # mcure=mcure_labels,
         error_labels_position=(-0.3, 0.25),
-        # grid_heights=[
-        #     0.55,
-        #     2,
-        #     0.4,
-        #     2,
-        #     0.4,
-        #     2,
-        # ],
+        grid_heights=[
+            0.55,
+            2,
+            0.55,
+            2,
+            0.55,
+            2,
+        ],
     )
     return
 
@@ -5325,13 +5335,6 @@ def violin_plots_multi_components(df, limit_to_column_not_nan=None):
             "ylim": atz_ylims,
         },
     ]
-    grid_heights = [
-        0.4,
-        2,
-        0.3,
-        2,
-    ]
-    grid_widths = [0.75, 0.65, 1.0, 2.2]
     mcures_labels_start = [
         {
             "SAPT0,sSAPT0": "SAPT0 ELST ENERGY Error",
@@ -5594,13 +5597,18 @@ def violin_plots_multi_components(df, limit_to_column_not_nan=None):
             "D3-ML": "D3-ML DISP ENERGY Error",
         },
         output_filename=f"./plots/LoS_components_adz_atz.jpg",
-        table_fontsize=7.5,
+        table_fontsize=6,
         usetex=True,
         legend_loc="lower right",
-        figure_size=(12, 12),
-        grid_heights=grid_heights,
-        grid_widths=grid_widths,
-        mcure=mcure_labels,
+        figure_size=(14, 10),
+        grid_heights = [
+            0.3,
+            2,
+            0.25,
+            2,
+        ],
+        grid_widths = [0.75, 0.65, 1.0, 2.2],
+        # mcure=mcure_labels,
     )
     return
 
@@ -6037,7 +6045,7 @@ def violin_plots_multi_components_subset(df, limit_to_column_not_nan=None):
         table_fontsize=6.5,
         usetex=True,
         legend_loc="lower right",
-        figure_size=(12, 12),
+        figure_size=(14, 12),
         grid_heights=grid_heights,
         grid_widths=grid_widths,
         mcure=mcure_labels,
@@ -6155,7 +6163,9 @@ def plot_LoS_saptdft(df):
     # print(df[["SAPT_DFT_D4_pbe0_adz_total", "PBE0 IE adz"]])
     violin_plots_multi_components(df, limit_to_column_not_nan="D3-ML")
     violin_plots_multi_components_subset(df, limit_to_column_not_nan="D3-ML")
-    violin_plots_multi_subset(df)
+    return
     violin_plots_multi(df)
+    violin_plots_multi_subset(df)
+    return
     # Need to plot subset with aqz data now...
     return
