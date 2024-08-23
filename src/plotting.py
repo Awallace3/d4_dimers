@@ -5668,6 +5668,50 @@ def violin_plots_multi_components(df, limit_to_column_not_nan=None):
             "SAPT(DFT) [WB97X]": "SAPT(DFT) [WB97X] IND ENERGY Error",
         },
         df_labels_and_columns_disp={
+            # "SAPT0,SAPT2": "SAPT0 DISP ENERGY Error",
+            # "SAPT0-D4": "SAPT0-D4 DISP ENERGY Error",
+            # # "sSAPT0": "SSAPT0 DISP ENERGY Error",
+            # "SAPT2+": "SAPT2+ DISP ENERGY Error",
+            # "SAPT2+(3)": "SAPT2+(3) DISP ENERGY Error",
+            # "SAPT2+3": "SAPT2+3 DISP ENERGY Error",
+            # "SAPT2+(CCD)": "SAPT2+(CCD) DISP ENERGY Error",
+            # "SAPT2+(3)(CCD)": "SAPT2+(3)(CCD) DISP ENERGY Error",
+            # "SAPT2+3(CCD)": "SAPT2+3(CCD) DISP ENERGY Error",
+            # "SAPT(DFT)-D4": "SAPT(DFT)-D4 DISP ENERGY Error",
+            # "SAPT(DFT) [PBE0]": "SAPT(DFT) [PBE0] DISP ENERGY Error",
+            # "SAPT(DFT) [B3LYP]": "SAPT(DFT) [B3LYP] DISP ENERGY Error",
+            # "SAPT(DFT) [B2PLYP]": "SAPT(DFT) [B2PLYP] DISP ENERGY Error",
+            # "SAPT(DFT) [WB97X]": "SAPT(DFT) [WB97X] DISP ENERGY Error",
+            # "SAPT(DFT)+D4": "SAPT(DFT)+D4 DISP ENERGY Error",
+            # "PBE0-D4": "PBE0-D4 DISP ENERGY Error",
+            # "B3LYP-D4": "B3LYP-D4 DISP ENERGY Error",
+            # "B2PLYP-D4": "B2PLYP-D4 DISP ENERGY Error",
+            # "WB97X-D4": "WB97X-D4 DISP ENERGY Error",
+            # "D3-ML": "D3-ML DISP ENERGY Error",
+        },
+        output_filename=f"./plots/LoS_components_adz_atz_nondisp.jpg",
+        table_fontsize=8,
+        usetex=True,
+        legend_loc="lower right",
+        figure_size=(10, 8),
+        grid_heights = [
+            0.6,
+            2,
+            0.4,
+            2,
+        ],
+        grid_widths = [0.75, 0.65, 1.0],
+        # mcure=mcure_labels,
+    )
+    cdsg_plot.error_statistics.violin_plot_table_multi_SAPT_components(
+        dfs,
+        df_labels_and_columns_elst={
+        },
+        df_labels_and_columns_exch={
+        },
+        df_labels_and_columns_indu={
+        },
+        df_labels_and_columns_disp={
             "SAPT0,SAPT2": "SAPT0 DISP ENERGY Error",
             "SAPT0-D4": "SAPT0-D4 DISP ENERGY Error",
             # "sSAPT0": "SSAPT0 DISP ENERGY Error",
@@ -5689,18 +5733,18 @@ def violin_plots_multi_components(df, limit_to_column_not_nan=None):
             "WB97X-D4": "WB97X-D4 DISP ENERGY Error",
             "D3-ML": "D3-ML DISP ENERGY Error",
         },
-        output_filename=f"./plots/LoS_components_adz_atz.jpg",
-        table_fontsize=6,
+        output_filename=f"./plots/LoS_components_adz_atz_disp.jpg",
+        table_fontsize=8,
         usetex=True,
         legend_loc="lower right",
-        figure_size=(14, 10),
+        figure_size=(10, 8),
         grid_heights = [
-            0.3,
+            0.6,
             2,
-            0.25,
+            0.4,
             2,
         ],
-        grid_widths = [0.75, 0.65, 1.0, 2.2],
+        grid_widths = [1.0],
         # mcure=mcure_labels,
     )
     return
@@ -5864,15 +5908,6 @@ def violin_plots_multi_components_subset(df, limit_to_column_not_nan=None):
             "ylim": adz_ylims,
         },
     ]
-    grid_heights = [
-        0.55,
-        2,
-        0.4,
-        2,
-        0.4,
-        2,
-    ]
-    grid_widths = [0.75, 0.65, 1.0, 2.2]
     mcures_labels_start = [
         {
             "SAPT0,sSAPT0": "SAPT0 ELST ENERGY Error",
@@ -6112,6 +6147,54 @@ def violin_plots_multi_components_subset(df, limit_to_column_not_nan=None):
             "SAPT(DFT) [B2PLYP]": "SAPT(DFT) [B2PLYP] IND ENERGY Error",
             "SAPT(DFT) [WB97X]": "SAPT(DFT) [WB97X] IND ENERGY Error",
         },
+        df_labels_and_columns_disp={},
+        # df_labels_and_columns_disp={
+
+        #     "SAPT0,SAPT2": "SAPT0 DISP ENERGY Error",
+        #     "SAPT0-D4": "SAPT0-D4 DISP ENERGY Error",
+        #     # "sSAPT0": "SSAPT0 DISP ENERGY Error",
+        #     "SAPT2+": "SAPT2+ DISP ENERGY Error",
+        #     "SAPT2+(3)": "SAPT2+(3) DISP ENERGY Error",
+        #     "SAPT2+3": "SAPT2+3 DISP ENERGY Error",
+        #     "SAPT2+(CCD)": "SAPT2+(CCD) DISP ENERGY Error",
+        #     "SAPT2+(3)(CCD)": "SAPT2+(3)(CCD) DISP ENERGY Error",
+        #     "SAPT2+3(CCD)": "SAPT2+3(CCD) DISP ENERGY Error",
+        #     "SAPT(DFT)-D4": "SAPT(DFT)-D4 DISP ENERGY Error",
+        #     "SAPT(DFT) [PBE0]": "SAPT(DFT) [PBE0] DISP ENERGY Error",
+        #     "SAPT(DFT) [B3LYP]": "SAPT(DFT) [B3LYP] DISP ENERGY Error",
+        #     "SAPT(DFT) [B2PLYP]": "SAPT(DFT) [B2PLYP] DISP ENERGY Error",
+        #     "SAPT(DFT) [WB97X]": "SAPT(DFT) [WB97X] DISP ENERGY Error",
+        #     "SAPT(DFT)+D4": "SAPT(DFT)+D4 DISP ENERGY Error",
+        #     "PBE0-D4": "PBE0-D4 DISP ENERGY Error",
+        #     "B3LYP-D4": "B3LYP-D4 DISP ENERGY Error",
+        #     "B2PLYP-D4": "B2PLYP-D4 DISP ENERGY Error",
+        #     "WB97X-D4": "WB97X-D4 DISP ENERGY Error",
+        #     "D3-ML": "D3-ML DISP ENERGY Error",
+        # },
+        output_filename=f"./plots/LoS_components_adz_atz_aqz_subset_nondisp.jpg",
+        table_fontsize=8,
+        usetex=True,
+        legend_loc="lower right",
+        figure_size=(10, 8),
+        grid_heights = [
+            0.6,
+            2,
+            0.4,
+            2,
+            0.4,
+            2,
+        ],
+        grid_widths = [0.75, 0.65, 1.0],
+        # mcure=mcure_labels,
+    )
+    cdsg_plot.error_statistics.violin_plot_table_multi_SAPT_components(
+        dfs,
+        df_labels_and_columns_elst={
+        },
+        df_labels_and_columns_exch={
+        },
+        df_labels_and_columns_indu={
+        },
         df_labels_and_columns_disp={
             "SAPT0,SAPT2": "SAPT0 DISP ENERGY Error",
             "SAPT0-D4": "SAPT0-D4 DISP ENERGY Error",
@@ -6134,14 +6217,21 @@ def violin_plots_multi_components_subset(df, limit_to_column_not_nan=None):
             "WB97X-D4": "WB97X-D4 DISP ENERGY Error",
             "D3-ML": "D3-ML DISP ENERGY Error",
         },
-        output_filename=f"./plots/LoS_components_adz_atz_aqz_subset.jpg",
-        table_fontsize=6.5,
+        output_filename=f"./plots/LoS_components_adz_atz_aqz_subset_disp.jpg",
+        table_fontsize=8,
         usetex=True,
         legend_loc="lower right",
-        figure_size=(14, 12),
-        grid_heights=grid_heights,
-        grid_widths=grid_widths,
-        mcure=mcure_labels,
+        figure_size=(10, 8),
+        grid_heights = [
+            0.6,
+            2,
+            0.4,
+            2,
+            0.4,
+            2,
+        ],
+        grid_widths = [1.0],
+        # mcure=mcure_labels,
     )
     return
 
@@ -6254,11 +6344,11 @@ def plot_LoS_saptdft(df):
     for c in conv:
         df[c] /= h2kcalmol
     # print(df[["SAPT_DFT_D4_pbe0_adz_total", "PBE0 IE adz"]])
-    violin_plots_multi(df)
-    violin_plots_multi_subset(df)
-    return
     violin_plots_multi_components(df, limit_to_column_not_nan="D3-ML")
     violin_plots_multi_components_subset(df, limit_to_column_not_nan="D3-ML")
+    return
+    violin_plots_multi(df)
+    violin_plots_multi_subset(df)
     return
     return
     # Need to plot subset with aqz data now...
