@@ -4174,41 +4174,86 @@ def violin_plots_multi(df, limit_to_column_not_nan=None):
         {"df": df_adz, "label": "aug-cc-pVDZ", "ylim": [-3, 3]},
         {"df": df_atz, "label": "aug-cc-pVTZ", "ylim": [-3, 3]},
     ]
+    # Color all of the same functional the same.
     df_labels_and_columns = {
         # "SAPT2+3(CCD)DMP2": "SAPT2+3(CCD)DMP2 TOTAL ENERGY Error",
-        "MP2": "MP2 IE Error",
+        # DFT
         "PBE0": "PBE0 IE Error",
         "B3LYP": "B3LYP IE Error",
         "B2PLYP": "B2PLYP IE Error",
         "WB97X": "WB97X IE Error",
-        "SAPT0": "SAPT0 TOTAL ENERGY Error",
+        # SAPT(DFT)
+        "SAPT(DFT) [PBE0]": "SAPT(DFT) [PBE0] TOTAL ENERGY Error",
+        "SAPT(DFT) [B3LYP]": "SAPT(DFT) [B3LYP] TOTAL ENERGY Error",
+        "SAPT(DFT) [B2PLYP]": "SAPT(DFT) [B2PLYP] TOTAL ENERGY Error",
+        "SAPT(DFT) [WB97X]": "SAPT(DFT) [WB97X] TOTAL ENERGY Error",
+        # DFT-D4
+        "PBE0-D4": "PBE0-D4 TOTAL ENERGY Error",
+        "B3LYP-D4": "B3LYP-D4 TOTAL ENERGY Error",
+        "B2PLYP-D4": "B2PLYP-D4 TOTAL ENERGY Error",
+        "WB97X-D4": "WB97X-D4 TOTAL ENERGY Error",
+        # SAPT(DFT) D's
+        "SAPT(DFT)-D4": "SAPT(DFT)-D4 TOTAL ENERGY Error",
+        "SAPT(DFT)+D4": "SAPT(DFT)+D4 TOTAL ENERGY Error",
+        "SAPT(DFT)D3-ML": "SAPT(DFT)D3-ML TOTAL ENERGY Error",
+        # Wavefunction
         "SAPT0-D4": "SAPT0-D4 TOTAL ENERGY Error",
-        # "SSAPT0": "SSAPT0 TOTAL ENERGY Error",
+        "SAPT0": "SAPT0 TOTAL ENERGY Error",
         "SAPT2": "SAPT2 TOTAL ENERGY Error",
         "SAPT2+": "SAPT2+ TOTAL ENERGY Error",
         "SAPT2+(3)": "SAPT2+(3) TOTAL ENERGY Error",
         "SAPT2+3": "SAPT2+3 TOTAL ENERGY Error",
+        "SAPT2+3(CCD)DMP2": "SAPT2+3(CCD)DMP2 TOTAL ENERGY Error",
+        # "SAPT2+(CCD)DMP2": "SAPT2+(CCD)DMP2 TOTAL ENERGY Error",
+        # "SAPT2+(3)(CCD)DMP2": "SAPT2+(3)(CCD)DMP2 TOTAL ENERGY Error",
+        # "MP2": "MP2 IE Error",
+        # "SSAPT0": "SSAPT0 TOTAL ENERGY Error",
         # "SAPT2+(CCD)": "SAPT2+(CCD) TOTAL ENERGY Error",
         # "SAPT2+(3)(CCD)": "SAPT2+(3)(CCD) TOTAL ENERGY Error",
         # "SAPT2+3(CCD)": "SAPT2+3(CCD) TOTAL ENERGY Error",
         # "SAPT2+DMP2": "SAPT2+DMP2 TOTAL ENERGY Error",
         # "SAPT2+(3)DMP2": "SAPT2+(3)DMP2 TOTAL ENERGY Error",
         # "SAPT2+3DMP2": "SAPT2+3DMP2 TOTAL ENERGY Error",
-        "SAPT2+(CCD)DMP2": "SAPT2+(CCD)DMP2 TOTAL ENERGY Error",
-        "SAPT2+(3)(CCD)DMP2": "SAPT2+(3)(CCD)DMP2 TOTAL ENERGY Error",
-        "SAPT2+3(CCD)DMP2": "SAPT2+3(CCD)DMP2 TOTAL ENERGY Error",
-        "SAPT(DFT)-D4": "SAPT(DFT)-D4 TOTAL ENERGY Error",
-        "SAPT(DFT) [PBE0]": "SAPT(DFT) [PBE0] TOTAL ENERGY Error",
-        "SAPT(DFT) [B3LYP]": "SAPT(DFT) [B3LYP] TOTAL ENERGY Error",
-        "SAPT(DFT) [B2PLYP]": "SAPT(DFT) [B2PLYP] TOTAL ENERGY Error",
-        "SAPT(DFT) [WB97X]": "SAPT(DFT) [WB97X] TOTAL ENERGY Error",
-        "SAPT(DFT)+D4": "SAPT(DFT)+D4 TOTAL ENERGY Error",
-        "PBE0-D4": "PBE0-D4 TOTAL ENERGY Error",
-        "B3LYP-D4": "B3LYP-D4 TOTAL ENERGY Error",
-        "B2PLYP-D4": "B2PLYP-D4 TOTAL ENERGY Error",
-        "WB97X-D4": "WB97X-D4 TOTAL ENERGY Error",
-        "SAPT(DFT)D3-ML": "SAPT(DFT)D3-ML TOTAL ENERGY Error",
     }
+    # four colors that are contrast between purple blue green and yellow
+    # I need a less bright yellow and different shades of blue and green
+    BLUE = '#1F77B4'  # BLUE
+    TEAL = '#17BECF'  # TEAL
+    LIGHT_BLUE = '#7F7FFF'  # LIGHT BLUE
+    GREEN = '#2CA02C'  # GREEN
+    LIME_GREEN = '#8CA83C'  # LIME GREEN
+    Aquamarine = '#7FFFD4'  # Aquamarine
+    Slate_Blue = '#6A5ACD'  # Slate Blue
+    Medium_Sea_Green = '#3CB371'  # Medium Sea Green
+    INDIGO = '#7057FF'   # INDIGO
+    colors = [
+        TEAL,
+        LIGHT_BLUE,
+        Medium_Sea_Green,
+        INDIGO,
+
+        TEAL,
+        LIGHT_BLUE,
+        Medium_Sea_Green,
+        INDIGO,
+
+        TEAL,
+        LIGHT_BLUE,
+        Medium_Sea_Green,
+        INDIGO,
+
+        BLUE,
+        GREEN,
+        BLUE,
+
+        GREEN,
+        BLUE,
+        GREEN,
+        BLUE,
+        GREEN,
+        BLUE,
+        GREEN,
+    ]
     mcure_labels = {}
     for k, v in df_labels_and_columns.items():
         mcure_labels[k] = []
@@ -4230,6 +4275,9 @@ def violin_plots_multi(df, limit_to_column_not_nan=None):
         usetex=True,
         legend_loc="lower right",
         figure_size=(10, 8),
+        colors=colors,
+        violin_alpha=0.9,
+        x_label_fontsize=9,
         # mcure=mcure_labels,
         error_labels_position=(-0.3, 0.25),
         grid_widths=[1.0],
@@ -4415,39 +4463,81 @@ def violin_plots_multi_subset(df, limit_to_column_not_nan=None):
     ]
     df_labels_and_columns = {
         # "SAPT2+3(CCD)DMP2": "SAPT2+3(CCD)DMP2 TOTAL ENERGY Error",
-        "MP2": "MP2 IE Error",
+        # DFT
         "PBE0": "PBE0 IE Error",
         "B3LYP": "B3LYP IE Error",
         "B2PLYP": "B2PLYP IE Error",
         "WB97X": "WB97X IE Error",
-        "SAPT0": "SAPT0 TOTAL ENERGY Error",
+        # SAPT(DFT)
+        "SAPT(DFT) [PBE0]": "SAPT(DFT) [PBE0] TOTAL ENERGY Error",
+        "SAPT(DFT) [B3LYP]": "SAPT(DFT) [B3LYP] TOTAL ENERGY Error",
+        "SAPT(DFT) [B2PLYP]": "SAPT(DFT) [B2PLYP] TOTAL ENERGY Error",
+        "SAPT(DFT) [WB97X]": "SAPT(DFT) [WB97X] TOTAL ENERGY Error",
+        # DFT-D4
+        "PBE0-D4": "PBE0-D4 TOTAL ENERGY Error",
+        "B3LYP-D4": "B3LYP-D4 TOTAL ENERGY Error",
+        "B2PLYP-D4": "B2PLYP-D4 TOTAL ENERGY Error",
+        "WB97X-D4": "WB97X-D4 TOTAL ENERGY Error",
+        # SAPT(DFT) D's
+        "SAPT(DFT)-D4": "SAPT(DFT)-D4 TOTAL ENERGY Error",
+        "SAPT(DFT)+D4": "SAPT(DFT)+D4 TOTAL ENERGY Error",
+        "SAPT(DFT)D3-ML": "SAPT(DFT)D3-ML TOTAL ENERGY Error",
+        # Wavefunction
         "SAPT0-D4": "SAPT0-D4 TOTAL ENERGY Error",
-        # "SSAPT0": "SSAPT0 TOTAL ENERGY Error",
+        "SAPT0": "SAPT0 TOTAL ENERGY Error",
         "SAPT2": "SAPT2 TOTAL ENERGY Error",
         "SAPT2+": "SAPT2+ TOTAL ENERGY Error",
         "SAPT2+(3)": "SAPT2+(3) TOTAL ENERGY Error",
         "SAPT2+3": "SAPT2+3 TOTAL ENERGY Error",
+        "SAPT2+3(CCD)DMP2": "SAPT2+3(CCD)DMP2 TOTAL ENERGY Error",
+        # "SAPT2+(CCD)DMP2": "SAPT2+(CCD)DMP2 TOTAL ENERGY Error",
+        # "SAPT2+(3)(CCD)DMP2": "SAPT2+(3)(CCD)DMP2 TOTAL ENERGY Error",
+        # "MP2": "MP2 IE Error",
+        # "SSAPT0": "SSAPT0 TOTAL ENERGY Error",
         # "SAPT2+(CCD)": "SAPT2+(CCD) TOTAL ENERGY Error",
         # "SAPT2+(3)(CCD)": "SAPT2+(3)(CCD) TOTAL ENERGY Error",
         # "SAPT2+3(CCD)": "SAPT2+3(CCD) TOTAL ENERGY Error",
         # "SAPT2+DMP2": "SAPT2+DMP2 TOTAL ENERGY Error",
         # "SAPT2+(3)DMP2": "SAPT2+(3)DMP2 TOTAL ENERGY Error",
         # "SAPT2+3DMP2": "SAPT2+3DMP2 TOTAL ENERGY Error",
-        "SAPT2+(CCD)DMP2": "SAPT2+(CCD)DMP2 TOTAL ENERGY Error",
-        "SAPT2+(3)(CCD)DMP2": "SAPT2+(3)(CCD)DMP2 TOTAL ENERGY Error",
-        "SAPT2+3(CCD)DMP2": "SAPT2+3(CCD)DMP2 TOTAL ENERGY Error",
-        "SAPT(DFT)-D4": "SAPT(DFT)-D4 TOTAL ENERGY Error",
-        "SAPT(DFT) [PBE0]": "SAPT(DFT) [PBE0] TOTAL ENERGY Error",
-        "SAPT(DFT) [B3LYP]": "SAPT(DFT) [B3LYP] TOTAL ENERGY Error",
-        "SAPT(DFT) [B2PLYP]": "SAPT(DFT) [B2PLYP] TOTAL ENERGY Error",
-        "SAPT(DFT) [WB97X]": "SAPT(DFT) [WB97X] TOTAL ENERGY Error",
-        "SAPT(DFT)+D4": "SAPT(DFT)+D4 TOTAL ENERGY Error",
-        "PBE0-D4": "PBE0-D4 TOTAL ENERGY Error",
-        "B3LYP-D4": "B3LYP-D4 TOTAL ENERGY Error",
-        "B2PLYP-D4": "B2PLYP-D4 TOTAL ENERGY Error",
-        "WB97X-D4": "WB97X-D4 TOTAL ENERGY Error",
-        "SAPT(DFT)D3-ML": "SAPT(DFT)D3-ML TOTAL ENERGY Error",
     }
+    BLUE = '#1F77B4'  # BLUE
+    TEAL = '#17BECF'  # TEAL
+    LIGHT_BLUE = '#7F7FFF'  # LIGHT BLUE
+    GREEN = '#2CA02C'  # GREEN
+    LIME_GREEN = '#8CA83C'  # LIME GREEN
+    Aquamarine = '#7FFFD4'  # Aquamarine
+    Slate_Blue = '#6A5ACD'  # Slate Blue
+    Medium_Sea_Green = '#3CB371'  # Medium Sea Green
+    INDIGO = '#7057FF'   # INDIGO
+    colors = [
+        TEAL,
+        LIGHT_BLUE,
+        Medium_Sea_Green,
+        INDIGO,
+
+        TEAL,
+        LIGHT_BLUE,
+        Medium_Sea_Green,
+        INDIGO,
+
+        TEAL,
+        LIGHT_BLUE,
+        Medium_Sea_Green,
+        INDIGO,
+
+        BLUE,
+        GREEN,
+        BLUE,
+
+        GREEN,
+        BLUE,
+        GREEN,
+        BLUE,
+        GREEN,
+        BLUE,
+        GREEN,
+    ]
     mcure_labels = {}
     for k, v in df_labels_and_columns.items():
         mcure_labels[k] = []
@@ -4469,6 +4559,9 @@ def violin_plots_multi_subset(df, limit_to_column_not_nan=None):
         usetex=True,
         legend_loc="lower right",
         figure_size=(10, 8),
+        colors=colors,
+        violin_alpha=0.9,
+        x_label_fontsize=9,
         # mcure=mcure_labels,
         error_labels_position=(-0.3, 0.25),
         grid_heights=[
@@ -6161,11 +6254,12 @@ def plot_LoS_saptdft(df):
     for c in conv:
         df[c] /= h2kcalmol
     # print(df[["SAPT_DFT_D4_pbe0_adz_total", "PBE0 IE adz"]])
+    violin_plots_multi(df)
+    violin_plots_multi_subset(df)
+    return
     violin_plots_multi_components(df, limit_to_column_not_nan="D3-ML")
     violin_plots_multi_components_subset(df, limit_to_column_not_nan="D3-ML")
     return
-    violin_plots_multi(df)
-    violin_plots_multi_subset(df)
     return
     # Need to plot subset with aqz data now...
     return
