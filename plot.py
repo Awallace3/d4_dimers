@@ -15,12 +15,12 @@ def main():
     # print(df.columns.values)
     df = src.plotting.plotting_setup(
         (df, df_name),
-        True,
+        False,
     )
     # return
     df = src.plotting.plot_basis_sets_d4_TT(
         df,
-        True,
+        False,
     )
     # return
     df = src.plotting.plot_basis_sets_d4(

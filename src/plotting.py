@@ -183,8 +183,11 @@ def compute_d4_from_opt_params(
         )
         diff = f"{i[1]}_diff"
         d4_diff = f"{i[1]}_d4_diff"
-        df[diff] = df[benchmark_label] - df[i[0]]
-        df[d4_diff] = df[benchmark_label] - df[i[3]] - df[f"-D4 ({i[1]})"]
+        # FIXED
+        # df[diff] = df[benchmark_label] - df[i[0]]
+        # df[d4_diff] = df[benchmark_label] - df[i[3]] - df[f"-D4 ({i[1]})"]
+        df[diff] = df[i[0]] - df[benchmark_label]
+        df[d4_diff] = df[i[3]] + df[f"-D4 ({i[1]})"] - df[benchmark_label]
         print(f'"{diff}",')
         print(f'"{d4_diff}",')
     return df
@@ -419,6 +422,7 @@ def get_charged_df(df) -> pd.DataFrame:
     df = df.drop(inds)
     return df
 
+
 def plot_basis_sets_d4_TT(df, build_df=False, df_out: str = "basis_study", df_name=""):
     selected = df_out
     df_out = f"plots/{df_out}.pkl"
@@ -502,7 +506,10 @@ def plot_basis_sets_d4_TT(df, build_df=False, df_out: str = "basis_study", df_na
     )
     return
 
-def plot_basis_sets_d4_Inter_vs_Super(df, build_df=False, df_out: str = "basis_study", df_name=""):
+
+def plot_basis_sets_d4_Inter_vs_Super(
+    df, build_df=False, df_out: str = "basis_study", df_name=""
+):
     selected = df_out
     df_out = f"plots/{df_out}.pkl"
     if build_df:
@@ -584,6 +591,7 @@ def plot_basis_sets_d4_Inter_vs_Super(df, build_df=False, df_out: str = "basis_s
         # figure_size=(6, 6),
     )
     return
+
 
 def plot_basis_sets_d4(df, build_df=False, df_out: str = "basis_study", df_name=""):
     selected = df_out
@@ -792,8 +800,10 @@ def compute_d3_from_opt_params(
         print(df[f"-D3 ({i[1]})"])
         diff = f"{i[1]}_diff"
         d3_diff = f"{i[1]}_d3_diff"
-        df[diff] = df["Benchmark"] - df[i[0]]
-        df[d3_diff] = df["Benchmark"] - df[i[3]] - df[f"-D3 ({i[1]})"]
+        # df[diff] = df["Benchmark"] - df[i[0]]
+        # df[d3_diff] = df["Benchmark"] - df[i[3]] - df[f"-D3 ({i[1]})"]
+        df[diff] = df[i[0]] - df["Benchmark"]
+        df[d3_diff] = df[i[3]] + df[f"-D3 ({i[1]})"] - df["Benchmark"]
         print(f'"{diff}",')
         print(f'"{d3_diff}",')
     return df
@@ -978,7 +988,7 @@ def plotting_setup(
             axis=1,
         )
         df["SAPT0_adz_ATM_opt_all_diff"] = (
-            df["Benchmark"] - df["SAPT0-D4(ATM ALL)/aug-cc-pVDZ"]
+            df["SAPT0-D4(ATM ALL)/aug-cc-pVDZ"] - df["Benchmark"]
         )
         df["SAPT0-D4/jun-cc-pVDZ"] = df.apply(
             lambda row: row["SAPT0_jdz_3_IE"] + row["-D4 (jdz)"],
@@ -988,26 +998,26 @@ def plotting_setup(
             lambda row: row["SAPT0_jdz_3_IE"] + row["-D4 (jdz) ATM"],
             axis=1,
         )
-        df["adz_diff_d4"] = df["Benchmark"] - df["SAPT0-D4/aug-cc-pVDZ"]
-        df["adz_diff_d4_ATM"] = df["Benchmark"] - df["SAPT0-D4(ATM)/aug-cc-pVDZ"]
-        df["adz_diff_d4_ATM_G"] = df["Benchmark"] - (
-            df["SAPT0_adz_3_IE"] + df["-D4 (adz) ATM G"]
-        )
-        df["jdz_diff_d4_ATM_G"] = df["Benchmark"] - (
-            df["SAPT0_jdz_3_IE"] + df["-D4 (jdz) ATM G"]
-        )
-        df["jdz_diff_d4"] = df["Benchmark"] - df["SAPT0-D4/jun-cc-pVDZ"]
-        df["jdz_diff_d4_ATM"] = df["Benchmark"] - df["SAPT0-D4(ATM)/jun-cc-pVDZ"]
-        df["SAPT0_jdz_diff"] = df["Benchmark"] - df["SAPT0"]
-        df["SAPT0_jdz_diff"] = df["Benchmark"] - df["SAPT0"]
+        df["adz_diff_d4"] = df["SAPT0-D4/aug-cc-pVDZ"] - df["Benchmark"]
+        df["adz_diff_d4_ATM"] = df["SAPT0-D4(ATM)/aug-cc-pVDZ"] - df["Benchmark"]
+        df["adz_diff_d4_ATM_G"] = (df["SAPT0_adz_3_IE"] + df["-D4 (adz) ATM G"]) - df[
+            "Benchmark"
+        ]
+        df["jdz_diff_d4_ATM_G"] = (df["SAPT0_jdz_3_IE"] + df["-D4 (jdz) ATM G"]) - df[
+            "Benchmark"
+        ]
+        df["jdz_diff_d4"] = df["SAPT0-D4/jun-cc-pVDZ"] - df["Benchmark"]
+        df["jdz_diff_d4_ATM"] = df["SAPT0-D4(ATM)/jun-cc-pVDZ"] + df["Benchmark"]
+        df["SAPT0_jdz_diff"] = df["SAPT0"] + df["Benchmark"]
+        df["SAPT0_jdz_diff"] = df["SAPT0"] + df["Benchmark"]
 
         if compute_d3:
-            df["adz_diff_d4_2B@ATM_G"] = df["Benchmark"] - (
+            df["adz_diff_d4_2B@ATM_G"] = (
                 df["SAPT0_adz_3_IE"] + df["-D4 2B@ATM_params (adz) G"]
-            )
-            df["jdz_diff_d4_2B@ATM_G"] = df["Benchmark"] - (
+            ) - df["Benchmark"]
+            df["jdz_diff_d4_2B@ATM_G"] = (
                 df["SAPT0_jdz_3_IE"] + df["-D4 2B@ATM_params (adz) G"]
-            )
+            ) - df["Benchmark"]
             df["SAPT0-D3/jun-cc-pVDZ"] = df.apply(
                 lambda row: row["SAPT0_jdz_3_IE"] + row["-D3 (jdz)"],
                 axis=1,
@@ -1020,18 +1030,18 @@ def plotting_setup(
                 lambda row: row["SAPT0_adz_3_IE"] + row["-D3 (adz)"],
                 axis=1,
             )
-        df["adz_diff_d3"] = df["Benchmark"] - df["SAPT0-D3/aug-cc-pVDZ"]
-        df["jdz_diff_d3"] = df["Benchmark"] - df["SAPT0-D3/jun-cc-pVDZ"]
+        df["adz_diff_d3"] = df["SAPT0-D3/aug-cc-pVDZ"] - df["Benchmark"]
+        df["jdz_diff_d3"] = df["SAPT0-D3/jun-cc-pVDZ"] - df["Benchmark"]
 
         # D3 binary results
-        df["jdz_diff_d3mbj"] = df["Benchmark"] - (df["SAPT0_jdz_3_IE"] + df["D3MBJ"])
-        df["adz_diff_d3mbj"] = df["Benchmark"] - (df["SAPT0_adz_3_IE"] + df["D3MBJ"])
-        df["jdz_diff_d3mbj_atm"] = df["Benchmark"] - (
-            df["SAPT0_jdz_3_IE"] + df["D3MBJ ATM"]
-        )
-        df["adz_diff_d3mbj_atm"] = df["Benchmark"] - (
-            df["SAPT0_adz_3_IE"] + df["D3MBJ ATM"]
-        )
+        df["jdz_diff_d3mbj"] = (df["SAPT0_jdz_3_IE"] + df["D3MBJ"]) - df["Benchmark"]
+        df["adz_diff_d3mbj"] = (df["SAPT0_adz_3_IE"] + df["D3MBJ"]) - df["Benchmark"]
+        df["jdz_diff_d3mbj_atm"] = (df["SAPT0_jdz_3_IE"] + df["D3MBJ ATM"]) - df[
+            "Benchmark"
+        ]
+        df["adz_diff_d3mbj_atm"] = (df["SAPT0_adz_3_IE"] + df["D3MBJ ATM"]) - df[
+            "Benchmark"
+        ]
         df.to_pickle(df_out)
 
     else:
@@ -1135,9 +1145,9 @@ def plotting_setup(
                 # "SAPT0/jDZ": "SAPT0_jdz_3_IE_diff",
                 "SAPT0/aDZ": "SAPT0_adz_3_IE_diff",
                 # "SAPT0-D3/jDZ": "SAPT0_jdz_3_IE_d3_diff",
-                #SAPT "0-D3MBJ(ATM)/jDZ": "jdz_diff_d3mbj_atm",
+                # SAPT "0-D3MBJ(ATM)/jDZ": "jdz_diff_d3mbj_atm",
                 "SAPT0-D3/aDZ": "SAPT0_adz_3_IE_d3_diff",
-                #SAPT "0-D3MBJ(ATM)/aDZ": "adz_diff_d3mbj_atm",
+                # SAPT "0-D3MBJ(ATM)/aDZ": "adz_diff_d3mbj_atm",
                 "SAPT0-D4/aDZ": "SAPT0_adz_3_IE_d4_diff",
                 # "0-D4(ATM)/aDZ": "SAPT0_dz_3_IE_ATM_SHARED_d4_diff",
                 # "0-D4(ATM)/aDZ": "SAPT0_adz_ATM_opt_all_diff",
@@ -1383,13 +1393,22 @@ def plotting_setup_dft_ddft(
     if build_df:
         df = pd.read_pickle(selected)
         len_before = len(df)
-        df.dropna(subset=['SAPT_DFT_pbe0_adz', 'SAPT_DFT_pbe0_atz', "C6s"], inplace=True)
+        df.dropna(
+            subset=["SAPT_DFT_pbe0_adz", "SAPT_DFT_pbe0_atz", "C6s"], inplace=True
+        )
         print(f"Removed {len_before - len(df)} NaN values")
 
         df = df[df["SAPT_DFT_pbe0_adz"].notna()].copy()
 
         def compute_saptdft_ddft_ie(r, b):
-            return r[f"SAPT_DFT_pbe0_{b}"][1] + r[f"SAPT_DFT_pbe0_{b}"][2] + r[f"SAPT_DFT_pbe0_{b}"][3] + r[f"SAPT_DFT_pbe0_{b}_D4_IE"] + r[f"SAPT_DFT_pbe0_{b}_dDFT"] - r[f"SAPT_DFT_pbe0_{b}_dHF"]
+            return (
+                r[f"SAPT_DFT_pbe0_{b}"][1]
+                + r[f"SAPT_DFT_pbe0_{b}"][2]
+                + r[f"SAPT_DFT_pbe0_{b}"][3]
+                + r[f"SAPT_DFT_pbe0_{b}_D4_IE"]
+                + r[f"SAPT_DFT_pbe0_{b}_dDFT"]
+                - r[f"SAPT_DFT_pbe0_{b}_dHF"]
+            )
 
         # SAPT(DFT) - aDZ
         # df["SAPT_DFT_D4_pbe0_adz_total"] = df.apply(
@@ -1402,7 +1421,7 @@ def plotting_setup_dft_ddft(
         #     axis=1,
         # )
         df["SAPT_DFT_D4_pbe0_adz_total"] = df.apply(
-            lambda x: compute_saptdft_ddft_ie(x, "adz"), 
+            lambda x: compute_saptdft_ddft_ie(x, "adz"),
             axis=1,
         )
         df["SAPT_DFT_pbe0_adz_total"] = df.apply(
@@ -1440,8 +1459,7 @@ def plotting_setup_dft_ddft(
             + df["SAPT_DFT_pbe0_adz_indu"]
         )
         df["SAPT_DFT_pbe0_adz_d4_disp"] = df.apply(
-            lambda x:
-            x["SAPT_DFT_pbe0_adz_dDFT"]
+            lambda x: x["SAPT_DFT_pbe0_adz_dDFT"]
             - x["SAPT_DFT_pbe0_adz_dHF"]
             + x["SAPT_DFT_pbe0_adz_D4_IE"],
             axis=1,
@@ -1458,13 +1476,17 @@ def plotting_setup_dft_ddft(
                     x["SAPT0 IND ENERGY adz"],
                     x["SAPT0 DISP ENERGY adz"],
                 ]
-            ) * h2kcalmol,
+            )
+            * h2kcalmol,
             axis=1,
         )
         df["SAPT0_adz_3_IE"] = df.apply(
-            lambda x: (x["SAPT0 ELST ENERGY adz"]
-            + x["SAPT0 EXCH ENERGY adz"]
-            + x["SAPT0 IND ENERGY adz"]) * h2kcalmol,
+            lambda x: (
+                x["SAPT0 ELST ENERGY adz"]
+                + x["SAPT0 EXCH ENERGY adz"]
+                + x["SAPT0 IND ENERGY adz"]
+            )
+            * h2kcalmol,
             axis=1,
         )
         df["SAPT0_adz_total"] = df["SAPT0_adz"].apply(lambda x: x[0])
@@ -1472,7 +1494,7 @@ def plotting_setup_dft_ddft(
         df["SAPT0_adz_exch"] = df["SAPT0_adz"].apply(lambda x: x[2])
         df["SAPT0_adz_indu"] = df["SAPT0_adz"].apply(lambda x: x[3])
         df["SAPT0_adz_disp"] = df["SAPT0_adz"].apply(lambda x: x[4])
-        print(df['SAPT_DFT_pbe0_atz'])
+        print(df["SAPT_DFT_pbe0_atz"])
 
         # SAPT(DFT) - aTZ
         df["SAPT_DFT_D4_pbe0_atz_total"] = df.apply(
@@ -1514,13 +1536,14 @@ def plotting_setup_dft_ddft(
             + df["SAPT_DFT_pbe0_atz_indu"]
         )
         df["SAPT_DFT_pbe0_atz_d4_disp"] = df.apply(
-            lambda x:
-            x["SAPT_DFT_pbe0_atz_dDFT"]
+            lambda x: x["SAPT_DFT_pbe0_atz_dDFT"]
             - x["SAPT_DFT_pbe0_atz_dHF"]
             + x["SAPT_DFT_pbe0_atz_D4_IE"],
             axis=1,
         )
-        df[f"{reference} TOTAL ENERGY adz"] = df[f"{reference} TOTAL ENERGY adz"] * h2kcalmol
+        df[f"{reference} TOTAL ENERGY adz"] = (
+            df[f"{reference} TOTAL ENERGY adz"] * h2kcalmol
+        )
         df["SAPT0_atz"] = df.apply(
             lambda x: np.array(
                 [
@@ -1533,13 +1556,17 @@ def plotting_setup_dft_ddft(
                     x["SAPT0 IND ENERGY atz"],
                     x["SAPT0 DISP ENERGY atz"],
                 ]
-            ) * h2kcalmol,
+            )
+            * h2kcalmol,
             axis=1,
         )
         df["SAPT0_atz_3_IE"] = df.apply(
-            lambda x: (x["SAPT0 ELST ENERGY atz"]
-            + x["SAPT0 EXCH ENERGY atz"]
-            + x["SAPT0 IND ENERGY atz"]) * h2kcalmol,
+            lambda x: (
+                x["SAPT0 ELST ENERGY atz"]
+                + x["SAPT0 EXCH ENERGY atz"]
+                + x["SAPT0 IND ENERGY atz"]
+            )
+            * h2kcalmol,
             axis=1,
         )
         df["SAPT0_atz_total"] = df["SAPT0_atz"].apply(lambda x: x[0])
@@ -2211,6 +2238,7 @@ def plot_component_violin_zoomed(
     plt.clf()
     return
 
+
 def plot_violin_d3_d4_ALL_zoomed_min_max_TOC(
     df,
     vals: {},
@@ -2453,6 +2481,7 @@ def plot_violin_d3_d4_ALL_zoomed_min_max_TOC(
         )
     plt.clf()
     return
+
 
 def plot_violin_d3_d4_ALL_zoomed_min_max(
     df,
