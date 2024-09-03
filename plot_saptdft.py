@@ -6,19 +6,22 @@ from pprint import pprint as pp
 
 h2kcalmol = qcel.constants.conversion_factor("hartree", "kcal/mol")
 
+
 def merge_basis_study():
     df = pd.read_pickle("./plots/basis_study.pkl")
     print(df.columns.values)
     df2 = pd.read_pickle("./plots/los_saptdft_atz_2.pkl")
     return
 
+
 def check_c6s(df):
-    if 'C6s' not in df.columns.values:
+    if "C6s" not in df.columns.values:
         df = src.setup.generate_D4_data(df)
         return df
-    if df.iloc[0]['C6s'] is None:
+    if df.iloc[0]["C6s"] is None:
         df = src.setup.generate_D4_data(df)
     return df
+
 
 def main():
     # df_name = "./dfs/los_adz_candidacy_s0atz.pkl"
@@ -42,7 +45,7 @@ def main():
     # return
     # src.plotting.plot_components_sapt0_saptdft(df)
     # return
-    src.plotting.plot_LoS_saptdft(df)
+    src.plotting.plot_LoS_saptdft(df, presentation=True)
     return
 
 

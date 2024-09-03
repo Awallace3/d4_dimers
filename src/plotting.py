@@ -4290,6 +4290,255 @@ def violin_plots_multi(df, limit_to_column_not_nan=None):
     )
     return
 
+def violin_plots_multi_individual(df, limit_to_column_not_nan=None):
+    if limit_to_column_not_nan is not None:
+
+        size_prior = len(df)
+        df = df[df[limit_to_column_not_nan].notna()].copy()
+        print(
+            f"Limiting to {limit_to_column_not_nan} not NaN: {size_prior} -> {len(df)}"
+        )
+    sapt_methods = [
+        "MP2 IE",
+        "PBE0 IE",
+        "B3LYP IE",
+        "B2PLYP IE",
+        "WB97X IE",
+        "SAPT0 TOTAL ENERGY",
+        "SSAPT0 TOTAL ENERGY",
+        "SAPT2 TOTAL ENERGY",
+        "SAPT2+ TOTAL ENERGY",
+        "SAPT2+(3) TOTAL ENERGY",
+        "SAPT2+3 TOTAL ENERGY",
+        "SAPT2+(CCD) TOTAL ENERGY",
+        "SAPT2+(3)(CCD) TOTAL ENERGY",
+        "SAPT2+3(CCD) TOTAL ENERGY",
+        "SAPT2+DMP2 TOTAL ENERGY",
+        "SAPT2+(3)DMP2 TOTAL ENERGY",
+        "SAPT2+3DMP2 TOTAL ENERGY",
+        "SAPT2+(CCD)DMP2 TOTAL ENERGY",
+        "SAPT2+(3)(CCD)DMP2 TOTAL ENERGY",
+        "SAPT2+3(CCD)DMP2 TOTAL ENERGY",
+        "SAPT0-D4 TOTAL ENERGY",
+        "SAPT TOTAL ENERGY",
+        "SAPT(DFT)D3-ML TOTAL ENERGY",
+        "SAPT(DFT)-D4 TOTAL ENERGY",
+        "SAPT(DFT)+D4 TOTAL ENERGY",
+    ]
+    reference = "benchmark ref energy"
+    copy_cols_start = [
+        "DB",
+        "system_id",
+        "benchmark ref energy",
+        "E_R_eq",
+        "R",
+        "Ref_elst_atz",
+        "E_R_eq_elst_atz",
+        "Ref_exch_atz",
+        "E_R_eq_exch_atz",
+        "Ref_ind_atz",
+        "E_R_eq_ind_atz",
+        "Ref_disp_atz",
+        "E_R_eq_disp_atz",
+        # local methods
+        ## saptdft
+        "SAPT_DFT_D4_pbe0_adz_total",
+        "SAPT_DFT_pbe0_adz_total",
+        "SAPT_DFT_D4_pbe0_atz_total",
+        "SAPT_DFT_pbe0_atz_total",
+
+        "SAPT_DFT_D4_b3lyp_adz_total",
+        "SAPT_DFT_b3lyp_adz_total",
+        "SAPT_DFT_D4_b3lyp_atz_total",
+        "SAPT_DFT_b3lyp_atz_total",
+
+        "SAPT_DFT_D4_b2plyp_adz_total",
+        "SAPT_DFT_b2plyp_adz_total",
+        "SAPT_DFT_D4_b2plyp_atz_total",
+        "SAPT_DFT_b2plyp_atz_total",
+
+        "SAPT_DFT_D4_wb97x_adz_total",
+        "SAPT_DFT_wb97x_adz_total",
+        "SAPT_DFT_D4_wb97x_atz_total",
+        "SAPT_DFT_wb97x_atz_total",
+    ]
+    print(df[["SAPT_DFT_D4_pbe0_adz_total", "SAPT_DFT_D4_b3lyp_adz_total",]])
+    copy_cols = copy_cols_start.copy()
+    copy_cols.extend([f"{c} adz" for c in sapt_methods])
+    df_adz = df[copy_cols].copy()
+    df_adz.columns = [c.replace(" adz", "") for c in df_adz.columns]
+    df_adz.rename(
+        columns={
+            "SAPT_DFT_D4_pbe0_adz_total": "PBE0-D4 TOTAL ENERGY",
+            "SAPT_DFT_pbe0_adz_total": "SAPT(DFT) [PBE0] TOTAL ENERGY",
+
+            "SAPT_DFT_D4_b2plyp_adz_total": "B2PLYP-D4 TOTAL ENERGY",
+            "SAPT_DFT_b2plyp_adz_total": "SAPT(DFT) [B2PLYP] TOTAL ENERGY",
+
+            "SAPT_DFT_D4_wb97x_adz_total": "WB97X-D4 TOTAL ENERGY",
+            "SAPT_DFT_wb97x_adz_total": "SAPT(DFT) [WB97X] TOTAL ENERGY",
+
+            "SAPT_DFT_D4_b3lyp_adz_total": "B3LYP-D4 TOTAL ENERGY",
+            "SAPT_DFT_b3lyp_adz_total": "SAPT(DFT) [B3LYP] TOTAL ENERGY",
+        },
+        inplace=True,
+    )
+
+    copy_cols = copy_cols_start.copy()
+    copy_cols.extend([f"{c} atz" for c in sapt_methods])
+    df_atz = df[copy_cols].copy()
+    df_atz.columns = [c.replace(" atz", "") for c in df_atz.columns]
+    df_atz.rename(
+        columns={
+            "SAPT_DFT_D4_pbe0_atz_total": "PBE0-D4 TOTAL ENERGY",
+            "SAPT_DFT_pbe0_atz_total": "SAPT(DFT) [PBE0] TOTAL ENERGY",
+
+            "SAPT_DFT_D4_b2plyp_atz_total": "B2PLYP-D4 TOTAL ENERGY",
+            "SAPT_DFT_b2plyp_atz_total": "SAPT(DFT) [B2PLYP] TOTAL ENERGY",
+
+            "SAPT_DFT_D4_wb97x_atz_total": "WB97X-D4 TOTAL ENERGY",
+            "SAPT_DFT_wb97x_atz_total": "SAPT(DFT) [WB97X] TOTAL ENERGY",
+
+            "SAPT_DFT_D4_b3lyp_atz_total": "B3LYP-D4 TOTAL ENERGY",
+            "SAPT_DFT_b3lyp_atz_total": "SAPT(DFT) [B3LYP] TOTAL ENERGY",
+
+        },
+        inplace=True,
+    )
+    local_methods = [
+        "PBE0-D4 TOTAL ENERGY",
+        "B3LYP-D4 TOTAL ENERGY",
+        "B2PLYP-D4 TOTAL ENERGY",
+        "WB97X-D4 TOTAL ENERGY",
+        "SAPT(DFT) [PBE0] TOTAL ENERGY",
+        "SAPT(DFT) [B3LYP] TOTAL ENERGY",
+        "SAPT(DFT) [B2PLYP] TOTAL ENERGY",
+        "SAPT(DFT) [WB97X] TOTAL ENERGY",
+    ]
+    sapt_methods.extend(local_methods)
+    for i in sapt_methods:
+        df_adz[f"{i} Error"] = df_adz[i] * h2kcalmol - df_adz[reference]
+        df_atz[f"{i} Error"] = df_atz[i] * h2kcalmol - df_atz[reference]
+
+    dfs_all = [
+        {"df": df_adz, "label": "aug-cc-pVDZ", "ylim": [-3, 3], "name": "adz"},
+        {"df": df_atz, "label": "aug-cc-pVTZ", "ylim": [-3, 3], "name": "atz"},
+    ]
+    # Color all of the same functional the same.
+    df_labels_and_columns = {
+        # "SAPT2+3(CCD)DMP2": "SAPT2+3(CCD)DMP2 TOTAL ENERGY Error",
+        # DFT
+        "PBE0": "PBE0 IE Error",
+        "B3LYP": "B3LYP IE Error",
+        "B2PLYP": "B2PLYP IE Error",
+        "WB97X": "WB97X IE Error",
+        # SAPT(DFT)
+        "SAPT(DFT) [PBE0]": "SAPT(DFT) [PBE0] TOTAL ENERGY Error",
+        "SAPT(DFT) [B3LYP]": "SAPT(DFT) [B3LYP] TOTAL ENERGY Error",
+        "SAPT(DFT) [B2PLYP]": "SAPT(DFT) [B2PLYP] TOTAL ENERGY Error",
+        "SAPT(DFT) [WB97X]": "SAPT(DFT) [WB97X] TOTAL ENERGY Error",
+        # DFT-D4
+        "PBE0-D4": "PBE0-D4 TOTAL ENERGY Error",
+        "B3LYP-D4": "B3LYP-D4 TOTAL ENERGY Error",
+        "B2PLYP-D4": "B2PLYP-D4 TOTAL ENERGY Error",
+        "WB97X-D4": "WB97X-D4 TOTAL ENERGY Error",
+        # SAPT(DFT) D's
+        "SAPT(DFT)-D4": "SAPT(DFT)-D4 TOTAL ENERGY Error",
+        "SAPT(DFT)+D4": "SAPT(DFT)+D4 TOTAL ENERGY Error",
+        "SAPT(DFT)D3-ML": "SAPT(DFT)D3-ML TOTAL ENERGY Error",
+        # Wavefunction
+        "SAPT0-D4": "SAPT0-D4 TOTAL ENERGY Error",
+        "SAPT0": "SAPT0 TOTAL ENERGY Error",
+        "SAPT2": "SAPT2 TOTAL ENERGY Error",
+        "SAPT2+": "SAPT2+ TOTAL ENERGY Error",
+        "SAPT2+(3)": "SAPT2+(3) TOTAL ENERGY Error",
+        "SAPT2+3": "SAPT2+3 TOTAL ENERGY Error",
+        "SAPT2+3(CCD)DMP2": "SAPT2+3(CCD)DMP2 TOTAL ENERGY Error",
+        # "SAPT2+(CCD)DMP2": "SAPT2+(CCD)DMP2 TOTAL ENERGY Error",
+        # "SAPT2+(3)(CCD)DMP2": "SAPT2+(3)(CCD)DMP2 TOTAL ENERGY Error",
+        # "MP2": "MP2 IE Error",
+        # "SSAPT0": "SSAPT0 TOTAL ENERGY Error",
+        # "SAPT2+(CCD)": "SAPT2+(CCD) TOTAL ENERGY Error",
+        # "SAPT2+(3)(CCD)": "SAPT2+(3)(CCD) TOTAL ENERGY Error",
+        # "SAPT2+3(CCD)": "SAPT2+3(CCD) TOTAL ENERGY Error",
+        # "SAPT2+DMP2": "SAPT2+DMP2 TOTAL ENERGY Error",
+        # "SAPT2+(3)DMP2": "SAPT2+(3)DMP2 TOTAL ENERGY Error",
+        # "SAPT2+3DMP2": "SAPT2+3DMP2 TOTAL ENERGY Error",
+    }
+    # four colors that are contrast between purple blue green and yellow
+    # I need a less bright yellow and different shades of blue and green
+    BLUE = '#1F77B4'  # BLUE
+    TEAL = '#17BECF'  # TEAL
+    LIGHT_BLUE = '#7F7FFF'  # LIGHT BLUE
+    GREEN = '#2CA02C'  # GREEN
+    LIME_GREEN = '#8CA83C'  # LIME GREEN
+    Aquamarine = '#7FFFD4'  # Aquamarine
+    Slate_Blue = '#6A5ACD'  # Slate Blue
+    Medium_Sea_Green = '#3CB371'  # Medium Sea Green
+    INDIGO = '#7057FF'   # INDIGO
+    colors = [
+        TEAL,
+        LIGHT_BLUE,
+        Medium_Sea_Green,
+        INDIGO,
+
+        TEAL,
+        LIGHT_BLUE,
+        Medium_Sea_Green,
+        INDIGO,
+
+        TEAL,
+        LIGHT_BLUE,
+        Medium_Sea_Green,
+        INDIGO,
+
+        BLUE,
+        GREEN,
+        BLUE,
+
+        GREEN,
+        BLUE,
+        GREEN,
+        BLUE,
+        GREEN,
+        BLUE,
+        GREEN,
+    ]
+    mcure_labels = {}
+    for k, v in df_labels_and_columns.items():
+        mcure_labels[k] = []
+        for d in dfs_all:
+            v = v.replace(" Error", "")
+            d["df"]["CRE"] = d["df"].apply(
+                lambda r: compute_CRE(r, energy_col=v), axis=1
+            )
+            mcure = d["df"]["CRE"].abs().mean() * 100
+            mcure_labels[k].append(mcure)
+
+    import cdsg_plot
+
+    for dfs in dfs_all:
+        dfs = [dfs]
+        cdsg_plot.error_statistics.violin_plot_table_multi(
+            dfs,
+            df_labels_and_columns,
+            f"./plots/individuals/LoS_all_{dfs[0]['name']}_saptdft.jpg",
+            table_fontsize=9,
+            usetex=True,
+            legend_loc="lower right",
+            figure_size=(10, 3),
+            colors=colors,
+            violin_alpha=0.9,
+            x_label_fontsize=12,
+            error_labels_position=(-0.3, 0.25),
+            grid_widths=[1.0],
+            grid_heights=[
+                0.45,
+                2,
+            ],
+        )
+    return
+
 
 def violin_plots_multi_subset(df, limit_to_column_not_nan=None):
     df = df[df["subset"]].copy()
@@ -4573,6 +4822,288 @@ def violin_plots_multi_subset(df, limit_to_column_not_nan=None):
             2,
         ],
     )
+    return
+
+def violin_plots_multi_subset_individual(df, limit_to_column_not_nan=None):
+    df = df[df["subset"]].copy()
+    print(f"Subset: {len(df)}")
+    if limit_to_column_not_nan is not None:
+
+        size_prior = len(df)
+        df = df[df[limit_to_column_not_nan].notna()].copy()
+        print(
+            f"Limiting to {limit_to_column_not_nan} not NaN: {size_prior} -> {len(df)}"
+        )
+    sapt_methods = [
+        "MP2 IE",
+        "PBE0 IE",
+        "B3LYP IE",
+        "B2PLYP IE",
+        "WB97X IE",
+        "SAPT0 TOTAL ENERGY",
+        "SSAPT0 TOTAL ENERGY",
+        "SAPT2 TOTAL ENERGY",
+        "SAPT2+ TOTAL ENERGY",
+        "SAPT2+(3) TOTAL ENERGY",
+        "SAPT2+3 TOTAL ENERGY",
+        "SAPT2+(CCD) TOTAL ENERGY",
+        "SAPT2+(3)(CCD) TOTAL ENERGY",
+        "SAPT2+3(CCD) TOTAL ENERGY",
+        "SAPT2+DMP2 TOTAL ENERGY",
+        "SAPT2+(3)DMP2 TOTAL ENERGY",
+        "SAPT2+3DMP2 TOTAL ENERGY",
+        "SAPT2+(CCD)DMP2 TOTAL ENERGY",
+        "SAPT2+(3)(CCD)DMP2 TOTAL ENERGY",
+        "SAPT2+3(CCD)DMP2 TOTAL ENERGY",
+        "SAPT0-D4 TOTAL ENERGY",
+        "SAPT TOTAL ENERGY",
+        "SAPT(DFT)D3-ML TOTAL ENERGY",
+        "SAPT(DFT)-D4 TOTAL ENERGY",
+        "SAPT(DFT)+D4 TOTAL ENERGY",
+    ]
+    reference = "benchmark ref energy"
+    copy_cols_start = [
+        "DB",
+        "system_id",
+        "benchmark ref energy",
+        "E_R_eq",
+        "R",
+        "Ref_elst_aqz",
+        "E_R_eq_elst_aqz",
+        "Ref_exch_aqz",
+        "E_R_eq_exch_aqz",
+        "Ref_ind_aqz",
+        "E_R_eq_ind_aqz",
+        "Ref_disp_aqz",
+        "E_R_eq_disp_aqz",
+        # local methods
+        ## saptdft
+        "SAPT_DFT_D4_pbe0_adz_total",
+        "SAPT_DFT_pbe0_adz_total",
+        "SAPT_DFT_D4_pbe0_atz_total",
+        "SAPT_DFT_pbe0_atz_total",
+        "SAPT_DFT_D4_pbe0_aqz_total",
+        "SAPT_DFT_pbe0_aqz_total",
+        #
+        "SAPT_DFT_D4_b3lyp_adz_total",
+        "SAPT_DFT_b3lyp_adz_total",
+        "SAPT_DFT_D4_b3lyp_atz_total",
+        "SAPT_DFT_b3lyp_atz_total",
+        "SAPT_DFT_D4_b3lyp_aqz_total",
+        "SAPT_DFT_b3lyp_aqz_total",
+        #
+        "SAPT_DFT_D4_b2plyp_adz_total",
+        "SAPT_DFT_b2plyp_adz_total",
+        "SAPT_DFT_D4_b2plyp_atz_total",
+        "SAPT_DFT_b2plyp_atz_total",
+        "SAPT_DFT_D4_b2plyp_aqz_total",
+        "SAPT_DFT_b2plyp_aqz_total",
+        #
+        "SAPT_DFT_D4_wb97x_adz_total",
+        "SAPT_DFT_wb97x_adz_total",
+        "SAPT_DFT_D4_wb97x_atz_total",
+        "SAPT_DFT_wb97x_atz_total",
+        "SAPT_DFT_D4_wb97x_aqz_total",
+        "SAPT_DFT_wb97x_aqz_total",
+    ]
+    copy_cols = copy_cols_start.copy()
+    copy_cols.extend([f"{c} adz" for c in sapt_methods])
+    df_adz = df[copy_cols].copy()
+    df_adz.columns = [c.replace(" adz", "") for c in df_adz.columns]
+    df_adz.rename(
+        columns={
+            "SAPT_DFT_D4_pbe0_adz_total": "PBE0-D4 TOTAL ENERGY",
+            "SAPT_DFT_pbe0_adz_total": "SAPT(DFT) [PBE0] TOTAL ENERGY",
+
+            "SAPT_DFT_D4_b2plyp_adz_total": "B2PLYP-D4 TOTAL ENERGY",
+            "SAPT_DFT_b2plyp_adz_total": "SAPT(DFT) [B2PLYP] TOTAL ENERGY",
+
+            "SAPT_DFT_D4_wb97x_adz_total": "WB97X-D4 TOTAL ENERGY",
+            "SAPT_DFT_wb97x_adz_total": "SAPT(DFT) [WB97X] TOTAL ENERGY",
+
+            "SAPT_DFT_D4_b3lyp_adz_total": "B3LYP-D4 TOTAL ENERGY",
+            "SAPT_DFT_b3lyp_adz_total": "SAPT(DFT) [B3LYP] TOTAL ENERGY",
+        },
+        inplace=True,
+    )
+
+    copy_cols = copy_cols_start.copy()
+    copy_cols.extend([f"{c} atz" for c in sapt_methods])
+    df_atz = df[copy_cols].copy()
+    df_atz.columns = [c.replace(" atz", "") for c in df_atz.columns]
+    df_atz.rename(
+        columns={
+            "SAPT_DFT_D4_pbe0_atz_total": "PBE0-D4 TOTAL ENERGY",
+            "SAPT_DFT_pbe0_atz_total": "SAPT(DFT) [PBE0] TOTAL ENERGY",
+
+            "SAPT_DFT_D4_b2plyp_atz_total": "B2PLYP-D4 TOTAL ENERGY",
+            "SAPT_DFT_b2plyp_atz_total": "SAPT(DFT) [B2PLYP] TOTAL ENERGY",
+
+            "SAPT_DFT_D4_wb97x_atz_total": "WB97X-D4 TOTAL ENERGY",
+            "SAPT_DFT_wb97x_atz_total": "SAPT(DFT) [WB97X] TOTAL ENERGY",
+
+            "SAPT_DFT_D4_b3lyp_atz_total": "B3LYP-D4 TOTAL ENERGY",
+            "SAPT_DFT_b3lyp_atz_total": "SAPT(DFT) [B3LYP] TOTAL ENERGY",
+        },
+        inplace=True,
+    )
+    copy_cols = copy_cols_start.copy()
+    copy_cols.extend([f"{c} aqz" for c in sapt_methods])
+    df_aqz = df[copy_cols].copy()
+    df_aqz.columns = [c.replace(" aqz", "") for c in df_aqz.columns]
+    df_aqz.rename(
+        columns={
+            "SAPT_DFT_D4_pbe0_aqz_total": "PBE0-D4 TOTAL ENERGY",
+            "SAPT_DFT_pbe0_aqz_total": "SAPT(DFT) [PBE0] TOTAL ENERGY",
+
+            "SAPT_DFT_D4_b2plyp_aqz_total": "B2PLYP-D4 TOTAL ENERGY",
+            "SAPT_DFT_b2plyp_aqz_total": "SAPT(DFT) [B2PLYP] TOTAL ENERGY",
+
+            "SAPT_DFT_D4_wb97x_aqz_total": "WB97X-D4 TOTAL ENERGY",
+            "SAPT_DFT_wb97x_aqz_total": "SAPT(DFT) [WB97X] TOTAL ENERGY",
+
+            "SAPT_DFT_D4_b3lyp_aqz_total": "B3LYP-D4 TOTAL ENERGY",
+            "SAPT_DFT_b3lyp_aqz_total": "SAPT(DFT) [B3LYP] TOTAL ENERGY",
+        },
+        inplace=True,
+    )
+    local_methods = [
+        "PBE0-D4 TOTAL ENERGY",
+        "B3LYP-D4 TOTAL ENERGY",
+        "B2PLYP-D4 TOTAL ENERGY",
+        "WB97X-D4 TOTAL ENERGY",
+        "SAPT(DFT) [PBE0] TOTAL ENERGY",
+        "SAPT(DFT) [B3LYP] TOTAL ENERGY",
+        "SAPT(DFT) [B2PLYP] TOTAL ENERGY",
+        "SAPT(DFT) [WB97X] TOTAL ENERGY",
+    ]
+    sapt_methods.extend(local_methods)
+    df_adz[reference] = df_adz[reference].astype(float)
+    df_atz[reference] = df_adz[reference].astype(float)
+    df_aqz[reference] = df_adz[reference].astype(float)
+    for i in sapt_methods:
+        df_adz[i] = df_adz[i].astype(float)
+        df_atz[i] = df_atz[i].astype(float)
+        df_aqz[i] = df_aqz[i].astype(float)
+        df_adz[f"{i} Error"] = df_adz[i] * h2kcalmol - df_adz[reference]
+        df_atz[f"{i} Error"] = df_atz[i] * h2kcalmol - df_atz[reference]
+        df_aqz[f"{i} Error"] = df_aqz[i] * h2kcalmol - df_aqz[reference]
+
+    dfs_all = [
+            {"df": df_adz, "label": "aug-cc-pVDZ", "ylim": [-3, 3], "name": "adz"},
+        {"df": df_atz, "label": "aug-cc-pVTZ", "ylim": [-3, 3], "name": "atz"},
+        {"df": df_aqz, "label": "aug-cc-pVQZ", "ylim": [-3, 3], "name": "aqz"},
+    ]
+    df_labels_and_columns = {
+        # "SAPT2+3(CCD)DMP2": "SAPT2+3(CCD)DMP2 TOTAL ENERGY Error",
+        # DFT
+        "PBE0": "PBE0 IE Error",
+        "B3LYP": "B3LYP IE Error",
+        "B2PLYP": "B2PLYP IE Error",
+        "WB97X": "WB97X IE Error",
+        # SAPT(DFT)
+        "SAPT(DFT) [PBE0]": "SAPT(DFT) [PBE0] TOTAL ENERGY Error",
+        "SAPT(DFT) [B3LYP]": "SAPT(DFT) [B3LYP] TOTAL ENERGY Error",
+        "SAPT(DFT) [B2PLYP]": "SAPT(DFT) [B2PLYP] TOTAL ENERGY Error",
+        "SAPT(DFT) [WB97X]": "SAPT(DFT) [WB97X] TOTAL ENERGY Error",
+        # DFT-D4
+        "PBE0-D4": "PBE0-D4 TOTAL ENERGY Error",
+        "B3LYP-D4": "B3LYP-D4 TOTAL ENERGY Error",
+        "B2PLYP-D4": "B2PLYP-D4 TOTAL ENERGY Error",
+        "WB97X-D4": "WB97X-D4 TOTAL ENERGY Error",
+        # SAPT(DFT) D's
+        "SAPT(DFT)-D4": "SAPT(DFT)-D4 TOTAL ENERGY Error",
+        "SAPT(DFT)+D4": "SAPT(DFT)+D4 TOTAL ENERGY Error",
+        "SAPT(DFT)D3-ML": "SAPT(DFT)D3-ML TOTAL ENERGY Error",
+        # Wavefunction
+        "SAPT0-D4": "SAPT0-D4 TOTAL ENERGY Error",
+        "SAPT0": "SAPT0 TOTAL ENERGY Error",
+        "SAPT2": "SAPT2 TOTAL ENERGY Error",
+        "SAPT2+": "SAPT2+ TOTAL ENERGY Error",
+        "SAPT2+(3)": "SAPT2+(3) TOTAL ENERGY Error",
+        "SAPT2+3": "SAPT2+3 TOTAL ENERGY Error",
+        "SAPT2+3(CCD)DMP2": "SAPT2+3(CCD)DMP2 TOTAL ENERGY Error",
+        # "SAPT2+(CCD)DMP2": "SAPT2+(CCD)DMP2 TOTAL ENERGY Error",
+        # "SAPT2+(3)(CCD)DMP2": "SAPT2+(3)(CCD)DMP2 TOTAL ENERGY Error",
+        # "MP2": "MP2 IE Error",
+        # "SSAPT0": "SSAPT0 TOTAL ENERGY Error",
+        # "SAPT2+(CCD)": "SAPT2+(CCD) TOTAL ENERGY Error",
+        # "SAPT2+(3)(CCD)": "SAPT2+(3)(CCD) TOTAL ENERGY Error",
+        # "SAPT2+3(CCD)": "SAPT2+3(CCD) TOTAL ENERGY Error",
+        # "SAPT2+DMP2": "SAPT2+DMP2 TOTAL ENERGY Error",
+        # "SAPT2+(3)DMP2": "SAPT2+(3)DMP2 TOTAL ENERGY Error",
+        # "SAPT2+3DMP2": "SAPT2+3DMP2 TOTAL ENERGY Error",
+    }
+    BLUE = '#1F77B4'  # BLUE
+    TEAL = '#17BECF'  # TEAL
+    LIGHT_BLUE = '#7F7FFF'  # LIGHT BLUE
+    GREEN = '#2CA02C'  # GREEN
+    LIME_GREEN = '#8CA83C'  # LIME GREEN
+    Aquamarine = '#7FFFD4'  # Aquamarine
+    Slate_Blue = '#6A5ACD'  # Slate Blue
+    Medium_Sea_Green = '#3CB371'  # Medium Sea Green
+    INDIGO = '#7057FF'   # INDIGO
+    colors = [
+        TEAL,
+        LIGHT_BLUE,
+        Medium_Sea_Green,
+        INDIGO,
+
+        TEAL,
+        LIGHT_BLUE,
+        Medium_Sea_Green,
+        INDIGO,
+
+        TEAL,
+        LIGHT_BLUE,
+        Medium_Sea_Green,
+        INDIGO,
+
+        BLUE,
+        GREEN,
+        BLUE,
+
+        GREEN,
+        BLUE,
+        GREEN,
+        BLUE,
+        GREEN,
+        BLUE,
+        GREEN,
+    ]
+    mcure_labels = {}
+    for k, v in df_labels_and_columns.items():
+        mcure_labels[k] = []
+        for d in dfs_all:
+            v = v.replace(" Error", "")
+            d["df"]["CRE"] = d["df"].apply(
+                lambda r: compute_CRE(r, energy_col=v), axis=1
+            )
+            mcure = d["df"]["CRE"].abs().mean() * 100
+            mcure_labels[k].append(mcure)
+
+    import cdsg_plot
+
+    for dfs in dfs_all:
+        dfs= [dfs]
+        cdsg_plot.error_statistics.violin_plot_table_multi(
+            dfs,
+            df_labels_and_columns,
+            f"./plots/individuals/LoS_all_{dfs[0]['name']}_saptdft_subset.jpg",
+            table_fontsize=8,
+            usetex=True,
+            legend_loc="lower right",
+            figure_size=(10, 3),
+            colors=colors,
+            violin_alpha=0.9,
+            x_label_fontsize=12,
+            error_labels_position=(-0.3, 0.25),
+            grid_widths=[1.0],
+            grid_heights=[
+                0.45,
+                2,
+            ],
+        )
     return
 
 
@@ -5749,6 +6280,475 @@ def violin_plots_multi_components(df, limit_to_column_not_nan=None):
     )
     return
 
+def violin_plots_multi_components_df_individual(df, limit_to_column_not_nan=None):
+    if limit_to_column_not_nan is not None:
+
+        size_prior = len(df)
+        df = df[df[limit_to_column_not_nan].notna()].copy()
+        print(
+            f"Limiting to {limit_to_column_not_nan} not NaN: {size_prior} -> {len(df)}"
+        )
+    df = prep_saptdft_components(df, "pbe0", "adz")
+    df = prep_saptdft_components(df, "pbe0", "atz")
+    df = prep_saptdft_components(df, "b3lyp", "adz")
+    df = prep_saptdft_components(df, "b3lyp", "atz")
+    df = prep_saptdft_components(df, "b2plyp", "adz")
+    df = prep_saptdft_components(df, "b2plyp", "atz")
+    df = prep_saptdft_components(df, "wb97x", "adz")
+    df = prep_saptdft_components(df, "wb97x", "atz")
+    # pp(df.columns.tolist())
+
+    df["SAPT0-D4 DISP ENERGY adz"] = df["-D4 (SAPT0_adz_3_IE)"] / h2kcalmol
+    df["SAPT0-D4 DISP ENERGY atz"] = df["-D4 (SAPT0_adz_3_IE)"] / h2kcalmol
+    df["SAPT0-D4 DISP ENERGY aqz"] = df["-D4 (SAPT0_adz_3_IE)"] / h2kcalmol
+
+    sapt_methods = [
+        "SAPT0 ELST ENERGY",
+        "SAPT2 ELST ENERGY",
+        "SAPT2+(3) ELST ENERGY",
+        "SAPT(DFT) [PBE0] ELST ENERGY",
+        "SAPT(DFT) [B3LYP] ELST ENERGY",
+        "SAPT(DFT) [B2PLYP] ELST ENERGY",
+        "SAPT(DFT) [WB97X] ELST ENERGY",
+        "SAPT0 EXCH ENERGY",
+        "SAPT2 EXCH ENERGY",
+        "SAPT(DFT) [PBE0] EXCH ENERGY",
+        "SAPT(DFT) [B3LYP] EXCH ENERGY",
+        "SAPT(DFT) [B2PLYP] EXCH ENERGY",
+        "SAPT(DFT) [WB97X] EXCH ENERGY",
+        "SAPT0 IND ENERGY",
+        # "SSAPT0 IND ENERGY",
+        "SAPT2 IND ENERGY",
+        "SAPT2+DMP2 IND ENERGY",
+        "SAPT2+3DMP2 IND ENERGY",
+        "SAPT(DFT) [PBE0] IND ENERGY",
+        "SAPT(DFT) [B3LYP] IND ENERGY",
+        "SAPT(DFT) [B2PLYP] IND ENERGY",
+        "SAPT(DFT) [WB97X] IND ENERGY",
+        "SAPT0 DISP ENERGY",
+        # "SSAPT0 DISP ENERGY",
+        "SAPT2+ DISP ENERGY",
+        "SAPT2+(3) DISP ENERGY",
+        "SAPT2+3 DISP ENERGY",
+        "SAPT2+(CCD) DISP ENERGY",
+        "SAPT2+(3)(CCD) DISP ENERGY",
+        "SAPT2+3(CCD) DISP ENERGY",
+        # local disp
+        "SAPT0-D4 DISP ENERGY",
+        "PBE0-D4 DISP ENERGY",
+        "B3LYP-D4 DISP ENERGY",
+        "B2PLYP-D4 DISP ENERGY",
+        "WB97X-D4 DISP ENERGY",
+        "SAPT(DFT) [PBE0] DISP ENERGY",
+        "SAPT(DFT) [B3LYP] DISP ENERGY",
+        "SAPT(DFT) [B2PLYP] DISP ENERGY",
+        "SAPT(DFT) [WB97X] DISP ENERGY",
+        "D3-ML DISP ENERGY",
+        "SAPT(DFT)+D4 DISP ENERGY",
+        "SAPT(DFT)-D4 DISP ENERGY",
+    ]
+    sapt_reference = {
+        "ELST": "SAPT2+3(CCD)DMP2 ELST ENERGY",
+        "EXCH": "SAPT2+3(CCD)DMP2 EXCH ENERGY",
+        "IND": "SAPT2+3(CCD)DMP2 IND ENERGY",
+        "DISP": "SAPT2+3(CCD)DMP2 DISP ENERGY",
+    }
+
+    reference = "benchmark ref energy"
+    copy_cols_start = [
+        "DB",
+        "system_id",
+        "benchmark ref energy",
+        "E_R_eq",
+        "R",
+        "Ref_elst_atz",
+        "E_R_eq_elst_atz",
+        "Ref_exch_atz",
+        "E_R_eq_exch_atz",
+        "Ref_ind_atz",
+        "E_R_eq_ind_atz",
+        "Ref_disp_atz",
+        "E_R_eq_disp_atz",
+        # local methods
+        ## saptdft
+        # "SAPT_DFT_pbe0_adz_elst",
+        # "SAPT_DFT_pbe0_adz_exch",
+        # "SAPT_DFT_pbe0_adz_ind",
+        # "SAPT_DFT_pbe0_adz_disp",
+        # "SAPT_DFT_pbe0d4_adz_disp",
+        # "SAPT0-D4 adz",
+        # "SAPT_DFT_pbe0_atz_elst",
+        # "SAPT_DFT_pbe0_atz_exch",
+        # "SAPT_DFT_pbe0_atz_ind",
+        # "SAPT_DFT_pbe0_atz_disp",
+        # "SAPT_DFT_pbe0d4_atz_disp",
+        # "SAPT0-D4 atz",
+    ]
+    copy_cols = copy_cols_start.copy()
+    copy_cols.extend([f"{c} adz" for c in sapt_methods])
+    copy_cols.extend([f"{c} adz" for c in sapt_reference.values()])
+    df_adz = df[copy_cols].copy()
+    df_adz.columns = [c.replace(" adz", "") for c in df_adz.columns]
+
+    copy_cols = copy_cols_start.copy()
+    copy_cols.extend([f"{c} atz" for c in sapt_methods])
+    copy_cols.extend([f"{c} atz" for c in sapt_reference.values()])
+    df_atz = df[copy_cols].copy()
+    df_atz.columns = [c.replace(" atz", "") for c in df_atz.columns]
+
+    df_adz = sapt_error_comp(df_adz, df_atz, sapt_reference, sapt_methods)
+    df_atz = sapt_error_comp(df_atz, df_atz, sapt_reference, sapt_methods)
+
+    adz_ylims = [
+        [-2, 2],
+        [-2, 2],
+        [-2, 2],
+        [-2, 2],
+    ]
+    atz_ylims = [
+        [-2, 2],
+        [-2, 2],
+        [-2, 2],
+        [-2, 2],
+    ]
+
+    dfs_all = [
+        {
+            "df": df_adz,
+            "basis": "aug-cc-pVDZ",
+            "label": "aug-cc-pVDZ",
+            "ylim": adz_ylims,
+            "name": 'adz',
+        },
+        {
+            "df": df_atz,
+            "basis": "aug-cc-pVTZ",
+            "label": "aug-cc-pVTZ",
+            "ylim": atz_ylims,
+            "name": 'atz',
+        },
+    ]
+    mcures_labels_start = [
+        {
+            "SAPT0,sSAPT0": "SAPT0 ELST ENERGY Error",
+        },
+        {
+            "SAPT2,SAPT2+": "SAPT2 ELST ENERGY Error",
+        },
+        {
+            "SAPT2+(3),SAPT2+3": "SAPT2+(3) ELST ENERGY Error",
+        },
+        {
+            "SAPT(DFT) [PBE0]": "SAPT(DFT) [PBE0] ELST ENERGY Error",
+        },
+        {
+            "SAPT(DFT) [B3LYP]": "SAPT(DFT) [B3LYP] ELST ENERGY Error",
+        },
+        {
+            "SAPT(DFT) [B2PLYP]": "SAPT(DFT) [B2PLYP] ELST ENERGY Error",
+        },
+        {
+            "SAPT(DFT) [WB97X]": "SAPT(DFT) [WB97X] ELST ENERGY Error",
+        },
+        {
+            "SAPT0,sSAPT0": "SAPT0 EXCH ENERGY Error",
+        },
+        {
+            "SAPT(DFT) [PBE0]": "SAPT(DFT) [PBE0] EXCH ENERGY Error",
+        },
+        {
+            "SAPT(DFT) [B3LYP]": "SAPT(DFT) [B3LYP] EXCH ENERGY Error",
+        },
+        {
+            "SAPT(DFT) [B2PLYP]": "SAPT(DFT) [B2PLYP] EXCH ENERGY Error",
+        },
+        {
+            "SAPT(DFT) [WB97X]": "SAPT(DFT) [WB97X] EXCH ENERGY Error",
+        },
+        {
+            "SAPT2,SAPT2+,\\\\SAPT2+(3),SAPT2+3": "SAPT2 EXCH ENERGY Error",
+        },
+        {
+            "SAPT0": "SAPT0 IND ENERGY Error",
+        },
+        # {
+        #     "sSAPT0": "SSAPT0 IND ENERGY Error",
+        # },
+        {
+            "SAPT2,SAPT2+,\\\\SAPT2+(3),SAPT2+3": "SAPT2 IND ENERGY Error",
+        },
+        {
+            "SAPT2+DMP2,\\\\SAPT2+(3)DMP2": "SAPT2+DMP2 IND ENERGY Error",
+        },
+        {
+            "SAPT2+3DMP2": "SAPT2+3DMP2 IND ENERGY Error",
+        },
+        {
+            "SAPT(DFT) [PBE0]": "SAPT(DFT) [PBE0] IND ENERGY Error",
+        },
+        {
+            "SAPT(DFT) [B3LYP]": "SAPT(DFT) [B3LYP] IND ENERGY Error",
+        },
+        {
+            "SAPT(DFT) [B2PLYP]": "SAPT(DFT) [B2PLYP] IND ENERGY Error",
+        },
+        {
+            "SAPT(DFT) [WB97X]": "SAPT(DFT) [WB97X] IND ENERGY Error",
+        },
+        {
+            "SAPT0,SAPT2": "SAPT0 DISP ENERGY Error",
+        },
+        # {
+        #     "sSAPT0": "SSAPT0 DISP ENERGY Error",
+        # },
+        {
+            "SAPT2+": "SAPT2+ DISP ENERGY Error",
+        },
+        {
+            "SAPT2+(3)": "SAPT2+(3) DISP ENERGY Error",
+        },
+        {
+            "SAPT2+3": "SAPT2+3 DISP ENERGY Error",
+        },
+        {
+            "SAPT2+(CCD)": "SAPT2+(CCD) DISP ENERGY Error",
+        },
+        {
+            "SAPT2+(3)(CCD)": "SAPT2+(3)(CCD) DISP ENERGY Error",
+        },
+        {
+            "SAPT2+3(CCD)": "SAPT2+3(CCD) DISP ENERGY Error",
+        },
+        {
+            "SAPT(DFT) [PBE0]": "SAPT(DFT) [PBE0] DISP ENERGY Error",
+        },
+        {
+            "SAPT(DFT) [B3LYP]": "SAPT(DFT) [B3LYP] DISP ENERGY Error",
+        },
+        {
+            "SAPT(DFT) [B2PLYP]": "SAPT(DFT) [B2PLYP] DISP ENERGY Error",
+        },
+        {
+            "SAPT(DFT) [WB97X]": "SAPT(DFT) [WB97X] DISP ENERGY Error",
+        },
+        {
+            "PBE0-D4": "PBE0-D4 DISP ENERGY Error",
+        },
+        {
+            "B3LYP-D4": "B3LYP-D4 DISP ENERGY Error",
+        },
+        {
+            "B2PLYP-D4": "B2PLYP-D4 DISP ENERGY Error",
+        },
+        {
+            "WB97X-D4": "WB97X-D4 DISP ENERGY Error",
+        },
+        {
+            "SAPT0-D4": "SAPT0-D4 DISP ENERGY Error",
+        },
+        {
+            "D3-ML": "D3-ML DISP ENERGY Error",
+        },
+        {
+            "SAPT(DFT)+D4": "SAPT(DFT)+D4 DISP ENERGY Error",
+        },
+        {
+            "SAPT(DFT)-D4": "SAPT(DFT)-D4 DISP ENERGY Error",
+        },
+    ]
+    mcure_labels = {
+        "ELST": {},
+        "EXCH": {},
+        "IND": {},
+        "DISP": {},
+    }
+    # TODO DEBUG
+    df_atz["SAPT2+3(CCD)DMP2 EXCH ENERGY"] *= h2kcalmol
+    debug = False
+    for i in mcures_labels_start:
+        k, v = list(i.items())[0]
+        for d in dfs_all:
+            if "ELST" in v:
+                if k not in mcure_labels["ELST"]:
+                    mcure_labels["ELST"][k] = []
+                v = v.replace(" Error", "")
+                d["df"]["CRE_ELST"] = d["df"].apply(
+                    lambda r: compute_CRE(
+                        r,
+                        energy_col=v,
+                        benchmark_col=f"Ref_elst_atz",
+                        benchmark_col_system=f"E_R_eq_elst_atz",
+                    ),
+                    axis=1,
+                )
+                mcure = d["df"]["CRE_ELST"].abs().mean() * 100
+                mcure_labels["ELST"][k].append(mcure)
+            elif "EXCH" in v:
+                if k not in mcure_labels["EXCH"]:
+                    mcure_labels["EXCH"][k] = []
+                v = v.replace(" Error", "")
+                d["df"]["CRE_EXCH"] = d["df"].apply(
+                    lambda r: compute_CRE(
+                        r,
+                        energy_col=v,
+                        benchmark_col=f"Ref_exch_atz",
+                        benchmark_col_system=f"E_R_eq_exch_atz",
+                        debug=debug,
+                    ),
+                    axis=1,
+                )
+                mcure = d["df"]["CRE_EXCH"].abs().mean() * 100
+                mcure_labels["EXCH"][k].append(mcure)
+            elif "IND" in v:
+                if k not in mcure_labels["IND"]:
+                    mcure_labels["IND"][k] = []
+                v = v.replace(" Error", "")
+                d["df"]["CRE_IND"] = d["df"].apply(
+                    lambda r: compute_CRE(
+                        r,
+                        energy_col=v,
+                        benchmark_col=f"Ref_ind_atz",
+                        benchmark_col_system=f"E_R_eq_ind_atz",
+                    ),
+                    axis=1,
+                )
+                mcure = d["df"]["CRE_IND"].abs().mean() * 100
+                mcure_labels["IND"][k].append(mcure)
+            elif "DISP" in v:
+                if k not in mcure_labels["DISP"]:
+                    mcure_labels["DISP"][k] = []
+                v = v.replace(" Error", "")
+                d["df"]["CRE_DISP"] = d["df"].apply(
+                    lambda r: compute_CRE(
+                        r,
+                        energy_col=v,
+                        benchmark_col=f"Ref_disp_atz",
+                        benchmark_col_system=f"E_R_eq_disp_atz",
+                    ),
+                    axis=1,
+                )
+                mcure = d["df"]["CRE_DISP"].abs().mean() * 100
+                mcure_labels["DISP"][k].append(mcure)
+            else:
+                raise ValueError(f"Error: {v = }")
+    pp(mcure_labels)
+
+    import cdsg_plot
+
+    for dfs in dfs_all:
+        dfs = [dfs]
+        cdsg_plot.error_statistics.violin_plot_table_multi_SAPT_components(
+            dfs,
+            df_labels_and_columns_elst={
+                "SAPT0,sSAPT0": "SAPT0 ELST ENERGY Error",
+                "SAPT2,SAPT2+": "SAPT2 ELST ENERGY Error",
+                "SAPT2+(3),SAPT2+3": "SAPT2+(3) ELST ENERGY Error",
+                "SAPT(DFT) [PBE0]": "SAPT(DFT) [PBE0] ELST ENERGY Error",
+                "SAPT(DFT) [B3LYP]": "SAPT(DFT) [B3LYP] ELST ENERGY Error",
+                "SAPT(DFT) [B2PLYP]": "SAPT(DFT) [B2PLYP] ELST ENERGY Error",
+                "SAPT(DFT) [WB97X]": "SAPT(DFT) [WB97X] ELST ENERGY Error",
+            },
+            df_labels_and_columns_exch={
+                "SAPT0,sSAPT0": "SAPT0 EXCH ENERGY Error",
+                "SAPT2,SAPT2+,\\\\SAPT2+(3),SAPT2+3": "SAPT2 EXCH ENERGY Error",
+                "SAPT(DFT) [PBE0]": "SAPT(DFT) [PBE0] EXCH ENERGY Error",
+                "SAPT(DFT) [B3LYP]": "SAPT(DFT) [B3LYP] EXCH ENERGY Error",
+                "SAPT(DFT) [B2PLYP]": "SAPT(DFT) [B2PLYP] EXCH ENERGY Error",
+                "SAPT(DFT) [WB97X]": "SAPT(DFT) [WB97X] EXCH ENERGY Error",
+            },
+            df_labels_and_columns_indu={
+                "SAPT0": "SAPT0 IND ENERGY Error",
+                # "sSAPT0": "SSAPT0 IND ENERGY Error",
+                "SAPT2,SAPT2+,\\\\SAPT2+(3),SAPT2+3": "SAPT2 IND ENERGY Error",
+                # should be here but moved for dense plotting...
+                # "SAPT2+DMP2,\\\\SAPT2+(3)DMP2": "SAPT2+DMP2 IND ENERGY Error",
+                "SAPT2+3DMP2": "SAPT2+3DMP2 IND ENERGY Error",
+                "SAPT2+DMP2,\\\\SAPT2+(3)DMP2": "SAPT2+DMP2 IND ENERGY Error",
+                "SAPT(DFT) [PBE0]": "SAPT(DFT) [PBE0] IND ENERGY Error",
+                "SAPT(DFT) [B3LYP]": "SAPT(DFT) [B3LYP] IND ENERGY Error",
+                "SAPT(DFT) [B2PLYP]": "SAPT(DFT) [B2PLYP] IND ENERGY Error",
+                "SAPT(DFT) [WB97X]": "SAPT(DFT) [WB97X] IND ENERGY Error",
+            },
+            df_labels_and_columns_disp={
+                # "SAPT0,SAPT2": "SAPT0 DISP ENERGY Error",
+                # "SAPT0-D4": "SAPT0-D4 DISP ENERGY Error",
+                # # "sSAPT0": "SSAPT0 DISP ENERGY Error",
+                # "SAPT2+": "SAPT2+ DISP ENERGY Error",
+                # "SAPT2+(3)": "SAPT2+(3) DISP ENERGY Error",
+                # "SAPT2+3": "SAPT2+3 DISP ENERGY Error",
+                # "SAPT2+(CCD)": "SAPT2+(CCD) DISP ENERGY Error",
+                # "SAPT2+(3)(CCD)": "SAPT2+(3)(CCD) DISP ENERGY Error",
+                # "SAPT2+3(CCD)": "SAPT2+3(CCD) DISP ENERGY Error",
+                # "SAPT(DFT)-D4": "SAPT(DFT)-D4 DISP ENERGY Error",
+                # "SAPT(DFT) [PBE0]": "SAPT(DFT) [PBE0] DISP ENERGY Error",
+                # "SAPT(DFT) [B3LYP]": "SAPT(DFT) [B3LYP] DISP ENERGY Error",
+                # "SAPT(DFT) [B2PLYP]": "SAPT(DFT) [B2PLYP] DISP ENERGY Error",
+                # "SAPT(DFT) [WB97X]": "SAPT(DFT) [WB97X] DISP ENERGY Error",
+                # "SAPT(DFT)+D4": "SAPT(DFT)+D4 DISP ENERGY Error",
+                # "PBE0-D4": "PBE0-D4 DISP ENERGY Error",
+                # "B3LYP-D4": "B3LYP-D4 DISP ENERGY Error",
+                # "B2PLYP-D4": "B2PLYP-D4 DISP ENERGY Error",
+                # "WB97X-D4": "WB97X-D4 DISP ENERGY Error",
+                # "D3-ML": "D3-ML DISP ENERGY Error",
+            },
+            output_filename=f"./plots/individuals/LoS_components_{dfs[0]['name']}_nondisp.jpg",
+            table_fontsize=8,
+            usetex=True,
+            legend_loc="lower right",
+            figure_size=(10, 3),
+            x_label_fontsize=12,
+            grid_widths=[1.0, 0.9, 1.2],
+            grid_heights=[
+                0.50,
+                2,
+            ],
+            # mcure=mcure_labels,
+        )
+        cdsg_plot.error_statistics.violin_plot_table_multi_SAPT_components(
+            dfs,
+            df_labels_and_columns_elst={
+            },
+            df_labels_and_columns_exch={
+            },
+            df_labels_and_columns_indu={
+            },
+            df_labels_and_columns_disp={
+                "SAPT0,SAPT2": "SAPT0 DISP ENERGY Error",
+                "SAPT0-D4": "SAPT0-D4 DISP ENERGY Error",
+                # "sSAPT0": "SSAPT0 DISP ENERGY Error",
+                "SAPT2+": "SAPT2+ DISP ENERGY Error",
+                "SAPT2+(3)": "SAPT2+(3) DISP ENERGY Error",
+                "SAPT2+3": "SAPT2+3 DISP ENERGY Error",
+                "SAPT2+(CCD)": "SAPT2+(CCD) DISP ENERGY Error",
+                "SAPT2+(3)(CCD)": "SAPT2+(3)(CCD) DISP ENERGY Error",
+                "SAPT2+3(CCD)": "SAPT2+3(CCD) DISP ENERGY Error",
+                "SAPT(DFT)-D4": "SAPT(DFT)-D4 DISP ENERGY Error",
+                "SAPT(DFT) [PBE0]": "SAPT(DFT) [PBE0] DISP ENERGY Error",
+                "SAPT(DFT) [B3LYP]": "SAPT(DFT) [B3LYP] DISP ENERGY Error",
+                "SAPT(DFT) [B2PLYP]": "SAPT(DFT) [B2PLYP] DISP ENERGY Error",
+                "SAPT(DFT) [WB97X]": "SAPT(DFT) [WB97X] DISP ENERGY Error",
+                "SAPT(DFT)+D4": "SAPT(DFT)+D4 DISP ENERGY Error",
+                "PBE0-D4": "PBE0-D4 DISP ENERGY Error",
+                "B3LYP-D4": "B3LYP-D4 DISP ENERGY Error",
+                "B2PLYP-D4": "B2PLYP-D4 DISP ENERGY Error",
+                "WB97X-D4": "WB97X-D4 DISP ENERGY Error",
+                "D3-ML": "D3-ML DISP ENERGY Error",
+            },
+            output_filename=f"./plots/individuals/LoS_components_{dfs[0]['name']}_disp.jpg",
+            table_fontsize=8,
+            usetex=True,
+            legend_loc="lower right",
+            figure_size=(10, 3),
+            x_label_fontsize=12,
+            grid_widths=[1.0],
+            grid_heights=[
+                0.50,
+                2,
+            ],
+            # mcure=mcure_labels,
+        )
+    return
+
 
 def violin_plots_multi_components_subset(df, limit_to_column_not_nan=None):
     df = df[df["subset"]].copy()
@@ -6235,6 +7235,489 @@ def violin_plots_multi_components_subset(df, limit_to_column_not_nan=None):
     )
     return
 
+def violin_plots_multi_components_subset_individual(df, limit_to_column_not_nan=None):
+    df = df[df["subset"]].copy()
+    print(f"Subset: {len(df)}")
+    if limit_to_column_not_nan is not None:
+
+        size_prior = len(df)
+        df = df[df[limit_to_column_not_nan].notna()].copy()
+        print(
+            f"Limiting to {limit_to_column_not_nan} not NaN: {size_prior} -> {len(df)}"
+        )
+    df = prep_saptdft_components(df, "pbe0", "adz")
+    df = prep_saptdft_components(df, "pbe0", "atz")
+    df = prep_saptdft_components(df, "pbe0", "aqz")
+    df = prep_saptdft_components(df, "b3lyp", "adz")
+    df = prep_saptdft_components(df, "b3lyp", "atz")
+    df = prep_saptdft_components(df, "b3lyp", "aqz")
+    df = prep_saptdft_components(df, "b2plyp", "adz")
+    df = prep_saptdft_components(df, "b2plyp", "atz")
+    df = prep_saptdft_components(df, "b2plyp", "aqz")
+    df = prep_saptdft_components(df, "wb97x", "adz")
+    df = prep_saptdft_components(df, "wb97x", "atz")
+    df = prep_saptdft_components(df, "wb97x", "aqz")
+
+    df["SAPT0-D4 DISP ENERGY adz"] = df["-D4 (SAPT0_adz_3_IE)"] / h2kcalmol
+    df["SAPT0-D4 DISP ENERGY atz"] = df["-D4 (SAPT0_atz_3_IE)"] / h2kcalmol
+    df["SAPT0-D4 DISP ENERGY aqz"] = df["-D4 (SAPT0_atz_3_IE)"] / h2kcalmol
+
+    sapt_methods = [
+        "SAPT0 ELST ENERGY",
+        "SAPT2 ELST ENERGY",
+        "SAPT2+(3) ELST ENERGY",
+        "SAPT(DFT) [PBE0] ELST ENERGY",
+        "SAPT(DFT) [B3LYP] ELST ENERGY",
+        "SAPT(DFT) [B2PLYP] ELST ENERGY",
+        "SAPT(DFT) [WB97X] ELST ENERGY",
+        "SAPT0 EXCH ENERGY",
+        "SAPT2 EXCH ENERGY",
+        "SAPT(DFT) [PBE0] EXCH ENERGY",
+        "SAPT(DFT) [B3LYP] EXCH ENERGY",
+        "SAPT(DFT) [B2PLYP] EXCH ENERGY",
+        "SAPT(DFT) [WB97X] EXCH ENERGY",
+        "SAPT0 IND ENERGY",
+        # "SSAPT0 IND ENERGY",
+        "SAPT2 IND ENERGY",
+        "SAPT2+DMP2 IND ENERGY",
+        "SAPT2+3DMP2 IND ENERGY",
+        "SAPT(DFT) [PBE0] IND ENERGY",
+        "SAPT(DFT) [B3LYP] IND ENERGY",
+        "SAPT(DFT) [B2PLYP] IND ENERGY",
+        "SAPT(DFT) [WB97X] IND ENERGY",
+        "SAPT0 DISP ENERGY",
+        # "SSAPT0 DISP ENERGY",
+        "SAPT2+ DISP ENERGY",
+        "SAPT2+(3) DISP ENERGY",
+        "SAPT2+3 DISP ENERGY",
+        "SAPT2+(CCD) DISP ENERGY",
+        "SAPT2+(3)(CCD) DISP ENERGY",
+        "SAPT2+3(CCD) DISP ENERGY",
+        # local disp
+        "SAPT0-D4 DISP ENERGY",
+        "PBE0-D4 DISP ENERGY",
+        "B3LYP-D4 DISP ENERGY",
+        "B2PLYP-D4 DISP ENERGY",
+        "WB97X-D4 DISP ENERGY",
+        "SAPT(DFT) [PBE0] DISP ENERGY",
+        "SAPT(DFT) [B3LYP] DISP ENERGY",
+        "SAPT(DFT) [B2PLYP] DISP ENERGY",
+        "SAPT(DFT) [WB97X] DISP ENERGY",
+        "D3-ML DISP ENERGY",
+        "SAPT(DFT)+D4 DISP ENERGY",
+        "SAPT(DFT)-D4 DISP ENERGY",
+    ]
+    sapt_reference = {
+        "ELST": "SAPT2+3(CCD)DMP2 ELST ENERGY",
+        "EXCH": "SAPT2+3(CCD)DMP2 EXCH ENERGY",
+        "IND": "SAPT2+3(CCD)DMP2 IND ENERGY",
+        "DISP": "SAPT2+3(CCD)DMP2 DISP ENERGY",
+    }
+
+    reference = "benchmark ref energy"
+    copy_cols_start = [
+        "DB",
+        "system_id",
+        "benchmark ref energy",
+        "E_R_eq",
+        "R",
+        "Ref_elst_aqz",
+        "E_R_eq_elst_aqz",
+        "Ref_exch_aqz",
+        "E_R_eq_exch_aqz",
+        "Ref_ind_aqz",
+        "E_R_eq_ind_aqz",
+        "Ref_disp_aqz",
+        "E_R_eq_disp_aqz",
+        # local methods
+        ## saptdft
+        # "SAPT_DFT_pbe0_adz_elst",
+        # "SAPT_DFT_pbe0_adz_exch",
+        # "SAPT_DFT_pbe0_adz_ind",
+        # "SAPT_DFT_pbe0_adz_disp",
+        # "SAPT_DFT_pbe0d4_adz_disp",
+        # "SAPT0-D4 adz",
+        # "SAPT_DFT_pbe0_atz_elst",
+        # "SAPT_DFT_pbe0_atz_exch",
+        # "SAPT_DFT_pbe0_atz_ind",
+        # "SAPT_DFT_pbe0_atz_disp",
+        # "SAPT_DFT_pbe0d4_atz_disp",
+        # "SAPT0-D4 atz",
+    ]
+    copy_cols = copy_cols_start.copy()
+    copy_cols.extend([f"{c} adz" for c in sapt_methods])
+    copy_cols.extend([f"{c} adz" for c in sapt_reference.values()])
+    df_adz = df[copy_cols].copy()
+    df_adz.columns = [c.replace(" adz", "") for c in df_adz.columns]
+
+    copy_cols = copy_cols_start.copy()
+    copy_cols.extend([f"{c} atz" for c in sapt_methods])
+    copy_cols.extend([f"{c} atz" for c in sapt_reference.values()])
+    df_atz = df[copy_cols].copy()
+    df_atz.columns = [c.replace(" atz", "") for c in df_atz.columns]
+
+    copy_cols = copy_cols_start.copy()
+    copy_cols.extend([f"{c} aqz" for c in sapt_methods])
+    copy_cols.extend([f"{c} aqz" for c in sapt_reference.values()])
+    df_aqz = df[copy_cols].copy()
+    df_aqz.columns = [c.replace(" aqz", "") for c in df_aqz.columns]
+
+    df_adz = sapt_error_comp(df_adz, df_aqz, sapt_reference, sapt_methods)
+    df_atz = sapt_error_comp(df_atz, df_aqz, sapt_reference, sapt_methods)
+    df_aqz = sapt_error_comp(df_aqz, df_aqz, sapt_reference, sapt_methods)
+
+    adz_ylims = [
+        [-3, 3],
+        [-3, 3],
+        [-3, 3],
+        [-3, 3],
+    ]
+
+    dfs_all = [
+        {
+            "df": df_adz,
+            "basis": "aug-cc-pVDZ",
+            "label": "aug-cc-pVDZ",
+            "ylim": adz_ylims,
+            "name": "adz",
+        },
+        {
+            "df": df_atz,
+            "basis": "aug-cc-pVTZ",
+            "label": "aug-cc-pVTZ",
+            "ylim": adz_ylims,
+            "name": "atz",
+        },
+        {
+            "df": df_aqz,
+            "basis": "aug-cc-pVQZ",
+            "label": "aug-cc-pVQZ",
+            "ylim": adz_ylims,
+            "name": "aqz",
+        },
+    ]
+    mcures_labels_start = [
+        {
+            "SAPT0,sSAPT0": "SAPT0 ELST ENERGY Error",
+        },
+        {
+            "SAPT2,SAPT2+": "SAPT2 ELST ENERGY Error",
+        },
+        {
+            "SAPT2+(3),SAPT2+3": "SAPT2+(3) ELST ENERGY Error",
+        },
+        {
+            "SAPT(DFT) [PBE0]": "SAPT(DFT) [PBE0] ELST ENERGY Error",
+        },
+        {
+            "SAPT(DFT) [B3LYP]": "SAPT(DFT) [B3LYP] ELST ENERGY Error",
+        },
+        {
+            "SAPT(DFT) [B2PLYP]": "SAPT(DFT) [B2PLYP] ELST ENERGY Error",
+        },
+        {
+            "SAPT(DFT) [WB97X]": "SAPT(DFT) [WB97X] ELST ENERGY Error",
+        },
+        {
+            "SAPT0,sSAPT0": "SAPT0 EXCH ENERGY Error",
+        },
+        {
+            "SAPT(DFT) [PBE0]": "SAPT(DFT) [PBE0] EXCH ENERGY Error",
+        },
+        {
+            "SAPT(DFT) [B3LYP]": "SAPT(DFT) [B3LYP] EXCH ENERGY Error",
+        },
+        {
+            "SAPT(DFT) [B2PLYP]": "SAPT(DFT) [B2PLYP] EXCH ENERGY Error",
+        },
+        {
+            "SAPT(DFT) [WB97X]": "SAPT(DFT) [WB97X] EXCH ENERGY Error",
+        },
+        {
+            "SAPT2,SAPT2+,\\\\SAPT2+(3),SAPT2+3": "SAPT2 EXCH ENERGY Error",
+        },
+        {
+            "SAPT0": "SAPT0 IND ENERGY Error",
+        },
+        # {
+        #     "sSAPT0": "SSAPT0 IND ENERGY Error",
+        # },
+        {
+            "SAPT2,SAPT2+,\\\\SAPT2+(3),SAPT2+3": "SAPT2 IND ENERGY Error",
+        },
+        {
+            "SAPT2+DMP2,\\\\SAPT2+(3)DMP2": "SAPT2+DMP2 IND ENERGY Error",
+        },
+        {
+            "SAPT2+3DMP2": "SAPT2+3DMP2 IND ENERGY Error",
+        },
+        {
+            "SAPT(DFT) [PBE0]": "SAPT(DFT) [PBE0] IND ENERGY Error",
+        },
+        {
+            "SAPT(DFT) [B3LYP]": "SAPT(DFT) [B3LYP] IND ENERGY Error",
+        },
+        {
+            "SAPT(DFT) [B2PLYP]": "SAPT(DFT) [B2PLYP] IND ENERGY Error",
+        },
+        {
+            "SAPT(DFT) [WB97X]": "SAPT(DFT) [WB97X] IND ENERGY Error",
+        },
+        {
+            "SAPT0,SAPT2": "SAPT0 DISP ENERGY Error",
+        },
+        # {
+        #     "sSAPT0": "SSAPT0 DISP ENERGY Error",
+        # },
+        {
+            "SAPT2+": "SAPT2+ DISP ENERGY Error",
+        },
+        {
+            "SAPT2+(3)": "SAPT2+(3) DISP ENERGY Error",
+        },
+        {
+            "SAPT2+3": "SAPT2+3 DISP ENERGY Error",
+        },
+        {
+            "SAPT2+(CCD)": "SAPT2+(CCD) DISP ENERGY Error",
+        },
+        {
+            "SAPT2+(3)(CCD)": "SAPT2+(3)(CCD) DISP ENERGY Error",
+        },
+        {
+            "SAPT2+3(CCD)": "SAPT2+3(CCD) DISP ENERGY Error",
+        },
+        {
+            "SAPT(DFT) [PBE0]": "SAPT(DFT) [PBE0] DISP ENERGY Error",
+        },
+        {
+            "SAPT(DFT) [B3LYP]": "SAPT(DFT) [B3LYP] DISP ENERGY Error",
+        },
+        {
+            "SAPT(DFT) [B2PLYP]": "SAPT(DFT) [B2PLYP] DISP ENERGY Error",
+        },
+        {
+            "SAPT(DFT) [WB97X]": "SAPT(DFT) [WB97X] DISP ENERGY Error",
+        },
+        {
+            "PBE0-D4": "PBE0-D4 DISP ENERGY Error",
+        },
+        {
+            "B3LYP-D4": "B3LYP-D4 DISP ENERGY Error",
+        },
+        {
+            "B2PLYP-D4": "B2PLYP-D4 DISP ENERGY Error",
+        },
+        {
+            "WB97X-D4": "WB97X-D4 DISP ENERGY Error",
+        },
+        {
+            "SAPT0-D4": "SAPT0-D4 DISP ENERGY Error",
+        },
+        {
+            "D3-ML": "D3-ML DISP ENERGY Error",
+        },
+        {
+            "SAPT(DFT)+D4": "SAPT(DFT)+D4 DISP ENERGY Error",
+        },
+        {
+            "SAPT(DFT)-D4": "SAPT(DFT)-D4 DISP ENERGY Error",
+        },
+    ]
+    mcure_labels = {
+        "ELST": {},
+        "EXCH": {},
+        "IND": {},
+        "DISP": {},
+    }
+    # TODO DEBUG
+    df_atz["SAPT2+3(CCD)DMP2 EXCH ENERGY"] *= h2kcalmol
+    debug = False
+    for i in mcures_labels_start:
+        k, v = list(i.items())[0]
+        for d in dfs_all:
+            if "ELST" in v:
+                if k not in mcure_labels["ELST"]:
+                    mcure_labels["ELST"][k] = []
+                v = v.replace(" Error", "")
+                d["df"]["CRE_ELST"] = d["df"].apply(
+                    lambda r: compute_CRE(
+                        r,
+                        energy_col=v,
+                        benchmark_col=f"Ref_elst_aqz",
+                        benchmark_col_system=f"E_R_eq_elst_aqz",
+                    ),
+                    axis=1,
+                )
+                mcure = d["df"]["CRE_ELST"].abs().mean() * 100
+                mcure_labels["ELST"][k].append(mcure)
+            elif "EXCH" in v:
+                if k not in mcure_labels["EXCH"]:
+                    mcure_labels["EXCH"][k] = []
+                v = v.replace(" Error", "")
+                d["df"]["CRE_EXCH"] = d["df"].apply(
+                    lambda r: compute_CRE(
+                        r,
+                        energy_col=v,
+                        benchmark_col=f"Ref_exch_aqz",
+                        benchmark_col_system=f"E_R_eq_exch_aqz",
+                        debug=debug,
+                    ),
+                    axis=1,
+                )
+                mcure = d["df"]["CRE_EXCH"].abs().mean() * 100
+                mcure_labels["EXCH"][k].append(mcure)
+            elif "IND" in v:
+                if k not in mcure_labels["IND"]:
+                    mcure_labels["IND"][k] = []
+                v = v.replace(" Error", "")
+                d["df"]["CRE_IND"] = d["df"].apply(
+                    lambda r: compute_CRE(
+                        r,
+                        energy_col=v,
+                        benchmark_col=f"Ref_ind_aqz",
+                        benchmark_col_system=f"E_R_eq_ind_aqz",
+                    ),
+                    axis=1,
+                )
+                mcure = d["df"]["CRE_IND"].abs().mean() * 100
+                mcure_labels["IND"][k].append(mcure)
+            elif "DISP" in v:
+                if k not in mcure_labels["DISP"]:
+                    mcure_labels["DISP"][k] = []
+                v = v.replace(" Error", "")
+                d["df"]["CRE_DISP"] = d["df"].apply(
+                    lambda r: compute_CRE(
+                        r,
+                        energy_col=v,
+                        benchmark_col=f"Ref_disp_aqz",
+                        benchmark_col_system=f"E_R_eq_disp_aqz",
+                    ),
+                    axis=1,
+                )
+                mcure = d["df"]["CRE_DISP"].abs().mean() * 100
+                mcure_labels["DISP"][k].append(mcure)
+            else:
+                raise ValueError(f"Error: {v = }")
+    pp(mcure_labels)
+
+    import cdsg_plot
+
+    for dfs in dfs_all:
+        dfs = [dfs]
+        cdsg_plot.error_statistics.violin_plot_table_multi_SAPT_components(
+            dfs,
+            df_labels_and_columns_elst={
+                "SAPT0,sSAPT0": "SAPT0 ELST ENERGY Error",
+                "SAPT2,SAPT2+": "SAPT2 ELST ENERGY Error",
+                "SAPT2+(3),SAPT2+3": "SAPT2+(3) ELST ENERGY Error",
+                "SAPT(DFT) [PBE0]": "SAPT(DFT) [PBE0] ELST ENERGY Error",
+                "SAPT(DFT) [B3LYP]": "SAPT(DFT) [B3LYP] ELST ENERGY Error",
+                "SAPT(DFT) [B2PLYP]": "SAPT(DFT) [B2PLYP] ELST ENERGY Error",
+                "SAPT(DFT) [WB97X]": "SAPT(DFT) [WB97X] ELST ENERGY Error",
+            },
+            df_labels_and_columns_exch={
+                "SAPT0,sSAPT0": "SAPT0 EXCH ENERGY Error",
+                "SAPT2,SAPT2+,\\\\SAPT2+(3),SAPT2+3": "SAPT2 EXCH ENERGY Error",
+                "SAPT(DFT) [PBE0]": "SAPT(DFT) [PBE0] EXCH ENERGY Error",
+                "SAPT(DFT) [B3LYP]": "SAPT(DFT) [B3LYP] EXCH ENERGY Error",
+                "SAPT(DFT) [B2PLYP]": "SAPT(DFT) [B2PLYP] EXCH ENERGY Error",
+                "SAPT(DFT) [WB97X]": "SAPT(DFT) [WB97X] EXCH ENERGY Error",
+            },
+            df_labels_and_columns_indu={
+                "SAPT0": "SAPT0 IND ENERGY Error",
+                # "sSAPT0": "SSAPT0 IND ENERGY Error",
+                "SAPT2,SAPT2+,\\\\SAPT2+(3),SAPT2+3": "SAPT2 IND ENERGY Error",
+                # should be here but moved for dense plotting...
+                # "SAPT2+DMP2,\\\\SAPT2+(3)DMP2": "SAPT2+DMP2 IND ENERGY Error",
+                "SAPT2+3DMP2": "SAPT2+3DMP2 IND ENERGY Error",
+                "SAPT2+DMP2,\\\\SAPT2+(3)DMP2": "SAPT2+DMP2 IND ENERGY Error",
+                "SAPT(DFT) [PBE0]": "SAPT(DFT) [PBE0] IND ENERGY Error",
+                "SAPT(DFT) [B3LYP]": "SAPT(DFT) [B3LYP] IND ENERGY Error",
+                "SAPT(DFT) [B2PLYP]": "SAPT(DFT) [B2PLYP] IND ENERGY Error",
+                "SAPT(DFT) [WB97X]": "SAPT(DFT) [WB97X] IND ENERGY Error",
+            },
+            df_labels_and_columns_disp={},
+            # df_labels_and_columns_disp={
+
+            #     "SAPT0,SAPT2": "SAPT0 DISP ENERGY Error",
+            #     "SAPT0-D4": "SAPT0-D4 DISP ENERGY Error",
+            #     # "sSAPT0": "SSAPT0 DISP ENERGY Error",
+            #     "SAPT2+": "SAPT2+ DISP ENERGY Error",
+            #     "SAPT2+(3)": "SAPT2+(3) DISP ENERGY Error",
+            #     "SAPT2+3": "SAPT2+3 DISP ENERGY Error",
+            #     "SAPT2+(CCD)": "SAPT2+(CCD) DISP ENERGY Error",
+            #     "SAPT2+(3)(CCD)": "SAPT2+(3)(CCD) DISP ENERGY Error",
+            #     "SAPT2+3(CCD)": "SAPT2+3(CCD) DISP ENERGY Error",
+            #     "SAPT(DFT)-D4": "SAPT(DFT)-D4 DISP ENERGY Error",
+            #     "SAPT(DFT) [PBE0]": "SAPT(DFT) [PBE0] DISP ENERGY Error",
+            #     "SAPT(DFT) [B3LYP]": "SAPT(DFT) [B3LYP] DISP ENERGY Error",
+            #     "SAPT(DFT) [B2PLYP]": "SAPT(DFT) [B2PLYP] DISP ENERGY Error",
+            #     "SAPT(DFT) [WB97X]": "SAPT(DFT) [WB97X] DISP ENERGY Error",
+            #     "SAPT(DFT)+D4": "SAPT(DFT)+D4 DISP ENERGY Error",
+            #     "PBE0-D4": "PBE0-D4 DISP ENERGY Error",
+            #     "B3LYP-D4": "B3LYP-D4 DISP ENERGY Error",
+            #     "B2PLYP-D4": "B2PLYP-D4 DISP ENERGY Error",
+            #     "WB97X-D4": "WB97X-D4 DISP ENERGY Error",
+            #     "D3-ML": "D3-ML DISP ENERGY Error",
+            # },
+            output_filename=f"./plots/individuals/LoS_components_{dfs[0]['name']}_subset_nondisp.jpg",
+            table_fontsize=8,
+            usetex=True,
+            legend_loc="lower right",
+            figure_size=(10, 3),
+            x_label_fontsize=12,
+            grid_widths=[1.0, 0.9, 1.2],
+            grid_heights=[
+                0.50,
+                2,
+            ],
+        )
+        cdsg_plot.error_statistics.violin_plot_table_multi_SAPT_components(
+            dfs,
+            df_labels_and_columns_elst={
+            },
+            df_labels_and_columns_exch={
+            },
+            df_labels_and_columns_indu={
+            },
+            df_labels_and_columns_disp={
+                "SAPT0,SAPT2": "SAPT0 DISP ENERGY Error",
+                "SAPT0-D4": "SAPT0-D4 DISP ENERGY Error",
+                # "sSAPT0": "SSAPT0 DISP ENERGY Error",
+                "SAPT2+": "SAPT2+ DISP ENERGY Error",
+                "SAPT2+(3)": "SAPT2+(3) DISP ENERGY Error",
+                "SAPT2+3": "SAPT2+3 DISP ENERGY Error",
+                "SAPT2+(CCD)": "SAPT2+(CCD) DISP ENERGY Error",
+                "SAPT2+(3)(CCD)": "SAPT2+(3)(CCD) DISP ENERGY Error",
+                "SAPT2+3(CCD)": "SAPT2+3(CCD) DISP ENERGY Error",
+                "SAPT(DFT)-D4": "SAPT(DFT)-D4 DISP ENERGY Error",
+                "SAPT(DFT) [PBE0]": "SAPT(DFT) [PBE0] DISP ENERGY Error",
+                "SAPT(DFT) [B3LYP]": "SAPT(DFT) [B3LYP] DISP ENERGY Error",
+                "SAPT(DFT) [B2PLYP]": "SAPT(DFT) [B2PLYP] DISP ENERGY Error",
+                "SAPT(DFT) [WB97X]": "SAPT(DFT) [WB97X] DISP ENERGY Error",
+                "SAPT(DFT)+D4": "SAPT(DFT)+D4 DISP ENERGY Error",
+                "PBE0-D4": "PBE0-D4 DISP ENERGY Error",
+                "B3LYP-D4": "B3LYP-D4 DISP ENERGY Error",
+                "B2PLYP-D4": "B2PLYP-D4 DISP ENERGY Error",
+                "WB97X-D4": "WB97X-D4 DISP ENERGY Error",
+                "D3-ML": "D3-ML DISP ENERGY Error",
+            },
+            output_filename=f"./plots/individuals/LoS_components_{dfs[0]['name']}_subset_disp.jpg",
+            table_fontsize=8,
+            usetex=True,
+            legend_loc="lower right",
+            figure_size=(10, 3),
+            x_label_fontsize=12,
+            grid_widths=[1.0],
+            grid_heights=[
+                0.50,
+                2,
+            ],
+            # mcure=mcure_labels,
+        )
+    return
+
 def plot_components_sapt0_saptdft(df):
     df = compute_d3_from_opt_params(
         df,
@@ -6276,7 +7759,9 @@ def plot_components_sapt0_saptdft(df):
     return
 
 
-def plot_LoS_saptdft(df):
+def plot_LoS_saptdft(df,
+    presentation=False,
+                     ):
     print(
         df[
             [
@@ -6343,13 +7828,15 @@ def plot_LoS_saptdft(df):
     ]
     for c in conv:
         df[c] /= h2kcalmol
-    # print(df[["SAPT_DFT_D4_pbe0_adz_total", "PBE0 IE adz"]])
-    violin_plots_multi_components(df, limit_to_column_not_nan="D3-ML")
-    violin_plots_multi_components_subset(df, limit_to_column_not_nan="D3-ML")
-    return
-    violin_plots_multi(df)
-    violin_plots_multi_subset(df)
-    return
-    return
-    # Need to plot subset with aqz data now...
+    if presentation:
+        violin_plots_multi_components_df_individual(df, limit_to_column_not_nan="D3-ML")
+        violin_plots_multi_components_subset_individual(df, limit_to_column_not_nan="D3-ML")
+        violin_plots_multi_individual(df)
+        violin_plots_multi_subset_individual(df)
+        return
+    else:
+        violin_plots_multi_components(df, limit_to_column_not_nan="D3-ML")
+        violin_plots_multi_components_subset(df, limit_to_column_not_nan="D3-ML")
+        violin_plots_multi(df)
+        violin_plots_multi_subset(df)
     return
