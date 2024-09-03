@@ -5813,7 +5813,7 @@ def violin_plots_multi_components_subset_sapt0d4(df):
     )
     return
 
-def violin_plots_multi_components(df, limit_to_column_not_nan=None):
+def violin_plots_multi_components(df, limit_to_column_not_nan=None, slide=True):
     if limit_to_column_not_nan is not None:
 
         size_prior = len(df)
@@ -6166,6 +6166,31 @@ def violin_plots_multi_components(df, limit_to_column_not_nan=None):
 
     import cdsg_plot
 
+    if slide:
+        fig_size = (15, 6)
+        grid_heights = [
+            0.8,
+            2,
+            0.6,
+            2,
+        ]
+        table_fontsize = 12
+        x_label_fontsize = 12
+        extra_label = "_slide"
+    else:
+        fig_size = (10, 8)
+        grid_heights = [
+            0.6,
+            2,
+            0.4,
+            2,
+        ]
+        table_fontsize = 8
+        x_label_fontsize = 8
+        extra_label = ""
+
+
+
     cdsg_plot.error_statistics.violin_plot_table_multi_SAPT_components(
         dfs,
         df_labels_and_columns_elst={
@@ -6220,17 +6245,13 @@ def violin_plots_multi_components(df, limit_to_column_not_nan=None):
             # "WB97X-D4": "WB97X-D4 DISP ENERGY Error",
             # "D3-ML": "D3-ML DISP ENERGY Error",
         },
-        output_filename=f"./plots/LoS_components_adz_atz_nondisp.jpg",
-        table_fontsize=8,
+        output_filename=f"./plots/LoS_components_adz_atz_nondisp{extra_label}.jpg",
         usetex=True,
         legend_loc="lower right",
-        figure_size=(10, 8),
-        grid_heights = [
-            0.6,
-            2,
-            0.4,
-            2,
-        ],
+        table_fontsize=table_fontsize,
+        x_label_fontsize=x_label_fontsize,
+        figure_size=fig_size,
+        grid_heights = grid_heights,
         grid_widths = [0.75, 0.65, 1.0],
         # mcure=mcure_labels,
     )
@@ -6264,17 +6285,13 @@ def violin_plots_multi_components(df, limit_to_column_not_nan=None):
             "WB97X-D4": "WB97X-D4 DISP ENERGY Error",
             "D3-ML": "D3-ML DISP ENERGY Error",
         },
-        output_filename=f"./plots/LoS_components_adz_atz_disp.jpg",
-        table_fontsize=8,
+        output_filename=f"./plots/LoS_components_adz_atz_disp{extra_label}.jpg",
         usetex=True,
         legend_loc="lower right",
-        figure_size=(10, 8),
-        grid_heights = [
-            0.6,
-            2,
-            0.4,
-            2,
-        ],
+        table_fontsize=table_fontsize,
+        x_label_fontsize=x_label_fontsize,
+        figure_size=fig_size,
+        grid_heights = grid_heights,
         grid_widths = [1.0],
         # mcure=mcure_labels,
     )

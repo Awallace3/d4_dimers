@@ -45,7 +45,7 @@ def main():
     # return
     # src.plotting.plot_components_sapt0_saptdft(df)
     # return
-    src.plotting.plot_LoS_saptdft(df, presentation=True)
+    src.plotting.plot_LoS_saptdft(df, presentation=False)
     return
 
 
