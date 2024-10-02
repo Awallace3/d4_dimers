@@ -18,22 +18,22 @@ def main():
         False,
     )
     # return
-    df = src.plotting.plot_basis_sets_d4_TT(
+    src.plotting.plot_basis_sets_d4_TT(
         df,
         False,
     )
     # return
-    df = src.plotting.plot_basis_sets_d4(
+    src.plotting.plot_basis_sets_d4(
         df,
         False,
     )
-    df = src.plotting.plot_basis_sets_d3(
+    src.plotting.plot_basis_sets_d3(
         df,
         False,
     )
-    df = src.plotting.plot_basis_sets_d4_Inter_vs_Super(
+    src.plotting.plot_basis_sets_d4_Inter_vs_Super(
         df,
-        True,
+        False,
     )
     # df = src.plotting.plotting_setup(
     #     (df, df_name),

@@ -168,9 +168,11 @@ def compute_d4_from_opt_params(
     ...
     ]
     """
+    print(df)
     params_dict = paramsTable.paramsDict()
     plot_vals = {}
     for i in bases:
+        print(i)
         params_d4 = params_dict[i[2]]
         params_2B, params_ATM = paramsTable.generate_2B_ATM_param_subsets(params_d4)
         df[f"-D4 ({i[1]})"] = df.apply(
@@ -500,7 +502,7 @@ def plot_basis_sets_d4_TT(df, build_df=False, df_out: str = "basis_study", df_na
         f"{selected}_d4_zoomed_TT",
         bottom=0.45,
         ylim=[-5, 5],
-        legend_loc="upper right",
+        legend_loc="lower right",
         transparent=True,
         # figure_size=(6, 6),
     )
@@ -586,7 +588,7 @@ def plot_basis_sets_d4_Inter_vs_Super(
         f"{selected}_d4_zoomed_Inter_vs_Super",
         bottom=0.45,
         ylim=[-3, 3],
-        legend_loc="upper right",
+        legend_loc="lower right",
         transparent=True,
         # figure_size=(6, 6),
     )
@@ -702,7 +704,7 @@ def plot_basis_sets_d4(df, build_df=False, df_out: str = "basis_study", df_name=
         f"{selected}_d4_zoomed",
         bottom=0.45,
         ylim=[-5, 5],
-        legend_loc="lower right",
+        legend_loc="upper right",
         transparent=True,
         # figure_size=(6, 6),
     )
@@ -728,7 +730,8 @@ def plot_basis_sets_d4(df, build_df=False, df_out: str = "basis_study", df_name=
         # f"All Dimers ({len(df)})",
         None,
         f"{selected}_d4_opt_vs_adz",
-        ylim=[-15, 14],
+        ylim=[-10, 20],
+        legend_loc="upper right",
         bottom=0.35,
     )
     return df
@@ -911,7 +914,7 @@ def plot_basis_sets_d3(df, build_df=False, df_out: str = "basis_study"):
         f"{selected}_d3_zoomed",
         bottom=0.45,
         ylim=[-5, 5],
-        legend_loc="lower right",
+        legend_loc="upper right",
         transparent=True,
         # figure_size=(6, 6),
     )
@@ -937,7 +940,7 @@ def plot_basis_sets_d3(df, build_df=False, df_out: str = "basis_study"):
         None,
         f"{selected}_d3_opt_vs_adz",
         bottom=0.35,
-        ylim=[-15, 15],
+        ylim=[-5, 30],
     )
 
     return df
@@ -956,7 +959,7 @@ def plot_ie_curve(
     print(df_sys.columns.values)
     df_sys.sort_values(by="R", inplace=True)
     df.reset_index(drop=True, inplace=True)
-    pd.set_option("display.max_columns", None)
+    # pd.set_option("display.max_columns", None)
     tools.print_cartesians(df_sys.iloc[0]["Geometry"])
     print()
     print(df_sys["R"].to_list())
@@ -1079,7 +1082,7 @@ def plotting_setup(
         assert df["SAPT_DFT_atz_3_IE_diff"].isnull().sum() == 0
         df_charged = get_charged_df(df)
         # ensure that SAPT_DFT_atz_3_IE_diff does not have NaN values
-        pd.set_option("display.max_rows", None)
+        # pd.set_option("display.max_rows", None)
         df_charged["SAPT_DFT_adz_t"] = df_charged["SAPT_DFT_adz"].apply(lambda x: x[0])
         assert df_charged["SAPT_DFT_adz_3_IE_diff"].isnull().sum() == 0
         assert df_charged["SAPT_DFT_atz_3_IE_diff"].isnull().sum() == 0
@@ -1103,12 +1106,11 @@ def plotting_setup(
             # f"Charged Dimers ({len(df_charged)})",
             None,
             f"{selected}_charged",
-            legend_loc="upper right",
+            legend_loc="lower right",
             bottom=0.42,
             ylim=[-5, 5],
         )
         # return
-        print(df[["SAPT_DFT_atz_3_IE_diff", "SAPT_DFT_adz_3_IE_diff"]])
         # plot_violin_d3_d4_ALL_zoomed(
         plot_violin_d3_d4_ALL_zoomed_min_max(
             df,
@@ -1135,7 +1137,7 @@ def plotting_setup(
             f"{selected}_ATM2",
             bottom=0.45,
             ylim=[-5, 5],
-            legend_loc="upper right",
+            legend_loc="lower right",
             transparent=True,
             # figure_size=(6, 6),
         )
@@ -1809,7 +1811,7 @@ def plot_violin_d3_d4_ALL_zoomed(
         annotations.append((cnt, m, text))
         cnt += 1
 
-    pd.set_option("display.max_columns", None)
+    # pd.set_option("display.max_columns", None)
     # print(df[vals.values()].describe(include="all"))
     # transparent figure
     fig = plt.figure(dpi=dpi)
@@ -2285,7 +2287,7 @@ def plot_violin_d3_d4_ALL_zoomed_min_max_TOC(
         annotations.append((cnt, m, text))
         cnt += 1
 
-    pd.set_option("display.max_columns", None)
+    # pd.set_option("display.max_columns", None)
     # print(df[vals.values()].describe(include="all"))
     # transparent figure
     fig = plt.figure(dpi=dpi)
@@ -2529,7 +2531,7 @@ def plot_violin_d3_d4_ALL_zoomed_min_max(
         annotations.append((cnt, m, text))
         cnt += 1
 
-    pd.set_option("display.max_columns", None)
+    # pd.set_option("display.max_columns", None)
     # print(df[vals.values()].describe(include="all"))
     # transparent figure
     fig = plt.figure(dpi=dpi)
@@ -2770,7 +2772,7 @@ def plot_violin_d3_d4_ALL(
         annotations.append((cnt, m, text))
         cnt += 1
 
-    pd.set_option("display.max_columns", None)
+    # pd.set_option("display.max_columns", None)
     # print(df[vals.values()].describe(include="all"))
     # transparent figure
     fig = plt.figure(dpi=dpi)
