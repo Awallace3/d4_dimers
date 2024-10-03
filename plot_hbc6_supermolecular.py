@@ -6,6 +6,10 @@ from src import paramsTable, locald4
 from qm_tools_aw import tools
 import os
 from scipy.optimize import curve_fit
+from src.plotting import prep_saptdft_components
+from qcelemental import constants 
+
+h2kcalmol = constants.conversion_factor("hartree", "kcal/mol")
 
 plt.rcParams.update(
     {
@@ -30,40 +34,50 @@ def df_setup(df, ddft=False):
         ),
         axis=1,
     )
-
-    df["d4_supra"] = df.apply(
-        lambda row: locald4.compute_disp_2B_BJ_dimer_supra(
-            row,
-            p_2b,
-            p_atm,
-        ),
-        axis=1,
-    )
-    p_2b, p_atm = paramsTable.param_lookup("sadz")
-    df["d4_super"] = df.apply(
-        lambda row: locald4.compute_disp_2B_BJ_ATM_CHG_dimer(
-            row,
-            p_2b,
-            p_atm,
-        ),
-        axis=1,
-    )
+    # df["d4_supra"] = df.apply(
+    #     lambda row: locald4.compute_disp_2B_BJ_dimer_supra(
+    #         row,
+    #         p_2b,
+    #         p_atm,
+    #     ),
+    #     axis=1,
+    # )
+    # p_2b, p_atm = paramsTable.param_lookup("sadz")
+    # df["d4_super"] = df.apply(
+    #     lambda row: locald4.compute_disp_2B_BJ_ATM_CHG_dimer(
+    #         row,
+    #         p_2b,
+    #         p_atm,
+    #     ),
+    #     axis=1,
+    # )
     if ddft:
         df["d4_ddft"] = df["SAPT_DFT_pbe0_adz_d4_disp"]
+    print(df["SAPT_DFT_b2plyp_atz"])
+
+    def compute_residue(row):
+        if row["SAPT_DFT_b2plyp_atz"]:
+            return row["Benchmark"] - sum(row["SAPT_DFT_b2plyp_atz"][1:-1]) * h2kcalmol
+        else:
+            return None
 
     df["SAPT0_disp"] = df.apply(lambda r: r["SAPT0_adz"][-1], axis=1)
     df["E_res"] = df.apply(lambda r: r["Benchmark"] - sum(r["SAPT0_adz"][1:-1]), axis=1)
     if ddft:
-        df["E_res_saptdft_adz"] = df.apply(lambda r: r["Benchmark"] - sum(r["SAPT_DFT_pbe0_adz"][1:-1]), axis=1)
-        df["E_res_saptdft_atz"] = df.apply(lambda r: r["Benchmark"] - sum(r["SAPT_DFT_pbe0_atz"][1:-1]), axis=1)
+        df["E_res_saptdft_b2plyp_atz"] = df.apply(lambda r: compute_residue(r), axis=1)
+        df["E_ref_hlsapt_atz"] = df.apply(
+            lambda r: r["SAPT2+(3)(CCD)DMP2 DISP ENERGY atz"] * h2kcalmol, axis=1
+        )
     return df
 
 
 def function_A_div_r6(r, A):
-    return A / r ** 6
+    return A / r**6
+
 
 def function_A_div_r6_B_div_r8(r, A, B):
-    return A / r ** 6 + B / r ** 8
+    return A / r**6 + B / r**8
+
 
 def plot_all_curves(df):
     print(df["DB"].unique())
@@ -130,7 +144,7 @@ def plot_all_curves(df):
                     label=r"E_{res}",
                     marker="o",
                     markersize=2.0,
-                    color='k',
+                    color="k",
                 )
                 plt.title(f"{db} System {i}")
                 plt.xlabel("Distance (A)", fontsize=16)
@@ -145,12 +159,25 @@ def plot_all_curves(df):
     return
 
 
-def plot_all_curves_LoS(df, plot_ddft_curve=True):
+def plot_all_curves_LoS(
+    df,
+    plot_ddft_curve=True,
+    functionals=[
+        "pbe0",
+        "b2plyp",
+        "b3lyp",
+        "wb97x",
+    ],
+    basis_sets=["adz", "atz"],
+):
+    for functional in functionals:
+        for basis_set in basis_sets:
+            df = prep_saptdft_components(df, functional, basis_set)
+            df[f"{functional.upper()}-D4 DISP ENERGY {basis_set.lower()}"] = df[f"{functional.upper()}-D4 DISP ENERGY {basis_set.lower()}"] * h2kcalmol
     print(df["DB"].unique())
     print(
         df[
             [
-                "d4_super",
                 "d4_ddft",
                 "E_res",
                 "system_id",
@@ -160,44 +187,77 @@ def plot_all_curves_LoS(df, plot_ddft_curve=True):
     )
     # plt usetex
     dbs = df["DB"].unique()
-    dbs = ['nbc10', 's66x8']
+    # dbs = ["nbc10", "s66x8"]
     for db in dbs:
         print(db)
         if db.lower() == "achc":
             continue
         df_db = df[df["DB"] == db]
 
-        mae = np.mean(np.abs(df_db['d4_ddft'] - df_db['SAPT_DFT_pbe0_adz_disp']))
-        me = np.mean(df_db['d4_ddft'] - df_db['SAPT_DFT_pbe0_adz_disp'])
-        print(f"DB: {db}, MAE: {mae:.2f} ME: {me:.2f}")
+        for functional in functionals:
+            for basis_set in basis_sets:
+                func_col = f"{functional.upper()}-D4 DISP ENERGY {basis_set.lower()}"
+                mae = np.mean(np.abs(df_db[func_col] - df_db["E_ref_hlsapt_atz"]))
+                me = np.mean(np.abs(df_db[func_col] - df_db["E_ref_hlsapt_atz"]))
+                print(f"DB: {db} w {functional}/{basis_set}, MAE: {mae:.2f} ME: {me:.2f}")
         sys_numbers = df_db["System Label"].unique()
         if len(sys_numbers) > 0:
             os.makedirs(f"./plots/disp_curves_ddft/{db}", exist_ok=True)
             for i in sys_numbers:
+
                 df_sys = df_db[df_db["System Label"] == i]
                 if len(df_sys) < 4:
                     continue
-                print(
-                    df_sys[
-                        [
-                            "d4_super",
-                            "d4_ddft",
-                            "E_res",
-                            "system_id",
-                            "distance (A)",
-                        ]
-                    ]
-                )
                 # fit to 1/r^6 function for both SAPT(DFT)/aDZ and PBE0+dDFT+D4
-                popt, pcov = curve_fit(function_A_div_r6_B_div_r8, df_sys['distance (A)'], df_sys['SAPT_DFT_pbe0_adz_disp'])
-                A_saptdft_adz = popt[0]
-                B_saptdft_adz = popt[1]
-                popt, pcov = curve_fit(function_A_div_r6_B_div_r8, df_sys['distance (A)'], df_sys['d4_ddft'])
-                A_ddft = popt[0]
-                B_ddft = popt[1]
+                # popt, pcov = curve_fit(
+                #     function_A_div_r6_B_div_r8,
+                #     df_sys["distance (A)"],
+                #     df_sys["SAPT_DFT_pbe0_adz_disp"],
+                # )
+                # A_saptdft_adz = popt[0]
+                # B_saptdft_adz = popt[1]
+                # popt, pcov = curve_fit(
+                #     function_A_div_r6_B_div_r8,
+                #     df_sys["distance (A)"],
+                #     df_sys["d4_ddft"],
+                # )
+                # A_ddft = popt[0]
+                # B_ddft = popt[1]
 
                 df_sys = df_sys.sort_values("distance (A)")
                 fig = plt.figure(dpi=400)
+                for functional in functionals:
+                    for basis_set in basis_sets:
+                        func_col = f"{functional.upper()}-D4 DISP ENERGY {basis_set.lower()}"
+                        mae = np.mean(
+                            np.abs(
+                                df_sys[func_col]
+                                - df_sys["E_ref_hlsapt_atz"]
+                            )
+                        )
+                        plt.plot(
+                            df_sys["distance (A)"],
+                            df_sys[func_col],
+                            label=f"{functional.upper()}-D4/{basis_set} MAE: {mae:.2f}",
+                            marker="o",
+                            markersize=2.0,
+                        )
+                plt.plot(
+                    df_sys["distance (A)"],
+                    df_sys["E_ref_hlsapt_atz"],
+                    label=r"E$_{\rm res}^{SAPT(DFT)[B2PLYP]/aTZ}$",
+                    marker="o",
+                    markersize=2.0,
+                    color="k",
+                )
+                plt.plot(
+                    df_sys["distance (A)"],
+                    df_sys["E_ref_hlsapt_atz"],
+                    label=r"SAPT2+(3)(CCD)$\delta$MP2",
+                    marker="o",
+                    markersize=2.0,
+                    color="k",
+                )
                 # plt.plot(
                 #     df_sys["distance (A)"],
                 #     df_sys["d4_supra"],
@@ -219,20 +279,22 @@ def plot_all_curves_LoS(df, plot_ddft_curve=True):
                 #     marker="o",
                 #     markersize=2.0,
                 # )
-                plt.plot(
-                    df_sys["distance (A)"],
-                    df_sys["SAPT_DFT_pbe0_adz_disp"],
-                    label=f"SAPT(DFT)/aDZ Disp.",
-                    marker="o",
-                    markersize=2.0,
-                )
-                plt.plot(
-                    df_sys["distance (A)"],
-                    function_A_div_r6_B_div_r8(df_sys["distance (A)"], A_saptdft_adz, B_saptdft_adz),
-                    label=f"SAPT(DFT)/aDZ fit $\\frac{{{A_saptdft_adz:.2f}}}{{r^6}} + \\frac{{{B_saptdft_adz:.2f}}}{{r^8}}$",
-                    marker="o",
-                    markersize=2.0,
-                )
+                # plt.plot(
+                #     df_sys["distance (A)"],
+                #     df_sys["SAPT_DFT_pbe0_adz_disp"],
+                #     label=f"SAPT(DFT)/aDZ Disp.",
+                #     marker="o",
+                #     markersize=2.0,
+                # )
+                # plt.plot(
+                #     df_sys["distance (A)"],
+                #     function_A_div_r6_B_div_r8(
+                #         df_sys["distance (A)"], A_saptdft_adz, B_saptdft_adz
+                #     ),
+                #     label=f"SAPT(DFT)/aDZ fit $\\frac{{{A_saptdft_adz:.2f}}}{{r^6}} + \\frac{{{B_saptdft_adz:.2f}}}{{r^8}}$",
+                #     marker="o",
+                #     markersize=2.0,
+                # )
                 # plt.plot(
                 #     df_sys["distance (A)"],
                 #     df_sys["SAPT_DFT_pbe0_atz_disp"],
@@ -256,28 +318,13 @@ def plot_all_curves_LoS(df, plot_ddft_curve=True):
                 #     markersize=2.0,
                 #     color="k",
                 # )
-                plt.plot(
-                    df_sys["distance (A)"],
-                    df_sys["d4_ddft"],
-                    label=f"PBE0-D4 Disp.",
-                    marker="o",
-                    markersize=2.0,
-                )
-                plt.plot(
-                    df_sys["distance (A)"],
-                    df_sys["E_res_saptdft_adz"],
-                    label=r"E$_{\rm res}^{SAPT(DFT)/aDZ}$",
-                    marker="o",
-                    markersize=2.0,
-                    color="k",
-                )
-                plt.plot(
-                    df_sys["distance (A)"],
-                    function_A_div_r6_B_div_r8(df_sys["distance (A)"], A_ddft, B_ddft),
-                    label=f"PBE0-D4 Disp. fit $\\frac{{{A_ddft:.2f}}}{{r^6}} + \\frac{{{B_ddft:.2f}}}{{r^8}}$",
-                    marker="o",
-                    markersize=2.0,
-                )
+                # plt.plot(
+                #     df_sys["distance (A)"],
+                #     function_A_div_r6_B_div_r8(df_sys["distance (A)"], A_ddft, B_ddft),
+                #     label=f"PBE0-D4 Disp. fit $\\frac{{{A_ddft:.2f}}}{{r^6}} + \\frac{{{B_ddft:.2f}}}{{r^8}}$",
+                #     marker="o",
+                #     markersize=2.0,
+                # )
                 plt.title(f"{db} {i}")
                 plt.xlabel("Distance (A)", fontsize=16)
                 plt.ylabel("Energy (kcal/mol)", fontsize=16)
@@ -286,12 +333,18 @@ def plot_all_curves_LoS(df, plot_ddft_curve=True):
                 plt.savefig(f"./plots/disp_curves_ddft/{db}/{i}_ddft_super.png")
                 plt.clf()
                 if plot_ddft_curve:
-                    popt, pcov = curve_fit(function_A_div_r6_B_div_r8, df_sys['distance (A)'], df_sys['d4_ddft'])
+                    popt, pcov = curve_fit(
+                        function_A_div_r6_B_div_r8,
+                        df_sys["distance (A)"],
+                        df_sys["d4_ddft"],
+                    )
                     A_ddft = popt[0]
                     B_ddft = popt[1]
                     # mae between d4_ddft and SAPT(DFT)/aDZ
-                    mae = np.mean(np.abs(df_sys['d4_ddft'] - df_sys['SAPT_DFT_pbe0_adz_disp']))
-                    me = np.mean(df_sys['d4_ddft'] - df_sys['SAPT_DFT_pbe0_adz_disp'])
+                    mae = np.mean(
+                        np.abs(df_sys["d4_ddft"] - df_sys["SAPT_DFT_pbe0_adz_disp"])
+                    )
+                    me = np.mean(df_sys["d4_ddft"] - df_sys["SAPT_DFT_pbe0_adz_disp"])
 
                     df_sys = df_sys.sort_values("distance (A)")
                     fig = plt.figure(dpi=400)
@@ -311,7 +364,8 @@ def plot_all_curves_LoS(df, plot_ddft_curve=True):
                     # )
                     plt.plot(
                         df_sys["distance (A)"],
-                        df_sys["SAPT_DFT_pbe0_adz_dDFT"] - df_sys["SAPT_DFT_pbe0_adz_dHF"],
+                        df_sys["SAPT_DFT_pbe0_adz_dDFT"]
+                        - df_sys["SAPT_DFT_pbe0_adz_dHF"],
                         label=f"PBE0(dDFT)/aDZ - dHF/aDZ",
                         marker="o",
                         markersize=2.0,
@@ -350,7 +404,7 @@ def plot_all_curves_LoS(df, plot_ddft_curve=True):
                         label=f"SAPT(DFT)/aTZ Disp: ME {0.00:.2f} kcal/mol",
                         marker="o",
                         markersize=2.0,
-                        color='k',
+                        color="k",
                     )
                     # plt.plot(
                     #     df_sys["distance (A)"],
@@ -363,15 +417,21 @@ def plot_all_curves_LoS(df, plot_ddft_curve=True):
                     # get location of middle of plot for text annotation
                     x = df_sys["distance (A)"].iloc[int(len(df_sys) / 2)]
                     x += 0.1 * x
-                    y = df_sys["d4_ddft"].iloc[0]  
+                    y = df_sys["d4_ddft"].iloc[0]
                     y = 0.65 * y
-                    plt.text(x, y, f"PBE0-D4 Disp. = PBE0(dDFT)/aDZ - dHF/aDZ + D4",)
+                    plt.text(
+                        x,
+                        y,
+                        f"PBE0-D4 Disp. = PBE0(dDFT)/aDZ - dHF/aDZ + D4",
+                    )
                     plt.title(f"{db} {i}")
                     plt.xlabel("Distance (A)", fontsize=16)
                     plt.ylabel("Energy (kcal/mol)", fontsize=16)
                     plt.tick_params(axis="both", which="major", labelsize=14)
-                    plt.legend(loc='lower right')
-                    plt.savefig(f"./plots/disp_curves_ddft/{db}/{i}_ddft_super_ddft_curve.png")
+                    plt.legend(loc="lower right")
+                    plt.savefig(
+                        f"./plots/disp_curves_ddft/{db}/{i}_ddft_super_ddft_curve.png"
+                    )
                     plt.clf()
     return
 
