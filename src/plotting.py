@@ -7850,7 +7850,6 @@ def plot_LoS_saptdft(df,
         violin_plots_multi_components_subset_individual(df, limit_to_column_not_nan="D3-ML")
         violin_plots_multi_individual(df)
         violin_plots_multi_subset_individual(df)
-        return
     else:
         violin_plots_multi_components(df, limit_to_column_not_nan="D3-ML")
         violin_plots_multi_components_subset(df, limit_to_column_not_nan="D3-ML")

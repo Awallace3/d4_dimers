@@ -45,6 +45,7 @@ def main():
     # return
     # src.plotting.plot_components_sapt0_saptdft(df)
     # return
+    # TODO: plot dispersion as pull apart
     src.plotting.plot_LoS_saptdft(df, presentation=False)
     return
 
