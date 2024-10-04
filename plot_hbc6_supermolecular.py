@@ -564,7 +564,7 @@ def subplot_all_curves_LoS(
                     markersize=2.0,
                     color="k",
                 )
-                # axs[0].set_title(f"{db} {i}")
+                axs[0].set_title(f"(A)")
                 axs[0].set_xlabel("Distance (A)", fontsize=16)
                 axs[0].set_ylabel("Energy (kcal/mol)", fontsize=16)
                 axs[0].tick_params(axis="both", which="major", labelsize=14)
@@ -630,7 +630,7 @@ def subplot_all_curves_LoS(
                     markersize=2.0,
                     color="k",
                 )
-                # axs[1].set_title(f"{db} {i}")
+                axs[1].set_title(f"(B)")
                 axs[1].set_xlabel("Distance (A)", fontsize=16)
                 # axs[1].set_ylabel("Energy (kcal/mol)", fontsize=16)
                 axs[1].tick_params(axis="both", which="major", labelsize=14)
