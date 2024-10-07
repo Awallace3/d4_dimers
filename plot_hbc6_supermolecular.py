@@ -561,14 +561,14 @@ def subplot_all_curves_LoS(
                             marker="o",
                             markersize=2.0,
                         )
-                    axs[n * 2].plot(
-                        df_sys["distance (A)"],
-                        df_sys["E_ref_hlsapt_atz"],
-                        label=r"E$_{\rm res}^{SAPT(DFT)[B2PLYP]/aTZ}$",
-                        marker="X",
-                        markersize=5.0,
-                        color="gray",
-                    )
+                    # axs[n * 2].plot(
+                    #     df_sys["distance (A)"],
+                    #     df_sys["E_ref_hlsapt_atz"],
+                    #     label=r"E$_{\rm res}^{SAPT(DFT)[B2PLYP]/aTZ}$",
+                    #     marker="X",
+                    #     markersize=5.0,
+                    #     color="gray",
+                    # )
                     axs[n * 2].plot(
                         df_sys["distance (A)"],
                         df_sys["E_ref_hlsapt_atz"],
@@ -596,7 +596,7 @@ def subplot_all_curves_LoS(
                     axs[n*2 + 1].plot(
                         df_sys["distance (A)"],
                         df_sys[f"SAPT_DFT_pbe0_{basis_set}_dHF"],
-                        label=r"$\delta$HF/" + f"{basis_set_label}",
+                        label=r"$\delta$HF", # + f"{basis_set_label}",
                         marker="o",
                         markersize=2.0,
                     )
@@ -604,22 +604,21 @@ def subplot_all_curves_LoS(
                         df_sys["distance (A)"],
                         df_sys[f"SAPT_DFT_pbe0_{basis_set}_dDFT"]
                         - df_sys[f"SAPT_DFT_pbe0_{basis_set}_dHF"],
-                        label=r"$\delta$DFT[PBE0]/" + basis_set_label +
-                        r"- $\delta$HF/" + basis_set_label,
+                        label=r"$\delta$DFT[PBE0] - $\delta$HF",
                         marker="o",
                         markersize=2.0,
                     )
                     axs[n*2 + 1].plot(
                         df_sys["distance (A)"],
                         df_sys[f"SAPT_DFT_pbe0_{basis_set}_dDFT"],
-                        label=r"$\delta$DFT[PBE0]/" + basis_set_label,
+                        label=r"$\delta$DFT[PBE0]",
                         marker="o",
                         markersize=2.0,
                     )
                     axs[n*2 + 1].plot(
                         df_sys["distance (A)"],
                         df_sys[f"SAPT(DFT) [{functional.upper()}] DISP ENERGY {basis_set}"] * h2kcalmol,
-                        label=r"SAPT(DFT)[PBE0]/" + basis_set_label,
+                        label=r"SAPT(DFT)[PBE0]",
                         marker="o",
                         markersize=2.0,
                     )
@@ -664,6 +663,141 @@ def subplot_all_curves_LoS(
                 # break
     return
 
+def subplot_all_curves_LoS_basis_set(
+    df,
+    plot_ddft_curve=True,
+    functionals=[
+        "pbe0",
+        "b2plyp",
+        "b3lyp",
+        # "wb97x",
+    ],
+    basis_sets=["adz", "atz"],
+):
+    # plt usetex
+    dbs = df["DB"].unique()
+    print(dbs)
+    # dbs = ["nbc10"]
+    for db in dbs:
+        print(db)
+        if db.lower() == "achc":
+            continue
+        df_db = df[df["DB"] == db]
+
+        for functional in functionals:
+            for basis_set in basis_sets:
+                func_col = f"""{
+                    functional.upper()}-D4 DISP ENERGY {basis_set.lower()}"""
+                mae = np.mean(
+                    np.abs(df_db[func_col] - df_db["E_ref_hlsapt_atz"]))
+                me = np.mean(
+                    np.abs(df_db[func_col] - df_db["E_ref_hlsapt_atz"]))
+                print(f"""DB: {db} w {
+                      functional}/{basis_set}, MAE: {mae:.2f} ME: {me:.2f}""")
+        sys_numbers = df_db["System Label"].unique()
+        if len(sys_numbers) > 0:
+            os.makedirs(f"./plots/disp_curves_ddft/{db}", exist_ok=True)
+            for n, i in enumerate(sys_numbers):
+
+                df_sys = df_db[df_db["System Label"] == i]
+                if len(df_sys) < 4:
+                    continue
+                print(db, i)
+
+                df_sys = df_sys.sort_values("distance (A)")
+                n_basis_sets = len(basis_sets)
+                fig, axs = plt.subplots(n_basis_sets, 1, figsize=(
+                    6, 4 * n_basis_sets), dpi=400, sharey=True, sharex=True)
+                axs = axs.flatten()
+                for n, basis_set in enumerate(basis_sets):
+                    basis_set_label = f"{basis_set[0]}{basis_set[1:].upper()}"
+                    df_sys = df_sys.sort_values("distance (A)")
+                    for functional in functionals:
+                        func_col = f"""{
+                            functional.upper()}-D4 DISP ENERGY {basis_set.lower()}"""
+                        mae = np.mean(
+                            np.abs(
+                                df_sys[func_col]
+                                - df_sys["E_ref_hlsapt_atz"]
+                            )
+                        )
+                        me = np.mean(
+                            df_sys[func_col]
+                            - df_sys["E_ref_hlsapt_atz"]
+                        )
+                        axs[n].plot(
+                            df_sys["distance (A)"],
+                            df_sys[f"SAPT_DFT_{functional.lower()}_{basis_set}_D4_IE"],
+                            label=f"-D4[{functional.upper()}]",
+                            marker="x",
+                            markersize=3.0,
+                            linestyle='-.',
+                            linewidth=0.5,
+                        )
+                        axs[n].plot(
+                            df_sys["distance (A)"],
+                            df_sys[f"SAPT_DFT_{functional.lower()}_{basis_set}_dDFT"]
+                            - df_sys[f"SAPT_DFT_{functional.lower()}_{basis_set}_dHF"],
+                            label=r"$\delta$DFT[" + functional.lower() + r"] - $\delta$HF",
+                            marker="x",
+                            linestyle='--',
+                            markersize=3.0,
+                            linewidth=1.0,
+                        )
+                        axs[n].plot(
+                            df_sys["distance (A)"],
+                            df_sys[func_col],
+                            label=f"""{
+                                functional.upper()}-D4 \\emph{{MAE: {mae:.2f}, ME: {me:.2f}}}""",
+                            marker="o",
+                            markersize=2.0,
+                        )
+                    mae = np.mean(
+                        np.abs(
+                            df_sys[f"SAPT(DFT) [{functional.upper()}] DISP ENERGY {basis_set}"] * h2kcalmol
+                            - df_sys["E_ref_hlsapt_atz"]
+                        )
+                    )
+                    me = np.mean(
+                        df_sys[f"SAPT(DFT) [{functional.upper()}] DISP ENERGY {basis_set}"] * h2kcalmol
+                        - df_sys["E_ref_hlsapt_atz"]
+                    )
+                    axs[n].plot(
+                        df_sys["distance (A)"],
+                        df_sys[f"SAPT(DFT) [{functional.upper()}] DISP ENERGY {basis_set}"] * h2kcalmol,
+                        label=r"SAPT(DFT)[PBE0] " + f"\\emph{{MAE: {mae:.2f}, ME: {me:.2f}}}",
+                        marker="o",
+                        markersize=2.0,
+                    )
+                    axs[n].plot(
+                        df_sys["distance (A)"],
+                        df_sys["E_ref_hlsapt_atz"],
+                        label=r"SAPT2+(3)(CCD)$\delta$MP2 disp.",
+                        marker="o",
+                        markersize=2.0,
+                        color="k",
+                    )
+                    axs[n].set_title(f"\\textbf{{{basis_set_label}}}", fontsize=16)
+                    if n >= (n_basis_sets - 1) * 2 - 1:
+                        axs[n].set_xlabel("Distance (A)", fontsize=16)
+                    axs[n].set_ylabel(f"Disp. Energy (kcal/mol)", fontsize=16)
+                    axs[n].tick_params(axis="both",
+                                             which="major", labelsize=14)
+                    axs[n].legend(loc="lower right", fontsize=9)
+                    # make x-axis log scale
+                    axs[n].set_xscale('log')
+                # fmt: off
+                plt.tight_layout()
+                plt.savefig(
+                    f"""./plots/disp_curves_ddft/{db}/{i}_ddft_super_ddft_curve.png"""
+                )
+                # fmt: on
+                plt.close()
+                # if n > 5:
+                #     break
+                # break
+    return
+
 
 def main():
     # df = pd.read_pickle("./plots/basis_study.pkl")
@@ -673,7 +807,7 @@ def main():
     # df = pd.read_pickle("./plots/ddft_study.pkl")
     df = df_setup(None, ddft=True)
     # subplot_all_curves_LoS(df, basis_sets=["adz"])
-    subplot_all_curves_LoS(df, basis_sets=["adz", "atz"])
+    subplot_all_curves_LoS_basis_set(df, basis_sets=["adz", "atz"])
     return
 
 
