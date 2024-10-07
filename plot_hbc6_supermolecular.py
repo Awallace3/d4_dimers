@@ -738,7 +738,7 @@ def subplot_all_curves_LoS_basis_set(
                             df_sys["distance (A)"],
                             df_sys[f"SAPT_DFT_{functional.lower()}_{basis_set}_dDFT"]
                             - df_sys[f"SAPT_DFT_{functional.lower()}_{basis_set}_dHF"],
-                            label=r"$\delta$DFT[" + functional.lower() + r"] - $\delta$HF",
+                            label=r"$\delta$DFT[" + functional.upper() + r"] - $\delta$HF",
                             marker="x",
                             linestyle='--',
                             markersize=3.0,
