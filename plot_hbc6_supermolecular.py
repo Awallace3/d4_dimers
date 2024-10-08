@@ -20,6 +20,22 @@ plt.rcParams.update(
     }
 )
 
+BLUE = '#1F77B4'  # BLUE - 
+GREEN = '#2CA02C'  # GREEN
+LIME_GREEN = '#8CA83C'  # LIME GREEN
+Aquamarine = '#7FFFD4'  # Aquamarine
+Slate_Blue = '#6A5ACD'  # Slate Blue
+# Functionals
+TEAL = '#17BECF'  # TEAL - PBE0
+LIGHT_BLUE = '#7F7FFF'  # LIGHT BLUE - B3LYP
+Medium_Sea_Green = '#3CB371'  # Medium Sea Green - B2PLYP
+INDIGO = '#7057FF'   # INDIGO - WB97X
+color_map = {
+    "PBE0": TEAL,
+    "B3LYP": LIGHT_BLUE,
+    "B2PLYP": Medium_Sea_Green,
+    "WB97X": INDIGO,
+}
 
 def df_setup(df=None, ddft=False,
              functionals=[
@@ -715,6 +731,7 @@ def subplot_all_curves_LoS_basis_set(
                     for functional in functionals:
                         func_col = f"""{
                             functional.upper()}-D4 DISP ENERGY {basis_set.lower()}"""
+                        c = color_map[functional.upper()]
                         mae = np.mean(
                             np.abs(
                                 df_sys[func_col]
@@ -733,6 +750,7 @@ def subplot_all_curves_LoS_basis_set(
                             markersize=3.0,
                             linestyle='-.',
                             linewidth=0.5,
+                            color=c,
                         )
                         axs[n].plot(
                             df_sys["distance (A)"],
@@ -743,6 +761,7 @@ def subplot_all_curves_LoS_basis_set(
                             linestyle='--',
                             markersize=3.0,
                             linewidth=1.0,
+                            color=c,
                         )
                         axs[n].plot(
                             df_sys["distance (A)"],
@@ -751,7 +770,28 @@ def subplot_all_curves_LoS_basis_set(
                                 functional.upper()}-D4 \\emph{{MAE: {mae:.2f}, ME: {me:.2f}}}""",
                             marker="o",
                             markersize=2.0,
+                            color=c,
                         )
+                    sapt0_col = f"""SAPT0 DISP ENERGY {basis_set.lower()}"""
+                    df_sys[sapt0_col] = df_sys[sapt0_col] * h2kcalmol
+                    mae = np.mean(
+                        np.abs(
+                            df_sys[sapt0_col]
+                            - df_sys["E_ref_hlsapt_atz"]
+                        )
+                    )
+                    me = np.mean(
+                        df_sys[sapt0_col]
+                        - df_sys["E_ref_hlsapt_atz"]
+                    )
+                    axs[n].plot(
+                        df_sys["distance (A)"],
+                        df_sys[sapt0_col],
+                label=f"SAPT0 \\emph{{MAE: {mae:.2f}, ME: {me:.2f}}}",
+                        marker="o",
+                        markersize=2.0,
+                        color='orange',
+                    )
                     mae = np.mean(
                         np.abs(
                             df_sys[f"SAPT(DFT) [{functional.upper()}] DISP ENERGY {basis_set}"] * h2kcalmol
@@ -768,6 +808,7 @@ def subplot_all_curves_LoS_basis_set(
                         label=r"SAPT(DFT)[PBE0] " + f"\\emph{{MAE: {mae:.2f}, ME: {me:.2f}}}",
                         marker="o",
                         markersize=2.0,
+                        color='gray',
                     )
                     axs[n].plot(
                         df_sys["distance (A)"],
