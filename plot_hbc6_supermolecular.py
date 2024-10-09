@@ -20,7 +20,7 @@ plt.rcParams.update(
     }
 )
 
-BLUE = '#1F77B4'  # BLUE - 
+BLUE = '#1F77B4'  # BLUE -
 GREEN = '#2CA02C'  # GREEN
 LIME_GREEN = '#8CA83C'  # LIME GREEN
 Aquamarine = '#7FFFD4'  # Aquamarine
@@ -37,12 +37,13 @@ color_map = {
     "WB97X": INDIGO,
 }
 
+
 def df_setup(df=None, ddft=False,
              functionals=[
-        "pbe0",
-        "b2plyp",
-        "b3lyp",
-        "wb97x",
+                "pbe0",
+                "b2plyp",
+                "b3lyp",
+                "wb97x",
                  ],
              basis_sets=["adz", "atz"],
              ):
@@ -96,7 +97,7 @@ def df_setup(df=None, ddft=False,
         df["E_res_saptdft_b2plyp_atz"] = df.apply(
             lambda r: compute_residue(r), axis=1)
         df["E_ref_hlsapt_atz"] = df.apply(
-            lambda r: r["SAPT2+(3)(CCD)DMP2 DISP ENERGY atz"] * h2kcalmol, axis=1
+            lambda r: r["SAPT2+3(CCD)DMP2 DISP ENERGY atz"] * h2kcalmol, axis=1
         )
     for functional in functionals:
         for basis_set in basis_sets:
@@ -298,7 +299,7 @@ def plot_all_curves_LoS(
                 plt.plot(
                     df_sys["distance (A)"],
                     df_sys["E_ref_hlsapt_atz"],
-                    label=r"SAPT2+(3)(CCD)$\delta$MP2",
+                    label=r"SAPT2+3(CCD)$\delta$MP2",
                     marker="o",
                     markersize=2.0,
                     color="k",
@@ -588,7 +589,7 @@ def subplot_all_curves_LoS(
                     axs[n * 2].plot(
                         df_sys["distance (A)"],
                         df_sys["E_ref_hlsapt_atz"],
-                        label=r"SAPT2+(3)(CCD)$\delta$MP2/aTZ",
+                        label=r"SAPT2+3(CCD)$\delta$MP2/aTZ",
                         marker="o",
                         markersize=2.0,
                         color="k",
@@ -656,7 +657,7 @@ def subplot_all_curves_LoS(
                     axs[n*2 + 1].plot(
                         df_sys["distance (A)"],
                         df_sys["E_ref_hlsapt_atz"],
-                        label=r"SAPT2+(3)(CCD)$\delta$MP2 disp.",
+                        label=r"SAPT2+3(CCD)$\delta$MP2 disp.",
                         marker="o",
                         markersize=2.0,
                         color="k",
@@ -723,20 +724,35 @@ def subplot_all_curves_LoS_basis_set(
             f.write("\\hline\n")
             f.write("Functional & Basis Set & MAE & ME \\\\\n")
             f.write("\\hline\n")
+            # Error statistics
+            for method in ["SAPT0", "SAPT2+3(CCD)DMP2", "SAPT(DFT) [PBE0]", "SAPT(DFT) [B2PLYP]", "SAPT(DFT) [B3LYP]"]:
+                for basis_set in basis_sets:
+                    methbs = f"""{method} DISP ENERGY {basis_set.lower()}"""
+                    print(methbs)
+                    local_energies = df_db[methbs] * h2kcalmol
+                    mae = np.mean(
+                        np.abs(
+                            local_energies - df["E_ref_hlsapt_atz"]
+                        )
+                    )
+                    me = np.mean(
+                        local_energies - df["E_ref_hlsapt_atz"]
+                    )
+                    print(f"{methbs}, MAE: {mae:.2f}, ME: {me:.2f}")
+                    f.write(f"{method} & {basis_set} & {mae:.2f} & {me:.2f} \\\\")
             for functional in functionals:
                 for basis_set in basis_sets:
                     func_col = f"""{
                         functional.upper()}-D4 DISP ENERGY {basis_set.lower()}"""
                     mae = np.mean(
                         np.abs(df_db[func_col] - df_db["E_ref_hlsapt_atz"]))
-                    me = np.mean(
-                        np.abs(df_db[func_col] - df_db["E_ref_hlsapt_atz"]))
+                    me = np.mean(df_db[func_col] - df_db["E_ref_hlsapt_atz"])
                     print(f"""DB: {db} w {
                           functional}/{basis_set}, MAE: {mae:.2f} ME: {me:.2f}""")
-                    f.write(f"{functional} & {basis_set} & {mae:.2f} & {me:.2f} \\\\ ")
+                    f.write(f"{functional.upper()}-D4 & {basis_set} & {mae:.2f} & {me:.2f} \\\\")
             f.write("\\hline\n")
             f.write("\\end{tabular}\n")
-            f.write("\\caption{Error statistics are in kcal/mol versus SAPT2+(3)(CCD)DMP2 DISP ENERGY atz}\n")
+            f.write("\\caption{Error statistics are in kcal/mol versus SAPT2+3(CCD)DMP2 DISP ENERGY atz}\n")
             f.write("\\end{center}\n")
             f.write("\\end{table}\n")
             f.write("\\clearpage\n")
@@ -821,19 +837,21 @@ def subplot_all_curves_LoS_basis_set(
                             markersize=2.0,
                             color='orange',
                         )
+                        func_col = f"SAPT(DFT) [{functional.upper()}] DISP ENERGY {basis_set}"
+                        df_sys[func_col] = df_sys[func_col] * h2kcalmol
                         mae = np.mean(
                             np.abs(
-                                df_sys[f"SAPT(DFT) [{functional.upper()}] DISP ENERGY {basis_set}"] * h2kcalmol
+                                df_sys[func_col] 
                                 - df_sys["E_ref_hlsapt_atz"]
                             )
                         )
                         me = np.mean(
-                            df_sys[f"SAPT(DFT) [{functional.upper()}] DISP ENERGY {basis_set}"] * h2kcalmol
+                                df_sys[func_col] 
                             - df_sys["E_ref_hlsapt_atz"]
                         )
                         axs[n].plot(
                             df_sys["distance (A)"],
-                            df_sys[f"SAPT(DFT) [{functional.upper()}] DISP ENERGY {basis_set}"] * h2kcalmol,
+                            df_sys[func_col],
                             label=r"SAPT(DFT)[PBE0] " + f"\\emph{{MAE: {mae:.2f}, ME: {me:.2f}}}",
                             marker="o",
                             markersize=2.0,
@@ -842,7 +860,7 @@ def subplot_all_curves_LoS_basis_set(
                         axs[n].plot(
                             df_sys["distance (A)"],
                             df_sys["E_ref_hlsapt_atz"],
-                            label=r"SAPT2+(3)(CCD)$\delta$MP2/aTZ disp.",
+                            label=r"SAPT2+3(CCD)$\delta$MP2/aTZ disp.",
                             marker="o",
                             markersize=2.0,
                             color="k",
@@ -890,8 +908,9 @@ def main():
     # df = pd.read_pickle("./plots/basis_study.pkl")
     # plot_hbc6(df)
     # plot_all_curves(df)
-
+    #
     # df = pd.read_pickle("./plots/ddft_study.pkl")
+    # df = df_setup(df, ddft=True)
     df = df_setup(None, ddft=True)
     # subplot_all_curves_LoS(df, basis_sets=["adz"])
     subplot_all_curves_LoS_basis_set(df, basis_sets=["adz", "atz"])
