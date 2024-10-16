@@ -5522,9 +5522,10 @@ def violin_plots_multi_components_sapt0d4(df):
         usetex=True,
         legend_loc="lower right",
         figure_size=(10, 5),
-        table_fontsize=11,
+        table_fontsize=13,
         x_label_fontsize=12,
         y_label_fontsize=12,
+        title_fontsize=14,
         grid_heights = [
             0.10,
             1,
@@ -5538,6 +5539,9 @@ def violin_plots_multi_components_sapt0d4(df):
         MinE=False,
         MaxE=False,
         annotations_texty=-0.2,
+        share_y_axis=True,
+        wspace=0.05,
+        table_delimiter=",",
     )
     return
 
