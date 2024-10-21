@@ -6428,6 +6428,15 @@ def violin_plots_multi_components_df_individual(df, limit_to_column_not_nan=None
     df = prep_saptdft_components(df, "b2plyp", "atz")
     df = prep_saptdft_components(df, "wb97x", "adz")
     df = prep_saptdft_components(df, "wb97x", "atz")
+
+
+    for func in ['pbe0', 'b3lyp', 'b2plyp', 'wb97x']:
+        for bs in ['adz', 'atz']:
+            df = df[df[f"SAPT_DFT_D4_{func}_{bs}_total"].notna()].copy()
+    print(
+        f"Limiting to not NaN: {size_prior} -> {len(df)}"
+    )
+
     # pp(df.columns.tolist())
 
     df["SAPT0-D4 DISP ENERGY adz"] = df["-D4 (SAPT0_adz_3_IE)"] / h2kcalmol
