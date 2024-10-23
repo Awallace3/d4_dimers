@@ -44,7 +44,7 @@ def plot_ie_curve(
     y_min = min(df_sys['disp']) if min(df_sys['disp']) < min(df_sys['elst']) else min(df_sys['elst'])
     y_max = y_max + 0.05 * y_max
     y_min = y_min + 0.05 * y_min
-    plt.ylim([y_min, y_max])
+    # plt.ylim([y_min, y_max])
     plt.savefig(f'plots/{db}/system_{system_num}_ie_curve_benchmark.png')
     plt.plot(df_sys['distance'], df_sys['elst'], linewidth=2.0, label='Elst', color='red')
     plt.plot(df_sys['distance'], df_sys['exch'], linewidth=2.0, label='Exch', color='green')
