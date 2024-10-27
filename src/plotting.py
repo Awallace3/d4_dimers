@@ -6441,7 +6441,8 @@ def violin_plots_multi_components_df_individual(df, limit_to_column_not_nan=None
     df = prep_saptdft_components(df, "wb97x", "atz")
 
 
-    for func in ['pbe0', 'b3lyp', 'b2plyp', 'wb97x']:
+    # for func in ['pbe0', 'b3lyp', 'b2plyp', 'wb97x']:
+    for func in ['pbe0', 'b3lyp',]:
         for bs in ['adz', 'atz']:
             df = df[df[f"SAPT_DFT_D4_{func}_{bs}_total"].notna()].copy()
     print(
@@ -6682,32 +6683,32 @@ def violin_plots_multi_components_df_individual(df, limit_to_column_not_nan=None
             BLUE,
             TEAL,
             TEAL,
-            LIGHT_BLUE,
+            # LIGHT_BLUE,
             Medium_Sea_Green,
-            INDIGO,
+            # INDIGO,
             TEAL,
-            LIGHT_BLUE,
+            # LIGHT_BLUE,
             Medium_Sea_Green,
-            INDIGO,
+            # INDIGO,
             BLUE,
         ]
     ]
     colors_total = [
      [
         TEAL,
-        LIGHT_BLUE,
+        # LIGHT_BLUE,
         Medium_Sea_Green,
-        INDIGO,
+        # INDIGO,
 
         TEAL,
-        LIGHT_BLUE,
+        # LIGHT_BLUE,
         Medium_Sea_Green,
-        INDIGO,
+        # INDIGO,
 
         TEAL,
-        LIGHT_BLUE,
+        # LIGHT_BLUE,
         Medium_Sea_Green,
-        INDIGO,
+        # INDIGO,
 
         BLUE,
         GREEN,
@@ -6727,27 +6728,27 @@ def violin_plots_multi_components_df_individual(df, limit_to_column_not_nan=None
         BLUE,
         GREEN,
         TEAL,
-        LIGHT_BLUE,
+        # LIGHT_BLUE,
         Medium_Sea_Green,
-        INDIGO,
+        # INDIGO,
         ],
         [
 
         BLUE,
         GREEN,
         TEAL,
-        LIGHT_BLUE,
+        # LIGHT_BLUE,
         Medium_Sea_Green,
-        INDIGO,
+        # INDIGO,
         ],
         [
         BLUE,
         GREEN,
         BLUE,
         TEAL,
-        LIGHT_BLUE,
+        # LIGHT_BLUE,
         Medium_Sea_Green,
-        INDIGO,
+        # INDIGO,
         ]
     ]
     # DIPS Components
@@ -6763,13 +6764,13 @@ def violin_plots_multi_components_df_individual(df, limit_to_column_not_nan=None
             "SAPT0": "SAPT0 DISP ENERGY Error",
             "SAPT(DFT)\\\\[PBE0]": "SAPT(DFT) [PBE0] DISP ENERGY Error",
             "SAPT(DFT)\\\\[B3LYP]": "SAPT(DFT) [B3LYP] DISP ENERGY Error",
-            "SAPT(DFT)\\\\[B2PLYP]": "SAPT(DFT) [B2PLYP] DISP ENERGY Error",
-            "SAPT(DFT)\\\\[WB97X]": "SAPT(DFT) [WB97X] DISP ENERGY Error",
+            # "SAPT(DFT)\\\\[B2PLYP]": "SAPT(DFT) [B2PLYP] DISP ENERGY Error",
+            # "SAPT(DFT)\\\\[WB97X]": "SAPT(DFT) [WB97X] DISP ENERGY Error",
             "SAPT0-D4": "SAPT0-D4 DISP ENERGY Error",
             "PBE0-D4": "PBE0-D4 DISP ENERGY Error",
             "B3LYP-D4": "B3LYP-D4 DISP ENERGY Error",
-            "B2PLYP-D4": "B2PLYP-D4 DISP ENERGY Error",
-            "WB97X-D4": "WB97X-D4 DISP ENERGY Error",
+            # "B2PLYP-D4": "B2PLYP-D4 DISP ENERGY Error",
+            # "WB97X-D4": "WB97X-D4 DISP ENERGY Error",
             "D3-ML": "D3-ML DISP ENERGY Error",
             "SAPT2+3\\\\(CCD)DMP2": "SAPT2+3(CCD) DISP ENERGY Error",
         },
@@ -6788,8 +6789,10 @@ def violin_plots_multi_components_df_individual(df, limit_to_column_not_nan=None
         },
         colors=[
             [
- PURPLE,TEAL,LIGHT_BLUE,Medium_Sea_Green,INDIGO,PURPLE,TEAL,LIGHT_BLUE,Medium_Sea_Green,INDIGO,"orange",GREY,
- PURPLE,TEAL,LIGHT_BLUE,Medium_Sea_Green,INDIGO,PURPLE,TEAL,LIGHT_BLUE,Medium_Sea_Green,INDIGO,"orange",GREY,
+ # PURPLE,TEAL,LIGHT_BLUE,Medium_Sea_Green,INDIGO,PURPLE,TEAL,LIGHT_BLUE,Medium_Sea_Green,INDIGO,"orange",GREY,
+ # PURPLE,TEAL,LIGHT_BLUE,Medium_Sea_Green,INDIGO,PURPLE,TEAL,LIGHT_BLUE,Medium_Sea_Green,INDIGO,"orange",GREY,
+ PURPLE,TEAL,Medium_Sea_Green,PURPLE,TEAL,Medium_Sea_Green,"orange",GREY,
+ PURPLE,TEAL,Medium_Sea_Green,PURPLE,TEAL,Medium_Sea_Green,"orange",GREY,
             ]
         ],
         output_filename=f"./plots/individuals/LoS_total_saptdft_extended_disp_pres.jpg",
@@ -6844,14 +6847,14 @@ def violin_plots_multi_components_df_individual(df, limit_to_column_not_nan=None
             "SAPT0": "SAPT0 TOTAL ENERGY Error",
             "SAPT(DFT)\\\\[PBE0]": "SAPT(DFT) [PBE0] TOTAL ENERGY Error",
             "SAPT(DFT)\\\\[B3LYP]": "SAPT(DFT) [B3LYP] TOTAL ENERGY Error",
-            "SAPT(DFT)\\\\[B2PLYP]": "SAPT(DFT) [B2PLYP] TOTAL ENERGY Error",
-            "SAPT(DFT)\\\\[WB97X]": "SAPT(DFT) [WB97X] TOTAL ENERGY Error",
+            # "SAPT(DFT)\\\\[B2PLYP]": "SAPT(DFT) [B2PLYP] TOTAL ENERGY Error",
+            # "SAPT(DFT)\\\\[WB97X]": "SAPT(DFT) [WB97X] TOTAL ENERGY Error",
             # DFT-D4
             "SAPT0-D4": "SAPT0-D4 TOTAL ENERGY Error",
             "PBE0-D4": "PBE0-D4 TOTAL ENERGY Error",
             "B3LYP-D4": "B3LYP-D4 TOTAL ENERGY Error",
-            "B2PLYP-D4": "B2PLYP-D4 TOTAL ENERGY Error",
-            "WB97X-D4": "WB97X-D4 TOTAL ENERGY Error",
+            # "B2PLYP-D4": "B2PLYP-D4 TOTAL ENERGY Error",
+            # "WB97X-D4": "WB97X-D4 TOTAL ENERGY Error",
             "SAPT(DFT)\\\\[PBE0]D3-ML": "SAPT(DFT)D3-ML TOTAL ENERGY Error",
             # SAPT(DFT) D's
             # "SAPT(DFT)-D4": "SAPT(DFT)-D4 TOTAL ENERGY Error",
@@ -6866,8 +6869,10 @@ def violin_plots_multi_components_df_individual(df, limit_to_column_not_nan=None
         },
         colors=[
             [
- PURPLE,TEAL,LIGHT_BLUE,Medium_Sea_Green,INDIGO,PURPLE,TEAL,LIGHT_BLUE,Medium_Sea_Green,INDIGO,'orange',GREY,
- PURPLE,TEAL,LIGHT_BLUE,Medium_Sea_Green,INDIGO,PURPLE,TEAL,LIGHT_BLUE,Medium_Sea_Green,INDIGO,'orange',GREY,
+ # PURPLE,TEAL,LIGHT_BLUE,Medium_Sea_Green,INDIGO,PURPLE,TEAL,LIGHT_BLUE,Medium_Sea_Green,INDIGO,'orange',GREY,
+ # PURPLE,TEAL,LIGHT_BLUE,Medium_Sea_Green,INDIGO,PURPLE,TEAL,LIGHT_BLUE,Medium_Sea_Green,INDIGO,'orange',GREY,
+ PURPLE,TEAL,Medium_Sea_Green,PURPLE,TEAL,Medium_Sea_Green,'orange',GREY,
+ PURPLE,TEAL,Medium_Sea_Green,PURPLE,TEAL,Medium_Sea_Green,'orange',GREY,
             ]
         ],
         output_filename=f"./plots/individuals/LoS_total_saptdft_extended_pres.jpg",
@@ -7036,13 +7041,13 @@ def violin_plots_multi_components_df_individual(df, limit_to_column_not_nan=None
             # SAPT(DFT)
             "SAPT(DFT) [PBE0]": "SAPT(DFT) [PBE0] TOTAL ENERGY Error",
             "SAPT(DFT) [B3LYP]": "SAPT(DFT) [B3LYP] TOTAL ENERGY Error",
-            "SAPT(DFT) [B2PLYP]": "SAPT(DFT) [B2PLYP] TOTAL ENERGY Error",
-            "SAPT(DFT) [WB97X]": "SAPT(DFT) [WB97X] TOTAL ENERGY Error",
+            # "SAPT(DFT) [B2PLYP]": "SAPT(DFT) [B2PLYP] TOTAL ENERGY Error",
+            # "SAPT(DFT) [WB97X]": "SAPT(DFT) [WB97X] TOTAL ENERGY Error",
             # DFT-D4
             "PBE0-D4": "PBE0-D4 TOTAL ENERGY Error",
             "B3LYP-D4": "B3LYP-D4 TOTAL ENERGY Error",
-            "B2PLYP-D4": "B2PLYP-D4 TOTAL ENERGY Error",
-            "WB97X-D4": "WB97X-D4 TOTAL ENERGY Error",
+            # "B2PLYP-D4": "B2PLYP-D4 TOTAL ENERGY Error",
+            # "WB97X-D4": "WB97X-D4 TOTAL ENERGY Error",
             # SAPT(DFT) D's
             # "SAPT(DFT)-D4": "SAPT(DFT)-D4 TOTAL ENERGY Error",
             # "SAPT(DFT)+D4": "SAPT(DFT)+D4 TOTAL ENERGY Error",
@@ -7057,8 +7062,10 @@ def violin_plots_multi_components_df_individual(df, limit_to_column_not_nan=None
         },
         colors=[
             [
-TEAL,LIGHT_BLUE,Medium_Sea_Green,INDIGO,
-TEAL,LIGHT_BLUE,Medium_Sea_Green,INDIGO,
+# TEAL,LIGHT_BLUE,Medium_Sea_Green,INDIGO,
+# TEAL,LIGHT_BLUE,Medium_Sea_Green,INDIGO,
+TEAL,Medium_Sea_Green,
+TEAL,Medium_Sea_Green,
             ]
         ],
         output_filename=f"./plots/individuals/LoS_total_saptdft_simple_pres.jpg",
@@ -7101,16 +7108,16 @@ TEAL,LIGHT_BLUE,Medium_Sea_Green,INDIGO,
                 "SAPT2+(3),SAPT2+3": "SAPT2+(3) ELST ENERGY Error",
                 "SAPT(DFT) [PBE0]": "SAPT(DFT) [PBE0] ELST ENERGY Error",
                 "SAPT(DFT) [B3LYP]": "SAPT(DFT) [B3LYP] ELST ENERGY Error",
-                "SAPT(DFT) [B2PLYP]": "SAPT(DFT) [B2PLYP] ELST ENERGY Error",
-                "SAPT(DFT) [WB97X]": "SAPT(DFT) [WB97X] ELST ENERGY Error",
+                # "SAPT(DFT) [B2PLYP]": "SAPT(DFT) [B2PLYP] ELST ENERGY Error",
+                # "SAPT(DFT) [WB97X]": "SAPT(DFT) [WB97X] ELST ENERGY Error",
             },
             df_labels_and_columns_exch={
                 "SAPT0,sSAPT0": "SAPT0 EXCH ENERGY Error",
                 "SAPT2,SAPT2+,\\\\SAPT2+(3),SAPT2+3": "SAPT2 EXCH ENERGY Error",
                 "SAPT(DFT) [PBE0]": "SAPT(DFT) [PBE0] EXCH ENERGY Error",
                 "SAPT(DFT) [B3LYP]": "SAPT(DFT) [B3LYP] EXCH ENERGY Error",
-                "SAPT(DFT) [B2PLYP]": "SAPT(DFT) [B2PLYP] EXCH ENERGY Error",
-                "SAPT(DFT) [WB97X]": "SAPT(DFT) [WB97X] EXCH ENERGY Error",
+                # "SAPT(DFT) [B2PLYP]": "SAPT(DFT) [B2PLYP] EXCH ENERGY Error",
+                # "SAPT(DFT) [WB97X]": "SAPT(DFT) [WB97X] EXCH ENERGY Error",
             },
             df_labels_and_columns_indu={
                 "SAPT0": "SAPT0 IND ENERGY Error",
@@ -7118,8 +7125,8 @@ TEAL,LIGHT_BLUE,Medium_Sea_Green,INDIGO,
                 "SAPT2+3DMP2": "SAPT2+3DMP2 IND ENERGY Error",
                 "SAPT(DFT) [PBE0]": "SAPT(DFT) [PBE0] IND ENERGY Error",
                 "SAPT(DFT) [B3LYP]": "SAPT(DFT) [B3LYP] IND ENERGY Error",
-                "SAPT(DFT) [B2PLYP]": "SAPT(DFT) [B2PLYP] IND ENERGY Error",
-                "SAPT(DFT) [WB97X]": "SAPT(DFT) [WB97X] IND ENERGY Error",
+                # "SAPT(DFT) [B2PLYP]": "SAPT(DFT) [B2PLYP] IND ENERGY Error",
+                # "SAPT(DFT) [WB97X]": "SAPT(DFT) [WB97X] IND ENERGY Error",
             },
             df_labels_and_columns_disp={
             },
@@ -7174,14 +7181,14 @@ TEAL,LIGHT_BLUE,Medium_Sea_Green,INDIGO,
                 "SAPT(DFT)-D4": "SAPT(DFT)-D4 DISP ENERGY Error",
                 "SAPT(DFT) [PBE0]": "SAPT(DFT) [PBE0] DISP ENERGY Error",
                 "SAPT(DFT) [B3LYP]": "SAPT(DFT) [B3LYP] DISP ENERGY Error",
-                "SAPT(DFT) [B2PLYP]": "SAPT(DFT) [B2PLYP] DISP ENERGY Error",
-                "SAPT(DFT) [WB97X]": "SAPT(DFT) [WB97X] DISP ENERGY Error",
+                # "SAPT(DFT) [B2PLYP]": "SAPT(DFT) [B2PLYP] DISP ENERGY Error",
+                # "SAPT(DFT) [WB97X]": "SAPT(DFT) [WB97X] DISP ENERGY Error",
                 "SAPT(DFT)-D4": "SAPT(DFT)-D4 DISP ENERGY Error",
                 # "SAPT(DFT)+D4": "SAPT(DFT)+D4 DISP ENERGY Error",
                 "PBE0-D4": "PBE0-D4 DISP ENERGY Error",
                 "B3LYP-D4": "B3LYP-D4 DISP ENERGY Error",
-                "B2PLYP-D4": "B2PLYP-D4 DISP ENERGY Error",
-                "WB97X-D4": "WB97X-D4 DISP ENERGY Error",
+                # "B2PLYP-D4": "B2PLYP-D4 DISP ENERGY Error",
+                # "WB97X-D4": "WB97X-D4 DISP ENERGY Error",
                 "D3-ML": "D3-ML DISP ENERGY Error",
             },
             colors=colors_disp,
@@ -7227,18 +7234,18 @@ TEAL,LIGHT_BLUE,Medium_Sea_Green,INDIGO,
             df_labels_and_columns_total={
                 "PBE0": "PBE0 IE Error",
                 "B3LYP": "B3LYP IE Error",
-                "B2PLYP": "B2PLYP IE Error",
-                "WB97X": "WB97X IE Error",
+                # "B2PLYP": "B2PLYP IE Error",
+                # "WB97X": "WB97X IE Error",
                 # SAPT(DFT)
                 "SAPT(DFT) [PBE0]": "SAPT(DFT) [PBE0] TOTAL ENERGY Error",
                 "SAPT(DFT) [B3LYP]": "SAPT(DFT) [B3LYP] TOTAL ENERGY Error",
-                "SAPT(DFT) [B2PLYP]": "SAPT(DFT) [B2PLYP] TOTAL ENERGY Error",
-                "SAPT(DFT) [WB97X]": "SAPT(DFT) [WB97X] TOTAL ENERGY Error",
+                # "SAPT(DFT) [B2PLYP]": "SAPT(DFT) [B2PLYP] TOTAL ENERGY Error",
+                # "SAPT(DFT) [WB97X]": "SAPT(DFT) [WB97X] TOTAL ENERGY Error",
                 # DFT-D4
                 "PBE0-D4": "PBE0-D4 TOTAL ENERGY Error",
                 "B3LYP-D4": "B3LYP-D4 TOTAL ENERGY Error",
-                "B2PLYP-D4": "B2PLYP-D4 TOTAL ENERGY Error",
-                "WB97X-D4": "WB97X-D4 TOTAL ENERGY Error",
+                # "B2PLYP-D4": "B2PLYP-D4 TOTAL ENERGY Error",
+                # "WB97X-D4": "WB97X-D4 TOTAL ENERGY Error",
                 # SAPT(DFT) D's
                 "SAPT(DFT)-D4": "SAPT(DFT)-D4 TOTAL ENERGY Error",
                 # "SAPT(DFT)+D4": "SAPT(DFT)+D4 TOTAL ENERGY Error",
