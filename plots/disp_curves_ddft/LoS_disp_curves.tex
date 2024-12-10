@@ -1,0 +1,873 @@
+
+% arara: pdflatex
+\documentclass{article}
+\usepackage{graphicx} % For including images
+\usepackage{adjustbox} % For adjusting image sizes
+\usepackage{longtable}
+\usepackage{chemformula}
+\usepackage[margin=0.1in]{geometry}
+\begin{document}
+\section*{hbc6}
+\begin{table}[h!]
+\begin{center}
+\begin{tabular}{|c|c|c|c|}
+\hline
+Functional & Basis Set & MAE & ME \\
+\hline
+SAPT0 & adz & 1.44 & 1.44 \\SAPT0 & atz & 0.83 & 0.83 \\SAPT2+3(CCD)DMP2 & adz & 0.58 & 0.58 \\SAPT2+3(CCD)DMP2 & atz & 0.00 & 0.00 \\SAPT(DFT) [PBE0] & adz & 1.52 & 1.52 \\SAPT(DFT) [PBE0] & atz & 0.78 & 0.78 \\SAPT(DFT) [B2PLYP] & adz & 1.45 & 1.45 \\SAPT(DFT) [B2PLYP] & atz & 0.74 & 0.74 \\SAPT(DFT) [B3LYP] & adz & 1.43 & 1.43 \\SAPT(DFT) [B3LYP] & atz & 0.67 & 0.66 \\PBE0-D4 & adz & 0.77 & -0.58 \\PBE0-D4 & atz & 0.73 & -0.52 \\B2PLYP-D4 & adz & 1.48 & 1.48 \\B2PLYP-D4 & atz & 1.27 & 1.27 \\B3LYP-D4 & adz & 1.04 & -0.96 \\B3LYP-D4 & atz & 1.01 & -0.92 \\\hline
+\end{tabular}
+\caption{Error statistics are in kcal/mol versus SAPT2+3(CCD)DMP2 DISP ENERGY atz}
+\end{center}
+\end{table}
+\clearpage
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{hbc6/HBC1-FaONFaON_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{hbc6 HBC1-FaONFaON}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{hbc6/HBC1-FaNNFaNN_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{hbc6 HBC1-FaNNFaNN}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{hbc6/HBC1-FaOOFaOO_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{hbc6 HBC1-FaOOFaOO}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{hbc6/HBC1-FaOOFaON_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{hbc6 HBC1-FaOOFaON}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{hbc6/HBC1-FaOOFaNN_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{hbc6 HBC1-FaOOFaNN}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{hbc6/HBC1-FaONFaNN_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{hbc6 HBC1-FaONFaNN}}.
+\end{figure}
+
+\clearpage
+
+\section*{X4010}
+\begin{table}[h!]
+\begin{center}
+\begin{tabular}{|c|c|c|c|}
+\hline
+Functional & Basis Set & MAE & ME \\
+\hline
+SAPT0 & adz & 0.56 & 0.37 \\SAPT0 & atz & 0.37 & -0.02 \\SAPT2+3(CCD)DMP2 & adz & 0.38 & 0.38 \\SAPT2+3(CCD)DMP2 & atz & 0.00 & 0.00 \\SAPT(DFT) [PBE0] & adz & 0.77 & 0.77 \\SAPT(DFT) [PBE0] & atz & 0.33 & 0.33 \\SAPT(DFT) [B2PLYP] & adz & 0.72 & 0.72 \\SAPT(DFT) [B2PLYP] & atz & 0.29 & 0.29 \\SAPT(DFT) [B3LYP] & adz & 0.73 & 0.73 \\SAPT(DFT) [B3LYP] & atz & 0.28 & 0.27 \\PBE0-D4 & adz & 0.36 & 0.07 \\PBE0-D4 & atz & 0.35 & 0.09 \\B2PLYP-D4 & adz & 0.57 & 0.57 \\B2PLYP-D4 & atz & 0.43 & 0.42 \\B3LYP-D4 & adz & 0.39 & 0.06 \\B3LYP-D4 & atz & 0.40 & 0.06 \\\hline
+\end{tabular}
+\caption{Error statistics are in kcal/mol versus SAPT2+3(CCD)DMP2 DISP ENERGY atz}
+\end{center}
+\end{table}
+\clearpage
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{X4010/03methaneBr2_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{X4010 03methaneBr2}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{X4010/06chloromethanemethane_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{X4010 06chloromethanemethane}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{X4010/14bromomethanefmdh_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{X4010 14bromomethanefmdh}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{X4010/20benBracetone_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{X4010 20benBracetone}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{X4010/17F3bromomethanefmdh_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{X4010 17F3bromomethanefmdh}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{X4010/22benClNm3_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{X4010 22benClNm3}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{X4010/13chloromethanefmdh_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{X4010 13chloromethanefmdh}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{X4010/39methanolfluoromethane_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{X4010 39methanolfluoromethane}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{X4010/40methanolchloromethane_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{X4010 40methanolchloromethane}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{X4010/27CH3Brben_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{X4010 27CH3Brben}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{X4010/29CF3Brben_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{X4010 29CF3Brben}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{X4010/23benBrNm3_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{X4010 23benBrNm3}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{X4010/25benBrmSH_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{X4010 25benBrmSH}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{X4010/16F3chloromethanefmdh_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{X4010 16F3chloromethanefmdh}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{X4010/09fluoromethanedimer_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{X4010 09fluoromethanedimer}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{X4010/01methaneF2_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{X4010 01methaneF2}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{X4010/10chloromethanedimer_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{X4010 10chloromethanedimer}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{X4010/31trifluorometOHwat_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{X4010 31trifluorometOHwat}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{X4010/02methaneCl2_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{X4010 02methaneCl2}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{X4010/32trichlorometOHwat_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{X4010 32trichlorometOHwat}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{X4010/08trichloromethanemethane_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{X4010 08trichloromethanemethane}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{X4010/37HFmethylamine_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{X4010 37HFmethylamine}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{X4010/33HFmethanol_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{X4010 33HFmethanol}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{X4010/38HClmethylamine_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{X4010 38HClmethylamine}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{X4010/34HClmethanol_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{X4010 34HClmethanol}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{X4010/35HBrmethanol_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{X4010 35HBrmethanol}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{X4010/11F3benben_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{X4010 11F3benben}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{X4010/07trifluoromethanemethane_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{X4010 07trifluoromethanemethane}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{X4010/12F6benben_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{X4010 12F6benben}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{X4010/19benClacetone_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{X4010 19benClacetone}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{X4010/05fluoromethanemethane_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{X4010 05fluoromethanemethane}}.
+\end{figure}
+
+\clearpage
+
+\section*{s66x8}
+\begin{table}[h!]
+\begin{center}
+\begin{tabular}{|c|c|c|c|}
+\hline
+Functional & Basis Set & MAE & ME \\
+\hline
+SAPT0 & adz & 0.46 & 0.23 \\SAPT0 & atz & 0.38 & -0.02 \\SAPT2+3(CCD)DMP2 & adz & 0.22 & 0.22 \\SAPT2+3(CCD)DMP2 & atz & 0.00 & 0.00 \\SAPT(DFT) [PBE0] & adz & 0.57 & 0.57 \\SAPT(DFT) [PBE0] & atz & 0.27 & 0.26 \\SAPT(DFT) [B2PLYP] & adz & 0.53 & 0.53 \\SAPT(DFT) [B2PLYP] & atz & 0.24 & 0.24 \\SAPT(DFT) [B3LYP] & adz & 0.51 & 0.51 \\SAPT(DFT) [B3LYP] & atz & 0.20 & 0.19 \\PBE0-D4 & adz & 0.32 & -0.12 \\PBE0-D4 & atz & 0.31 & -0.09 \\B2PLYP-D4 & adz & 0.42 & 0.41 \\B2PLYP-D4 & atz & 0.31 & 0.31 \\B3LYP-D4 & adz & 0.33 & -0.19 \\B3LYP-D4 & atz & 0.33 & -0.20 \\\hline
+\end{tabular}
+\caption{Error statistics are in kcal/mol versus SAPT2+3(CCD)DMP2 DISP ENERGY atz}
+\end{center}
+\end{table}
+\clearpage
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/27_Benzene-Pyridine_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 27\_Benzene-Pyridine}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/01_Water-Water_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 01\_Water-Water}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/30_Benzene-Ethene_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 30\_Benzene-Ethene}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/50_Benzene-Ethyne_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 50\_Benzene-Ethyne}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/28_Benzene-Uracil_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 28\_Benzene-Uracil}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/49_Benzene-Pyridine_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 49\_Benzene-Pyridine}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/53_Benzene-AcNH2_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 53\_Benzene-AcNH2}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/63_Benzene-AcOH_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 63\_Benzene-AcOH}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/55_Benzene-MeOH_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 55\_Benzene-MeOH}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/45_Ethyne-Pentane_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 45\_Ethyne-Pentane}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/56_Benzene-MeNH2_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 56\_Benzene-MeNH2}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/54_Benzene-Water_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 54\_Benzene-Water}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/44_Ethene-Pentane_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 44\_Ethene-Pentane}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/52_Benzene-AcOH_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 52\_Benzene-AcOH}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/46_Peptide-Pentane_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 46\_Peptide-Pentane}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/09_MeNH2-MeOH_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 09\_MeNH2-MeOH}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/10_MeNH2-MeNH2_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 10\_MeNH2-MeNH2}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/58_Pyridine-Pyridine_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 58\_Pyridine-Pyridine}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/38_Cyclopentane-Cyclopentane_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 38\_Cyclopentane-Cyclopentane}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/11_MeNH2-Peptide_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 11\_MeNH2-Peptide}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/12_MeNH2-Water_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 12\_MeNH2-Water}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/66_MeNH2-Pyridine_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 66\_MeNH2-Pyridine}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/65_Pyridine-Ethyne_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 65\_Pyridine-Ethyne}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/32_Uracil-Ethyne_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 32\_Uracil-Ethyne}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/17_Uracil-Uracil_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 17\_Uracil-Uracil}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/31_Uracil-Ethene_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 31\_Uracil-Ethene}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/59_Ethyne-Water_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 59\_Ethyne-Water}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/62_Pentane-AcNH2_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 62\_Pentane-AcNH2}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/34_Pentane-Pentane_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 34\_Pentane-Pentane}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/35_Neopentane-Pentane_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 35\_Neopentane-Pentane}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/24_Benzene-Benzene_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 24\_Benzene-Benzene}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/41_Uracil-Pentane_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 41\_Uracil-Pentane}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/42_Uracil-Cyclopentane_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 42\_Uracil-Cyclopentane}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/47_Benzene-Benzene_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 47\_Benzene-Benzene}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/61_Pentane-AcOH_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 61\_Pentane-AcOH}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/15_Peptide-Peptide_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 15\_Peptide-Peptide}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/20_AcOH-AcOH_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 20\_AcOH-AcOH}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/29_Pyridine-Uracil_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 29\_Pyridine-Uracil}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/43_Uracil-Neopentane_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 43\_Uracil-Neopentane}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/48_Pyridine-Pyridine_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 48\_Pyridine-Pyridine}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/33_Pyridine-Ethene_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 33\_Pyridine-Ethene}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/40_Benzene-Neopentane_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 40\_Benzene-Neopentane}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/21_AcNH2-AcNH2_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 21\_AcNH2-AcNH2}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/08_MeOH-Water_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 08\_MeOH-Water}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/64_Peptide-Ethene_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 64\_Peptide-Ethene}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/06_MeOH-MeNH2_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 06\_MeOH-MeNH2}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/13_Peptide-MeOH_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 13\_Peptide-MeOH}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/03_Water-MeNH2_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 03\_Water-MeNH2}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/39_Benzene-Cyclopentane_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 39\_Benzene-Cyclopentane}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/05_MeOH-MeOH_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 05\_MeOH-MeOH}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/16_Peptide-Water_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 16\_Peptide-Water}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/23_AcNH2-Uracil_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 23\_AcNH2-Uracil}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/26_Uracil-Uracil_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 26\_Uracil-Uracil}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/25_Pyridine-Pyridine_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 25\_Pyridine-Pyridine}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/18_Water-Pyridine_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 18\_Water-Pyridine}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/36_Neopentane-Neopentane_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 36\_Neopentane-Neopentane}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/19_MeOH-Pyridine_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 19\_MeOH-Pyridine}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/02_Water-MeOH_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 02\_Water-MeOH}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/04_Water-Peptide_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 04\_Water-Peptide}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/57_Benzene-Peptide_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 57\_Benzene-Peptide}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/22_AcOH-Uracil_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 22\_AcOH-Uracil}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/07_MeOH-Peptide_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 07\_MeOH-Peptide}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/14_Peptide-MeNH2_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 14\_Peptide-MeNH2}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/60_Ethyne-AcOH_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 60\_Ethyne-AcOH}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/51_Ethyne-Ethyne_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 51\_Ethyne-Ethyne}}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.9\textwidth]{s66x8/37_Cyclopentane-Neopentane_ddft_super_ddft_curve.png}
+    \caption{LoS Dispersion Curves for \textbf{s66x8 37\_Cyclopentane-Neopentane}}.
+\end{figure}
+
+\clearpage
+
+\end{document}
