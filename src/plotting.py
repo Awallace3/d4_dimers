@@ -5154,43 +5154,49 @@ def prep_saptdft_components(df, functional, basis_set):
         else np.nan,
  axis=1
     )
-    if functional == 'b2plyp':
-        # df[f'SAPT MP2(2) ENERGY {basis_set}'] = df[f'SAPT MP2(2) ENERGY {basis_set}'] * h2kcalmol
-        # print("B2PLYP diff")
-        print(df[[f'MP2 IE {basis_set}', f"SAPT_DFT_{functional}_{basis_set}", f"SAPT DISP20 ENERGY {basis_set}"]])
-        print(
-                df[f"MP2 IE {basis_set}"],
-                df[f"SAPT_DFT_{functional}_{basis_set}"],
-                df[f'SAPT DISP20 ENERGY {basis_set}'],
-                df[f'SAPT EXCH-DISP20 ENERGY {basis_set}'],
-                df[f'SAPT HF(2) ENERGY {basis_set}'],
-        )
-        df[f"SAPT(DFT) [{functional.upper()}] dMP2 ENERGY {basis_set}"] = df.apply(
-            lambda r:
+    # if functional == 'b2plyp':
+    #     # df[f'SAPT MP2(2) ENERGY {basis_set}'] = df[f'SAPT MP2(2) ENERGY {basis_set}'] * h2kcalmol
+    #     # print("B2PLYP diff")
+    #     print(df[[f'MP2 IE {basis_set}', f"SAPT_DFT_{functional}_{basis_set}", f"SAPT DISP20 ENERGY {basis_set}"]])
+    #     print(
+    #             df[f"MP2 IE {basis_set}"],
+    #             df[f"SAPT_DFT_{functional}_{basis_set}"],
+    #             df[f'SAPT DISP20 ENERGY {basis_set}'],
+    #             df[f'SAPT EXCH-DISP20 ENERGY {basis_set}'],
+    #             df[f'SAPT HF(2) ENERGY {basis_set}'],
+    #     )
+    df[f"SAPT(DFT) [{functional.upper()}] dMP2 ENERGY {basis_set}"] = df.apply(
+        lambda r:
+        (
+            # need to define dMP2 as dHF-like but with DFT non-disp
+            # components and SAPT0 disp components
+            r[f'MP2 IE {basis_set}'] -
             (
-                # need to define dMP2 as dHF-like but with DFT non-disp
-                # components and SAPT0 disp components
-                r[f'MP2 IE {basis_set}'] -
-                (
-                    r[f"SAPT_DFT_{functional}_{basis_set}"][1]
-                    + r[f"SAPT_DFT_{functional}_{basis_set}"][2]
-                    + r[f"SAPT_DFT_{functional}_{basis_set}"][3]
-                    + r[f'SAPT DISP20 ENERGY {basis_set}']
-                    + r[f'SAPT EXCH-DISP20 ENERGY {basis_set}']
-                 )
+                r[f"SAPT_DFT_{functional}_{basis_set}"][1]
+                + r[f"SAPT_DFT_{functional}_{basis_set}"][2]
+                + r[f"SAPT_DFT_{functional}_{basis_set}"][3]
+                + r[f'SAPT DISP20 ENERGY {basis_set}']
+                + r[f'SAPT EXCH-DISP20 ENERGY {basis_set}']
+             )
 
-            ) * h2kcalmol
-            if r[f"SAPT_DFT_D4_{functional}_{basis_set}_total"] and
-            r[f"SAPT_DFT_{functional}_{basis_set}"]
-            else np.nan, axis=1
-        )
-
-        print(df[[f"SAPT(DFT) [{functional.upper()}] dMP2 ENERGY {basis_set}", f"SAPT HF(2) ENERGY {basis_set}"]].describe())
-        print(df[[f"SAPT(DFT) [{functional.upper()}] dMP2 ENERGY {basis_set}", f"SAPT HF(2) ENERGY {basis_set}"]])
-
+        ) * h2kcalmol
+        if r[f"SAPT_DFT_D4_{functional}_{basis_set}_total"] and
+        r[f"SAPT_DFT_{functional}_{basis_set}"]
+        else np.nan, axis=1
+    )
+    if functional == 'b2plyp':
         df[f"SAPT(DFT) [{functional.upper()}] dMP2 IND ENERGY {basis_set}"] = df.apply(
             lambda r: r[f"SAPT_DFT_{functional}_{basis_set}"][3]
                 # + r[f'SAPT MP2(2) ENERGY {basis_set}'] 
+                + r[f"SAPT(DFT) [{functional.upper()}] dMP2 ENERGY {basis_set}"] / h2kcalmol
+            if r[f"SAPT_DFT_D4_{functional}_{basis_set}_total"] and
+            r[f"SAPT_DFT_{functional}_{basis_set}"]
+            else np.nan,
+            axis=1
+        )
+    else:
+        df[f"SAPT(DFT) [{functional.upper()}] dMP2 EXCH ENERGY {basis_set}"] = df.apply(
+            lambda r: r[f"SAPT_DFT_{functional}_{basis_set}"][2]
                 + r[f"SAPT(DFT) [{functional.upper()}] dMP2 ENERGY {basis_set}"] / h2kcalmol
             if r[f"SAPT_DFT_D4_{functional}_{basis_set}_total"] and
             r[f"SAPT_DFT_{functional}_{basis_set}"]
@@ -5212,23 +5218,23 @@ def prep_saptdft_components(df, functional, basis_set):
         else np.nan,
  axis=1
     )
-    if functional == 'b2plyp':
-        print("B2PLYP diff")
-        df[f"{functional.upper()}-D4 dMP2 DISP ENERGY {basis_set}"] = df.apply(
-            lambda r: (
-                r[f"SAPT_DFT_{functional}_{basis_set}_D4_IE"]
-                + r[f"SAPT_DFT_{functional}_{basis_set}_dDFT"]
-                - r[f"SAPT_DFT_{functional}_{basis_set}_dHF"]
-                # - r[f'SAPT MP2(2) ENERGY {basis_set}'] * h2kcalmol
-                - r[f"SAPT(DFT) [{functional.upper()}] dMP2 ENERGY {basis_set}"]
+    # if functional == 'b2plyp':
+        # print("B2PLYP diff")
+    df[f"{functional.upper()}-D4 dMP2 DISP ENERGY {basis_set}"] = df.apply(
+        lambda r: (
+            r[f"SAPT_DFT_{functional}_{basis_set}_D4_IE"]
+            + r[f"SAPT_DFT_{functional}_{basis_set}_dDFT"]
+            - r[f"SAPT_DFT_{functional}_{basis_set}_dHF"]
+            # - r[f'SAPT MP2(2) ENERGY {basis_set}'] * h2kcalmol
+            - r[f"SAPT(DFT) [{functional.upper()}] dMP2 ENERGY {basis_set}"]
 
-            )
-            / h2kcalmol
-            if r[f"SAPT_DFT_D4_{functional}_{basis_set}_total"] and
-            r[f"SAPT_DFT_{functional}_{basis_set}"]
-            else np.nan,
-            axis=1,
         )
+        / h2kcalmol
+        if r[f"SAPT_DFT_D4_{functional}_{basis_set}_total"] and
+        r[f"SAPT_DFT_{functional}_{basis_set}"]
+        else np.nan,
+        axis=1,
+    )
     # else:
     df[f"{functional.upper()}-D4 DISP ENERGY {basis_set}"] = df.apply(
         lambda r: (
@@ -7527,6 +7533,7 @@ def violin_plots_multi_components_subset(df, limit_to_column_not_nan=None):
         "SAPT2 EXCH ENERGY",
         "SAPT(DFT) [PBE0] EXCH ENERGY",
         "SAPT(DFT) [B3LYP] EXCH ENERGY",
+        "SAPT(DFT) [B3LYP] dMP2 EXCH ENERGY",
         "SAPT(DFT) [B2PLYP] EXCH ENERGY",
         "SAPT(DFT) [WB97X] EXCH ENERGY",
         "SAPT0 IND ENERGY",
@@ -7536,6 +7543,7 @@ def violin_plots_multi_components_subset(df, limit_to_column_not_nan=None):
         "SAPT2+3DMP2 IND ENERGY",
         "SAPT(DFT) [PBE0] IND ENERGY",
         "SAPT(DFT) [B3LYP] IND ENERGY",
+        # "SAPT(DFT) [B3LYP] dMP2 IND ENERGY",
         "SAPT(DFT) [B2PLYP] IND ENERGY",
         "SAPT(DFT) [B2PLYP] dMP2 IND ENERGY",
         "SAPT(DFT) [WB97X] IND ENERGY",
@@ -7551,6 +7559,7 @@ def violin_plots_multi_components_subset(df, limit_to_column_not_nan=None):
         "SAPT0-D4 DISP ENERGY",
         "PBE0-D4 DISP ENERGY",
         "B3LYP-D4 DISP ENERGY",
+        "B3LYP-D4 dMP2 DISP ENERGY",
         "B2PLYP-D4 DISP ENERGY",
         "B2PLYP-D4 dMP2 DISP ENERGY",
         "WB97X-D4 DISP ENERGY",
@@ -7680,6 +7689,9 @@ def violin_plots_multi_components_subset(df, limit_to_column_not_nan=None):
             "SAPT(DFT) [B3LYP]": "SAPT(DFT) [B3LYP] EXCH ENERGY Error",
         },
         {
+            "SAPT(DFT) [B3LYP]": "SAPT(DFT) [B3LYP] dMP2 EXCH ENERGY Error",
+        },
+        {
             "SAPT(DFT) [B2PLYP]": "SAPT(DFT) [B2PLYP] EXCH ENERGY Error",
         },
         {
@@ -7709,6 +7721,9 @@ def violin_plots_multi_components_subset(df, limit_to_column_not_nan=None):
         {
             "SAPT(DFT) [B3LYP]": "SAPT(DFT) [B3LYP] IND ENERGY Error",
         },
+        # {
+        #     "SAPT(DFT) [B3LYP]": "SAPT(DFT) [B3LYP] dMP2 IND ENERGY Error",
+        # },
         {
             "SAPT(DFT) [B2PLYP]": "SAPT(DFT) [B2PLYP] IND ENERGY Error",
         },
@@ -7759,6 +7774,9 @@ def violin_plots_multi_components_subset(df, limit_to_column_not_nan=None):
         },
         {
             "B3LYP-D4": "B3LYP-D4 DISP ENERGY Error",
+        },
+        {
+            "B3LYP-D4": "B3LYP-D4 dMP2 DISP ENERGY Error",
         },
         {
             "B2PLYP-D4": "B2PLYP-D4 DISP ENERGY Error",
@@ -7877,6 +7895,7 @@ def violin_plots_multi_components_subset(df, limit_to_column_not_nan=None):
             "SAPT2,SAPT2+,\\\\SAPT2+(3),SAPT2+3": "SAPT2 EXCH ENERGY Error",
             "SAPT(DFT) [PBE0]": "SAPT(DFT) [PBE0] EXCH ENERGY Error",
             "SAPT(DFT) [B3LYP]": "SAPT(DFT) [B3LYP] EXCH ENERGY Error",
+            "SAPT(DFT) [B3LYP] dMP2": "SAPT(DFT) [B3LYP] dMP2 EXCH ENERGY Error",
             "SAPT(DFT) [B2PLYP]": "SAPT(DFT) [B2PLYP] EXCH ENERGY Error",
             "SAPT(DFT) [WB97X]": "SAPT(DFT) [WB97X] EXCH ENERGY Error",
         },
@@ -7890,6 +7909,7 @@ def violin_plots_multi_components_subset(df, limit_to_column_not_nan=None):
             "SAPT2+DMP2,\\\\SAPT2+(3)DMP2": "SAPT2+DMP2 IND ENERGY Error",
             "SAPT(DFT) [PBE0]": "SAPT(DFT) [PBE0] IND ENERGY Error",
             "SAPT(DFT) [B3LYP]": "SAPT(DFT) [B3LYP] IND ENERGY Error",
+            # "SAPT(DFT) [B3LYP] dMP2": "SAPT(DFT) [B3LYP] dMP2 IND ENERGY Error",
             "SAPT(DFT) [B2PLYP]": "SAPT(DFT) [B2PLYP] IND ENERGY Error",
             "SAPT(DFT) [B2PLYP] dMP2": "SAPT(DFT) [B2PLYP] dMP2 IND ENERGY Error",
             "SAPT(DFT) [WB97X]": "SAPT(DFT) [WB97X] IND ENERGY Error",
@@ -7931,7 +7951,7 @@ def violin_plots_multi_components_subset(df, limit_to_column_not_nan=None):
             0.4,
             2,
         ],
-        grid_widths = [0.75, 0.65, 1.0],
+        grid_widths = [0.75, 0.75, 1.0],
         # mcure=mcure_labels,
     )
     cdsg_plot.error_statistics.violin_plot_table_multi_SAPT_components(
@@ -7960,6 +7980,7 @@ def violin_plots_multi_components_subset(df, limit_to_column_not_nan=None):
             "SAPT(DFT)+D4": "SAPT(DFT)+D4 DISP ENERGY Error",
             "PBE0-D4": "PBE0-D4 DISP ENERGY Error",
             "B3LYP-D4": "B3LYP-D4 DISP ENERGY Error",
+            "B3LYP-D4 dMP2": "B3LYP-D4 dMP2 DISP ENERGY Error",
             "B2PLYP-D4": "B2PLYP-D4 DISP ENERGY Error",
             "B2PLYP-D4 dMP2": "B2PLYP-D4 dMP2 DISP ENERGY Error",
             "WB97X-D4": "WB97X-D4 DISP ENERGY Error",
