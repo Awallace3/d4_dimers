@@ -793,7 +793,7 @@ def subplot_all_curves_LoS_basis_set(
                             axs[n].plot(
                                 df_sys["distance (A)"],
                                 df_sys[f"SAPT_DFT_{functional.lower()}_{basis_set}_D4_IE"],
-                                label=f"-D4[{functional.upper()}]",
+                                label=rf"$E_{{\rm int}}^{{\rm D4,{functional.upper()}}}$",
                                 marker="x",
                                 markersize=3.5,
                                 linestyle='-.',
@@ -804,7 +804,8 @@ def subplot_all_curves_LoS_basis_set(
                                 df_sys["distance (A)"],
                                 df_sys[f"SAPT_DFT_{functional.lower()}_{basis_set}_dDFT"]
                                 - df_sys[f"SAPT_DFT_{functional.lower()}_{basis_set}_dHF"],
-                                label=r"$\delta$DFT[" + functional.upper() + r"] - $\delta$HF",
+                                # label=r"$\delta$DFT[" + functional.upper() + r"] - $\delta$HF",
+                                label=rf"$\delta_{{\rm DFT,{functional.upper()}}}^{{[2]}} - \delta_{{\rm HF}}^{{[2]}}$",
                                 marker="x",
                                 linestyle='--',
                                 markersize=3.5,
@@ -857,7 +858,7 @@ def subplot_all_curves_LoS_basis_set(
                         axs[n].plot(
                             df_sys["distance (A)"],
                             df_sys[func_col],
-                            label=r"SAPT(DFT)[PBE0] ", # + f"\\emph{{MAE: {mae:.2f}, ME: {me:.2f}}}",
+                            label=r"SAPT(PBE0) ", # + f"\\emph{{MAE: {mae:.2f}, ME: {me:.2f}}}",
                             marker="o",
                             markersize=2.5,
                             linewidth=1.0,
@@ -866,7 +867,7 @@ def subplot_all_curves_LoS_basis_set(
                         axs[n].plot(
                             df_sys["distance (A)"],
                             df_sys["E_ref_hlsapt_atz"],
-                            label=r"SAPT2+3(CCD)$\delta$MP2/aTZ disp.",
+                            label=r"SAPT2+3(CCD)$\delta$MP2/aTZ ref.",
                             marker="o",
                             markersize=2.5,
                             linewidth=1.0,
@@ -878,7 +879,7 @@ def subplot_all_curves_LoS_basis_set(
                         axs[n].set_ylabel(f"Disp. Energy (kcal/mol)", fontsize=16)
                         axs[n].tick_params(axis="both",
                                                  which="major", labelsize=14)
-                        axs[n].legend(loc="lower right", fontsize=9)
+                        axs[n].legend(loc="lower right", fontsize=11)
                         axs[n].yaxis.set_minor_locator(AutoMinorLocator())
                         axs[n].xaxis.set_minor_locator(AutoMinorLocator())
                         # make x-axis log scale
