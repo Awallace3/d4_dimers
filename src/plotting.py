@@ -8291,7 +8291,7 @@ def violin_plots_multi_components_subset_individual(df, limit_to_column_not_nan=
                 "SAPT2+(3),SAPT2+3": "SAPT2+(3) ELST ENERGY Error",
                 "SAPT(DFT) [PBE0]": "SAPT(DFT) [PBE0] ELST ENERGY Error",
                 "SAPT(DFT) [B3LYP]": "SAPT(DFT) [B3LYP] ELST ENERGY Error",
-                "SAPT(DFT) [B2PLYP]": "SAPT(DFT) [B2PLYP] ELST ENERGY Error",
+                # "SAPT(DFT) [B2PLYP]": "SAPT(DFT) [B2PLYP] ELST ENERGY Error",
                 "SAPT(DFT) [WB97X]": "SAPT(DFT) [WB97X] ELST ENERGY Error",
             },
             df_labels_and_columns_exch={
@@ -8299,7 +8299,7 @@ def violin_plots_multi_components_subset_individual(df, limit_to_column_not_nan=
                 "SAPT2,SAPT2+,\\\\SAPT2+(3),SAPT2+3": "SAPT2 EXCH ENERGY Error",
                 "SAPT(DFT) [PBE0]": "SAPT(DFT) [PBE0] EXCH ENERGY Error",
                 "SAPT(DFT) [B3LYP]": "SAPT(DFT) [B3LYP] EXCH ENERGY Error",
-                "SAPT(DFT) [B2PLYP]": "SAPT(DFT) [B2PLYP] EXCH ENERGY Error",
+                # "SAPT(DFT) [B2PLYP]": "SAPT(DFT) [B2PLYP] EXCH ENERGY Error",
                 "SAPT(DFT) [WB97X]": "SAPT(DFT) [WB97X] EXCH ENERGY Error",
             },
             df_labels_and_columns_indu={
@@ -8312,7 +8312,7 @@ def violin_plots_multi_components_subset_individual(df, limit_to_column_not_nan=
                 "SAPT2+DMP2,\\\\SAPT2+(3)DMP2": "SAPT2+DMP2 IND ENERGY Error",
                 "SAPT(DFT) [PBE0]": "SAPT(DFT) [PBE0] IND ENERGY Error",
                 "SAPT(DFT) [B3LYP]": "SAPT(DFT) [B3LYP] IND ENERGY Error",
-                "SAPT(DFT) [B2PLYP]": "SAPT(DFT) [B2PLYP] IND ENERGY Error",
+                # "SAPT(DFT) [B2PLYP]": "SAPT(DFT) [B2PLYP] IND ENERGY Error",
                 "SAPT(DFT) [WB97X]": "SAPT(DFT) [WB97X] IND ENERGY Error",
             },
             df_labels_and_columns_disp={},
@@ -8372,12 +8372,12 @@ def violin_plots_multi_components_subset_individual(df, limit_to_column_not_nan=
                 "SAPT(DFT)-D4": "SAPT(DFT)-D4 DISP ENERGY Error",
                 "SAPT(DFT) [PBE0]": "SAPT(DFT) [PBE0] DISP ENERGY Error",
                 "SAPT(DFT) [B3LYP]": "SAPT(DFT) [B3LYP] DISP ENERGY Error",
-                "SAPT(DFT) [B2PLYP]": "SAPT(DFT) [B2PLYP] DISP ENERGY Error",
+                # "SAPT(DFT) [B2PLYP]": "SAPT(DFT) [B2PLYP] DISP ENERGY Error",
                 "SAPT(DFT) [WB97X]": "SAPT(DFT) [WB97X] DISP ENERGY Error",
                 "SAPT(DFT)+D4": "SAPT(DFT)+D4 DISP ENERGY Error",
                 "PBE0-D4": "PBE0-D4 DISP ENERGY Error",
                 "B3LYP-D4": "B3LYP-D4 DISP ENERGY Error",
-                "B2PLYP-D4": "B2PLYP-D4 DISP ENERGY Error",
+                # "B2PLYP-D4": "B2PLYP-D4 DISP ENERGY Error",
                 "WB97X-D4": "WB97X-D4 DISP ENERGY Error",
                 "D3-ML": "D3-ML DISP ENERGY Error",
             },
@@ -8511,7 +8511,7 @@ def plot_LoS_saptdft(
         df[c] /= h2kcalmol
     if presentation:
         violin_plots_multi_components_subset(df, limit_to_column_not_nan="D3-ML")
-        return
+        # return
         violin_plots_multi_components(df, limit_to_column_not_nan="D3-ML")
         violin_plots_multi(df)
         violin_plots_multi_subset(df)
