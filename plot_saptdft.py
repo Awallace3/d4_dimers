@@ -1,8 +1,6 @@
 import src
 import pandas as pd
-import numpy as np
 import qcelemental as qcel
-from pprint import pprint as pp
 
 h2kcalmol = qcel.constants.conversion_factor("hartree", "kcal/mol")
 
