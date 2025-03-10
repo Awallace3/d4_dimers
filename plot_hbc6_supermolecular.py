@@ -682,6 +682,27 @@ def subplot_all_curves_LoS(
     return
 
 
+def compute_N(df_l, col_E, sign_flip=True, print_lvl=1):
+    df_l_neg = df_l[df_l[col_E] < 0]
+    R = df_l_neg["distance (A)"]
+    f_R = df_l_neg[col_E]
+    if sign_flip:
+        f_R = -f_R
+    # Step 1: Take the logarithm of R and f(R)
+    log_R = np.log(R)
+    log_f_R = np.log(f_R)
+
+    # Step 2: Perform linear regression on log_f_R vs. log_R
+    # Calculate the slope (m) and intercept (b) using numpy's polyfit
+    slope, intercept = np.polyfit(log_R, log_f_R, 1)
+
+    # Step 3: Get N from the slope
+    N = -slope  # Since log(f(R)) = -N * log(R), slope = -N
+    if print_lvl > 0:
+        print(f"{col_E:.12} N: {N:.2f}")
+    return N
+
+
 def subplot_all_curves_LoS_basis_set(
     df,
     plot_ddft_curve=True,
@@ -698,9 +719,9 @@ def subplot_all_curves_LoS_basis_set(
     dbs = df["DB"].unique()
     print(dbs)
     dbs = [
-        "hbc6",
-        "X4010",
         "s66x8",
+        # "hbc6",
+        # "X4010",
     ]
     # dbs = ["nbc10"]
     tex_header = r"""
@@ -767,7 +788,7 @@ def subplot_all_curves_LoS_basis_set(
                 for n1, i in enumerate(sys_numbers):
 
                     df_sys = df_db[df_db["System Label"] == i]
-
+                    print('sys:', df_sys['system_id'].iloc[0])
                     df_sys = df_sys.sort_values("distance (A)")
                     n_basis_sets = len(basis_sets)
                     fig, axs = plt.subplots(n_basis_sets, 1, figsize=(
@@ -780,6 +801,7 @@ def subplot_all_curves_LoS_basis_set(
                             func_col = f"""{
                                 functional.upper()}-D4 DISP ENERGY {basis_set.lower()}"""
                             c = color_map[functional.upper()]
+
                             mae = np.mean(
                                 np.abs(
                                     df_sys[func_col]
@@ -790,9 +812,11 @@ def subplot_all_curves_LoS_basis_set(
                                 df_sys[func_col]
                                 - df_sys["E_ref_hlsapt_atz"]
                             )
+                            N_neg = compute_N(df_sys, f"SAPT_DFT_{functional.lower()}_{basis_set}_D4_IE", sign_flip=True)
                             axs[n].plot(
                                 df_sys["distance (A)"],
                                 df_sys[f"SAPT_DFT_{functional.lower()}_{basis_set}_D4_IE"],
+                                # label=rf"$E_{{\rm int}}^{{\rm D4,{functional.upper()}}}$ ($R^{{-{N_neg:.1f}}}$)",
                                 label=rf"$E_{{\rm int}}^{{\rm D4,{functional.upper()}}}$",
                                 marker="x",
                                 markersize=3.5,
@@ -800,11 +824,13 @@ def subplot_all_curves_LoS_basis_set(
                                 linewidth=2.0,
                                 color=c,
                             )
+                            df_sys['dDFT - dHF'] = df_sys[f"SAPT_DFT_{functional.lower()}_{basis_set}_dDFT"] -  df_sys[f"SAPT_DFT_{functional.lower()}_{basis_set}_dHF"]
+                            N_neg = compute_N(df_sys, 'dDFT - dHF', sign_flip=True)
                             axs[n].plot(
                                 df_sys["distance (A)"],
-                                df_sys[f"SAPT_DFT_{functional.lower()}_{basis_set}_dDFT"]
-                                - df_sys[f"SAPT_DFT_{functional.lower()}_{basis_set}_dHF"],
+                                df_sys['dDFT - dHF'],
                                 # label=r"$\delta$DFT[" + functional.upper() + r"] - $\delta$HF",
+                                # label=rf"$\delta_{{\rm DFT,{functional.upper()}}}^{{[2]}} - \delta_{{\rm HF}}^{{[2]}}$ ($R^{{-{N_neg:.1f}}}$)",
                                 label=rf"$\delta_{{\rm DFT,{functional.upper()}}}^{{[2]}} - \delta_{{\rm HF}}^{{[2]}}$",
                                 marker="x",
                                 linestyle='--',
@@ -812,12 +838,13 @@ def subplot_all_curves_LoS_basis_set(
                                 linewidth=2.0,
                                 color=c,
                             )
+                            N_neg = compute_N(df_sys, func_col, sign_flip=True)
                             axs[n].plot(
                                 df_sys["distance (A)"],
                                 df_sys[func_col],
                                 # label=f"""{
                                     # functional.upper()}-D4 \\emph{{MAE: {mae:.2f}, ME: {me:.2f}}}""",
-                                label=f"""{functional.upper()}-D4""",
+                                label=f"""{functional.upper()}-D4 ($R^{{-{N_neg:.1f}}}$)""",
                                 marker="o",
                                 markersize=2.0,
                                 linewidth=2.0,
@@ -835,10 +862,11 @@ def subplot_all_curves_LoS_basis_set(
                             df_sys[sapt0_col]
                             - df_sys["E_ref_hlsapt_atz"]
                         )
+                        N_neg = compute_N(df_sys, sapt0_col, sign_flip=True)
                         axs[n].plot(
                             df_sys["distance (A)"],
                             df_sys[sapt0_col],
-                    label=f"SAPT0", # \\emph{{MAE: {mae:.2f}, ME: {me:.2f}}}",
+                            label=f"SAPT0 ($R^{{-{N_neg:.1f}}}$)", 
                             marker="o",
                             markersize=2.0,
                             color='orange',
@@ -855,19 +883,21 @@ def subplot_all_curves_LoS_basis_set(
                                 df_sys[func_col] 
                             - df_sys["E_ref_hlsapt_atz"]
                         )
+                        N_neg = compute_N(df_sys, func_col, sign_flip=True)
                         axs[n].plot(
                             df_sys["distance (A)"],
                             df_sys[func_col],
-                            label=r"SAPT(PBE0) ", # + f"\\emph{{MAE: {mae:.2f}, ME: {me:.2f}}}",
+                            label=rf"SAPT(PBE0) ($R^{{-{N_neg:.1f}}}$)", 
                             marker="o",
                             markersize=2.5,
                             linewidth=1.0,
                             color='gray',
                         )
+                        N_neg = compute_N(df_sys, "E_ref_hlsapt_atz", sign_flip=True)
                         axs[n].plot(
                             df_sys["distance (A)"],
                             df_sys["E_ref_hlsapt_atz"],
-                            label=r"SAPT2+3(CCD)$\delta$MP2/aTZ ref.",
+                            label=rf"SAPT2+3(CCD)$\delta$MP2/aTZ ref. ($R^{{-{N_neg:.1f}}}$)",
                             marker="o",
                             markersize=2.5,
                             linewidth=1.0,
