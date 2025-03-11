@@ -397,7 +397,7 @@ def plot_all_curves_LoS(
                                  df_sys["SAPT_DFT_pbe0_adz_disp"])
 
                     df_sys = df_sys.sort_values("distance (A)")
-                    fig = plt.figure(dpi=400)
+                    fig = plt.figure(figsize=(4, 8), dpi=400)
                     # plt.plot(
                     #     df_sys["distance (A)"],
                     #     df_sys["SAPT_DFT_pbe0_atz_disp"],
@@ -418,42 +418,42 @@ def plot_all_curves_LoS(
                         - df_sys["SAPT_DFT_pbe0_adz_dHF"],
                         label=f"PBE0(dDFT)/aDZ - dHF/aDZ",
                         marker="o",
-                        markersize=2.0,
+                        markersize=3.0,
                     )
                     plt.plot(
                         df_sys["distance (A)"],
                         df_sys["SAPT_DFT_pbe0_adz_dDFT"],
                         label=f"PBE0(dDFT)/aDZ",
                         marker="o",
-                        markersize=2.0,
+                        markersize=3.0,
                     )
                     plt.plot(
                         df_sys["distance (A)"],
                         df_sys["SAPT_DFT_pbe0_adz_dHF"],
                         label=f"dHF/aDZ",
                         marker="o",
-                        markersize=2.0,
+                        markersize=3.0,
                     )
                     plt.plot(
                         df_sys["distance (A)"],
                         df_sys["SAPT_DFT_pbe0_adz_D4_IE"],
                         label=f"-D4",
                         marker="o",
-                        markersize=2.0,
+                        markersize=3.0,
                     )
                     plt.plot(
                         df_sys["distance (A)"],
                         df_sys["d4_ddft"],
                         label=f"PBE0-D4 Disp: ME {me:.2f} kcal/mol",
                         marker="o",
-                        markersize=2.0,
+                        markersize=3.0,
                     )
                     plt.plot(
                         df_sys["distance (A)"],
                         df_sys["SAPT_DFT_pbe0_atz_disp"],
                         label=f"SAPT(DFT)/aTZ Disp: ME {0.00:.2f} kcal/mol",
                         marker="o",
-                        markersize=2.0,
+                        markersize=3.0,
                         color="k",
                     )
                     # plt.plot(
@@ -461,7 +461,7 @@ def plot_all_curves_LoS(
                     #     function_A_div_r6_B_div_r8(df_sys["distance (A)"], A_ddft, B_ddft),
                     #     label=f"PBE0+dDFT+D4 fit $\\frac{{{A_ddft:.2f}}}{{r^6}} + \\frac{{{B_ddft:.2f}}}{{r^8}}$",
                     #     marker="o",
-                    #     markersize=2.0,
+                    #     markersize=3.0,
                     # )
                     # Annotate equation
                     # get location of middle of plot for text annotation
@@ -794,7 +794,7 @@ def subplot_all_curves_LoS_basis_set(
                     df_sys = df_sys.sort_values("distance (A)")
                     n_basis_sets = len(basis_sets)
                     fig, axs = plt.subplots(n_basis_sets, 1, figsize=(
-                        8, 5 * n_basis_sets), dpi=400, sharey=True, sharex=True)
+                        6.5, 5.5 * n_basis_sets), dpi=400, sharey=True, sharex=True)
                     axs = axs.flatten()
                     for n, basis_set in enumerate(basis_sets):
                         basis_set_label = f"{basis_set[0]}{basis_set[1:].upper()}"
@@ -822,9 +822,9 @@ def subplot_all_curves_LoS_basis_set(
                                     # label=rf"$E_{{\rm int}}^{{\rm D4,{functional.upper()}}}$ ($R^{{-{N_neg:.1f}}}$)",
                                     label=rf"$E_{{\rm int}}^{{\rm D4,{functional.upper()}}}$",
                                     marker="x",
-                                    markersize=3.5,
+                                    markersize=8.5,
                                     linestyle='-.',
-                                    linewidth=2.0,
+                                    linewidth=2.5,
                                     color=c,
                                 )
                                 df_sys['dDFT - dHF'] = df_sys[f"SAPT_DFT_{functional.lower()}_{basis_set}_dDFT"] -  df_sys[f"SAPT_DFT_{functional.lower()}_{basis_set}_dHF"]
@@ -837,8 +837,8 @@ def subplot_all_curves_LoS_basis_set(
                                     label=rf"$\delta_{{\rm DFT,{functional.upper()}}}^{{[2]}} - \delta_{{\rm HF}}^{{[2]}}$",
                                     marker="x",
                                     linestyle='--',
-                                    markersize=3.5,
-                                    linewidth=2.0,
+                                    markersize=8.5,
+                                    linewidth=2.5,
                                     color=c,
                                 )
                             N_neg = compute_N(df_sys, func_col, sign_flip=True)
@@ -849,8 +849,8 @@ def subplot_all_curves_LoS_basis_set(
                                     # functional.upper()}-D4 \\emph{{MAE: {mae:.2f}, ME: {me:.2f}}}""",
                                 label=f"""{functional.upper()}-D4 ($R^{{-{N_neg:.1f}}}$)""",
                                 marker="o",
-                                markersize=2.0,
-                                linewidth=2.0,
+                                markersize=4.0,
+                                linewidth=2.5,
                                 color=c,
                             )
                         sapt0_col = f"""SAPT0 DISP ENERGY {basis_set.lower()}"""
@@ -871,7 +871,7 @@ def subplot_all_curves_LoS_basis_set(
                             df_sys[sapt0_col],
                             label=f"SAPT0 ($R^{{-{N_neg:.1f}}}$)", 
                             marker="o",
-                            markersize=2.0,
+                            markersize=4.0,
                             color='orange',
                         )
                         func_col = f"SAPT(DFT) [{functional.upper()}] DISP ENERGY {basis_set}"
@@ -892,8 +892,8 @@ def subplot_all_curves_LoS_basis_set(
                             df_sys[func_col],
                             label=rf"SAPT(PBE0) ($R^{{-{N_neg:.1f}}}$)", 
                             marker="o",
-                            markersize=2.5,
-                            linewidth=1.0,
+                            markersize=4.5,
+                            linewidth=2.0,
                             color='gray',
                         )
                         N_neg = compute_N(df_sys, "E_ref_hlsapt_atz", sign_flip=True)
@@ -902,8 +902,8 @@ def subplot_all_curves_LoS_basis_set(
                             df_sys["E_ref_hlsapt_atz"],
                             label=rf"SAPT2+3(CCD)/aTZ ($R^{{-{N_neg:.1f}}}$)",
                             marker="o",
-                            markersize=2.5,
-                            linewidth=1.0,
+                            markersize=4.5,
+                            linewidth=2.0,
                             color="k",
                         )
                         axs[n].set_title(f"\\textbf{{{basis_set_label}}}", fontsize=20)
