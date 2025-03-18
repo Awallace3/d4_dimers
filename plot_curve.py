@@ -110,8 +110,8 @@ def ar_ar_setup():
     print(df)
     c6_dimers, c6_monAs, c6_monBs, t6_1s, t6_2s, t8_1s, t8_2s, dist = [], [], [], [], [], [], [], []
     e1s, e2s = [], []
-    # saptdft_d4_params, _ = src.paramsTable.generate_2B_ATM_param_subsets(src.paramsTable.get_params("SAPT_DFT_pbe0_adz_3_IE"))
-    saptdft_d4_params, _ = src.paramsTable.generate_2B_ATM_param_subsets(src.paramsTable.get_params("SAPT_DFT_OPT_END3"))
+    saptdft_d4_params, _ = src.paramsTable.generate_2B_ATM_param_subsets(src.paramsTable.get_params("SAPT_DFT_pbe0_adz_3_IE"))
+    # saptdft_d4_params, _ = src.paramsTable.generate_2B_ATM_param_subsets(src.paramsTable.get_params("SAPT_DFT_OPT_END3"))
     hfd4_params, _ = src.paramsTable.generate_2B_ATM_param_subsets(src.paramsTable.get_params("HF_ATM"))
     print(f"{saptdft_d4_params = }")
     print(f"{hfd4_params = }")
@@ -231,6 +231,10 @@ def plot_ar_ar_BJ_damping_function():
     lines = line1 + line2 + line3 + line4 
     labels = [l.get_label() for l in lines]
     ax1.legend(lines, labels, loc='best', fontsize=10)
+
+    # annotate note that 1s come from SAPT_DFT_D4 and 2s come from HF_D4
+    ax1.annotate('params 1s from SAPT_DFT_D4', xy=(0.1, 0.65), xycoords='axes fraction', fontsize=12, color='black')
+    ax1.annotate('params 2s from HF_D4', xy=(0.1, 0.60), xycoords='axes fraction', fontsize=12, color='black')
 
     # Improve appearance
     plt.tight_layout()
