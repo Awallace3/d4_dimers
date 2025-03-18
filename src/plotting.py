@@ -2167,6 +2167,22 @@ def plotting_setup_dft_ddft(
     assert df["SAPT_DFT_pbe0_adz_elst"].isnull().sum() == 0
     print(f"Length of df prior plotting: {len(df)}")
     dimer_dataset_size = len(df)
+
+    if True:
+        df = compute_d4_from_opt_params(
+            df,
+            bases=[
+                [
+                    "SAPT_DFT_pbe0_aqz_total",
+                    "SAPT_DFT_aqz_plus_D4",
+                    "SAPT_DFT_pbe0_atz_disp_targeting_SAPT2+3(CCD)dMP2",
+                    "SAPT_DFT_pbe0_aqz_total",
+                ],
+            ],
+            benchmark_label="benchmark ref energy",
+            disp_compute=locald4.compute_disp_2B_NO_DAMPING,
+        )
+        print(df[["SAPT_DFT_pbe0_aqz_total", "SAPT_DFT_aqz_plus_D4"]])
     # plot_violin_SAPT0_DFT_components(
     if original_plot:
         plot_violin_SAPT0_DFT_components(
