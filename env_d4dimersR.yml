@@ -235,7 +235,7 @@ dependencies:
   - pip:
       # - cdsg-tools==0.0.1
       # - dispersion-amw==0.1.0
-      - hrcl-jobs==1.8.0
+      # - hrcl-jobs==1.8.0
       - periodictable==1.6.1
       - qm-tools-aw==1.4.1
 # prefix: /theoryfs2/ds/amwalla3/miniconda3/envs/d4dimersR

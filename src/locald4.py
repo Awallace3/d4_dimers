@@ -145,18 +145,21 @@ def calc_dftd4_c6_for_d_a_b(
         cD,
         charges[0],
         p=p,
+        dftd4_bin=dftd4_bin,
     )
     C6s_mA, _, _, _ = calc_dftd4_c6_c8_pairDisp2(
         pA,
         cA,
         charges[1],
         p=p,
+        dftd4_bin=dftd4_bin,
     )
     C6s_mB, _, _, _ = calc_dftd4_c6_c8_pairDisp2(
         pB,
         cB,
         charges[2],
         p=p,
+        dftd4_bin=dftd4_bin,
     )
     return C6s_dimer, C6s_mA, C6s_mB
 
@@ -222,6 +225,67 @@ def compute_bj_f90(
                     energies[j] += de
     energy = np.sum(energies)
     return energy
+
+
+def compute_bj_terms(
+    pos: np.array,
+    carts: np.array,
+    C6s: np.array,
+    params: [] = [1.61679827, 0.44959224, 3.35743605],
+    r4r2_ls=r4r2.r4r2_vals_ls(),
+) -> float:
+    """
+    compute_bj_f90 computes energy from C6s, cartesian coordinates, and dimer sizes.
+    """
+    energy = 0
+    if len(params) == 3:
+        s8, a1, a2 = params
+        s6 = 1.0
+    elif len(params) == 4:
+        s6, s8, a1, a2 = params
+    elif len(params) == 5:
+        s6, s8, a1, a2, s9 = params
+    else:
+        raise ValueError("params must be length 3 or 4")
+    M_tot = len(carts)
+    energies = np.zeros(M_tot)
+    r0ijs = np.zeros(M_tot)
+    t6s = np.zeros(M_tot)
+    t8s = np.zeros(M_tot)
+    lattice_points = 1
+
+    for i in range(M_tot):
+        el1 = int(pos[i])
+        Q_A = (0.5 * el1**0.5 * r4r2_ls[el1 - 1]) ** 0.5
+
+        for j in range(i + 1):
+            el2 = int(pos[j])
+            Q_B = (0.5 * el2**0.5 * r4r2_ls[el2 - 1]) ** 0.5
+            if i == j:
+                continue
+            for k in range(lattice_points):
+                rrij = 3 * Q_A * Q_B
+                r0ij = a1 * np.sqrt(rrij) + a2
+                print(f"{r0ij =:.2f} = {a1 =:.2f} * np.sqrt({rrij =:.2f}) + {a2 =:.2f}")
+                C6ij = C6s[i, j]
+
+                r1, r2 = carts[i, :], carts[j, :]
+                r2 = np.subtract(r1, r2)
+                r2 = np.sum(np.multiply(r2, r2))
+
+                t6 = r2**3 / (r2**3 + r0ij**6)
+                t8 = r2**4 / (r2**4 + r0ij**8)
+
+                edisp = s6 * t6 / r2**3 + s8 * rrij * t8 / r2**4
+
+                de = -C6ij * edisp * 0.5
+                energies[i] += de
+                if i != j:
+                    energies[j] += de
+                r0ijs[i] = r0ij
+                t6s[i] = t6
+                t8s[i] = t8
+    return t6s, t8s, energies
 
 
 def triple_scale(ii, jj, kk) -> float:
