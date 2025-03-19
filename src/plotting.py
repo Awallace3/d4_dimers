@@ -264,6 +264,7 @@ def compute_d4_from_opt_params(
     for i in bases:
         params_d4 = params_dict[i[2]]
         params_2B, params_ATM = paramsTable.generate_2B_ATM_param_subsets(params_d4)
+        print(f"{i[2]} {params_2B = }")
         df[f"-D4 ({i[1]})"] = df.apply(
             lambda row: disp_compute(
                 row,
@@ -2173,16 +2174,58 @@ def plotting_setup_dft_ddft(
             df,
             bases=[
                 [
-                    "SAPT_DFT_pbe0_aqz_total",
-                    "SAPT_DFT_aqz_plus_D4",
-                    "SAPT_DFT_pbe0_atz_disp_targeting_SAPT2+3(CCD)dMP2",
-                    "SAPT_DFT_pbe0_aqz_total",
+                    "SAPT_DFT_pbe0_adz_total",
+                    "SAPT_DFT_pbe0_adz_3_IE_NO_DAMPING",
+                    "SAPT_DFT_pbe0_adz_3_IE",
+                    # "pbe0",
+                    "SAPT_DFT_pbe0_adz_3_IE",
                 ],
             ],
             benchmark_label="benchmark ref energy",
             disp_compute=locald4.compute_disp_2B_NO_DAMPING,
         )
-        print(df[["SAPT_DFT_pbe0_aqz_total", "SAPT_DFT_aqz_plus_D4"]])
+        df = compute_d4_from_opt_params(
+            df,
+            bases=[
+                [
+                    "SAPT0_adz",
+                    "HF",
+                    "HF",
+                    "SAPT0_adz",
+                ],
+                [
+                    "SAPT0_adz",
+                    "HF_ATM",
+                    "HF_ATM",
+                    "SAPT0_adz",
+                ],
+            ],
+            benchmark_label="benchmark ref energy",
+            disp_compute=locald4.compute_disp_2B_BJ_ATM_CHG_dimer,
+        )
+        df = compute_d4_from_opt_params(
+            df,
+            bases=[
+                [
+                    "SAPT_DFT_pbe0_adz_total",
+                    "SAPT_DFT_pbe0_adz_3_IE_supra",
+                    "SAPT_DFT_pbe0_adz_3_IE_supra",
+                    # "pbe0",
+                    "SAPT_DFT_pbe0_adz_3_IE",
+                ],
+                [
+                    "SAPT_DFT_pbe0_adz_total",
+                    "SAPT_DFT_pbe0_adz_3_IE_supra_NO_DAMPING",
+                    "SAPT_DFT_pbe0_adz_3_IE_supra_NO_DAMPING",
+                    # "pbe0",
+                    "SAPT_DFT_pbe0_adz_3_IE",
+                ],
+            ],
+            benchmark_label="benchmark ref energy",
+            disp_compute=locald4.compute_disp_2B_BJ_dimer_supra,
+        )
+        print(df[["-D4 (SAPT_DFT_pbe0_adz_3_IE_NO_DAMPING)"]])
+        # df.to_pickle(df_out)
     # plot_violin_SAPT0_DFT_components(
     if original_plot:
         plot_violin_SAPT0_DFT_components(
@@ -4179,6 +4222,7 @@ def violin_plots_multi(df, limit_to_column_not_nan=None, slide=True):
         "SAPT(B3LYP)D3-ML TOTAL ENERGY",
         "SAPT(DFT)-D4 TOTAL ENERGY",
         "SAPT(DFT)+D4 TOTAL ENERGY",
+        "SAPT(DFT)-D4 SUPRA TOTAL ENERGY",
     ]
     reference = "benchmark ref energy"
     copy_cols_start = [
@@ -4318,6 +4362,7 @@ def violin_plots_multi(df, limit_to_column_not_nan=None, slide=True):
         "SAPT2+3": "SAPT2+3 TOTAL ENERGY Error",
         "SAPT2+3(CCD)": "SAPT2+3(CCD) TOTAL ENERGY Error",
         "SAPT2+3(CCD)DMP2": "SAPT2+3(CCD)DMP2 TOTAL ENERGY Error",
+        "SAPT(PBE0)-D4 SUPRA": "SAPT(DFT)-D4 SUPRA TOTAL ENERGY Error",
         # "SAPT2+(CCD)DMP2": "SAPT2+(CCD)DMP2 TOTAL ENERGY Error",
         # "SAPT2+(3)(CCD)DMP2": "SAPT2+(3)(CCD)DMP2 TOTAL ENERGY Error",
         # "MP2": "MP2 IE Error",
@@ -6172,6 +6217,8 @@ def violin_plots_multi_components(df, limit_to_column_not_nan=None, slide=False)
         "D3-ML DISP ENERGY",
         "SAPT(DFT)+D4 DISP ENERGY",
         "SAPT(DFT)-D4 DISP ENERGY",
+        "SAPT(DFT)-D4 SUPRA DISP ENERGY",
+        "SAPT(DFT)-D4 SUPRA ND DISP ENERGY",
     ]
     sapt_reference = {
         # "ELST": "SAPT2+3(CCD)DMP2 ELST ENERGY",
@@ -6403,6 +6450,13 @@ def violin_plots_multi_components(df, limit_to_column_not_nan=None, slide=False)
         {
             "SAPT(DFT)-D4": "SAPT(DFT)-D4 DISP ENERGY Error",
         },
+        {
+            "SAPT(DFT)-D4(SUPRA)": "SAPT(DFT)-D4 SUPRA DISP ENERGY Error",
+        },
+        {
+            "SAPT(DFT)-D4(SUPRA ND)": "SAPT(DFT)-D4 SUPRA ND DISP ENERGY Error",
+        },
+
     ]
     mcure_labels = {
         "ELST": {},
@@ -6577,6 +6631,8 @@ def violin_plots_multi_components(df, limit_to_column_not_nan=None, slide=False)
             # "SAPT2+(CCD)": "SAPT2+(CCD) DISP ENERGY Error",
             # "SAPT2+(3)(CCD)": "SAPT2+(3)(CCD) DISP ENERGY Error",
             "SAPT2+3(CCD)": "SAPT2+3(CCD) DISP ENERGY Error",
+            "-D4 SUPRA": "SAPT(DFT)-D4 SUPRA DISP ENERGY Error",
+            "-D4 SUPRA ND": "SAPT(DFT)-D4 SUPRA ND DISP ENERGY Error",
         },
         colors=colors_disp_saptdftd4,
         usetex=True,
@@ -8532,11 +8588,7 @@ def d3ml_saptdft(df, functional='b3lyp'):
         df[f"SAPT({functional.upper()})D3-ML TOTAL ENERGY {i}"] /= h2kcalmol
     return df
 
-def plot_LoS_saptdft(
-    df,
-    presentation=False,
-):
-    print(f"{presentation = }")
+def d4_conversions(df):
     df["SAPT0-D4 TOTAL ENERGY adz"] = df.apply(
         lambda r: ((r["SAPT0_adz_3_IE"] + r["-D4 (SAPT0_adz_3_IE)"]) / h2kcalmol),
         axis=1,
@@ -8549,6 +8601,21 @@ def plot_LoS_saptdft(
         lambda r: ((r["SAPT0_atz_3_IE"] + r["-D4 (SAPT0_atz_3_IE)"]) / h2kcalmol),
         axis=1,
     )
+    df['SAPT(DFT)-D4 SUPRA DISP ENERGY adz'] = df['SAPT(DFT)-D4 SUPRA DISP ENERGY'] / h2kcalmol
+    df['SAPT(DFT)-D4 SUPRA DISP ENERGY atz'] = df['SAPT(DFT)-D4 SUPRA DISP ENERGY'] / h2kcalmol
+    df['SAPT(DFT)-D4 SUPRA ND DISP ENERGY adz'] = df['SAPT(DFT)-D4 SUPRA ND DISP ENERGY'] / h2kcalmol
+    df['SAPT(DFT)-D4 SUPRA ND DISP ENERGY atz'] = df['SAPT(DFT)-D4 SUPRA ND DISP ENERGY'] / h2kcalmol
+# SAPT_DFT_{functional}_{basis_set}_3_IE
+    df['SAPT(DFT)-D4 SUPRA TOTAL ENERGY adz'] = df['SAPT(DFT)-D4 SUPRA DISP ENERGY'] / h2kcalmol + df['SAPT_DFT_pbe0_adz_3_IE'] / h2kcalmol
+    df['SAPT(DFT)-D4 SUPRA TOTAL ENERGY atz'] = df['SAPT(DFT)-D4 SUPRA DISP ENERGY'] / h2kcalmol + df['SAPT_DFT_pbe0_atz_3_IE'] / h2kcalmol
+    return df
+
+def plot_LoS_saptdft(
+    df,
+    presentation=False,
+):
+    print(f"{presentation = }")
+    df = d4_conversions(df)
     conv = [
         # PBE0
         "SAPT_DFT_D4_pbe0_adz_total",
@@ -8612,8 +8679,9 @@ def plot_LoS_saptdft(
         # return
         # return
         violin_plots_multi(df)
-        violin_plots_multi_subset(df)
+        return
         violin_plots_multi_components(df, limit_to_column_not_nan="D3-ML")
+        violin_plots_multi_subset(df)
         violin_plots_multi_components_subset(df, limit_to_column_not_nan="D3-ML")
         # return
         return

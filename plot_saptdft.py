@@ -40,6 +40,42 @@ def main():
         split_components=True,
         original_plot=False,
     )
+    print(
+        df[
+            [
+                # "-D4 (HF)",
+                # "-D4 (HF_ATM)",
+                "-D4 (SAPT_DFT_pbe0_adz_3_IE_NO_DAMPING)",
+                "-D4 (SAPT_DFT_pbe0_adz_3_IE)",
+            ]
+        ]
+    )
+    print(
+        df[
+            [
+                # "-D4 (HF)",
+                # "-D4 (HF_ATM)",
+                "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra_NO_DAMPING)",
+                "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra)",
+            ]
+        ]
+    )
+    # print(df.columns.values.tolist())
+    df['SAPT2+3(CCD) DISP ENERGY atz kcal'] = df['SAPT2+3(CCD) DISP ENERGY atz'] * h2kcalmol
+    print(
+        df[
+            [
+                "-D4 (HF)",
+                "-D4 (HF_ATM)",
+                "SAPT2+3(CCD) DISP ENERGY atz kcal"
+                # "-D4 (SAPT_DFT_pbe0_adz_3_IE_NO_DAMPING)",
+                # "-D4 (SAPT_DFT_pbe0_adz_3_IE)",
+            ]
+        ]
+    )
+    df['SAPT(DFT)-D4 SUPRA DISP ENERGY'] = df['-D4 (SAPT_DFT_pbe0_adz_3_IE_supra)']
+    df['SAPT(DFT)-D4 SUPRA ND DISP ENERGY'] = df['-D4 (SAPT_DFT_pbe0_adz_3_IE_supra_NO_DAMPING)']
+    # return
     # pp(df.columns.tolist())
     # return
     # src.plotting.plot_components_sapt0_saptdft(df)

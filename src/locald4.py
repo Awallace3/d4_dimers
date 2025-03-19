@@ -639,21 +639,17 @@ def compute_disp_2B_NO_DAMPING(
     charges = r["charges"]
     pA, cA = pos[monAs], carts[monAs, :]
     pB, cB = pos[monBs], carts[monBs, :]
-    e_total = disp.disp_2B_NO_DAMPING(
+    e_total = disp.disp_2B_dimer_NO_DAMPING(
         pos,
         carts,
         r["C6s"],
-        r["C6_ATM"],
         pA,
         cA,
         r["C6_A"],
-        r["C6_ATM_A"],
         pB,
         cB,
         r["C6_B"],
-        r["C6_ATM_B"],
         params_2B,
-        params_ATM,
     )
     return e_total * mult_out
 
