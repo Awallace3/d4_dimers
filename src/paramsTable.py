@@ -354,6 +354,14 @@ def paramsDict() -> {}:
             ],
             dtype=np.float64,
         ),
+        "SAPT_DFT_adz_TT_supra": np.array(
+            # [s8, b1, b2], optimized s8 for -0.33 and 4.39 params
+            [
+                [1.0, 0.6602069470, -0.33, 4.39, 0.0],
+                [1.0, 0.6602069470, -0.33, 4.39, 0.0],
+            ],
+            dtype=np.float64,
+        ),
         "SAPT0_adz_ATM_TT": np.array(
             [
                 [1.0, 0.0, -0.43832754, 3.38022962, 1.0],
@@ -619,6 +627,10 @@ def paramsDict() -> {}:
                 [1.0, 0.89529649, -0.82043591, 0.03264695, 0.0],
                 [1.0, 0.89529649, -0.82043591, 0.03264695, 0.0],
             ]
+        ),
+        "SAPT_DFT_pbe0_adz_3_IE_supra_DISP_CORRECTION_START": np.array(
+            [1.0, 0.8, 1.02043591, 3.03264695],
+            dtype=np.float64,
         ),
         "SAPT_DFT_pbe0_adz_3_IE_supra_NO_DAMPING": np.array(
             [

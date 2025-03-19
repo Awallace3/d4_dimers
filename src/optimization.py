@@ -442,8 +442,11 @@ def compute_int_energy_stats_DISP_2B_BJ_supra(
         if len(params) == 3:
             params_2B = np.array([1.0, params[0], params[1], params[2], 0.0])
             params_ATM = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
+        elif len(params) == 4:
+            params_2B = np.array([params[0], params[1], params[2],params[3], 0.0])
+            params_ATM = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
         else:
-            raise ValueError("params must be of length 3")
+            raise ValueError("params must be of length 3 or 4")
     # print(f"compute_int_energy_stats_DISP_TT:\n{params_2B = }\n{params_ATM = }")
 
     diff = np.zeros(len(df))
@@ -808,8 +811,11 @@ def compute_int_energy_DISP_2B_BJ_supra(
         if len(params) == 3:
             params_2B = np.array([1.0, params[0], params[1], params[2], 0.0])
             params_ATM = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
+        elif len(params) == 4:
+            params_2B = np.array([params[0], params[1], params[2],params[3], 0.0])
+            params_ATM = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
         else:
-            raise ValueError("params must be of length 3")
+            raise ValueError("params must be of length 3 or 4")
     rmse = 0
     df["d4"] = df.apply(
         lambda row: locald4.compute_disp_2B_BJ_dimer_supra(
