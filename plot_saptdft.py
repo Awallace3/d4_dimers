@@ -1,6 +1,7 @@
 import src
 import pandas as pd
 import qcelemental as qcel
+from pprint import pprint as pp
 
 h2kcalmol = qcel.constants.conversion_factor("hartree", "kcal/mol")
 
@@ -40,6 +41,20 @@ def main():
         split_components=True,
         original_plot=False,
     )
+    pp(df.columns.values.tolist())
+    print(df[['-D4 (SAPT_DFT_pbe0_adz_3_IE_NO_DAMPING)', '-D4 (HF)', '-D4 (SAPT_DFT_pbe0_adz_3_IE)', '-D4 (SAPT_DFT_pbe0_adz_3_IE_supra)']])
+    print(df[['-D4 (SAPT_DFT_pbe0_adz_3_IE_NO_DAMPING)', '-D4 (HF)', '-D4 (SAPT_DFT_pbe0_adz_3_IE)', '-D4 (SAPT_DFT_pbe0_adz_3_IE_supra)']].describe())
+    # df = src.plotting.prep_saptdft_components(df, "pbe0", "adz")
+    # pp(df.columns.values.tolist())
+    # df["SAPT(DFT) [PBE0] Sum"] = df.apply(
+    #     lambda r: r["SAPT(DFT) [PBE0] ELST ENERGY adz"]
+    #     + r["SAPT(DFT) [PBE0] EXCH ENERGY adz"]
+    #     + r["SAPT(DFT) [PBE0] IND ENERGY adz"]
+    #     + r['SAPT_DFT_pbe0_adz_DFT_IE'],
+    #     axis=1,
+    # )
+    # df.to_pickle("./plots/ddft_study.pkl")
+    # return
     src.plotting.plot_LoS_saptdft(df, presentation=False)
     return
 

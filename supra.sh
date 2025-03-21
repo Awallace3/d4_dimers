@@ -5,5 +5,9 @@
 # python3 -u main.py --df_path plots/ddft_study.pkl --level_theories SAPT_DFT_pbe0_adz_3_IE --start_params_d4_key HF_OPT_2B_START --supramolecular_BJ # > BJ_supra_saptdftd4.log 
 #
 #
-python3 -u main.py --df_path plots/ddft_study.pkl --level_theories SAPT_DFT_pbe0_adz_3_IE --start_params_d4_key 2B_TT_START --supramolecular_TT # > BJ_supra_saptdftd4.log 
+# python3 -u main.py --df_path plots/ddft_study.pkl --level_theories SAPT_DFT_pbe0_adz_3_IE --start_params_d4_key 2B_TT_START --supramolecular_TT # > BJ_supra_saptdftd4.log 
 # python3 -u main.py --df_path plots/ddft_study.pkl --start_params_d4_key 'SAPT_DFT_pbe0_adz_3_IE_supra_DISP_CORRECTION_START'  --supramolecular_BJ --energy_target 'SAPT_DFT_pbe0_adz_DIFF_SAPT2+3(CCD)DMP2' --fit_dispersion_term
+
+# Can we improve DFT-D4 fitting?
+# python3 -u main.py --df_path plots/ddft_study.pkl --level_theories "SAPT(DFT) [PBE0] Sum" --start_params_d4_key 'SAPT_DFT_pbe0_adz_3_IE_supra_START' --supramolecular_BJ
+python3 -u main.py --df_path plots/ddft_study.pkl --level_theories "SAPT(DFT) [PBE0] Sum" --start_params_d4_key 'SAPT_DFT_pbe0_adz_3_IE_supra_START' --powell

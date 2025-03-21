@@ -2190,25 +2190,6 @@ def plotting_setup_dft_ddft(
             df,
             bases=[
                 [
-                    "SAPT0_adz",
-                    "HF",
-                    "HF",
-                    "SAPT0_adz",
-                ],
-                [
-                    "SAPT0_adz",
-                    "HF_ATM",
-                    "HF_ATM",
-                    "SAPT0_adz",
-                ],
-            ],
-            benchmark_label="benchmark ref energy",
-            disp_compute=locald4.compute_disp_2B_BJ_ATM_CHG_dimer,
-        )
-        df = compute_d4_from_opt_params(
-            df,
-            bases=[
-                [
                     "SAPT_DFT_pbe0_adz_total",
                     "SAPT_DFT_pbe0_adz_3_IE_supra",
                     "SAPT_DFT_pbe0_adz_3_IE_supra",
@@ -2230,17 +2211,36 @@ def plotting_setup_dft_ddft(
             df,
             bases=[
                 [
-                    "SAPT_DFT_pbe0_adz_total",
-                    "SAPT_DFT_adz_TT_supra",
-                    "SAPT_DFT_adz_TT_supra",
-                    # "pbe0",
-                    "SAPT_DFT_pbe0_adz_3_IE",
+                    "SAPT0_adz",
+                    "HF",
+                    "HF",
+                    "SAPT0_adz",
+                ],
+                [
+                    "SAPT0_adz",
+                    "HF_ATM",
+                    "HF_ATM",
+                    "SAPT0_adz",
                 ],
             ],
             benchmark_label="benchmark ref energy",
-            disp_compute=locald4.compute_disp_2B_TT_dimer_supra,
+            disp_compute=locald4.compute_disp_2B_BJ_ATM_CHG_dimer,
         )
-        print(df[["-D4 (SAPT_DFT_adz_TT_supra)"]])
+        # df = compute_d4_from_opt_params(
+        #     df,
+        #     bases=[
+        #         [
+        #             "SAPT_DFT_pbe0_adz_total",
+        #             "SAPT_DFT_adz_TT_supra",
+        #             "SAPT_DFT_adz_TT_supra",
+        #             # "pbe0",
+        #             "SAPT_DFT_pbe0_adz_3_IE",
+        #         ],
+        #     ],
+        #     benchmark_label="benchmark ref energy",
+        #     disp_compute=locald4.compute_disp_2B_TT_dimer_supra,
+        # )
+        # print(df[["-D4 (SAPT_DFT_adz_TT_supra)"]])
         # df.to_pickle(df_out)
     # plot_violin_SAPT0_DFT_components(
     if original_plot:
