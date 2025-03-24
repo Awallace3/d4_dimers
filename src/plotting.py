@@ -2178,7 +2178,7 @@ def plotting_setup_dft_ddft(
                 [
                     "SAPT_DFT_pbe0_adz_total",
                     "SAPT_DFT_pbe0_adz_3_IE_NO_DAMPING",
-                    "SAPT_DFT_pbe0_adz_3_IE",
+                    "SAPT_DFT_pbe0_adz_3_IE_supra_NO_DAMPING",
                     # "pbe0",
                     "SAPT_DFT_pbe0_adz_3_IE",
                 ],
@@ -2226,6 +2226,7 @@ def plotting_setup_dft_ddft(
             benchmark_label="benchmark ref energy",
             disp_compute=locald4.compute_disp_2B_BJ_ATM_CHG_dimer,
         )
+        df.to_pickle(df_out)
         # df = compute_d4_from_opt_params(
         #     df,
         #     bases=[
