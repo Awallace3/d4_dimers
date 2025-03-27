@@ -233,6 +233,7 @@ def compute_bj_terms(
     C6s: np.array,
     params: [] = [1.61679827, 0.44959224, 3.35743605],
     r4r2_ls=r4r2.r4r2_vals_ls(),
+    damping_2d=False,
 ) -> float:
     """
     compute_bj_f90 computes energy from C6s, cartesian coordinates, and dimer sizes.
@@ -250,8 +251,12 @@ def compute_bj_terms(
     M_tot = len(carts)
     energies = np.zeros(M_tot)
     r0ijs = np.zeros(M_tot)
-    t6s = np.zeros(M_tot)
-    t8s = np.zeros(M_tot)
+    if damping_2d:
+        t6s = np.zeros((M_tot, M_tot))
+        t8s = np.zeros((M_tot, M_tot))
+    else:
+        t6s = np.zeros(M_tot)
+        t8s = np.zeros(M_tot)
     lattice_points = 1
 
     for i in range(M_tot):
@@ -283,8 +288,14 @@ def compute_bj_terms(
                 if i != j:
                     energies[j] += de
                 r0ijs[i] = r0ij
-                t6s[i] = t6
-                t8s[i] = t8
+                if damping_2d:
+                    t6s[i, j] = t6
+                    t8s[i, j] = t8
+                    t6s[j, i] = t6
+                    t8s[j, i] = t8
+                else:
+                    t6s[i] = t6
+                    t8s[i] = t8
     return t6s, t8s, energies
 
 
@@ -501,6 +512,57 @@ def compute_disp_2B(
 
     e_total = (e_d - (e_1 + e_2)) * hartree_to_kcalmol
     return e_total
+
+
+def compute_disp_2B_from_C6s(
+    pos,
+    carts,
+    c6s,
+    params,
+    params_ATM=None,
+):
+    e_d = disp.disp_2B(
+        np.array(pos, dtype=np.int32),
+        np.array(carts, dtype=np.float64),
+        np.array(c6s, dtype=np.float64),
+        params,
+    )
+    return e_d * hartree_to_kcalmol
+
+
+def compute_disp_2B_from_C6s_NO_DAMPING(
+    pos,
+    carts,
+    c6s,
+    params,
+    params_ATM=None,
+):
+    e_d = disp.disp_2B_NO_DAMPING(
+        np.array(pos, dtype=np.int32),
+        np.array(carts, dtype=np.float64),
+        np.array(c6s, dtype=np.float64),
+        params,
+    )
+    return e_d * hartree_to_kcalmol
+
+def compute_disp_2B_supra_from_C6s(
+    pos,
+    carts,
+    c6s,
+    monAs,
+    monBs,
+    params,
+    params_ATM=None,
+):
+    e_d = disp.disp_2B_BJ_supra(
+        np.array(pos, dtype=np.int32),
+        np.array(carts, dtype=np.float64),
+        np.array(c6s, dtype=np.float64),
+        np.array(monAs, dtype=np.int32),
+        np.array(monBs, dtype=np.int32),
+        params,
+    )
+    return e_d * hartree_to_kcalmol
 
 
 def compute_disp_2B_dimer(

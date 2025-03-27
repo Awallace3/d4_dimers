@@ -2171,7 +2171,7 @@ def plotting_setup_dft_ddft(
     print(f"Length of df prior plotting: {len(df)}")
     dimer_dataset_size = len(df)
 
-    if True:
+    if False:
         df = compute_d4_from_opt_params(
             df,
             bases=[

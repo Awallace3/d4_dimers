@@ -1169,7 +1169,7 @@ def subplot_all_curves_LoS_basis_set_D4_versions(
                     y_min = np.min([ax.get_ylim()[0] for ax in axs])
                     y_max = np.max([ax.get_ylim()[1] for ax in axs])
                     for ax in axs:
-                        ax.set_ylim(y_min, 5)
+                        ax.set_ylim(y_min, 8)
                     # fmt: off
                     plt.tight_layout()
                     # plt.savefig(
@@ -1203,6 +1203,129 @@ def subplot_all_curves_LoS_basis_set_D4_versions(
         os.chdir("../../")
     return
 
+def monomer_C6s_from_dimer(dimer_C6s, monA_C6s, monB_C6s):
+    dimer_monA_C6s = dimer_C6s[:len(monA_C6s), :len(monA_C6s)]
+    dimer_monB_C6s = dimer_C6s[len(monA_C6s):, len(monA_C6s):]
+    return dimer_monA_C6s, dimer_monB_C6s
+
+def c6_change_mon_dimer(df, print_lvl=0):
+    # df_42 = df[df['System Label'] == '42_Uracil-Cyclopentane']
+    df_sys = df[df['System Label'] == '01_Water-Water']
+    # df_sys = df[df['System Label'] == '50_Benzene-Ethyne'].copy()
+    df_sys.sort_values('distance (A)', inplace=True)
+    # df_sys = plotting.compute_d4_from_opt_params(
+    #     df_sys,
+    #     bases=[
+    #         [
+    #             "SAPT_DFT_pbe0_adz_total",
+    #             "SAPT_DFT_pbe0_adz_3_IE_NO_DAMPING",
+    #             "SAPT_DFT_pbe0_adz_3_IE_supra_NO_DAMPING",
+    #             # "pbe0",
+    #             "SAPT_DFT_pbe0_adz_3_IE",
+    #         ],
+    #     ],
+    #     benchmark_label="benchmark ref energy",
+    #     disp_compute=locald4.compute_disp_2B_NO_DAMPING,
+    # )
+    print(df_sys[['system_id', 'R', 'distance (A)']])
+    print(df_sys[['R', '-D4 (SAPT_DFT_pbe0_adz_3_IE)']])
+    print(df_sys[['R', '-D4 (SAPT_DFT_pbe0_adz_3_IE_NO_DAMPING)']])
+    params, _ = paramsTable.get_params("SAPT_DFT_pbe0_adz_3_IE_supra_NO_DAMPING")
+    # params, _ = paramsTable.get_params("SAPT_DFT_pbe0_adz_3_IE")
+    for n, r in df_sys.iterrows():
+        print(f"System: {r['system_id']}, R: {r['R']}")
+        dimer_C6s = r['C6s']
+        monA_C6s = r['C6_A']
+        monB_C6s = r['C6_B']
+        dimer_monA_C6s, dimer_monB_C6s = monomer_C6s_from_dimer(dimer_C6s, monA_C6s, monB_C6s)
+        dimer_geom = r['Geometry_bohr'][:, 1:]
+        distance_matrix = np.linalg.norm(dimer_geom[:, np.newaxis] - dimer_geom, axis=2)
+        monomer_distance_A = distance_matrix[:len(monA_C6s), :len(monA_C6s)]
+        monomer_distance_B = distance_matrix[len(monA_C6s):, len(monA_C6s):]
+        for i in range(len(monA_C6s)):
+            monA_C6s[i, i] = 0.0
+            dimer_monA_C6s[i, i] = 0.0
+            monomer_distance_A[i, i] = 1.0
+        for i in range(len(monB_C6s)):
+            monB_C6s[i, i] = 0.0
+            dimer_monB_C6s[i, i] = 0.0
+            monomer_distance_B[i, i] = 1.0
+        avg_change_A = np.mean(dimer_monA_C6s - monA_C6s)
+        avg_change_B = np.mean(dimer_monB_C6s - monB_C6s)
+        print(f"avg change A: {avg_change_A:.2f}, avg change B: {avg_change_B:.2f}")
+        print("* hartree2kcalmol because want to scale units to kcal/mol where I can think more clearly about them")
+        avg_change_A = np.mean(dimer_monA_C6s - monA_C6s) * constants.hartree2kcalmol
+        avg_change_B = np.mean(dimer_monB_C6s - monB_C6s) * constants.hartree2kcalmol
+        print(f"avg change A: {avg_change_A:.2f}, avg change B: {avg_change_B:.2f}")
+        print("divided by 1/r^6")
+        avg_change_A = np.mean(dimer_monA_C6s / monomer_distance_A ** 6 - monA_C6s / monomer_distance_A ** 6) * constants.hartree2kcalmol
+        avg_change_B = np.mean(dimer_monB_C6s / monomer_distance_B ** 6 - monB_C6s / monomer_distance_B ** 6) * constants.hartree2kcalmol
+        print(f"avg change A: {avg_change_A:.2f}, avg change B: {avg_change_B:.2f}")
+        print("divided by 1/r^8")
+        avg_change_A = np.mean(dimer_monA_C6s / monomer_distance_A **8 - monA_C6s / monomer_distance_A **8) * constants.hartree2kcalmol
+        avg_change_B = np.mean(dimer_monB_C6s / monomer_distance_B **8 - monB_C6s / monomer_distance_B **8) * constants.hartree2kcalmol
+        print(f"avg change A: {avg_change_A:.2f}, avg change B: {avg_change_B:.2f}")
+
+        dimer_dispersion_supra = locald4.compute_disp_2B_supra_from_C6s(r['Geometry_bohr'][:, 0], r['Geometry_bohr'][:, 1:], dimer_C6s, r['monAs'],r['monBs'], params)
+        dimer_dispersion = locald4.compute_disp_2B_from_C6s_NO_DAMPING(r['Geometry_bohr'][:, 0], r['Geometry_bohr'][:, 1:], dimer_C6s, params)
+        monA_dispersion = locald4.compute_disp_2B_from_C6s_NO_DAMPING(r['Geometry_bohr'][:len(monA_C6s), 0], r['Geometry_bohr'][:len(monA_C6s), 1:], monA_C6s, params)
+
+        dimer_C6s_d_zero = dimer_C6s.copy()
+        for i in range(len(dimer_C6s_d_zero)):
+            dimer_C6s_d_zero[i, i] = 0.0
+        dimer_dispersion_diagonal_zero = locald4.compute_disp_2B_from_C6s_NO_DAMPING(r['Geometry_bohr'][:, 0], r['Geometry_bohr'][:, 1:], dimer_C6s_d_zero, params)
+        # This test demonstrates that diagonal C6s do not contribute to the
+        # dispersion energy. This allows us to set diagonal to zero for monC6s
+        assert np.isclose(dimer_dispersion_diagonal_zero, dimer_dispersion)
+
+
+        print(f"Disp.    dimer diagonal zero: {dimer_dispersion_diagonal_zero:.4f}")
+        monB_dispersion = locald4.compute_disp_2B_from_C6s_NO_DAMPING(r['Geometry_bohr'][len(monA_C6s):, 0], r['Geometry_bohr'][len(monA_C6s):, 1:], monB_C6s, params)
+        dimer_monA_dispersion = locald4.compute_disp_2B_from_C6s_NO_DAMPING(r['Geometry_bohr'][:len(monA_C6s), 0], r['Geometry_bohr'][:len(monA_C6s), 1:], dimer_monA_C6s, params)
+        dimer_monB_dispersion = locald4.compute_disp_2B_from_C6s_NO_DAMPING(r['Geometry_bohr'][len(monA_C6s):, 0], r['Geometry_bohr'][len(monA_C6s):, 1:], dimer_monB_C6s, params)
+        dimer_C6s_mon = dimer_C6s.copy()
+        dimer_C6s_mon[:len(monA_C6s), :len(monA_C6s)] = monA_C6s
+        dimer_C6s_mon[len(monA_C6s):, len(monA_C6s):] = monB_C6s
+        dimer_dispersion_supra_monc6s = locald4.compute_disp_2B_supra_from_C6s(r['Geometry_bohr'][:, 0], r['Geometry_bohr'][:, 1:], dimer_C6s_mon, r['monAs'],r['monBs'], params)
+        dimer_dispersion_c6s_mon = locald4.compute_disp_2B_from_C6s_NO_DAMPING(r['Geometry_bohr'][:, 0], r['Geometry_bohr'][:, 1:], dimer_C6s_mon, params)
+        print(f"Disp.    dimer: {dimer_dispersion:.4f}, monA: {monA_dispersion:.4f}, monB: {monB_dispersion:.4f}")
+        print(f"Disp.    Total: {dimer_dispersion - monA_dispersion - monB_dispersion:.4f}")
+        print(f"Disp.MC6 dimer: {dimer_dispersion_c6s_mon:.4f}, monA: {monA_dispersion:.4f}, monB: {monB_dispersion:.4f}")
+        print(f"Disp.MC6 Total: {dimer_dispersion_c6s_mon - dimer_monA_dispersion - dimer_monB_dispersion:.4f}")
+        print(f"Disp.    dmonA: {dimer_monA_dispersion:.4f}, dmonB: {dimer_monB_dispersion:.4f}")
+        print(f"Disp.    Total: {dimer_dispersion - dimer_monA_dispersion - dimer_monB_dispersion:.4f}")
+        print(f"Disp.    Supra: {dimer_dispersion_supra:.4f}")
+        print(f"Disp.    Supra monC6s: {dimer_dispersion_supra_monc6s:.4f}")
+
+        if print_lvl == 0:
+            params_damped, _ = paramsTable.param_lookup("sadz")
+            t6_2, t8_2, energies = locald4.compute_bj_terms(dimer_geom[:, 0], dimer_geom[:, 1:], dimer_C6s, params=params_damped, damping_2d=True)
+            print("dimer C6s")
+            print(dimer_C6s)
+            print("Monomer C6s")
+            print(monA_C6s)
+            print(monA_C6s)
+            print("Dimer Monomer C6s")
+            print(dimer_monA_C6s)
+            print(dimer_monB_C6s)
+            print("C6 change")
+            print(dimer_monA_C6s - monA_C6s)
+            print(dimer_monB_C6s - monB_C6s)
+            monA_t6s = t6_2[:len(monA_C6s), :len(monA_C6s)]
+            monB_t6s = t6_2[len(monA_C6s):, len(monA_C6s):]
+            monA_t8s = t8_2[:len(monA_C6s), :len(monA_C6s)]
+            monB_t8s = t8_2[len(monA_C6s):, len(monA_C6s):]
+            print("Dimer t6s")
+            print(t6_2)
+            print("Monomer t6s")
+            print(monA_t6s)
+            print(monB_t6s)
+            print("Monomer t8s")
+            print(monA_t8s)
+            print(monB_t8s)
+        print()
+    return
+
 
 def main():
     # df = pd.read_pickle("./plots/basis_study.pkl")
@@ -1212,6 +1335,8 @@ def main():
     # df = pd.read_pickle("./plots/ddft_study.pkl")
     # df = df_setup(df, ddft=True)
     df = df_setup(None, ddft=True)
+    c6_change_mon_dimer(df)
+    return
     print(df['SAPT(DFT) [PBE0] DISP ENERGY atz'])
     df = plotting.prep_saptdft_components(df, "pbe0", "adz")
     df = plotting.prep_saptdft_components(df, "pbe0", "atz")
