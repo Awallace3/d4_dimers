@@ -41,40 +41,7 @@ def main():
         split_components=True,
         original_plot=False,
     )
-    df_sys = df[df['System Label'] == '50_Benzene-Ethyne'].copy()
-    print(df_sys[['R', '-D4 (SAPT_DFT_pbe0_adz_3_IE_NO_DAMPING)']])
-    pp(df.columns.values.tolist())
-    print(
-        df[
-            [
-                "-D4 (SAPT_DFT_pbe0_adz_3_IE_NO_DAMPING)",
-                "-D4 (HF)",
-                "-D4 (SAPT_DFT_pbe0_adz_3_IE)",
-                "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra)",
-            ]
-        ]
-    )
-    print(
-        df[
-            [
-                "-D4 (SAPT_DFT_pbe0_adz_3_IE_NO_DAMPING)",
-                "-D4 (HF)",
-                "-D4 (SAPT_DFT_pbe0_adz_3_IE)",
-                "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra)",
-            ]
-        ].describe()
-    )
-    print(df["SAPT_DFT_pbe0_adz"])
-    df["PBE0(SAPT)_adz_DIFF_REF"] = df.apply(
-        lambda r: sum(r["SAPT_DFT_pbe0_adz"][1:4])
-        + r["SAPT_DFT_pbe0_adz_dDFT"]
-        - r["SAPT_DFT_pbe0_adz_dHF"]
-        - r["benchmark ref energy"],
-        axis=1,
-    )
-    print(df["PBE0(SAPT)_adz_DIFF_REF"])
-    df.to_pickle("./plots/train.pkl")
-    return
+    # return
     # df = src.plotting.prep_saptdft_components(df, "pbe0", "adz")
     # pp(df.columns.values.tolist())
     # df["SAPT(DFT) [PBE0] Sum"] = df.apply(

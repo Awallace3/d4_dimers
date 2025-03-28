@@ -1408,6 +1408,8 @@ def opt_val_no_folds(
     print(f"{version = }")
 
     if hf_key != "":
+        if True:
+            df.dropna(subset=[hf_key], inplace=True)
         nans = df[hf_key].isna().sum()
         inds = df.index[df[hf_key].isna()]
         assert (
