@@ -41,6 +41,9 @@ def main():
         split_components=True,
         original_plot=False,
     )
+
+
+    print(df[['SAPT_DFT_pbe0_adz', 'SAPT_DFT_pbe0_atz']])
     # return
     # df = src.plotting.prep_saptdft_components(df, "pbe0", "adz")
     # pp(df.columns.values.tolist())
