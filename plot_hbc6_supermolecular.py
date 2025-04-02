@@ -1084,7 +1084,7 @@ def subplot_all_curves_LoS_basis_set_D4_versions(
                         axs[n].plot(
                             df_sys["distance (A)"],
                             df_sys[label],
-                            label=f"HF-D4 (I)",
+                            label=f"HF-D4 (S)",
                             marker="o",
                             markersize=4.0,
                             # color="orange",
