@@ -57,6 +57,7 @@ def main():
     # df.to_pickle("./plots/ddft_study.pkl")
     # return
     src.plotting.plot_LoS_saptdft(df, presentation=False)
+    # src.plotting.plot_LoS_saptdft(df, presentation=True);
     return
 
 

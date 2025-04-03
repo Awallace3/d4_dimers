@@ -2173,6 +2173,20 @@ def plotting_setup_dft_ddft(
     print(f"Length of df prior plotting: {len(df)}")
     dimer_dataset_size = len(df)
 
+    if True:
+        df = compute_d4_from_opt_params(
+            df,
+            bases=[
+                [
+                    "SAPT0_adz_total",
+                    "SAPT0_adz_3_IE_2B_BJ_inter",
+                    "SAPT0_adz_3_IE_2B_BJ_inter",
+                    "SAPT0_adz_3_IE",
+                ],
+            ],
+            benchmark_label="benchmark ref energy",
+            disp_compute=locald4.compute_disp_2B_BJ_dimer_supra,
+        )
     if False:
         df = compute_d4_from_opt_params(
             df,
@@ -4218,7 +4232,7 @@ def violin_plots_multi(df, limit_to_column_not_nan=None, slide=True):
         print(
             f"Limiting to {limit_to_column_not_nan} not NaN: {size_prior} -> {len(df)}"
         )
-    df = d3ml_saptdft(df, 'b3lyp')
+    # df = d3ml_saptdft(df, 'b3lyp')
     sapt_methods = [
         "MP2 IE",
         "PBE0 IE",
@@ -4513,6 +4527,9 @@ def violin_plots_multi_individual(df, limit_to_column_not_nan=None):
         "SAPT(DFT)D3-ML TOTAL ENERGY",
         "SAPT(DFT)-D4 TOTAL ENERGY",
         "SAPT(DFT)+D4 TOTAL ENERGY",
+        "SAPT(PBE0)-D4 SUPRA TOTAL ENERGY",
+        "SAPT(B3LYP)-D4 SUPRA TOTAL ENERGY",
+        "SAPT0-D4 (I) TOTAL ENERGY",
     ]
     reference = "benchmark ref energy"
     copy_cols_start = [
@@ -4607,39 +4624,39 @@ def violin_plots_multi_individual(df, limit_to_column_not_nan=None):
         df_atz[f"{i} Error"] = df_atz[i] * h2kcalmol - df_atz[reference]
 
     dfs_all = [
-        {"df": df_adz, "label": "aug-cc-pVDZ", "ylim": [-3, 3], "name": "adz"},
-        {"df": df_atz, "label": "aug-cc-pVTZ", "ylim": [-3, 3], "name": "atz"},
+        {"df": df_adz, "basis": "aug-cc-pVDZ", "label": "aug-cc-pVDZ", 
+            "ylim": [[-3, 3] for i in range(2)], "name": "adz"},
+        {"df": df_atz, "basis": "aug-cc-pVTZ", "label": "aug-cc-pVTZ", "ylim": [[-3, 3] for i in range(2)], "name": "atz"},
     ]
     # Color all of the same functional the same.
     df_labels_and_columns = {
         # "SAPT2+3(CCD)DMP2": "SAPT2+3(CCD)DMP2 TOTAL ENERGY Error",
         # DFT
-        "PBE0": "PBE0 IE Error",
-        "B3LYP": "B3LYP IE Error",
-        "B2PLYP": "B2PLYP IE Error",
-        "WB97X": "WB97X IE Error",
+        # "PBE0": "PBE0 IE Error",
+        # "B3LYP": "B3LYP IE Error",
+        # "B2PLYP": "B2PLYP IE Error",
+        # "WB97X": "WB97X IE Error",
         # SAPT(DFT)
-        "SAPT(DFT) [PBE0]": "SAPT(DFT) [PBE0] TOTAL ENERGY Error",
-        "SAPT(DFT) [B3LYP]": "SAPT(DFT) [B3LYP] TOTAL ENERGY Error",
-        "SAPT(DFT) [B2PLYP]": "SAPT(DFT) [B2PLYP] TOTAL ENERGY Error",
-        "SAPT(DFT) [WB97X]": "SAPT(DFT) [WB97X] TOTAL ENERGY Error",
+        # "SAPT(DFT) [B3LYP]": "SAPT(DFT) [B3LYP] TOTAL ENERGY Error",
+        # "SAPT(DFT) [B2PLYP]": "SAPT(DFT) [B2PLYP] TOTAL ENERGY Error",
+        # "SAPT(DFT) [WB97X]": "SAPT(DFT) [WB97X] TOTAL ENERGY Error",
         # DFT-D4
         "PBE0-D4(SAPT)": "PBE0-D4 TOTAL ENERGY Error",
-        "B3LYP-D4(SAPT)": "B3LYP-D4 TOTAL ENERGY Error",
-        "B2PLYP-D4(SAPT)": "B2PLYP-D4 TOTAL ENERGY Error",
-        "WB97X-D4(SAPT)": "WB97X-D4 TOTAL ENERGY Error",
+        # "B3LYP-D4(SAPT)": "B3LYP-D4 TOTAL ENERGY Error",
+        # "B2PLYP-D4(SAPT)": "B2PLYP-D4 TOTAL ENERGY Error",
+        # "WB97X-D4(SAPT)": "WB97X-D4 TOTAL ENERGY Error",
         # SAPT(DFT) D's
-        "SAPT(PBE0)-D4": "SAPT(DFT)-D4 TOTAL ENERGY Error",
-        "SAPT(PBE0)+D4": "SAPT(DFT)+D4 TOTAL ENERGY Error",
-        "SAPT(PBE0)D3-ML": "SAPT(DFT)D3-ML TOTAL ENERGY Error",
-        "SAPT(B3LYP)D3-ML": "SAPT(B3LYP)D3-ML TOTAL ENERGY Error",
+        "SAPT(PBE0)-D4 (S)": "SAPT(DFT)-D4 TOTAL ENERGY Error",
+        "SAPT(PBE0)-D4 (I)": "SAPT(PBE0)-D4 SUPRA TOTAL ENERGY Error",
         # Wavefunction
-        "SAPT0-D4": "SAPT0-D4 TOTAL ENERGY Error",
+        "SAPT0-D4 (S)": "SAPT0-D4 TOTAL ENERGY Error",
+        "SAPT0-D4 (I)": "SAPT0-D4 (I) TOTAL ENERGY Error",
         "SAPT0": "SAPT0 TOTAL ENERGY Error",
-        "SAPT2": "SAPT2 TOTAL ENERGY Error",
-        "SAPT2+": "SAPT2+ TOTAL ENERGY Error",
-        "SAPT2+(3)": "SAPT2+(3) TOTAL ENERGY Error",
-        "SAPT2+3": "SAPT2+3 TOTAL ENERGY Error",
+        "SAPT(DFT) [PBE0]": "SAPT(DFT) [PBE0] TOTAL ENERGY Error",
+        # "SAPT2": "SAPT2 TOTAL ENERGY Error",
+        # "SAPT2+": "SAPT2+ TOTAL ENERGY Error",
+        # "SAPT2+(3)": "SAPT2+(3) TOTAL ENERGY Error",
+        # "SAPT2+3": "SAPT2+3 TOTAL ENERGY Error",
         "SAPT2+3(CCD)DMP2": "SAPT2+3(CCD)DMP2 TOTAL ENERGY Error",
         # "SAPT2+(CCD)DMP2": "SAPT2+(CCD)DMP2 TOTAL ENERGY Error",
         # "SAPT2+(3)(CCD)DMP2": "SAPT2+(3)(CCD)DMP2 TOTAL ENERGY Error",
@@ -4652,31 +4669,29 @@ def violin_plots_multi_individual(df, limit_to_column_not_nan=None):
         # "SAPT2+(3)DMP2": "SAPT2+(3)DMP2 TOTAL ENERGY Error",
         # "SAPT2+3DMP2": "SAPT2+3DMP2 TOTAL ENERGY Error",
     }
+    df_labels_and_columns_disp = {
+        "PBE0-D4(SAPT)": "PBE0-D4 DISP ENERGY Error",
+        "SAPT(PBE0)-D4 (S)": "SAPT(DFT)-D4 DISP ENERGY Error",
+        "SAPT(PBE0)-D4 (I)": "SAPT(PBE0)-D4 SUPRA DISP ENERGY Error",
+        "SAPT0-D4": "SAPT0-D4 DISP ENERGY Error",
+        "SAPT0": "SAPT0 DISP ENERGY Error",
+        "SAPT(DFT) [PBE0]": "SAPT(DFT) [PBE0] DISP ENERGY Error",
+        "SAPT2+3(CCD)DMP2": "SAPT2+3(CCD)DMP2 DISP ENERGY Error",
+    }
+    pp(df_adz.columns.values.tolist())
     # four colors that are contrast between purple blue green and yellow
     # I need a less bright yellow and different shades of blue and green
     colors = [
-        TEAL,
-        LIGHT_PURPLE,
-        Medium_Sea_Green,
-        INDIGO,
-        TEAL,
-        LIGHT_PURPLE,
-        Medium_Sea_Green,
-        INDIGO,
-        TEAL,
-        LIGHT_PURPLE,
-        Medium_Sea_Green,
-        INDIGO,
-        BLUE,
-        GREEN,
-        BLUE,
-        GREEN,
-        BLUE,
-        GREEN,
-        BLUE,
-        GREEN,
-        BLUE,
-        GREEN,
+        [
+            TEAL,
+            TEAL,
+            TEAL,
+            PURPLE,
+            PURPLE,
+            PURPLE,
+            TEAL,
+            GREEN,
+        ]
     ]
     mcure_labels = {}
     for k, v in df_labels_and_columns.items():
@@ -4693,23 +4708,43 @@ def violin_plots_multi_individual(df, limit_to_column_not_nan=None):
 
     for dfs in dfs_all:
         dfs = [dfs]
-        cdsg_plot.error_statistics.violin_plot_table_multi(
+        cdsg_plot.error_statistics.violin_plot_table_multi_SAPT_components(
             dfs,
-            df_labels_and_columns,
-            f"./plots/individuals/LoS_all_{dfs[0]['name']}_saptdft.jpg",
-            table_fontsize=9,
+            df_labels_and_columns_total=df_labels_and_columns,
+            output_filename = f"./plots/individuals/LoS_all_{dfs[0]['name']}_saptdft.jpg",
             usetex=True,
-            legend_loc="lower right",
-            figure_size=(10, 3),
+            figure_size=(10, 4),
             colors=colors,
-            violin_alpha=0.9,
-            x_label_fontsize=12,
-            error_labels_position=(-0.3, 0.25),
             grid_widths=[1.0],
             grid_heights=[
-                0.45,
+                0.95,
                 2,
             ],
+            wspace=0.8,
+            violin_alphas=0.9,
+            legend_loc="lower right",
+            table_fontsize=18,
+            x_label_fontsize=16,
+            y_label_fontsize=18,
+        )
+        cdsg_plot.error_statistics.violin_plot_table_multi_SAPT_components(
+            dfs,
+            df_labels_and_columns_total=df_labels_and_columns,
+            output_filename = f"./plots/individuals/LoS_all_{dfs[0]['name']}_disp_total.jpg",
+            usetex=True,
+            figure_size=(10, 4),
+            colors=colors,
+            grid_widths=[1.0],
+            grid_heights=[
+                0.95,
+                2,
+            ],
+            wspace=0.8,
+            violin_alphas=0.9,
+            legend_loc="lower right",
+            table_fontsize=18,
+            x_label_fontsize=16,
+            y_label_fontsize=18,
         )
     return
 
@@ -6569,16 +6604,19 @@ def violin_plots_multi_components(df, limit_to_column_not_nan=None, slide=False)
     import cdsg_plot
 
     if slide:
-        fig_size = (12, 6)
+        fig_size = (10, 4)
         grid_heights = [
             0.9,
             2,
-            0.7,
-            2,
+            # 0.7,
+            # 2,
         ]
-        table_fontsize = 12
-        x_label_fontsize = 12
+        table_fontsize = 16
+        x_label_fontsize = 16
+        y_label_fontsize = 18
         extra_label = "_slide"
+        output_filename=f"./plots/individual_components.jpg"
+        dfs = dfs[:1]
     else:
         fig_size = (9, 7)
         grid_heights = [
@@ -6589,7 +6627,9 @@ def violin_plots_multi_components(df, limit_to_column_not_nan=None, slide=False)
         ]
         table_fontsize = 12
         x_label_fontsize = 12
+        y_label_fontsize = 12
         extra_label = ""
+        output_filename=f"./plots/LoS_components_adz_atz_nondisp{extra_label}.jpg"
 
     print(f"Plotting Extra label: {extra_label}")
     cdsg_plot.error_statistics.violin_plot_table_multi_SAPT_components(
@@ -6631,12 +6671,12 @@ def violin_plots_multi_components(df, limit_to_column_not_nan=None, slide=False)
         legend_loc="lower right",
         table_fontsize=table_fontsize,
         x_label_fontsize=x_label_fontsize,
-        y_label_fontsize=11,
+        y_label_fontsize=y_label_fontsize,
         share_y_axis=True,
         figure_size=fig_size,
         grid_heights=grid_heights,
         grid_widths=[5, 5, 6],
-        output_filename=f"./plots/LoS_components_adz_atz_nondisp{extra_label}.jpg",
+        output_filename=output_filename,
         # mcure=mcure_labels,
     )
     cdsg_plot.error_statistics.violin_plot_table_multi_SAPT_components(
@@ -6827,15 +6867,6 @@ def violin_plots_multi_components_df_individual(df, limit_to_column_not_nan=None
     df = prep_saptdft_components(df, "wb97x", "adz")
     df = prep_saptdft_components(df, "wb97x", "atz")
 
-    # for func in ['pbe0', 'b3lyp', 'b2plyp', 'wb97x']:
-    for func in [
-        "pbe0",
-        "b3lyp",
-    ]:
-        for bs in ["adz", "atz"]:
-            df = df[df[f"SAPT_DFT_D4_{func}_{bs}_total"].notna()].copy()
-    print(f"Limiting to not NaN: {size_prior} -> {len(df)}")
-
     df["SAPT0-D4 DISP ENERGY adz"] = df["-D4 (SAPT0_adz_3_IE)"] / h2kcalmol
     df["SAPT0-D4 DISP ENERGY atz"] = df["-D4 (SAPT0_adz_3_IE)"] / h2kcalmol
     df["SAPT0-D4 DISP ENERGY aqz"] = df["-D4 (SAPT0_adz_3_IE)"] / h2kcalmol
@@ -6852,16 +6883,20 @@ def violin_plots_multi_components_df_individual(df, limit_to_column_not_nan=None
         "SAPT2 EXCH ENERGY",
         "SAPT(DFT) [PBE0] EXCH ENERGY",
         "SAPT(DFT) [B3LYP] EXCH ENERGY",
+        "SAPT(DFT) [B3LYP] dMP2 EXCH ENERGY",
         "SAPT(DFT) [B2PLYP] EXCH ENERGY",
         "SAPT(DFT) [WB97X] EXCH ENERGY",
         "SAPT0 IND ENERGY",
         # "SSAPT0 IND ENERGY",
         "SAPT2 IND ENERGY",
         "SAPT2+DMP2 IND ENERGY",
+        "SAPT2+3 IND ENERGY",
         "SAPT2+3DMP2 IND ENERGY",
         "SAPT(DFT) [PBE0] IND ENERGY",
         "SAPT(DFT) [B3LYP] IND ENERGY",
+        # "SAPT(DFT) [B3LYP] dMP2 IND ENERGY",
         "SAPT(DFT) [B2PLYP] IND ENERGY",
+        "SAPT(DFT) [B2PLYP] dMP2 IND ENERGY",
         "SAPT(DFT) [WB97X] IND ENERGY",
         "SAPT0 DISP ENERGY",
         # "SSAPT0 DISP ENERGY",
@@ -6870,12 +6905,14 @@ def violin_plots_multi_components_df_individual(df, limit_to_column_not_nan=None
         "SAPT2+3 DISP ENERGY",
         "SAPT2+(CCD) DISP ENERGY",
         "SAPT2+(3)(CCD) DISP ENERGY",
-        "SAPT2+3(CCD) DISP ENERGY",
+        # "SAPT2+3(CCD) DISP ENERGY",
         # local disp
         "SAPT0-D4 DISP ENERGY",
         "PBE0-D4 DISP ENERGY",
         "B3LYP-D4 DISP ENERGY",
+        "B3LYP-D4 dMP2 DISP ENERGY",
         "B2PLYP-D4 DISP ENERGY",
+        "B2PLYP-D4 dMP2 DISP ENERGY",
         "WB97X-D4 DISP ENERGY",
         "SAPT(DFT) [PBE0] DISP ENERGY",
         "SAPT(DFT) [B3LYP] DISP ENERGY",
@@ -6884,38 +6921,19 @@ def violin_plots_multi_components_df_individual(df, limit_to_column_not_nan=None
         "D3-ML DISP ENERGY",
         "SAPT(DFT)+D4 DISP ENERGY",
         "SAPT(DFT)-D4 DISP ENERGY",
-        # TOTAL
-        "MP2 IE",
-        "PBE0 IE",
-        "B3LYP IE",
-        "B2PLYP IE",
-        "WB97X IE",
-        "SAPT0 TOTAL ENERGY",
-        "SSAPT0 TOTAL ENERGY",
-        "SAPT2 TOTAL ENERGY",
-        "SAPT2+ TOTAL ENERGY",
-        "SAPT2+(3) TOTAL ENERGY",
-        "SAPT2+3 TOTAL ENERGY",
-        "SAPT2+(CCD) TOTAL ENERGY",
-        "SAPT2+(3)(CCD) TOTAL ENERGY",
-        "SAPT2+3(CCD) TOTAL ENERGY",
-        "SAPT2+DMP2 TOTAL ENERGY",
-        "SAPT2+(3)DMP2 TOTAL ENERGY",
-        "SAPT2+3DMP2 TOTAL ENERGY",
-        "SAPT2+(CCD)DMP2 TOTAL ENERGY",
-        "SAPT2+(3)(CCD)DMP2 TOTAL ENERGY",
-        "SAPT2+3(CCD)DMP2 TOTAL ENERGY",
-        "SAPT0-D4 TOTAL ENERGY",
-        "SAPT TOTAL ENERGY",
-        "SAPT(DFT)D3-ML TOTAL ENERGY",
-        "SAPT(DFT)-D4 TOTAL ENERGY",
-        "SAPT(DFT)+D4 TOTAL ENERGY",
+        "SAPT(PBE0)-D4 SUPRA DISP ENERGY",
+        "SAPT(B3LYP)-D4 SUPRA DISP ENERGY",
+        "SAPT0-D4 (I) DISP ENERGY",
     ]
     sapt_reference = {
-        "ELST": "SAPT2+3(CCD)DMP2 ELST ENERGY",
-        "EXCH": "SAPT2+3(CCD)DMP2 EXCH ENERGY",
-        "IND": "SAPT2+3(CCD)DMP2 IND ENERGY",
-        "DISP": "SAPT2+3(CCD)DMP2 DISP ENERGY",
+        # "ELST": "SAPT2+3(CCD)DMP2 ELST ENERGY",
+        # "EXCH": "SAPT2+3(CCD)DMP2 EXCH ENERGY",
+        # "IND": "SAPT2+3(CCD)DMP2 IND ENERGY",
+        # "DISP": "SAPT2+3(CCD)DMP2 DISP ENERGY",
+        "ELST": "SAPT2+3(CCD) ELST ENERGY",
+        "EXCH": "SAPT2+3(CCD) EXCH ENERGY",
+        "IND": "SAPT2+3(CCD) IND ENERGY",
+        "DISP": "SAPT2+3(CCD) DISP ENERGY",
     }
 
     reference = "benchmark ref energy"
@@ -6947,73 +6965,21 @@ def violin_plots_multi_components_df_individual(df, limit_to_column_not_nan=None
         # "SAPT_DFT_pbe0_atz_disp",
         # "SAPT_DFT_pbe0d4_atz_disp",
         # "SAPT0-D4 atz",
-        "SAPT_DFT_D4_pbe0_adz_total",
-        "SAPT_DFT_pbe0_adz_total",
-        "SAPT_DFT_D4_pbe0_atz_total",
-        "SAPT_DFT_pbe0_atz_total",
-        "SAPT_DFT_D4_b3lyp_adz_total",
-        "SAPT_DFT_b3lyp_adz_total",
-        "SAPT_DFT_D4_b3lyp_atz_total",
-        "SAPT_DFT_b3lyp_atz_total",
-        "SAPT_DFT_D4_b2plyp_adz_total",
-        "SAPT_DFT_b2plyp_adz_total",
-        "SAPT_DFT_D4_b2plyp_atz_total",
-        "SAPT_DFT_b2plyp_atz_total",
-        "SAPT_DFT_D4_wb97x_adz_total",
-        "SAPT_DFT_wb97x_adz_total",
-        "SAPT_DFT_D4_wb97x_atz_total",
-        "SAPT_DFT_wb97x_atz_total",
     ]
     copy_cols = copy_cols_start.copy()
     copy_cols.extend([f"{c} adz" for c in sapt_methods])
     copy_cols.extend([f"{c} adz" for c in sapt_reference.values()])
     df_adz = df[copy_cols].copy()
     df_adz.columns = [c.replace(" adz", "") for c in df_adz.columns]
-    df_adz.rename(
-        columns={
-            "SAPT_DFT_D4_pbe0_adz_total": "PBE0-D4 TOTAL ENERGY",
-            "SAPT_DFT_pbe0_adz_total": "SAPT(DFT) [PBE0] TOTAL ENERGY",
-            "SAPT_DFT_D4_b2plyp_adz_total": "B2PLYP-D4 TOTAL ENERGY",
-            "SAPT_DFT_b2plyp_adz_total": "SAPT(DFT) [B2PLYP] TOTAL ENERGY",
-            "SAPT_DFT_D4_wb97x_adz_total": "WB97X-D4 TOTAL ENERGY",
-            "SAPT_DFT_wb97x_adz_total": "SAPT(DFT) [WB97X] TOTAL ENERGY",
-            "SAPT_DFT_D4_b3lyp_adz_total": "B3LYP-D4 TOTAL ENERGY",
-            "SAPT_DFT_b3lyp_adz_total": "SAPT(DFT) [B3LYP] TOTAL ENERGY",
-        },
-        inplace=True,
-    )
 
     copy_cols = copy_cols_start.copy()
     copy_cols.extend([f"{c} atz" for c in sapt_methods])
     copy_cols.extend([f"{c} atz" for c in sapt_reference.values()])
     df_atz = df[copy_cols].copy()
     df_atz.columns = [c.replace(" atz", "") for c in df_atz.columns]
-    df_atz.rename(
-        columns={
-            "SAPT_DFT_D4_pbe0_atz_total": "PBE0-D4 TOTAL ENERGY",
-            "SAPT_DFT_pbe0_atz_total": "SAPT(DFT) [PBE0] TOTAL ENERGY",
-            "SAPT_DFT_D4_b2plyp_atz_total": "B2PLYP-D4 TOTAL ENERGY",
-            "SAPT_DFT_b2plyp_atz_total": "SAPT(DFT) [B2PLYP] TOTAL ENERGY",
-            "SAPT_DFT_D4_wb97x_atz_total": "WB97X-D4 TOTAL ENERGY",
-            "SAPT_DFT_wb97x_atz_total": "SAPT(DFT) [WB97X] TOTAL ENERGY",
-            "SAPT_DFT_D4_b3lyp_atz_total": "B3LYP-D4 TOTAL ENERGY",
-            "SAPT_DFT_b3lyp_atz_total": "SAPT(DFT) [B3LYP] TOTAL ENERGY",
-        },
-        inplace=True,
-    )
 
-    sapt_methods.extend(
-        [
-            "SAPT(DFT) [PBE0] TOTAL ENERGY",
-            "SAPT(DFT) [B3LYP] TOTAL ENERGY",
-            "SAPT(DFT) [B2PLYP] TOTAL ENERGY",
-            "SAPT(DFT) [WB97X] TOTAL ENERGY",
-            "PBE0-D4 TOTAL ENERGY",
-            "B3LYP-D4 TOTAL ENERGY",
-            "B2PLYP-D4 TOTAL ENERGY",
-            "WB97X-D4 TOTAL ENERGY",
-        ]
-    )
+    sapt_methods.extend(sapt_reference.values())
+
     df_adz = sapt_error_comp(df_adz, df_atz, sapt_reference, sapt_methods)
     df_atz = sapt_error_comp(df_atz, df_atz, sapt_reference, sapt_methods)
 
@@ -7130,16 +7096,19 @@ def violin_plots_multi_components_df_individual(df, limit_to_column_not_nan=None
         df_labels_and_columns_indu={},
         df_labels_and_columns_disp={
             "SAPT0": "SAPT0 DISP ENERGY Error",
-            "SAPT(PBE0)": "SAPT(DFT) [PBE0] DISP ENERGY Error",
-            "SAPT(B3LYP)": "SAPT(DFT) [B3LYP] DISP ENERGY Error",
+            # "SAPT(B3LYP)": "SAPT(DFT) [B3LYP] DISP ENERGY Error",
             # "SAPT(DFT)\\\\[B2PLYP]": "SAPT(DFT) [B2PLYP] DISP ENERGY Error",
             # "SAPT(DFT)\\\\[WB97X]": "SAPT(DFT) [WB97X] DISP ENERGY Error",
-            "SAPT0-D4": "SAPT0-D4 DISP ENERGY Error",
+            "SAPT0-D4 (S)": "SAPT0-D4 DISP ENERGY Error",
+            "SAPT0-D4 (I)": "SAPT0-D4 (I) DISP ENERGY Error",
+            "SAPT(PBE0)": "SAPT(DFT) [PBE0] DISP ENERGY Error",
             "PBE0-D4(SAPT)": "PBE0-D4 DISP ENERGY Error",
-            "B3LYP-D4(SAPT)": "B3LYP-D4 DISP ENERGY Error",
+            "SAPT(PBE0)-D4 (S)": "SAPT(DFT)-D4 DISP ENERGY Error",
+            "SAPT(PBE0)-D4 (I)": "SAPT(PBE0)-D4 SUPRA DISP ENERGY Error",
+            # "B3LYP-D4(SAPT)": "B3LYP-D4 DISP ENERGY Error",
             # "B2PLYP-D4": "B2PLYP-D4 DISP ENERGY Error",
             # "WB97X-D4": "WB97X-D4 DISP ENERGY Error",
-            "D3-ML": "D3-ML DISP ENERGY Error",
+            # "D3-ML": "D3-ML DISP ENERGY Error",
             # "SAPT2+3\\\\(CCD)DMP2": "SAPT2+3(CCD) DISP ENERGY Error",
             "SAPT2+3\\\\(CCD)": "SAPT2+3(CCD) DISP ENERGY Error",
         },
@@ -7161,20 +7130,12 @@ def violin_plots_multi_components_df_individual(df, limit_to_column_not_nan=None
                 # PURPLE,TEAL,LIGHT_BLUE,Medium_Sea_Green,INDIGO,PURPLE,TEAL,LIGHT_BLUE,Medium_Sea_Green,INDIGO,"orange",GREY,
                 # PURPLE,TEAL,LIGHT_BLUE,Medium_Sea_Green,INDIGO,PURPLE,TEAL,LIGHT_BLUE,Medium_Sea_Green,INDIGO,"orange",GREY,
                 PURPLE,
-                TEAL,
-                Medium_Sea_Green,
+                PURPLE,
                 PURPLE,
                 TEAL,
-                Medium_Sea_Green,
-                "orange",
-                GREY,
-                PURPLE,
                 TEAL,
-                Medium_Sea_Green,
-                PURPLE,
                 TEAL,
-                Medium_Sea_Green,
-                "orange",
+                TEAL,
                 GREY,
             ]
         ],
@@ -7210,6 +7171,7 @@ def violin_plots_multi_components_df_individual(df, limit_to_column_not_nan=None
         hide_ytick_label_edges=True,
         # mcure=mcure_labels,
     )
+    return
 
     cdsg_plot.error_statistics.violin_plot_table_multi_SAPT_components(
         dfs_all,
@@ -8636,6 +8598,31 @@ def d4_conversions(df):
         lambda r: ((r["SAPT0_atz_3_IE"] + r["-D4 (SAPT0_atz_3_IE)"]) / h2kcalmol),
         axis=1,
     )
+    df["SAPT0-D4 (I) TOTAL ENERGY adz"] = df.apply(
+        lambda r: ((r["SAPT0_adz_3_IE"] + r["-D4 (SAPT0_adz_3_IE_2B_BJ_inter)"]) / h2kcalmol),
+        axis=1,
+    )
+    df["SAPT0-D4 (I) TOTAL ENERGY atz"] = df.apply(
+        lambda r: ((r["SAPT0_atz_3_IE"] + r["-D4 (SAPT0_adz_3_IE_2B_BJ_inter)"]) / h2kcalmol),
+        axis=1,
+    )
+    df["SAPT0-D4 (I) TOTAL ENERGY aqz"] = df.apply(
+        lambda r: ((r["SAPT0_atz_3_IE"] + r["-D4 (SAPT0_adz_3_IE_2B_BJ_inter)"]) / h2kcalmol),
+        axis=1,
+    )
+    df["SAPT0-D4 (I) DISP ENERGY adz"] = df.apply(
+        lambda r: (r["-D4 (SAPT0_adz_3_IE_2B_BJ_inter)"] / h2kcalmol),
+        axis=1,
+    )
+    df["SAPT0-D4 (I) DISP ENERGY atz"] = df.apply(
+        lambda r: (r["-D4 (SAPT0_adz_3_IE_2B_BJ_inter)"] / h2kcalmol),
+        axis=1,
+    )
+    df["SAPT0-D4 (I) DISP ENERGY aqz"] = df.apply(
+        lambda r: (r["-D4 (SAPT0_adz_3_IE_2B_BJ_inter)"] / h2kcalmol),
+        axis=1,
+    )
+
     df['SAPT(PBE0)-D4 SUPRA DISP ENERGY'] = df['-D4 (SAPT_DFT_pbe0_adz_3_IE_supra)']
     df['SAPT(PBE0)-D4 SUPRA DISP ENERGY adz'] = df['SAPT(PBE0)-D4 SUPRA DISP ENERGY'] / h2kcalmol
     df['SAPT(PBE0)-D4 SUPRA DISP ENERGY atz'] = df['SAPT(PBE0)-D4 SUPRA DISP ENERGY'] / h2kcalmol
@@ -8702,10 +8689,11 @@ def plot_LoS_saptdft(
     ]
     for c in conv:
         df[c] /= h2kcalmol
+    df = d3ml_saptdft(df, 'b3lyp')
     if presentation:
-        violin_plots_multi_components_subset(df, limit_to_column_not_nan="D3-ML")
+        # violin_plots_multi_components_subset(df, limit_to_column_not_nan="D3-ML")
         # return
-        violin_plots_multi_components(df, limit_to_column_not_nan="D3-ML")
+        violin_plots_multi_components(df, limit_to_column_not_nan="D3-ML", slide=True)
         # return
         violin_plots_multi(df)
         violin_plots_multi_subset(df)
@@ -8716,13 +8704,17 @@ def plot_LoS_saptdft(
             df, limit_to_column_not_nan="D3-ML"
         )
         violin_plots_multi_individual(df)
-        violin_plots_multi_subset_individual(df)
+        # violin_plots_multi_subset_individual(df)
     else:
         # return
         # return
+        # violin_plots_multi_components_df_individual(df, limit_to_column_not_nan="D3-ML")
+        # violin_plots_multi_individual(df)
+        # return
+        violin_plots_multi_components(df, limit_to_column_not_nan="D3-ML", slide=True)
+        return
         violin_plots_multi(df)
         violin_plots_multi_subset(df)
-        violin_plots_multi_components(df, limit_to_column_not_nan="D3-ML")
         violin_plots_multi_components_subset(df, limit_to_column_not_nan="D3-ML")
         return
         # return
