@@ -31,14 +31,13 @@ def read_xyzs(
     data["charges"] = [
         np.array([[0, 1] for i in range(3)]) for i in range(len(data["Geometry"]))
     ]
-    data["monAs"] = [np.array(range(monA_len))
-                     for i in range(len(data["Geometry"]))]
+    data["monAs"] = [np.array(range(monA_len)) for i in range(len(data["Geometry"]))]
     data["monBs"] = [
         np.array(range(monA_len, monA_len + monB_len))
         for i in range(len(data["Geometry"]))
     ]
-    data['pbe0_grac_shift_a'] = [grac_shift for i in range(len(data["Geometry"]))]
-    data['pbe0_grac_shift_b'] = [grac_shift for i in range(len(data["Geometry"]))]
+    data["pbe0_grac_shift_a"] = [grac_shift for i in range(len(data["Geometry"]))]
+    data["pbe0_grac_shift_b"] = [grac_shift for i in range(len(data["Geometry"]))]
     df = pd.DataFrame(data)
     return df
 
@@ -48,10 +47,10 @@ def main():
     # benzene ionization potential = 0.072113
     df_benzene = read_xyzs("benzene", 12, 12, 0.072113)
     df = pd.concat([df_water, df_benzene], ignore_index=True)
-    df['id'] = df.index
+    df["id"] = df.index
     df.reset_index(drop=True, inplace=True)
     print(df.columns.values.tolist())
-    print(df[['Geometry']])
+    print(df[["Geometry"]])
     df.to_pickle("curves.pkl")
     DB_NAME, TABLE_NAME = "curves.db", "main"
     hrcl_jobs.sqlt.convert_df_into_sql(
@@ -69,7 +68,7 @@ def main():
             "pbe0_grac_shift_b": "REAL",
         },
         output_columns={},
-        overwrite=True,
+        overwrite=False,
     )
     hrcl_jobs.dataset.compute_energy(
         DB_NAME,
@@ -85,7 +84,12 @@ def main():
             "SAPT_DFT_FUNCTIONAL": "pbe0",
             "SAPT_DFT_DO_DDFT": True,
             "SAPT_DFT_D4_IE": True,
-        }
+        },
+        output_root="curve_outputs",
+        hive_params={
+            "mem_per_process": "80 gb",
+            "num_omp_threads": 16,
+        },
     )
     return
 
