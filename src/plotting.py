@@ -4647,7 +4647,7 @@ def violin_plots_multi_individual(df, limit_to_column_not_nan=None):
         # "WB97X-D4(SAPT)": "WB97X-D4 TOTAL ENERGY Error",
         # SAPT(DFT) D's
         "SAPT(PBE0)-D4 (S)": "SAPT(DFT)-D4 TOTAL ENERGY Error",
-        "SAPT(PBE0)-D4 (I)": "SAPT(PBE0)-D4 SUPRA TOTAL ENERGY Error",
+        # "SAPT(PBE0)-D4 (I)": "SAPT(PBE0)-D4 SUPRA TOTAL ENERGY Error",
         # Wavefunction
         "SAPT0-D4 (S)": "SAPT0-D4 TOTAL ENERGY Error",
         "SAPT0-D4 (I)": "SAPT0-D4 (I) TOTAL ENERGY Error",
@@ -4686,7 +4686,7 @@ def violin_plots_multi_individual(df, limit_to_column_not_nan=None):
             TEAL,
             TEAL,
             TEAL,
-            PURPLE,
+            # PURPLE,
             PURPLE,
             PURPLE,
             TEAL,
@@ -8708,8 +8708,8 @@ def plot_LoS_saptdft(
     else:
         # return
         # return
-        # violin_plots_multi_components_df_individual(df, limit_to_column_not_nan="D3-ML")
-        # violin_plots_multi_individual(df)
+        violin_plots_multi_components_df_individual(df, limit_to_column_not_nan="D3-ML")
+        violin_plots_multi_individual(df)
         # return
         violin_plots_multi_components(df, limit_to_column_not_nan="D3-ML", slide=True)
         return
