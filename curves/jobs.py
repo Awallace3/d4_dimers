@@ -227,21 +227,21 @@ def plot_results():
     system_starting_distance = [3.0, 4.0]
     colors = {'SAPT_DFT_pbe_adz_disp': 'blue', 'pbe_d4_sapt_adz_disp': 'red'}
     markers = {'SAPT_DFT_pbe_adz_disp': 'o', 'pbe_d4_sapt_adz_disp': 's'}
-    labels = {'SAPT_DFT_pbe_adz_disp': 'SAPT(DFT) Dispersion', 'pbe_d4_sapt_adz_disp': 'PBE-D4 Dispersion'}
+    labels = {'SAPT_DFT_pbe_adz_disp': 'SAPT(PBE0)', 'pbe_d4_sapt_adz_disp': 'PBE-D4'}
     
     for i, system in enumerate(systems):
         df_system = df[df['system_type'] == system].sort_values('R')
         
-        # Plot actual data points
+        # plot a vertical black line at system_starting_distance[i]
+        axes[i].axvline(system_starting_distance[i], color='black', linestyle='--', label='Fit Start')
         for col, color in colors.items():
+            # Plot actual data points
             axes[i].scatter(df_system['R'], df_system[col], color=color, marker=markers[col], 
                            label=f"{labels[col]} (Data)")
             axes[i].set_ylim(df_system[col].min() + 0.05 * df_system[col].min(), 0.1)
             
             # Fit N for R > 3 Angstroms
             df_fit = df_system[(df_system['R'] > system_starting_distance[i])].copy()
-            # plot a vertical black line at system_starting_distance[i]
-            axes[i].axvline(system_starting_distance[i], color='black', linestyle='--', label='Fit Start')
             if not df_fit.empty:
                 N = compute_N(df_fit, col, sign_flip=True, print_lvl=1)
                 
