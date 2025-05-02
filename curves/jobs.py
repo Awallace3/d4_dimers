@@ -227,16 +227,22 @@ def plot_results():
                              )
     
     systems = ['water', 'benzene']
-    system_starting_distance = [3.0, 4.0]
+    system_starting_distance = [3.21, 4.56]
     colors = {'SAPT_DFT_pbe_adz_disp': 'blue', 'pbe_d4_sapt_adz_disp': 'red'}
     markers = {'SAPT_DFT_pbe_adz_disp': 'o', 'pbe_d4_sapt_adz_disp': 's'}
     labels = {'SAPT_DFT_pbe_adz_disp': 'SAPT(PBE0)', 'pbe_d4_sapt_adz_disp': 'PBE-D4'}
     
     for i, system in enumerate(systems):
         df_system = df[df['system_type'] == system].sort_values('R')
+        print(df_system['R'])
         
         # plot a vertical black line at system_starting_distance[i]
         axes[i].axvline(system_starting_distance[i], color='black', linestyle='--', label='Fit Start')
+        # get index of minimum total energy of df_system and plot vertical grey line at that distance
+        min_index = df_system['SAPT_DFT_pbe_adz_total'].idxmin()
+        min_distance = df_system.loc[min_index, 'R']
+        print(f"Minimum distance for {system}: {min_distance}")
+        axes[i].axvline(min_distance, color='grey', linestyle='--', label='Equilibrium Distance')
         for col, color in colors.items():
             # Plot actual data points
             axes[i].scatter(df_system['R'], df_system[col], color=color, marker=markers[col], 
@@ -266,6 +272,9 @@ def plot_results():
         axes[i].set_title(f"{system.capitalize()} Dimer")
         axes[i].set_ylabel("Disp. Energy (kcal/mol)")
         axes[i].grid(True, linestyle='--', alpha=0.7)
+        # minor ticks
+        axes[i].minorticks_on()
+        axes[i].tick_params(which='both', width=1)
         axes[i].legend()
 
         # Format tick labels to show actual values instead of powers
