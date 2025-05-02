@@ -10,7 +10,7 @@
 #SBATCH --mail-type=START,END,FAIL
 #SBATCH --mail-user=awallace43@gatech.edu
 
-cd $HOME/data/SAPT_D4
+cd $HOME/data/sapt_dft_ddftd4/code_ddft_d4/curves/
 . "/storage/home/hhive1/awallace43/data/miniconda3/etc/profile.d/conda.sh"
 conda activate /storage/hive/project/chem-sherrill/awallace43/.conda/envs/p4dev19
 echo "CONDA_PREFIX=" ${CONDA_PREFIX}
@@ -33,4 +33,4 @@ echo "SLURM_CPUS_ON_NODE = " $SLURM_CPUS_ON_NODE
 echo "mem_per_process = " $mem_per_process
 echo "n_procs = " $n_procs
 
-mpiexec -n $n_procs python3 ./jobs.py
+mpiexec -n $n_procs python3 -u ./jobs.py

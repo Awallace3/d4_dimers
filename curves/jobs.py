@@ -12,26 +12,6 @@ from matplotlib.ticker import ScalarFormatter
 
 print(hrcl_jobs.import_error)
 
-def compute_N(df_l, col_E, sign_flip=True, print_lvl=0):
-    df_l_neg = df_l[df_l[col_E] < 0]
-    R = df_l_neg["R"]
-    f_R = df_l_neg[col_E]
-    if sign_flip:
-        f_R = -f_R
-    # Step 1: Take the logarithm of R and f(R)
-    log_R = np.log(R)
-    log_f_R = np.log(f_R)
-
-    # Step 2: Perform linear regression on log_f_R vs. log_R
-    # Calculate the slope (m) and intercept (b) using numpy's polyfit
-    slope, intercept = np.polyfit(log_R, log_f_R, 1)
-
-    # Step 3: Get N from the slope
-    N = -slope  # Since log(f(R)) = -N * log(R), slope = -N
-    if print_lvl > 0:
-        print(f"{col_E:.12} N: {N:.2f} on {len(df_l_neg)} points")
-    return N
-
 def compute_N(df_l, col_E, sign_flip=True, print_lvl=0, min_distance=None):
     """
     Compute the power law exponent N for the relationship f(R) = C/R^N.
@@ -166,7 +146,28 @@ def full():
     hrcl_jobs.dataset.compute_energy(
         DB_NAME,
         TABLE_NAME,
-        col_check="SAPT_DFT_pbe0_adz",
+        col_check="SAPT_DFT_pbe0_atz",
+        options={
+            "maxiter": 250,
+            "E_CONVERGENCE": 8,
+            "D_CONVERGENCE": 8,
+            "freeze_core": "True",
+            "guess": "sad",
+            "scf_type": "df",
+            "SAPT_DFT_FUNCTIONAL": "pbe0",
+            "SAPT_DFT_DO_DDFT": False,
+            "SAPT_DFT_D4_IE": False,
+        },
+        output_root="curve_outputs",
+        hive_params={
+            "mem_per_process": "80 gb",
+            "num_omp_threads": 16,
+        },
+    )
+    hrcl_jobs.dataset.compute_energy(
+        DB_NAME,
+        TABLE_NAME,
+        col_check="SAPT0_adz",
         options={
             "maxiter": 250,
             "E_CONVERGENCE": 8,
@@ -184,16 +185,18 @@ def full():
             "num_omp_threads": 16,
         },
     )
-    hrcl_jobs.sqlt.table_to_df_pkl(
-        db_p=DB_NAME,
-        table=TABLE_NAME,
-        df_p="curves.pkl",
-    )
+    # hrcl_jobs.sqlt.table_to_df_pkl(
+    #     db_p=DB_NAME,
+    #     table=TABLE_NAME,
+    #     df_p="curves.pkl",
+    # )
     return
 
 def plot_results():
     h2kcal = qcel.constants.conversion_factor("hartree", "kcal/mol")
     df = pd.read_pickle("curves.pkl")
+    print(df)
+    pp(df.columns.tolist())
     df['R'] = [float(i.split('_')[-1]) for i in df['system_id']]
     df = df[df['R'] < 8].copy()
     df['system_type'] = [i.split('_')[0] for i in df['system_id']]
@@ -271,9 +274,11 @@ def plot_results():
     
     axes[1].set_xlabel("Distance (Å)")
     plt.tight_layout()
-    plt.savefig("dispersion_comparison.png", dpi=300)
+    plt.savefig("dispersion_comparison_2.png", dpi=300)
     return
 
 
 if __name__ == "__main__":
-    plot_results()
+    full()
+    # plot_results()
+    
