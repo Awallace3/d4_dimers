@@ -5,7 +5,7 @@
 #SBATCH -Ahive-cs207
 #SBATCH -N10 --ntasks=10 --cpus-per-task=8
 #SBATCH --mem-per-cpu=8G
-#SBATCH -t72:00:00
+#SBATCH -t52:00:00
 #SBATCH -phive
 #SBATCH --mail-type=START,END,FAIL
 #SBATCH --mail-user=awallace43@gatech.edu
