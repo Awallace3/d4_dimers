@@ -194,7 +194,7 @@ def full():
 
 def plot_results():
     h2kcal = qcel.constants.conversion_factor("hartree", "kcal/mol")
-    df = pd.read_pickle("curves.pkl")
+    df = pd.read_pickle("./curves_d4.pkl")
     print(df)
     pp(df.columns.tolist())
     df['R'] = [float(i.split('_')[-1]) for i in df['system_id']]
@@ -202,35 +202,50 @@ def plot_results():
     df['system_type'] = [i.split('_')[0] for i in df['system_id']]
     print(df)
     pp(df.columns.tolist())
+    df['SAPT_DFT_pbe_atz_total'] = [np.nan for i in range(len(df))]
+    df['SAPT_DFT_pbe_atz_elst'] = [np.nan for i in range(len(df))]
+    df['SAPT_DFT_pbe_atz_exch'] = [np.nan for i in range(len(df))]
+    df['SAPT_DFT_pbe_atz_indu'] = [np.nan for i in range(len(df))]
+    df['SAPT_DFT_pbe_atz_disp'] = [np.nan for i in range(len(df))]
     df['SAPT_DFT_pbe_adz_total'] = [np.nan for i in range(len(df))]
     df['SAPT_DFT_pbe_adz_elst'] = [np.nan for i in range(len(df))]
     df['SAPT_DFT_pbe_adz_exch'] = [np.nan for i in range(len(df))]
     df['SAPT_DFT_pbe_adz_indu'] = [np.nan for i in range(len(df))]
     df['SAPT_DFT_pbe_adz_disp'] = [np.nan for i in range(len(df))]
     df['pbe_d4_sapt_adz_disp'] = [np.nan for i in range(len(df))]
+    # locald4
     vars_json_files = glob('./curve_outputs/*/*/*.json')
     for i in vars_json_files:
+        print(i)
         v = tools.json_to_dict(i)
-        id = int(i.split('/')[2])
-        df.loc[id, 'SAPT_DFT_pbe_adz_total'] = v['SAPT TOTAL ENERGY'] * h2kcal
-        df.loc[id, 'SAPT_DFT_pbe_adz_elst'] = v['SAPT ELST ENERGY'] * h2kcal
-        df.loc[id, 'SAPT_DFT_pbe_adz_exch'] = v['SAPT EXCH ENERGY'] * h2kcal
-        df.loc[id, 'SAPT_DFT_pbe_adz_indu'] = v['SAPT IND ENERGY'] * h2kcal
-        df.loc[id, 'SAPT_DFT_pbe_adz_disp'] = v['SAPT DISP ENERGY'] * h2kcal
-        df.loc[id, 'pbe_d4_sapt_adz_disp'] = (
-            v['D4 IE'] + v['SAPT(DFT) DELTA DFT'] - v['SAPT(DFT) DELTA HF']
-        ) * h2kcal
+        if 'pvdz' in i:
+            id = int(i.split('/')[2])
+            df.loc[id, 'SAPT_DFT_pbe_adz_total'] = v['SAPT TOTAL ENERGY'] * h2kcal
+            df.loc[id, 'SAPT_DFT_pbe_adz_elst'] = v['SAPT ELST ENERGY'] * h2kcal
+            df.loc[id, 'SAPT_DFT_pbe_adz_exch'] = v['SAPT EXCH ENERGY'] * h2kcal
+            df.loc[id, 'SAPT_DFT_pbe_adz_indu'] = v['SAPT IND ENERGY'] * h2kcal
+            df.loc[id, 'SAPT_DFT_pbe_adz_disp'] = v['SAPT DISP ENERGY'] * h2kcal
+            df.loc[id, 'pbe_d4_sapt_adz_disp'] = (
+                v['D4 IE'] + v['SAPT(DFT) DELTA DFT'] - v['SAPT(DFT) DELTA HF']
+            ) * h2kcal
+        else:
+            id = int(i.split('/')[2])
+            df.loc[id, 'SAPT_DFT_pbe_atz_total'] = v['SAPT TOTAL ENERGY'] * h2kcal
+            df.loc[id, 'SAPT_DFT_pbe_atz_elst'] = v['SAPT ELST ENERGY'] * h2kcal
+            df.loc[id, 'SAPT_DFT_pbe_atz_exch'] = v['SAPT EXCH ENERGY'] * h2kcal
+            df.loc[id, 'SAPT_DFT_pbe_atz_indu'] = v['SAPT IND ENERGY'] * h2kcal
+            df.loc[id, 'SAPT_DFT_pbe_atz_disp'] = v['SAPT DISP ENERGY'] * h2kcal
     print(df)
     # Plot SAPT(DFT) disp and pbe-d4 disp, have subplots 2x1 (water, benzene), fit the N for > 3 Angstroms (R > 3)
-    fig, axes = plt.subplots(2, 1, figsize=(6, 8), 
+    fig, axes = plt.subplots(2, 1, figsize=(6, 6), 
                              # sharex=True,
                              )
     
     systems = ['water', 'benzene']
     system_starting_distance = [3.21, 4.56]
-    colors = {'SAPT_DFT_pbe_adz_disp': 'blue', 'pbe_d4_sapt_adz_disp': 'red'}
-    markers = {'SAPT_DFT_pbe_adz_disp': 'o', 'pbe_d4_sapt_adz_disp': 's'}
-    labels = {'SAPT_DFT_pbe_adz_disp': 'SAPT(PBE0)', 'pbe_d4_sapt_adz_disp': 'PBE-D4'}
+    colors = {'SAPT_DFT_pbe_atz_disp': 'blue', 'pbe_d4_sapt_adz_disp': 'red', 'SAPT(PBE0)-D4/aDZ (I)': 'green'}
+    markers = {'SAPT_DFT_pbe_atz_disp': 'o', 'pbe_d4_sapt_adz_disp': 's', 'SAPT(PBE0)-D4/aDZ (I)': '^'}
+    labels = {'SAPT_DFT_pbe_atz_disp': 'SAPT(PBE0)/aTZ', 'pbe_d4_sapt_adz_disp': 'PBE0-D4/aDZ', 'SAPT(PBE0)-D4/aDZ (I)': 'SAPT(PBE0)-D4/aDZ (I)'}
     
     for i, system in enumerate(systems):
         df_system = df[df['system_type'] == system].sort_values('R')
@@ -239,7 +254,7 @@ def plot_results():
         # plot a vertical black line at system_starting_distance[i]
         axes[i].axvline(system_starting_distance[i], color='black', linestyle='--', label='Fit Start')
         # get index of minimum total energy of df_system and plot vertical grey line at that distance
-        min_index = df_system['SAPT_DFT_pbe_adz_total'].idxmin()
+        min_index = df_system['SAPT_DFT_pbe_atz_total'].idxmin()
         min_distance = df_system.loc[min_index, 'R']
         print(f"Minimum distance for {system}: {min_distance}")
         axes[i].axvline(min_distance, color='grey', linestyle='--', label='Equilibrium Distance')
@@ -266,7 +281,7 @@ def plot_results():
                 
                 # Plot fitted curve
                 axes[i].plot(R_range, fitted_values, color=color, linestyle='--', 
-                            label=f"{labels[col]} (Fit, N={N:.2f})")
+                            label=f"{labels[col]} (Fit, N={N:.1f})")
         
         # Set plot properties
         axes[i].set_title(f"{system.capitalize()} Dimer")
@@ -288,6 +303,11 @@ def plot_results():
 
 
 if __name__ == "__main__":
-    full()
-    # plot_results()
+    # full()
+    # hrcl_jobs.sqlt.table_to_df_pkl(
+    #     db_p='curves.db',
+    #     table='main',
+    #     df_p="curves.pkl",
+    # )
+    plot_results()
     

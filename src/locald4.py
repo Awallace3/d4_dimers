@@ -11,26 +11,6 @@ from pprint import pprint as pp
 hartree_to_kcalmol = qcel.constants.conversion_factor("hartree", "kcal/mol")
 
 
-# def compute_psi4_d4(geom, Ma, Mb, memory: str = "4 GB", basis="jun-cc-pvdz"):
-#     ma, mb = split_dimer(geom, Ma, Mb)
-#     ma = tools.np_carts_to_string(ma)
-#     mb = tools.np_carts_to_string(mb)
-#     geom = "0 1\n%s--\n0 1\n%s" % (ma, mb)
-#     print(geom)
-#     psi4.geometry(geom)
-#     psi4.set_memory(memory)
-#     psi4.set_options(
-#         {
-#             "basis": basis,
-#             "freeze_core": "true",
-#             "guess": "sad",
-#             "scf_type": "df",
-#         }
-#     )
-#     v = psi4.energy("hf-d4", bsse_type="cp")
-#     return
-
-
 def get_monomer_C6s_from_dimer(C6s_dimer, monN) -> np.array:
     C6s_monomer_from_dimer = C6s_dimer[monN].tolist()
     for i in range(len(C6s_monomer_from_dimer)):
@@ -946,6 +926,7 @@ def compute_bj_dimer_DFTD4(
     charges,
     mult_out=hartree_to_kcalmol,
     s9=0.0,
+    dftd4_bin: str = "/theoryfs2/ds/amwalla3/.local/bin/dftd4",
 ) -> float:
     """
     computes dftd4 for dimer and each monomer and returns subtraction.
@@ -956,6 +937,7 @@ def compute_bj_dimer_DFTD4(
         charges[0],
         p=params,
         s9=s9,
+        dftd4_bin=dftd4_bin,
     )
 
     mon_ca = carts[Ma]
@@ -966,6 +948,7 @@ def compute_bj_dimer_DFTD4(
         charges[1],
         p=params,
         s9=s9,
+        dftd4_bin=dftd4_bin,
     )
 
     mon_cb = carts[Mb]
@@ -976,6 +959,7 @@ def compute_bj_dimer_DFTD4(
         charges[2],
         p=params,
         s9=s9,
+        dftd4_bin=dftd4_bin,
     )
 
     AB = A + B
