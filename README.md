@@ -21,11 +21,18 @@ conda env create -f env.yml
    pytests.
 
 ## Usage
-### Plotting Code
+### Plotting Code - SAPT0-D4 Basis Set Study
 - data is stored in `./plots/basis_study.pkl`; however, the file size is quite large 
     and fragmented into smaller files for storing in this repository. 
 - After creating a python environment above, run `python3 plot.py` to generate
   `./plots/basis_study.pkl` and plot graphs shown in the manuscript.
+### Plotting Code - SAPT(DFT)-D4/DFT-D4(SAPT)
+- data is stored in `./plots/ddft_study.pkl`; however, the file size is quite large 
+    and fragmented into smaller files for storing in this repository. 
+- After creating a python environment above, run `python3 ./plot_saptdft.py` to generate
+  `./plots/ddft_study.pkl` and plot graphs shown in the manuscript.
+
+
 ### Optimization Code 
 - The `main.py` python script is not meant to be statically used, but rather
 serve as a place to use the functions in the `src` directory.

@@ -1,37 +1,21 @@
 import pandas as pd
 import src
-import subprocess, os
+import subprocess
+import os
+
 
 def main():
     df_name = "plots/basis_study.pkl"
-    # df_name = "dfs/schr_dft2.pkl"
     if not os.path.exists(df_name):
         print("Cannot find ./plots/basis_study.pkl, creating it now...")
-        subprocess.call("cat plots/basis_study-* > plots/basis_study.pkl.tar.gz", shell=True)
+        subprocess.call(
+            "cat plots/basis_study-* > plots/basis_study.pkl.tar.gz", shell=True
+        )
         subprocess.call("tar -xzf plots/basis_study.pkl.tar.gz", shell=True)
         subprocess.call("rm plots/basis_study.pkl.tar.gz", shell=True)
         subprocess.call("mv basis_study.pkl plots/basis_study.pkl", shell=True)
     df = pd.read_pickle(df_name)
-    print(df)
-    return
-    # print np.array with commas
-    import numpy as np
-    # np.set_printoptions()
-    print(df.iloc[2500]['D3Data'])
-    print(df.iloc[2500]['D3Data'].shape)
-    print(len(df.iloc[2500]['monAs']))
-    print(len(df.iloc[2500]['monBs']))
-    # print(df.columns.values)
-    # df = src.plotting.plot_basis_sets_d4_Inter_vs_Super(
-    #     df,
-    #     True,
-    # )
-    return
-    df = src.plotting.plot_components_sapt0_saptdft(
-        df
-    )
-
-    return
+    df = src.plotting.plot_components_sapt0_saptdft(df)
     df = src.plotting.plot_basis_sets_d4_TT(
         df,
         True,
@@ -40,7 +24,6 @@ def main():
         (df, df_name),
         False,
     )
-    return
     df = src.plotting.plot_basis_sets_d4(
         df,
         False,

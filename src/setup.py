@@ -307,6 +307,15 @@ def calc_c6s_c8s_pairDisp2_for_df(xyzs, monAs, monBs, charges) -> ([], [], []):
     return C6s, C6_A, C6_B, C6_ATMs, C6_ATM_A, C6_ATM_B, disp_d, disp_a, disp_b
 
 
+def check_c6s(df):
+    if "C6s" not in df.columns.values:
+        df = generate_D4_data(df)
+        return df
+    if df.iloc[0]["C6s"] is None:
+        df = generate_D4_data(df)
+    return df
+
+
 def generate_D4_data(df):
     xyzs = df["Geometry"].to_list()
     monAs = df["monAs"].to_list()

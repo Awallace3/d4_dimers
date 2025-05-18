@@ -2166,7 +2166,9 @@ def plotting_setup_dft_ddft(
         )
         df.to_pickle(df_out)
     else:
+        print(f"Loading {df_out}")
         df = pd.read_pickle(df_out)
+        print(df)
     basename_selected = selected.split("/")[-1].split(".")[0]
     print(len(df), df["SAPT_DFT_pbe0_adz_elst"].isnull().sum())
     assert df["SAPT_DFT_pbe0_adz_elst"].isnull().sum() == 0

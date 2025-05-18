@@ -1,63 +1,25 @@
 import src
-import pandas as pd
-import qcelemental as qcel
-from pprint import pprint as pp
-
-h2kcalmol = qcel.constants.conversion_factor("hartree", "kcal/mol")
-
-
-def merge_basis_study():
-    df = pd.read_pickle("./plots/basis_study.pkl")
-    print(df.columns.values)
-    df2 = pd.read_pickle("./plots/los_saptdft_atz_2.pkl")
-    return
-
-
-def check_c6s(df):
-    if "C6s" not in df.columns.values:
-        df = src.setup.generate_D4_data(df)
-        return df
-    if df.iloc[0]["C6s"] is None:
-        df = src.setup.generate_D4_data(df)
-    return df
+import os
+import subprocess
 
 
 def main():
-    # df_name = "./dfs/los_adz_candidacy_s0atz.pkl"
-    # df_name = "./dfs/los_saptdft_adz_3.pkl"
-    # df_name = "./dfs/los_all.pkl"
-    df_name = "./dfs/los_all.pkl"
-    # df_name = "./dfs/ddft_study.pkl"
-    # df = pd.read_pickle(df_name)
-    # df = check_c6s(df)
-    # df = src.misc.make_geometry_bohr_column_df(df)
-    # df.to_pickle(df_name)
-    # assert df['C6s'].notnull().all()
-
-    # pp(df.columns.values.tolist())
+    df_name = "./plots/ddft_study.pkl"
+    if not os.path.exists(df_name):
+        print("Cannot find ./plots/ddft_study.pkl, creating it now...")
+        subprocess.call(
+            "cat plots/ddft_study-* > plots/ddft_study.pkl.tar.gz", shell=True
+        )
+        subprocess.call("tar -xzf plots/ddft_study.pkl.tar.gz", shell=True)
+        subprocess.call("rm plots/ddft_study.pkl.tar.gz", shell=True)
+        subprocess.call("mv ddft_study.pkl plots/ddft_study.pkl", shell=True)
     df = src.plotting.plotting_setup_dft_ddft(
         df_name,
         build_df=False,
         split_components=True,
         original_plot=False,
     )
-
-
-    print(df[['SAPT_DFT_pbe0_adz', 'SAPT_DFT_pbe0_atz']])
-    # return
-    # df = src.plotting.prep_saptdft_components(df, "pbe0", "adz")
-    # pp(df.columns.values.tolist())
-    # df["SAPT(DFT) [PBE0] Sum"] = df.apply(
-    #     lambda r: r["SAPT(DFT) [PBE0] ELST ENERGY adz"]
-    #     + r["SAPT(DFT) [PBE0] EXCH ENERGY adz"]
-    #     + r["SAPT(DFT) [PBE0] IND ENERGY adz"]
-    #     + r['SAPT_DFT_pbe0_adz_DFT_IE'],
-    #     axis=1,
-    # )
-    # df.to_pickle("./plots/ddft_study.pkl")
-    # return
     src.plotting.plot_LoS_saptdft(df, presentation=False)
-    # src.plotting.plot_LoS_saptdft(df, presentation=True);
     return
 
 
