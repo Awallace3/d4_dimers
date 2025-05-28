@@ -104,39 +104,43 @@ def setup_entries():
 
 def main():
     ds = client.get_dataset("singlepoint", "ddft_study")
-    client.delete_dataset(ds.id, delete_records=True)
-    setup_entries()
+    # client.delete_dataset(ds.id, delete_records=True)
+    # setup_entries()
     # return
-    ds = qca.init_singlepoint_dataset(
-        client,
-        ds_name="ddft_study",
-    )
+    # ds = qca.init_singlepoint_dataset(
+    #     client,
+    #     ds_name="ddft_study",
+    # )
     print(ds)
     functional = "pbe0"
+    functional = "b3lyp"
+    basis = "aug-cc-pvdz"
+    # basis = "aug-cc-pvtz"
     # return
-    qca.create_singlepoint_dataset_specification(
-        ds,
-        program="psi4",
-        driver="energy",
-        method="sapt(dft)",
-        basis="aug-cc-pvtz",
-        keywords={
-            "maxiter": 250,
-            "E_CONVERGENCE": 8,
-            "D_CONVERGENCE": 8,
-            "freeze_core": "True",
-            "guess": "sad",
-            "scf_type": "df",
-            "SAPT_DFT_FUNCTIONAL": functional,
-            "SAPT_DFT_DO_DISP": True,
-            "SAPT_DFT_DO_DDFT": True,
-            "SAPT_DFT_D4_IE": True,
-            "SAPT_DFT_GRAC_COMPUTE": "ITERATIVE",
-        },
-        protocols={"stdout": True},
-        specification_name=f"psi4/sapt({functional})/aug-cc-pvdz",
-        compute_tag="hive",
-    )
+    if False:
+        qca.create_singlepoint_dataset_specification(
+            ds,
+            program="psi4",
+            driver="energy",
+            method="sapt(dft)",
+            basis=basis,
+            keywords={
+                "maxiter": 250,
+                "E_CONVERGENCE": 8,
+                "D_CONVERGENCE": 8,
+                "freeze_core": "True",
+                "guess": "sad",
+                "scf_type": "df",
+                "SAPT_DFT_FUNCTIONAL": functional,
+                "SAPT_DFT_DO_DISP": True,
+                "SAPT_DFT_DO_DDFT": True,
+                "SAPT_DFT_D4_IE": True,
+                "SAPT_DFT_GRAC_COMPUTE": "ITERATIVE",
+            },
+            protocols={"stdout": True},
+            specification_name=f"psi4/sapt({functional})/aug-cc-pvdz",
+            compute_tag="hive",
+        )
     print(ds.status())
     return
 
