@@ -142,6 +142,41 @@ def main():
             compute_tag="hive",
         )
     print(ds.status())
+    # get errors
+
+    conv_str = "Convergence error, trying next GRAC iteration..."
+    convergence_issues_1 = 0
+    convergence_issues_2 = 0
+    # for n, entry in enumerate(ds.detailed_status()):
+        # name, lot, status = entry
+    # for n, (e, s, r) in enumerate(ds.iterate_records(specification_names=["psi4/sapt(pbe0)/aug-cc-pvdz"])):
+    for n, (e, s, r) in enumerate(ds.iterate_records(specification_names=["psi4/sapt(b3lyp)/aug-cc-pvdz"])):
+        if str(r.status) == "RecordStatusEnum.error":
+            # print(name, lot)
+            # r = ds.get_record(name, lot)
+            # print(r.stdout)
+            # print(r.stderr)
+            # print(r.error)
+            # print()
+            pass
+        else:
+            # print(r.stdout)
+            cnt = r.stdout.count(conv_str)
+            if cnt > 0:
+                print(r)
+                print("Convergence errors:", cnt)
+                print()
+                if cnt == 1:
+                    convergence_issues_1 += 1
+                elif cnt == 2:
+                    convergence_issues_2 += 1
+        if n % 100 == 0:
+            print(f"{n} records processed.")
+        # if n > 10:
+        #     break
+    print("Convergence struggles:", convergence_issues_1 + convergence_issues_2)
+    print("Convergence issues with 1 iteration:", convergence_issues_1)
+    print("Convergence issues with 2 iterations:", convergence_issues_2)
     return
 
 
