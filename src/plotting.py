@@ -1606,8 +1606,8 @@ def plotting_setup_dft_ddft(
     if build_df:
         df = pd.read_pickle(selected)
         len_before = len(df)
-        df_c6s = pd.read_pickle("./dfs/los_c6s.pkl")
-        df = df.merge(df_c6s, on="system_id", how="left", suffixes=("", "_drop"))
+        df_c6s_dispml = pd.read_pickle("./plots/ddft_study.pkl")
+        df = df.merge(df_c6s_dispml, on="system_id", how="left", suffixes=("", "_drop"))
         df.drop([c for c in df.columns if "drop" in c], axis=1, inplace=True)
         df.dropna(
             subset=["SAPT_DFT_pbe0_adz", "SAPT_DFT_pbe0_atz", "C6s"], inplace=True
@@ -1616,13 +1616,13 @@ def plotting_setup_dft_ddft(
 
         df = df[df["SAPT_DFT_pbe0_adz"].notna()].copy()
 
-        df_disp = pd.read_pickle("./dfs/dispml.pkl")
-        df_disp = df_disp[["D3-ML", "system_id"]].copy()
-        df = df.merge(df_disp, on="system_id")
+        # df_disp = pd.read_pickle("./dfs/dispml.pkl")
+        # df_disp = df_disp[["D3-ML", "system_id"]].copy()
+        # df = df.merge(df_disp, on="system_id")
 
-        df_d3data = pd.read_pickle("./dfs/los_d3data.pkl")
-        df_d3data = df_d3data[["D3Data", "system_id"]].copy()
-        df = df.merge(df_d3data, on="system_id")
+        # df_d3data = pd.read_pickle("./dfs/los_d3data.pkl")
+        # df_d3data = df_d3data[["D3Data", "system_id"]].copy()
+        # df = df.merge(df_d3data, on="system_id")
         basis_set = "adz"
         functional = "pbe0"
         df = prepare_saptdft_columns(df, "pbe0", "adz")
@@ -4472,27 +4472,45 @@ def violin_plots_multi(df, limit_to_column_not_nan=None, slide=True):
         grid_widths=[1],
         # mcure=mcure_labels,
     )
-    # cdsg_plot.error_statistics.violin_plot_table_multi(
-    #     dfs,
-    #     df_labels_and_columns,
-    #     f"./plots/LoS_all_adz_atz_saptdft.jpg",
-    #     table_fontsize=8,
-    #     usetex=True,
-    #     legend_loc="lower right",
-    #     figure_size=(10, 8),
-    #     colors=colors_total_saptdftd4,
-    #     violin_alpha=0.9,
-    #     x_label_fontsize=9,
-    #     # mcure=mcure_labels,
-    #     error_labels_position=(-0.3, 0.25),
-    #     grid_widths=[1.0],
-    #     grid_heights=[
-    #         0.35,
-    #         2,
-    #         0.35,
-    #         2,
-    #     ],
-    # )
+    cdsg_plot.error_statistics.violin_plot_table_multi_SAPT_components(
+        dfs=[{
+            "df": df_adz,
+            "label": "aug-cc-pVDZ",
+            "basis": "aug-cc-pVDZ",
+            "ylim": [[-3, 3] for i in range(2)],
+        }],
+        df_labels_and_columns_total={
+        # "SAPT(PBE0)": "SAPT(DFT) [PBE0] TOTAL ENERGY Error",
+        # "SAPT(B3LYP)": "SAPT(DFT) [B3LYP] TOTAL ENERGY Error",
+        "SAPT0": "SAPT0 TOTAL ENERGY Error",
+        "PBE0-D4": "PBE0-D4 TOTAL ENERGY Error",
+        "SAPT(PBE0)-D4(I)": "SAPT(PBE0)-D4 SUPRA TOTAL ENERGY Error",
+        # "SAPT0-D4": "SAPT0-D4 TOTAL ENERGY Error",
+        },
+        output_filename=f"./plots/saptdft_vs_sapt0.jpg",
+        table_fontsize=12,
+        usetex=True,
+        legend_loc="lower right",
+        figure_size=(4, 3),
+        colors=[[
+            PURPLE,
+            TEAL,
+            BLUE,
+        ] for i in range(5)
+        ],
+        violin_alphas=0.9,
+        x_label_fontsize=11,
+        y_label_fontsize=11,
+        grid_widths=[1.0],
+        grid_heights=[
+            0.35,
+            2,
+        ],
+        MaxE=None,
+        MinE=None,
+        add_title=False,
+        x_label_rotation=15,
+    )
     return
 
 
@@ -8695,17 +8713,17 @@ def plot_LoS_saptdft(
     if presentation:
         # violin_plots_multi_components_subset(df, limit_to_column_not_nan="D3-ML")
         # return
-        violin_plots_multi_components(df, limit_to_column_not_nan="D3-ML", slide=True)
-        # return
         violin_plots_multi(df)
-        violin_plots_multi_subset(df)
-        # return
-        violin_plots_multi_components_df_individual(df, limit_to_column_not_nan="D3-ML")
-        # return
-        violin_plots_multi_components_subset_individual(
-            df, limit_to_column_not_nan="D3-ML"
-        )
-        violin_plots_multi_individual(df)
+        # violin_plots_multi_components(df, limit_to_column_not_nan="D3-ML", slide=True)
+        # # return
+        # violin_plots_multi_subset(df)
+        # # return
+        # violin_plots_multi_components_df_individual(df, limit_to_column_not_nan="D3-ML")
+        # # return
+        # violin_plots_multi_components_subset_individual(
+        #     df, limit_to_column_not_nan="D3-ML"
+        # )
+        # violin_plots_multi_individual(df)
         # violin_plots_multi_subset_individual(df)
     else:
         # return

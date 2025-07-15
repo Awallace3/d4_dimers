@@ -14,12 +14,18 @@ def main():
         subprocess.call("rm plots/ddft_study.pkl.tar.gz", shell=True)
         subprocess.call("mv ddft_study.pkl plots/ddft_study.pkl", shell=True)
     df = src.plotting.plotting_setup_dft_ddft(
-        df_name,
+        # df_name,
+        "./plots/LoS.pkl",
         build_df=False,
-        split_components=True,
+        df_out="./plots/LoS_ddft.pkl",
         original_plot=False,
     )
-    src.plotting.plot_LoS_saptdft(df, presentation=False)
+    print(df)
+    # return
+    src.plotting.plot_LoS_saptdft(
+        df,
+        presentation=True,
+    )
     return
 
 
