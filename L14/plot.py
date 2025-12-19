@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 from pprint import pprint as pp
 import qcelemental as qcel
 from qm_tools_aw import tools
+import os
+import apnet_pt
 
 
 def compute_apnet_energies(mols):
@@ -17,26 +19,69 @@ def compute_apnet_energies(mols):
     return interaction_energies
 
 
+def ap3_d_elst_classical_energies(mols):
+    path_to_qcml = os.path.join(os.path.expanduser("~"), "gits/qcmlforge/models")
+    am_path = f"{path_to_qcml}/../models/ap3_ensemble/1/am_3.pt"
+    at_hf_vw_path = f"{path_to_qcml}/../models/ap3_ensemble/1/am_h+1_3.pt"
+    at_elst_path = f"{path_to_qcml}/../models/ap3_ensemble/1/am_elst_h+1_3.pt"
+    ap3_path = f"{path_to_qcml}/../models/ap3_ensemble/3/ap3_.pt"
+    atom_type_hf_vw_model = apnet_pt.AtomPairwiseModels.mtp_mtp.AtomTypeParamModel(
+        ds_root=None,
+        use_GPU=False,
+        ignore_database_null=True,
+        atom_model_pre_trained_path=am_path,
+        pre_trained_model_path=at_hf_vw_path,
+    )
+    atom_type_elst_model = apnet_pt.AtomPairwiseModels.mtp_mtp.AM_DimerParam_Model(
+        use_GPU=False,
+        n_neuron=64,
+        n_params=1,
+        ignore_database_null=True,
+        atom_model=atom_type_hf_vw_model.model,
+        atom_model_type="AtomTypeParamNN",
+        model_type="AtomTypeParamNN",
+        # model_type="AtomTypeParamMPNN",
+        # pre_trained_model_path=at_elst_path_mpnn,
+        pre_trained_model_path=at_elst_path,
+    )
+    ap3 = apnet_pt.AtomPairwiseModels.apnet3_fused.APNet3_AtomType_Model(
+        ds_root=None,
+        atom_type_model=atom_type_hf_vw_model.model,
+        dimer_prop_model=atom_type_elst_model.dimer_model,
+        pre_trained_model_path=ap3_path,
+    )
+    pred, pair_elst, pair_ind = ap3.predict_qcel_mols(
+        mols, batch_size=16, return_classical_pairs=True
+    )
+    return pred
+
+
 def create_df_l14_data():
     df = pd.read_csv("./l14_molecules.csv")
     df = df.rename({"Molecule": "L14"}, axis=1)
     df2 = pd.read_csv("./l14_data.csv")
     df = pd.merge(df, df2, on="L14", how="inner")
-    df['qcel_mol'] = df['XYZ'].apply(tools.xyz_dimer_to_qcelemental_mol_dimer)
+    df["qcel_mol"] = df["XYZ"].apply(tools.xyz_dimer_to_qcelemental_mol_dimer)
     # Print which rows have missing dimer geometries to be dropped
     print("Rows with missing dimer geometries (to be dropped):")
-    print(df[df['qcel_mol'].isna()][['L14']])
+    print(df[df["qcel_mol"].isna()][["L14"]])
     print("Remaining rows after dropping missing geometries:")
-    print(df[df['qcel_mol'].notna()][['L14']])
-    df = df.drop(columns=['XYZ'])
-    df = df.dropna(subset=['qcel_mol'])
-    ies = compute_apnet_energies(df['qcel_mol'].to_list())
-    df['AP2 total'] = ies[:, 0]
-    df['AP2 elst'] = ies[:, 1]
-    df['AP2 exch'] = ies[:, 2]
-    df['AP2 indu'] = ies[:, 3]
-    df['AP2 disp'] = ies[:, 4]
-    df['AP2 elst+exch+indu'] = ies[:, 1:4].sum(axis=1)
+    print(df[df["qcel_mol"].notna()][["L14"]])
+    df = df.drop(columns=["XYZ"])
+    df = df.dropna(subset=["qcel_mol"])
+    ies = compute_apnet_energies(df["qcel_mol"].to_list())
+    df["AP2 total"] = ies[:, 0]
+    df["AP2 elst"] = ies[:, 1]
+    df["AP2 exch"] = ies[:, 2]
+    df["AP2 indu"] = ies[:, 3]
+    df["AP2 disp"] = ies[:, 4]
+    df["AP2 elst+exch+indu"] = ies[:, 1:4].sum(axis=1)
+    ies = ap3_d_elst_classical_energies(df["qcel_mol"].to_list())
+    df["AP3 total"] = np.sum(ies[:, 0:4], axis=1)
+    df["AP3 elst"] = ies[:, 0]
+    df["AP3 exch"] = ies[:, 1]
+    df["AP3 indu"] = ies[:, 2]
+    df["AP3 disp"] = ies[:, 3]
     print(df)
     df.to_pickle("./l14_data_with_apnet.pkl")
     return
@@ -61,6 +106,9 @@ def visualize_errors(
         df = pd.read_csv(data_path)
 
     print(df[["L14", reference_col, "MP2"]])
+    print(df[["L14", reference_col, "SCS(MI)-MP2"]])
+    print(df[["L14", reference_col, 'SAPT0', 'AP3 total', 'AP3 elst', 'AP3 exch', 'AP3 indu', 'AP3 disp']])
+    print(df[["L14", reference_col, 'SAPT0', 'AP2 total', 'AP2 elst', 'AP2 exch', 'AP2 indu', 'AP2 disp']])
     print(df[["L14", reference_col, "SCS(MI)-MP2"]])
     print(df.columns.to_list())
     # Columns to exclude from the set of energy/method columns
@@ -193,7 +241,7 @@ def visualize_errors(
 
 
 def main():
-    create_df_l14_data()
+    # create_df_l14_data()
     # return
     visualize_errors(data_path="./l14_data_with_apnet.pkl")
     visualize_errors(
