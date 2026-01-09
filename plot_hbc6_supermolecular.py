@@ -1206,11 +1206,13 @@ def subplot_all_curves_water_benzene_functional_form(
     basis_sets=["adz"],
     build_pdf=True,
 ):
-    df = pd.read_pickle("./curves/curves.pkl")
+    # df = pd.read_pickle("./curves/curves.pkl")
+    df = pd.read_pickle("./plots/ddft_study.pkl")
     pp(df.columns.tolist())
     for functional in functionals:
         for basis_set in basis_sets:
-            df[f'SAPT_DFT_{functional.lower()}_{basis_set}'] = df[f'SAPT_LP_DFT_RP__{basis_set}']
+            # df[f'SAPT_DFT_{functional.lower()}_{basis_set}'] = df[f'SAPT_LP_DFT_RP__{basis_set}']
+            # df[f'SAPT_DFT_{functional.lower()}_{basis_set}'] = df[f'SAPT_DFT__{basis_set}']
             df[f'SAPT_DFT_{functional.lower()}_{basis_set}_total'] = df.apply(
                 lambda r: r[f'SAPT_DFT_{functional.lower()}_{basis_set}'][0],
                 axis=1
@@ -1225,6 +1227,9 @@ def subplot_all_curves_water_benzene_functional_form(
                 df[f"""{functional.upper()}-D4 DISP ENERGY {basis_set.lower()}"""]
                 * h2kcalmol
             )
+    df["E_ref_hlsapt_atz"] = df.apply(
+        lambda r: r["SAPT2+3(CCD)DMP2 DISP ENERGY atz"] * h2kcalmol, axis=1
+    )
     for functional in functionals:
         for basis_set in basis_sets:
             func_col = (
@@ -1240,6 +1245,9 @@ def subplot_all_curves_water_benzene_functional_form(
                 os.makedirs(f"./plots/disp_curves_ddft_d4/", exist_ok=True)
                 for n1, i in enumerate(sys_numbers):
                     df_sys = df[df["System Label"] == i]
+                    if len(df_sys) == 0:
+                        print("No data for system:", i)
+                        continue
                     print("sys:", df_sys["system_id"].iloc[0])
                     df_sys = df_sys.sort_values("distance (A)")
                     n_basis_sets = len(basis_sets)
@@ -1509,6 +1517,7 @@ def main():
     # plot_all_curves(df)
     #
     # df = pd.read_pickle("./plots/ddft_study.pkl")
+    # pp(df.columns.tolist())
     # df = df_setup(df, ddft=True)
     subplot_all_curves_water_benzene_functional_form()
     return
