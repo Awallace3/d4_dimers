@@ -49,6 +49,7 @@ def plot_ie_curve(
     y_max = y_max + 0.05 * y_max
     y_min = y_min + 0.05 * y_min
     # plt.ylim([y_min, y_max])
+    plt.ylim([-5, 5])
     plt.savefig(f'plots/{db}/system_{system_num}_ie_curve_benchmark.png')
     plt.plot(df_sys['distance'], df_sys['elst'], linewidth=2.0, label='Elst', color='red')
     plt.plot(df_sys['distance'], df_sys['exch'], linewidth=2.0, label='Exch', color='green')
@@ -243,8 +244,9 @@ def plot_ar_ar_BJ_damping_function():
 
 
 def main():
-    ar_ar_setup()
-    plot_ar_ar_BJ_damping_function()
+    # ar_ar_setup()
+    # plot_ar_ar_BJ_damping_function()
+    single_curve()
     return
 
 if __name__ == "__main__":
