@@ -816,11 +816,11 @@ def subplot_all_curves_LoS_basis_set(
                             )
                             me = np.mean(df_sys[func_col] - df_sys["E_ref_hlsapt_atz"])
                             if n_func == 0:
-                                N_neg = compute_N(
-                                    df_sys,
-                                    f"SAPT_DFT_{functional.lower()}_{basis_set}_D4_IE",
-                                    sign_flip=True,
-                                )
+                                # N_neg = compute_N(
+                                #     df_sys,
+                                #     f"SAPT_DFT_{functional.lower()}_{basis_set}_D4_IE",
+                                #     sign_flip=True,
+                                # )
                                 axs[n].plot(
                                     df_sys["distance (A)"],
                                     df_sys[
@@ -842,7 +842,7 @@ def subplot_all_curves_LoS_basis_set(
                                         f"SAPT_DFT_{functional.lower()}_{basis_set}_dHF"
                                     ]
                                 )
-                                N_neg = compute_N(df_sys, "dDFT - dHF", sign_flip=True)
+                                # N_neg = compute_N(df_sys, "dDFT - dHF", sign_flip=True)
                                 axs[n].plot(
                                     df_sys["distance (A)"],
                                     df_sys["dDFT - dHF"],
@@ -1203,14 +1203,21 @@ def subplot_all_curves_water_benzene_functional_form(
     functionals=[
         "pbe0",
     ],
-    basis_sets=["adz"],
+    basis_sets=["atz"],
     build_pdf=True,
+    sys_labels=[
+        '01_Water-Water',
+     '54_Benzene-Water',
+    ]
 ):
     df = pd.read_pickle("./plots/ddft_curves.pkl")
+    df = df[df["System Label"].isin(sys_labels)]
+    # df = pd.read_pickle("./plots/ddft_study.pkl")
     pp(df.columns.tolist())
     for functional in functionals:
         for basis_set in basis_sets:
-            df[f'SAPT_DFT_{functional.lower()}_{basis_set}'] = df[f'SAPT_LP_DFT_RP__{basis_set}']
+            # df[f'SAPT_DFT_{functional.lower()}_{basis_set}'] = df[f'SAPT_LP_DFT_RP__{basis_set}']
+            # df[f'SAPT_DFT_{functional.lower()}_{basis_set}'] = df[f'SAPT_DFT__{basis_set}']
             df[f'SAPT_DFT_{functional.lower()}_{basis_set}_total'] = df.apply(
                 lambda r: r[f'SAPT_DFT_{functional.lower()}_{basis_set}'][0],
                 axis=1
@@ -1225,6 +1232,9 @@ def subplot_all_curves_water_benzene_functional_form(
                 df[f"""{functional.upper()}-D4 DISP ENERGY {basis_set.lower()}"""]
                 * h2kcalmol
             )
+    df["E_ref_hlsapt_atz"] = df.apply(
+        lambda r: r["SAPT2+3(CCD)DMP2 DISP ENERGY atz"] * h2kcalmol, axis=1
+    )
     for functional in functionals:
         for basis_set in basis_sets:
             func_col = (
@@ -1233,13 +1243,18 @@ def subplot_all_curves_water_benzene_functional_form(
             mae = np.mean(np.abs(df[func_col] - df["E_ref_hlsapt_atz"]))
             me = np.mean(df[func_col] - df["E_ref_hlsapt_atz"])
             print(
-                f"""{functional}/{basis_set}, MAE: {mae:.2f} ME: {me:.2f}"""
+                f"""{functional}/{basis_set}, MAE: {mae:.2f} ME: {me:.2f}, count: {len(df)}"""
             )
             sys_numbers = df["System Label"].unique()
+            pp(sys_numbers)
             if len(sys_numbers) > 0:
                 os.makedirs(f"./plots/disp_curves_ddft_d4/", exist_ok=True)
                 for n1, i in enumerate(sys_numbers):
+                    print("Plotting system:", i)
                     df_sys = df[df["System Label"] == i]
+                    if len(df_sys) == 0:
+                        print("No data for system:", i)
+                        continue
                     print("sys:", df_sys["system_id"].iloc[0])
                     df_sys = df_sys.sort_values("distance (A)")
                     n_basis_sets = len(basis_sets)
@@ -1251,12 +1266,16 @@ def subplot_all_curves_water_benzene_functional_form(
                         sharey=True,
                         sharex=True,
                     )
-                    axs = axs.flatten()
+                    # if len(axs) > 1:
+                    if ans := isinstance(axs, np.ndarray):
+                        axs = axs.flatten()
+                    else:
+                        axs = [axs]
                     for n, basis_set in enumerate(basis_sets):
                         basis_set_label = f"{basis_set[0]}{basis_set[1:].upper()}"
                         df_sys = df_sys.sort_values("distance (A)")
                         label = "-D4 (HF_ATM)"
-                        N_neg = compute_N(df_sys, label, sign_flip=True)
+                        # N_neg = compute_N(df_sys, label, sign_flip=True)
                         axs[n].plot(
                             df_sys["distance (A)"],
                             df_sys[label],
@@ -1266,7 +1285,7 @@ def subplot_all_curves_water_benzene_functional_form(
                             # color="orange",
                         )
                         label = "-D4 (SAPT_DFT_pbe0_adz_3_IE)"
-                        N_neg = compute_N(df_sys, label, sign_flip=True)
+                        # N_neg = compute_N(df_sys, label, sign_flip=True)
                         axs[n].plot(
                             df_sys["distance (A)"],
                             df_sys[label],
@@ -1276,7 +1295,7 @@ def subplot_all_curves_water_benzene_functional_form(
                             # color="orange",
                         )
                         label = "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra)"
-                        N_neg = compute_N(df_sys, label, sign_flip=True)
+                        # N_neg = compute_N(df_sys, label, sign_flip=True)
                         axs[n].plot(
                             df_sys["distance (A)"],
                             df_sys[label],
@@ -1286,7 +1305,7 @@ def subplot_all_curves_water_benzene_functional_form(
                             # color="orange",
                         )
                         label = '-D4 (SAPT_DFT_pbe0_adz_3_IE_NO_DAMPING)'
-                        N_neg = compute_N(df_sys, label, sign_flip=True)
+                        # N_neg = compute_N(df_sys, label, sign_flip=True)
                         axs[n].plot(
                             df_sys["distance (A)"],
                             df_sys[label],
@@ -1296,7 +1315,7 @@ def subplot_all_curves_water_benzene_functional_form(
                             # color="orange",
                         )
                         label = "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra_NO_DAMPING)"
-                        N_neg = compute_N(df_sys, label, sign_flip=True)
+                        # N_neg = compute_N(df_sys, label, sign_flip=True)
                         axs[n].plot(
                             df_sys["distance (A)"],
                             df_sys[label],
@@ -1309,7 +1328,7 @@ def subplot_all_curves_water_benzene_functional_form(
                             f"SAPT(DFT) [{functional.upper()}] DISP ENERGY {basis_set}"
                         )
                         df_sys[func_col] = df_sys[func_col] * h2kcalmol
-                        N_neg = compute_N(df_sys, func_col, sign_flip=True)
+                        # N_neg = compute_N(df_sys, func_col, sign_flip=True)
                         axs[n].plot(
                             df_sys["distance (A)"],
                             df_sys[func_col],
@@ -1319,7 +1338,7 @@ def subplot_all_curves_water_benzene_functional_form(
                             linewidth=2.0,
                             color="gray",
                         )
-                        N_neg = compute_N(df_sys, "E_ref_hlsapt_atz", sign_flip=True)
+                        # N_neg = compute_N(df_sys, "E_ref_hlsapt_atz", sign_flip=True)
                         axs[n].plot(
                             df_sys["distance (A)"],
                             df_sys["E_ref_hlsapt_atz"],
