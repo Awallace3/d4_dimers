@@ -8,7 +8,7 @@ import os
 from scipy.optimize import curve_fit
 from src.plotting import prep_saptdft_components
 from qcelemental import constants
-from matplotlib.ticker import AutoMinorLocator
+from matplotlib.ticker import AutoMinorLocator, ScalarFormatter
 
 h2kcalmol = constants.conversion_factor("hartree", "kcal/mol")
 
@@ -232,9 +232,8 @@ def plot_all_curves_LoS(
                 mae = np.mean(np.abs(df_db[func_col] - df_db["E_ref_hlsapt_atz"]))
                 me = np.mean(np.abs(df_db[func_col] - df_db["E_ref_hlsapt_atz"]))
                 print(
-                    f"""DB: {db} w {functional}/{
-                        basis_set
-                    }, MAE: {mae:.2f} ME: {me:.2f}"""
+                    f"""DB: {db} w {functional}/{basis_set}, MAE: {mae:.2f} ME: {
+                        me:.2f}"""
                 )
         sys_numbers = df_db["System Label"].unique()
         if len(sys_numbers) > 0:
@@ -274,9 +273,8 @@ def plot_all_curves_LoS(
                         plt.plot(
                             df_sys["distance (A)"],
                             df_sys[func_col],
-                            label=f"""{functional.upper()}-D4/{
-                                basis_set
-                            } MAE: {mae:.2f}, ME: {me:.2f}""",
+                            label=f"""{functional.upper()}-D4/{basis_set} MAE: {
+                                mae:.2f}, ME: {me:.2f}""",
                             marker="o",
                             markersize=2.0,
                         )
@@ -508,9 +506,8 @@ def subplot_all_curves_LoS(
                 mae = np.mean(np.abs(df_db[func_col] - df_db["E_ref_hlsapt_atz"]))
                 me = np.mean(np.abs(df_db[func_col] - df_db["E_ref_hlsapt_atz"]))
                 print(
-                    f"""DB: {db} w {functional}/{
-                        basis_set
-                    }, MAE: {mae:.2f} ME: {me:.2f}"""
+                    f"""DB: {db} w {functional}/{basis_set}, MAE: {mae:.2f} ME: {
+                        me:.2f}"""
                 )
         sys_numbers = df_db["System Label"].unique()
         if len(sys_numbers) > 0:
@@ -572,9 +569,8 @@ def subplot_all_curves_LoS(
                         axs[n * 2].plot(
                             df_sys["distance (A)"],
                             df_sys[func_col],
-                            label=f"""{functional.upper()}-D4/{
-                                basis_set_label
-                            } MAE: {mae:.2f}, ME: {me:.2f}""",
+                            label=f"""{functional.upper()}-D4/{basis_set_label} MAE: {
+                                mae:.2f}, ME: {me:.2f}""",
                             marker="o",
                             markersize=2.0,
                         )
@@ -768,9 +764,8 @@ def subplot_all_curves_LoS_basis_set(
                     mae = np.mean(np.abs(df_db[func_col] - df_db["E_ref_hlsapt_atz"]))
                     me = np.mean(df_db[func_col] - df_db["E_ref_hlsapt_atz"])
                     print(
-                        f"""DB: {db} w {functional}/{
-                            basis_set
-                        }, MAE: {mae:.2f} ME: {me:.2f}"""
+                        f"""DB: {db} w {functional}/{basis_set}, MAE: {mae:.2f} ME: {
+                            me:.2f}"""
                     )
                     f.write(
                         f"{functional.upper()}-D4 & {basis_set} & {mae:.2f} & {me:.2f} \\\\"
@@ -1019,9 +1014,8 @@ def subplot_all_curves_LoS_basis_set_D4_versions(
                     mae = np.mean(np.abs(df_db[func_col] - df_db["E_ref_hlsapt_atz"]))
                     me = np.mean(df_db[func_col] - df_db["E_ref_hlsapt_atz"])
                     print(
-                        f"""DB: {db} w {functional}/{
-                            basis_set
-                        }, MAE: {mae:.2f} ME: {me:.2f}"""
+                        f"""DB: {db} w {functional}/{basis_set}, MAE: {mae:.2f} ME: {
+                            me:.2f}"""
                     )
                     f.write(
                         f"{functional.upper()}-D4 & {basis_set} & {mae:.2f} & {me:.2f} \\\\"
@@ -1041,144 +1035,132 @@ def subplot_all_curves_LoS_basis_set_D4_versions(
             if len(sys_numbers) > 0:
                 os.makedirs(f"./plots/disp_curves_ddft_d4/{db}", exist_ok=True)
                 for n1, i in enumerate(sys_numbers):
-                    df_sys = df_db[df_db["System Label"] == i]
+                    df_sys = df_db[df_db["System Label"] == i].copy()
                     print("sys:", df_sys["system_id"].iloc[0])
                     df_sys = df_sys.sort_values("distance (A)")
                     n_basis_sets = len(basis_sets)
                     fig, axs = plt.subplots(
                         n_basis_sets,
                         1,
-                        figsize=(6.5, 5.5 * n_basis_sets),
-                        dpi=400,
-                        sharey=True,
-                        sharex=True,
+                        figsize=(6, 6),
+                        dpi=300,
                     )
-                    axs = axs.flatten()
+                    if n_basis_sets == 1:
+                        axs = [axs]
+                    else:
+                        axs = axs.flatten()
+
+                    # Define colors and markers for each method
+                    colors = {
+                        "-D4 (HF_ATM)": "blue",
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE)": "red",
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra)": "green",
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_NO_DAMPING)": "purple",
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra_NO_DAMPING)": "orange",
+                        "SAPT(PBE0)": "gray",
+                        "E_ref_hlsapt_atz": "black",
+                    }
+                    markers = {
+                        "-D4 (HF_ATM)": "o",
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE)": "s",
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra)": "^",
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_NO_DAMPING)": "d",
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra_NO_DAMPING)": "v",
+                        "SAPT(PBE0)": "X",
+                        "E_ref_hlsapt_atz": "o",
+                    }
+                    labels = {
+                        "-D4 (HF_ATM)": "HF-D4 (S)",
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE)": "SAPT(PBE0)-D4 (S)",
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra)": "SAPT(PBE0)-D4 (I)",
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_NO_DAMPING)": "SAPT(PBE0)-D4 (S, ND)",
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra_NO_DAMPING)": "SAPT(PBE0)-D4 (I, ND)",
+                        "SAPT(PBE0)": "SAPT(PBE0)",
+                        "E_ref_hlsapt_atz": "SAPT2+3(CCD)/aTZ",
+                    }
+
                     for n, basis_set in enumerate(basis_sets):
                         basis_set_label = f"{basis_set[0]}{basis_set[1:].upper()}"
                         df_sys = df_sys.sort_values("distance (A)")
-                        # for n_func, functional in enumerate(functionals):
-                        #     func_col = f"""{functional.upper()}-D4 DISP ENERGY {
-                        #         basis_set.lower()
-                        #     }"""
-                        #     c = color_map[functional.upper()]
-                        #
-                        #     N_neg = compute_N(df_sys, func_col, sign_flip=True)
-                        #     axs[n].plot(
-                        #         df_sys["distance (A)"],
-                        #         df_sys[func_col],
-                        #         # label=f"""{
-                        #         label=f"""{functional.upper()}-D4 ($R^{{-{N_neg:.1f}}}$)""",
-                        #         marker="o",
-                        #         markersize=4.0,
-                        #         linewidth=2.5,
-                        #         color=c,
-                        #     )
-                        label = "-D4 (HF_ATM)"
-                        N_neg = compute_N(df_sys, label, sign_flip=True)
-                        axs[n].plot(
-                            df_sys["distance (A)"],
-                            df_sys[label],
-                            label=f"HF-D4(S)",
-                            marker="o",
-                            markersize=4.0,
-                            # color="orange",
-                        )
-                        label = "-D4 (SAPT_DFT_pbe0_adz_3_IE)"
-                        N_neg = compute_N(df_sys, label, sign_flip=True)
-                        axs[n].plot(
-                            df_sys["distance (A)"],
-                            df_sys[label],
-                            label=f"SAPT(PBE0)-D4(S)",
-                            marker="o",
-                            markersize=4.0,
-                            # color="orange",
-                        )
-                        label = "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra)"
-                        N_neg = compute_N(df_sys, label, sign_flip=True)
-                        axs[n].plot(
-                            df_sys["distance (A)"],
-                            df_sys[label],
-                            label=f"SAPT(PBE0)-D4(I)",
-                            marker="o",
-                            markersize=4.0,
-                            # color="orange",
-                        )
-                        label = '-D4 (SAPT_DFT_pbe0_adz_3_IE_NO_DAMPING)'
-                        N_neg = compute_N(df_sys, label, sign_flip=True)
-                        axs[n].plot(
-                            df_sys["distance (A)"],
-                            df_sys[label],
-                            label=f"SAPT(PBE0)-D4(S, ND)",
-                            marker="o",
-                            markersize=4.0,
-                            # color="orange",
-                        )
-                        label = "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra_NO_DAMPING)"
-                        N_neg = compute_N(df_sys, label, sign_flip=True)
-                        axs[n].plot(
-                            df_sys["distance (A)"],
-                            df_sys[label],
-                            label=f"SAPT(PBE0)-D4(I, ND)",
-                            marker="o",
-                            markersize=4.0,
-                            # color="orange",
-                        )
-                        func_col = (
-                            f"SAPT(DFT) [{functional.upper()}] DISP ENERGY {basis_set}"
-                        )
-                        df_sys[func_col] = df_sys[func_col] * h2kcalmol
-                        N_neg = compute_N(df_sys, func_col, sign_flip=True)
-                        axs[n].plot(
-                            df_sys["distance (A)"],
-                            df_sys[func_col],
-                            label=rf"SAPT(PBE0)",
-                            marker="o",
-                            markersize=4.5,
-                            linewidth=2.0,
-                            color="gray",
-                        )
-                        N_neg = compute_N(df_sys, "E_ref_hlsapt_atz", sign_flip=True)
+
+                        # Get equilibrium distance from minimum energy
+                        func_col = f"SAPT(DFT) [pbe0] DISP ENERGY {basis_set}"
+                        if func_col in df_sys.columns:
+                            df_sys[func_col] = df_sys[func_col] * h2kcalmol
+                            min_idx = df_sys[func_col].idxmin()
+                            min_distance = df_sys.loc[min_idx, "distance (A)"]
+                            axs[n].axvline(
+                                min_distance,
+                                color="grey",
+                                linestyle="--",
+                                label="Equilibrium",
+                            )
+
+                        # Plot each D4 method
+                        d4_cols = [
+                            "-D4 (HF_ATM)",
+                            "-D4 (SAPT_DFT_pbe0_adz_3_IE)",
+                            "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra)",
+                            "-D4 (SAPT_DFT_pbe0_adz_3_IE_NO_DAMPING)",
+                            "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra_NO_DAMPING)",
+                        ]
+
+                        for col in d4_cols:
+                            if col not in df_sys.columns:
+                                continue
+                            # Scatter plot for data points
+                            axs[n].plot(
+                                df_sys["distance (A)"],
+                                df_sys[col],
+                                color=colors[col],
+                                marker=markers[col],
+                                label=f"{labels[col]} (Data)",
+                            )
+                            # Set y-limits based on data
+                            axs[n].set_ylim(
+                                df_sys[col].min() + 0.05 * df_sys[col].min(), 0.5
+                            )
+
+                        # Plot SAPT(PBE0) reference
+                        if func_col in df_sys.columns:
+                            axs[n].plot(
+                                df_sys["distance (A)"],
+                                df_sys[func_col],
+                                color=colors["SAPT(PBE0)"],
+                                marker=markers["SAPT(PBE0)"],
+                                label=f"{labels['SAPT(PBE0)']} (Data)",
+                            )
+
+                        # Plot SAPT2+3(CCD) reference
                         axs[n].plot(
                             df_sys["distance (A)"],
                             df_sys["E_ref_hlsapt_atz"],
-                            label=rf"SAPT2+3(CCD)/aTZ",
-                            marker="o",
-                            markersize=4.5,
-                            linewidth=2.0,
-                            color="k",
+                            color=colors["E_ref_hlsapt_atz"],
+                            marker=markers["E_ref_hlsapt_atz"],
+                            label=f"{labels['E_ref_hlsapt_atz']} (Data)",
                         )
-                        axs[n].set_title(f"\\textbf{{{basis_set_label}}}", fontsize=20)
-                        if n >= (n_basis_sets - 1) * 2 - 1:
-                            axs[n].set_xlabel(r"Distance (\AA)", fontsize=16)
-                        axs[n].set_ylabel(
-                            f"Disp. Energy (kcal$\cdot$mol$^{-1}$)", fontsize=20
-                        )
-                        axs[n].tick_params(axis="both", which="major", labelsize=18)
-                        axs[n].legend(loc="lower right", fontsize=15)
-                        axs[n].yaxis.set_minor_locator(AutoMinorLocator())
-                        axs[n].xaxis.set_minor_locator(AutoMinorLocator())
-                        # make x-axis log scale
-                        # axs[n].set_xscale('log')
-                    # get y-axis limits
-                    y_min = np.min([ax.get_ylim()[0] for ax in axs])
-                    y_max = np.max([ax.get_ylim()[1] for ax in axs])
-                    for ax in axs:
-                        ax.set_ylim(y_min, 8)
-                    # fmt: off
+
+                        # Set plot properties
+                        axs[n].set_title(f"{basis_set_label}")
+                        axs[n].set_ylabel("Disp. Energy (kcal/mol)")
+                        axs[n].grid(True, linestyle="--", alpha=0.7)
+                        axs[n].minorticks_on()
+                        axs[n].tick_params(which="both", width=1)
+                        axs[n].legend(fontsize=8, loc="lower right")
+
+                        # Format tick labels
+                        axs[n].xaxis.set_major_formatter(ScalarFormatter())
+                        axs[n].yaxis.set_major_formatter(ScalarFormatter())
+
+                    axs[-1].set_xlabel(r"Distance (\AA)")
                     plt.tight_layout()
-                    # plt.savefig(
-                    #     f"""./plots/disp_curves_ddft/{db}/{i}_ddft_super_ddft_curve.png"""
-                    # )
                     plt.savefig(
-                        f"""./plots/disp_curves_ddft_d4/{db}/{i}_ddft_super_ddft_curve.pdf"""
+                        f"./plots/disp_curves_ddft_d4/{db}/{i}_ddft_super_ddft_curve.pdf"
                     )
-                    # fmt: on
                     plt.close()
-                    # if n1 > 1:
-                    #     break
+
                     # add figure to tex file
-                    i_safe = i.replace("_", f"\\_")
+                    i_safe = i.replace("_", r"\_")
                     # \\includegraphics[width=0.9\\textwidth]{{{db}/{i}_ddft_super_ddft_curve.png}}
                     f.write(
                         f"""\\begin{{figure}}[ht]
@@ -1207,10 +1189,10 @@ def subplot_all_curves_water_benzene_functional_form(
     basis_sets=["atz"],
     build_pdf=True,
     sys_labels=[
-        '01_Water-Water',
-     '54_Benzene-Water',
+        "01_Water-Water",
+        "54_Benzene-Water",
     ],
-    db='s66x8',
+    db="s66x8",
 ):
     df = pd.read_pickle("./plots/ddft_curves.pkl")
     df = df[df["System Label"].isin(sys_labels)]
@@ -1220,15 +1202,13 @@ def subplot_all_curves_water_benzene_functional_form(
         for basis_set in basis_sets:
             # df[f'SAPT_DFT_{functional.lower()}_{basis_set}'] = df[f'SAPT_LP_DFT_RP__{basis_set}']
             # df[f'SAPT_DFT_{functional.lower()}_{basis_set}'] = df[f'SAPT_DFT__{basis_set}']
-            df[f'SAPT_DFT_{functional.lower()}_{basis_set}_total'] = df.apply(
-                lambda r: r[f'SAPT_DFT_{functional.lower()}_{basis_set}'][0],
-                axis=1
+            df[f"SAPT_DFT_{functional.lower()}_{basis_set}_total"] = df.apply(
+                lambda r: r[f"SAPT_DFT_{functional.lower()}_{basis_set}"][0], axis=1
             )
-            df[f'SAPT_DFT_{functional.lower()}_{basis_set}_total'] = df.apply(
-                lambda r: r[f'SAPT_DFT_{functional.lower()}_{basis_set}'][0],
-                axis=1
+            df[f"SAPT_DFT_{functional.lower()}_{basis_set}_total"] = df.apply(
+                lambda r: r[f"SAPT_DFT_{functional.lower()}_{basis_set}"][0], axis=1
             )
-            print(df[f'SAPT_DFT_{functional.lower()}_{basis_set}_total'])
+            print(df[f"SAPT_DFT_{functional.lower()}_{basis_set}_total"])
             df = prep_saptdft_components(df, functional, basis_set)
             df[f"""{functional.upper()}-D4 DISP ENERGY {basis_set.lower()}"""] = (
                 df[f"""{functional.upper()}-D4 DISP ENERGY {basis_set.lower()}"""]
@@ -1239,9 +1219,7 @@ def subplot_all_curves_water_benzene_functional_form(
     )
     for functional in functionals:
         for basis_set in basis_sets:
-            func_col = (
-                f"""{functional.upper()}-D4 DISP ENERGY {basis_set.lower()}"""
-            )
+            func_col = f"""{functional.upper()}-D4 DISP ENERGY {basis_set.lower()}"""
             mae = np.mean(np.abs(df[func_col] - df["E_ref_hlsapt_atz"]))
             me = np.mean(df[func_col] - df["E_ref_hlsapt_atz"])
             print(
@@ -1306,7 +1284,7 @@ def subplot_all_curves_water_benzene_functional_form(
                             markersize=4.0,
                             # color="orange",
                         )
-                        label = '-D4 (SAPT_DFT_pbe0_adz_3_IE_NO_DAMPING)'
+                        label = "-D4 (SAPT_DFT_pbe0_adz_3_IE_NO_DAMPING)"
                         # N_neg = compute_N(df_sys, label, sign_flip=True)
                         axs[n].plot(
                             df_sys["distance (A)"],
@@ -1383,34 +1361,36 @@ def subplot_all_curves_water_benzene_functional_form(
                     # add figure to tex file
                     i_safe = i.replace("_", f"\\_")
                     # \\includegraphics[width=0.9\\textwidth]{{{db}/{i}_ddft_super_ddft_curve.png}}
-#                     f.write(
-#                         f"""\\begin{{figure}}[ht]
-#     \\centering
-#     \\includegraphics[width=0.7\\textwidth]{{{db}/{i}_ddft_super_ddft_curve.pdf}}
-#     \\caption{{LoS Dispersion Curves for \\textbf{{{db} {i_safe}}}}}.
-# \\end{{figure}}
-#
-# \\clearpage
-#
-# """
-#                     )
-#         f.write(r"""\end{document}""")
+    #                     f.write(
+    #                         f"""\\begin{{figure}}[ht]
+    #     \\centering
+    #     \\includegraphics[width=0.7\\textwidth]{{{db}/{i}_ddft_super_ddft_curve.pdf}}
+    #     \\caption{{LoS Dispersion Curves for \\textbf{{{db} {i_safe}}}}}.
+    # \\end{{figure}}
+    #
+    # \\clearpage
+    #
+    # """
+    #                     )
+    #         f.write(r"""\end{document}""")
     # if build_pdf:
     #     os.chdir("./plots/disp_curves_ddft_d4/")
     #     os.system("pdflatex LoS_disp_curves.tex")
     #     os.chdir("../../")
     return
 
+
 def monomer_C6s_from_dimer(dimer_C6s, monA_C6s, monB_C6s):
-    dimer_monA_C6s = dimer_C6s[:len(monA_C6s), :len(monA_C6s)]
-    dimer_monB_C6s = dimer_C6s[len(monA_C6s):, len(monA_C6s):]
+    dimer_monA_C6s = dimer_C6s[: len(monA_C6s), : len(monA_C6s)]
+    dimer_monB_C6s = dimer_C6s[len(monA_C6s) :, len(monA_C6s) :]
     return dimer_monA_C6s, dimer_monB_C6s
+
 
 def c6_change_mon_dimer(df, print_lvl=0):
     # df_42 = df[df['System Label'] == '42_Uracil-Cyclopentane']
-    df_sys = df[df['System Label'] == '01_Water-Water']
+    df_sys = df[df["System Label"] == "01_Water-Water"]
     # df_sys = df[df['System Label'] == '50_Benzene-Ethyne'].copy()
-    df_sys.sort_values('distance (A)', inplace=True)
+    df_sys.sort_values("distance (A)", inplace=True)
     # df_sys = plotting.compute_d4_from_opt_params(
     #     df_sys,
     #     bases=[
@@ -1425,21 +1405,23 @@ def c6_change_mon_dimer(df, print_lvl=0):
     #     benchmark_label="benchmark ref energy",
     #     disp_compute=locald4.compute_disp_2B_NO_DAMPING,
     # )
-    print(df_sys[['system_id', 'R', 'distance (A)']])
-    print(df_sys[['R', '-D4 (SAPT_DFT_pbe0_adz_3_IE)']])
-    print(df_sys[['R', '-D4 (SAPT_DFT_pbe0_adz_3_IE_NO_DAMPING)']])
+    print(df_sys[["system_id", "R", "distance (A)"]])
+    print(df_sys[["R", "-D4 (SAPT_DFT_pbe0_adz_3_IE)"]])
+    print(df_sys[["R", "-D4 (SAPT_DFT_pbe0_adz_3_IE_NO_DAMPING)"]])
     params, _ = paramsTable.get_params("SAPT_DFT_pbe0_adz_3_IE_supra_NO_DAMPING")
     # params, _ = paramsTable.get_params("SAPT_DFT_pbe0_adz_3_IE")
     for n, r in df_sys.iterrows():
         print(f"System: {r['system_id']}, R: {r['R']}")
-        dimer_C6s = r['C6s']
-        monA_C6s = r['C6_A']
-        monB_C6s = r['C6_B']
-        dimer_monA_C6s, dimer_monB_C6s = monomer_C6s_from_dimer(dimer_C6s, monA_C6s, monB_C6s)
-        dimer_geom = r['Geometry_bohr'][:, 1:]
+        dimer_C6s = r["C6s"]
+        monA_C6s = r["C6_A"]
+        monB_C6s = r["C6_B"]
+        dimer_monA_C6s, dimer_monB_C6s = monomer_C6s_from_dimer(
+            dimer_C6s, monA_C6s, monB_C6s
+        )
+        dimer_geom = r["Geometry_bohr"][:, 1:]
         distance_matrix = np.linalg.norm(dimer_geom[:, np.newaxis] - dimer_geom, axis=2)
-        monomer_distance_A = distance_matrix[:len(monA_C6s), :len(monA_C6s)]
-        monomer_distance_B = distance_matrix[len(monA_C6s):, len(monA_C6s):]
+        monomer_distance_A = distance_matrix[: len(monA_C6s), : len(monA_C6s)]
+        monomer_distance_B = distance_matrix[len(monA_C6s) :, len(monA_C6s) :]
         for i in range(len(monA_C6s)):
             monA_C6s[i, i] = 0.0
             dimer_monA_C6s[i, i] = 0.0
@@ -1451,53 +1433,139 @@ def c6_change_mon_dimer(df, print_lvl=0):
         avg_change_A = np.mean(dimer_monA_C6s - monA_C6s)
         avg_change_B = np.mean(dimer_monB_C6s - monB_C6s)
         print(f"avg change A: {avg_change_A:.2f}, avg change B: {avg_change_B:.2f}")
-        print("* hartree2kcalmol because want to scale units to kcal/mol where I can think more clearly about them")
+        print(
+            "* hartree2kcalmol because want to scale units to kcal/mol where I can think more clearly about them"
+        )
         avg_change_A = np.mean(dimer_monA_C6s - monA_C6s) * constants.hartree2kcalmol
         avg_change_B = np.mean(dimer_monB_C6s - monB_C6s) * constants.hartree2kcalmol
         print(f"avg change A: {avg_change_A:.2f}, avg change B: {avg_change_B:.2f}")
         print("divided by 1/r^6")
-        avg_change_A = np.mean(dimer_monA_C6s / monomer_distance_A ** 6 - monA_C6s / monomer_distance_A ** 6) * constants.hartree2kcalmol
-        avg_change_B = np.mean(dimer_monB_C6s / monomer_distance_B ** 6 - monB_C6s / monomer_distance_B ** 6) * constants.hartree2kcalmol
+        avg_change_A = (
+            np.mean(
+                dimer_monA_C6s / monomer_distance_A**6
+                - monA_C6s / monomer_distance_A**6
+            )
+            * constants.hartree2kcalmol
+        )
+        avg_change_B = (
+            np.mean(
+                dimer_monB_C6s / monomer_distance_B**6
+                - monB_C6s / monomer_distance_B**6
+            )
+            * constants.hartree2kcalmol
+        )
         print(f"avg change A: {avg_change_A:.2f}, avg change B: {avg_change_B:.2f}")
         print("divided by 1/r^8")
-        avg_change_A = np.mean(dimer_monA_C6s / monomer_distance_A **8 - monA_C6s / monomer_distance_A **8) * constants.hartree2kcalmol
-        avg_change_B = np.mean(dimer_monB_C6s / monomer_distance_B **8 - monB_C6s / monomer_distance_B **8) * constants.hartree2kcalmol
+        avg_change_A = (
+            np.mean(
+                dimer_monA_C6s / monomer_distance_A**8
+                - monA_C6s / monomer_distance_A**8
+            )
+            * constants.hartree2kcalmol
+        )
+        avg_change_B = (
+            np.mean(
+                dimer_monB_C6s / monomer_distance_B**8
+                - monB_C6s / monomer_distance_B**8
+            )
+            * constants.hartree2kcalmol
+        )
         print(f"avg change A: {avg_change_A:.2f}, avg change B: {avg_change_B:.2f}")
 
-        dimer_dispersion_supra = locald4.compute_disp_2B_supra_from_C6s(r['Geometry_bohr'][:, 0], r['Geometry_bohr'][:, 1:], dimer_C6s, r['monAs'],r['monBs'], params)
-        dimer_dispersion = locald4.compute_disp_2B_from_C6s_NO_DAMPING(r['Geometry_bohr'][:, 0], r['Geometry_bohr'][:, 1:], dimer_C6s, params)
-        monA_dispersion = locald4.compute_disp_2B_from_C6s_NO_DAMPING(r['Geometry_bohr'][:len(monA_C6s), 0], r['Geometry_bohr'][:len(monA_C6s), 1:], monA_C6s, params)
+        dimer_dispersion_supra = locald4.compute_disp_2B_supra_from_C6s(
+            r["Geometry_bohr"][:, 0],
+            r["Geometry_bohr"][:, 1:],
+            dimer_C6s,
+            r["monAs"],
+            r["monBs"],
+            params,
+        )
+        dimer_dispersion = locald4.compute_disp_2B_from_C6s_NO_DAMPING(
+            r["Geometry_bohr"][:, 0], r["Geometry_bohr"][:, 1:], dimer_C6s, params
+        )
+        monA_dispersion = locald4.compute_disp_2B_from_C6s_NO_DAMPING(
+            r["Geometry_bohr"][: len(monA_C6s), 0],
+            r["Geometry_bohr"][: len(monA_C6s), 1:],
+            monA_C6s,
+            params,
+        )
 
         dimer_C6s_d_zero = dimer_C6s.copy()
         for i in range(len(dimer_C6s_d_zero)):
             dimer_C6s_d_zero[i, i] = 0.0
-        dimer_dispersion_diagonal_zero = locald4.compute_disp_2B_from_C6s_NO_DAMPING(r['Geometry_bohr'][:, 0], r['Geometry_bohr'][:, 1:], dimer_C6s_d_zero, params)
+        dimer_dispersion_diagonal_zero = locald4.compute_disp_2B_from_C6s_NO_DAMPING(
+            r["Geometry_bohr"][:, 0],
+            r["Geometry_bohr"][:, 1:],
+            dimer_C6s_d_zero,
+            params,
+        )
         # This test demonstrates that diagonal C6s do not contribute to the
         # dispersion energy. This allows us to set diagonal to zero for monC6s
         assert np.isclose(dimer_dispersion_diagonal_zero, dimer_dispersion)
 
-
         print(f"Disp.    dimer diagonal zero: {dimer_dispersion_diagonal_zero:.4f}")
-        monB_dispersion = locald4.compute_disp_2B_from_C6s_NO_DAMPING(r['Geometry_bohr'][len(monA_C6s):, 0], r['Geometry_bohr'][len(monA_C6s):, 1:], monB_C6s, params)
-        dimer_monA_dispersion = locald4.compute_disp_2B_from_C6s_NO_DAMPING(r['Geometry_bohr'][:len(monA_C6s), 0], r['Geometry_bohr'][:len(monA_C6s), 1:], dimer_monA_C6s, params)
-        dimer_monB_dispersion = locald4.compute_disp_2B_from_C6s_NO_DAMPING(r['Geometry_bohr'][len(monA_C6s):, 0], r['Geometry_bohr'][len(monA_C6s):, 1:], dimer_monB_C6s, params)
+        monB_dispersion = locald4.compute_disp_2B_from_C6s_NO_DAMPING(
+            r["Geometry_bohr"][len(monA_C6s) :, 0],
+            r["Geometry_bohr"][len(monA_C6s) :, 1:],
+            monB_C6s,
+            params,
+        )
+        dimer_monA_dispersion = locald4.compute_disp_2B_from_C6s_NO_DAMPING(
+            r["Geometry_bohr"][: len(monA_C6s), 0],
+            r["Geometry_bohr"][: len(monA_C6s), 1:],
+            dimer_monA_C6s,
+            params,
+        )
+        dimer_monB_dispersion = locald4.compute_disp_2B_from_C6s_NO_DAMPING(
+            r["Geometry_bohr"][len(monA_C6s) :, 0],
+            r["Geometry_bohr"][len(monA_C6s) :, 1:],
+            dimer_monB_C6s,
+            params,
+        )
         dimer_C6s_mon = dimer_C6s.copy()
-        dimer_C6s_mon[:len(monA_C6s), :len(monA_C6s)] = monA_C6s
-        dimer_C6s_mon[len(monA_C6s):, len(monA_C6s):] = monB_C6s
-        dimer_dispersion_supra_monc6s = locald4.compute_disp_2B_supra_from_C6s(r['Geometry_bohr'][:, 0], r['Geometry_bohr'][:, 1:], dimer_C6s_mon, r['monAs'],r['monBs'], params)
-        dimer_dispersion_c6s_mon = locald4.compute_disp_2B_from_C6s_NO_DAMPING(r['Geometry_bohr'][:, 0], r['Geometry_bohr'][:, 1:], dimer_C6s_mon, params)
-        print(f"Disp.    dimer: {dimer_dispersion:.4f}, monA: {monA_dispersion:.4f}, monB: {monB_dispersion:.4f}")
-        print(f"Disp.    Total: {dimer_dispersion - monA_dispersion - monB_dispersion:.4f}")
-        print(f"Disp.MC6 dimer: {dimer_dispersion_c6s_mon:.4f}, monA: {monA_dispersion:.4f}, monB: {monB_dispersion:.4f}")
-        print(f"Disp.MC6 Total: {dimer_dispersion_c6s_mon - dimer_monA_dispersion - dimer_monB_dispersion:.4f}")
-        print(f"Disp.    dmonA: {dimer_monA_dispersion:.4f}, dmonB: {dimer_monB_dispersion:.4f}")
-        print(f"Disp.    Total: {dimer_dispersion - dimer_monA_dispersion - dimer_monB_dispersion:.4f}")
+        dimer_C6s_mon[: len(monA_C6s), : len(monA_C6s)] = monA_C6s
+        dimer_C6s_mon[len(monA_C6s) :, len(monA_C6s) :] = monB_C6s
+        dimer_dispersion_supra_monc6s = locald4.compute_disp_2B_supra_from_C6s(
+            r["Geometry_bohr"][:, 0],
+            r["Geometry_bohr"][:, 1:],
+            dimer_C6s_mon,
+            r["monAs"],
+            r["monBs"],
+            params,
+        )
+        dimer_dispersion_c6s_mon = locald4.compute_disp_2B_from_C6s_NO_DAMPING(
+            r["Geometry_bohr"][:, 0], r["Geometry_bohr"][:, 1:], dimer_C6s_mon, params
+        )
+        print(
+            f"Disp.    dimer: {dimer_dispersion:.4f}, monA: {monA_dispersion:.4f}, monB: {monB_dispersion:.4f}"
+        )
+        print(
+            f"Disp.    Total: {dimer_dispersion - monA_dispersion - monB_dispersion:.4f}"
+        )
+        print(
+            f"Disp.MC6 dimer: {dimer_dispersion_c6s_mon:.4f}, monA: {monA_dispersion:.4f}, monB: {monB_dispersion:.4f}"
+        )
+        print(
+            f"Disp.MC6 Total: {dimer_dispersion_c6s_mon - dimer_monA_dispersion - dimer_monB_dispersion:.4f}"
+        )
+        print(
+            f"Disp.    dmonA: {dimer_monA_dispersion:.4f}, dmonB: {dimer_monB_dispersion:.4f}"
+        )
+        print(
+            f"Disp.    Total: {dimer_dispersion - dimer_monA_dispersion - dimer_monB_dispersion:.4f}"
+        )
         print(f"Disp.    Supra: {dimer_dispersion_supra:.4f}")
         print(f"Disp.    Supra monC6s: {dimer_dispersion_supra_monc6s:.4f}")
 
         if print_lvl == 0:
             params_damped, _ = paramsTable.param_lookup("sadz")
-            t6_2, t8_2, energies = locald4.compute_bj_terms(dimer_geom[:, 0], dimer_geom[:, 1:], dimer_C6s, params=params_damped, damping_2d=True)
+            t6_2, t8_2, energies = locald4.compute_bj_terms(
+                dimer_geom[:, 0],
+                dimer_geom[:, 1:],
+                dimer_C6s,
+                params=params_damped,
+                damping_2d=True,
+            )
             print("dimer C6s")
             print(dimer_C6s)
             print("Monomer C6s")
@@ -1509,10 +1577,10 @@ def c6_change_mon_dimer(df, print_lvl=0):
             print("C6 change")
             print(dimer_monA_C6s - monA_C6s)
             print(dimer_monB_C6s - monB_C6s)
-            monA_t6s = t6_2[:len(monA_C6s), :len(monA_C6s)]
-            monB_t6s = t6_2[len(monA_C6s):, len(monA_C6s):]
-            monA_t8s = t8_2[:len(monA_C6s), :len(monA_C6s)]
-            monB_t8s = t8_2[len(monA_C6s):, len(monA_C6s):]
+            monA_t6s = t6_2[: len(monA_C6s), : len(monA_C6s)]
+            monB_t6s = t6_2[len(monA_C6s) :, len(monA_C6s) :]
+            monA_t8s = t8_2[: len(monA_C6s), : len(monA_C6s)]
+            monB_t8s = t8_2[len(monA_C6s) :, len(monA_C6s) :]
             print("Dimer t6s")
             print(t6_2)
             print("Monomer t6s")
@@ -1537,11 +1605,15 @@ def main():
     df = df_setup(None, ddft=True)
     # c6_change_mon_dimer(df)
     # return
-    print(df['SAPT(DFT) [PBE0] DISP ENERGY atz'])
+    print(df["SAPT(DFT) [PBE0] DISP ENERGY atz"])
     df = plotting.prep_saptdft_components(df, "pbe0", "adz")
     df = plotting.prep_saptdft_components(df, "pbe0", "atz")
-    df['SAPT(DFT) [PBE0] DISP ENERGY atz'] = df['SAPT(DFT) [PBE0] DISP ENERGY atz'] * h2kcalmol
-    df['SAPT(DFT) [PBE0] DISP ENERGY adz'] = df['SAPT(DFT) [PBE0] DISP ENERGY adz'] * h2kcalmol
+    df["SAPT(DFT) [PBE0] DISP ENERGY atz"] = (
+        df["SAPT(DFT) [PBE0] DISP ENERGY atz"] * h2kcalmol
+    )
+    df["SAPT(DFT) [PBE0] DISP ENERGY adz"] = (
+        df["SAPT(DFT) [PBE0] DISP ENERGY adz"] * h2kcalmol
+    )
     # print(df['SAPT(DFT) [PBE0] DISP ENERGY atz'])
     # pp(df.columns.values.tolist())
     # return
@@ -1549,7 +1621,9 @@ def main():
     # print(df['R'])
     # subplot_all_curves_LoS(df, basis_sets=["adz"])
     # subplot_all_curves_LoS_basis_set(df, basis_sets=["adz", "atz"])
-    subplot_all_curves_LoS_basis_set_D4_versions(df, basis_sets=["adz", "atz"], build_pdf=True)
+    subplot_all_curves_LoS_basis_set_D4_versions(
+        df, basis_sets=["adz", "atz"], build_pdf=True
+    )
     return
 
 
