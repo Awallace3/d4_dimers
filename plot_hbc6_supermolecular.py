@@ -1108,7 +1108,7 @@ def subplot_all_curves_LoS_basis_set_D4_versions(
                         for col in d4_cols:
                             if col not in df_sys.columns:
                                 continue
-                            # Scatter plot for data points
+                            # plot plot for data points
                             axs[n].plot(
                                 df_sys["distance (A)"],
                                 df_sys[col],
@@ -1146,7 +1146,7 @@ def subplot_all_curves_LoS_basis_set_D4_versions(
                         axs[n].grid(True, linestyle="--", alpha=0.7)
                         axs[n].minorticks_on()
                         axs[n].tick_params(which="both", width=1)
-                        axs[n].legend(fontsize=8, loc="lower right")
+                        axs[n].legend(fontsize=10, loc="lower right")
 
                         # Format tick labels
                         axs[n].xaxis.set_major_formatter(ScalarFormatter())
@@ -1177,6 +1177,268 @@ def subplot_all_curves_LoS_basis_set_D4_versions(
     if build_pdf:
         os.chdir("./plots/disp_curves_ddft_d4/")
         os.system("pdflatex LoS_disp_curves.tex")
+        os.chdir("../../")
+    return
+
+
+def subplot_all_curves_LoS_basis_set_D4_versions_nondamped(
+    df,
+    plot_ddft_curve=True,
+    functionals=[
+        "pbe0",
+    ],
+    build_pdf=True,
+):
+    """
+    Plot D4 dispersion curves with two subplots:
+    - Top: ND (non-damped) curves vs reference and -D4 curves
+    - Bottom: -D4(S), -D4(I), HF-D4, SAPT(PBE0)/aDZ, SAPT(PBE0)/aTZ, reference
+
+    Uses only aTZ data for the reference.
+    """
+    dbs = df["DB"].unique()
+    print(dbs)
+    dbs = [
+        "s66x8",
+    ]
+    tex_header = r"""
+% arara: pdflatex
+\documentclass{article}
+\usepackage{graphicx}
+\usepackage{adjustbox}
+\usepackage{longtable}
+\usepackage{chemformula}
+\usepackage[margin=0.1in]{geometry}
+\begin{document}
+"""
+    with open("./plots/disp_curves_ddft_d4/LoS_disp_curves_nd.tex", "w") as f:
+        f.write(tex_header)
+        for db in dbs:
+            print(db)
+            df_db = df[df["DB"] == db]
+            f.write(f"\\section*{{{db}}}\n")
+            f.write("\\clearpage\n")
+            if db.lower() in ["achc", "ssi", "ion43"]:
+                continue
+            sys_numbers = df_db["System Label"].unique()
+            # sys_numbers = sys_numbers[:3]
+            if len(sys_numbers) > 0:
+                os.makedirs(f"./plots/disp_curves_ddft_d4/{db}", exist_ok=True)
+                for n1, i in enumerate(sys_numbers):
+                    df_sys = df_db[df_db["System Label"] == i].copy()
+                    print("sys:", df_sys["system_id"].iloc[0])
+                    df_sys = df_sys.sort_values("distance (A)")
+
+                    # Create 2x1 subplot (top: ND curves, bottom: damped curves)
+                    fig, axs = plt.subplots(
+                        2,
+                        1,
+                        figsize=(6, 8),
+                        dpi=300,
+                    )
+
+                    # Define colors and markers for each method
+                    colors = {
+                        "-D4 (HF_ATM)": "blue",
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE)": "red",
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra)": "green",
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_NO_DAMPING)": "purple",
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra_NO_DAMPING)": "orange",
+                        "SAPT(PBE0)/aDZ": "brown",
+                        "SAPT(PBE0)/aTZ": "gray",
+                        "E_ref_hlsapt_atz": "black",
+                    }
+                    markers = {
+                        "-D4 (HF_ATM)": "o",
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE)": "s",
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra)": "^",
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_NO_DAMPING)": "d",
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra_NO_DAMPING)": "v",
+                        "SAPT(PBE0)/aDZ": "X",
+                        "SAPT(PBE0)/aTZ": "P",
+                        "E_ref_hlsapt_atz": "o",
+                    }
+                    labels = {
+                        "-D4 (HF_ATM)": "HF-D4",
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE)": "SAPT(PBE0)-D4 (S)",
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra)": "SAPT(PBE0)-D4 (I)",
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_NO_DAMPING)": "SAPT(PBE0)-D4 (S, ND)",
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra_NO_DAMPING)": "SAPT(PBE0)-D4 (I, ND)",
+                        "SAPT(PBE0)/aDZ": "SAPT(PBE0)/aDZ",
+                        "SAPT(PBE0)/aTZ": "SAPT(PBE0)/aTZ",
+                        "E_ref_hlsapt_atz": "SAPT2+3(CCD)/aTZ",
+                    }
+
+                    # Prepare SAPT(PBE0) columns for aDZ and aTZ
+                    sapt_adz_col = "SAPT(DFT) [PBE0] DISP ENERGY adz"
+                    sapt_atz_col = "SAPT(DFT) [PBE0] DISP ENERGY atz"
+                    if sapt_adz_col in df_sys.columns:
+                        df_sys[sapt_adz_col] = df_sys[sapt_adz_col] * h2kcalmol
+                    if sapt_atz_col in df_sys.columns:
+                        df_sys[sapt_atz_col] = df_sys[sapt_atz_col] * h2kcalmol
+
+                    # Get equilibrium distance from aTZ minimum energy
+                    if sapt_atz_col in df_sys.columns:
+                        min_idx = df_sys["SAPT2+3(CCD)DMP2 TOTAL ENERGY atz"].idxmin()
+                        min_distance = df_sys.loc[min_idx, "distance (A)"]
+                    else:
+                        min_distance = None
+
+                    # ===== TOP PLOT: ND curves vs reference and -D4 =====
+                    ax_top = axs[0]
+
+                    if min_distance is not None:
+                        ax_top.axvline(
+                            min_distance,
+                            color="grey",
+                            linestyle="--",
+                            label="Equilibrium",
+                        )
+
+                    # Plot ND curves
+                    nd_cols = [
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_NO_DAMPING)",
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra_NO_DAMPING)",
+                    ]
+                    for col in nd_cols:
+                        if col in df_sys.columns:
+                            ax_top.plot(
+                                df_sys["distance (A)"],
+                                df_sys[col],
+                                color=colors[col],
+                                marker=markers[col],
+                                label=labels[col],
+                            )
+
+                    # Plot damped -D4 curves for comparison
+                    d4_cols = [
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE)",
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra)",
+                    ]
+                    for col in d4_cols:
+                        if col in df_sys.columns:
+                            ax_top.plot(
+                                df_sys["distance (A)"],
+                                df_sys[col],
+                                color=colors[col],
+                                marker=markers[col],
+                                label=labels[col],
+                                alpha=0.5,
+                            )
+
+                    # Plot reference
+                    ax_top.plot(
+                        df_sys["distance (A)"],
+                        df_sys["E_ref_hlsapt_atz"],
+                        color=colors["E_ref_hlsapt_atz"],
+                        marker=markers["E_ref_hlsapt_atz"],
+                        label=labels["E_ref_hlsapt_atz"],
+                    )
+
+                    ax_top.set_title("Non-Damped D4 Comparison")
+                    ax_top.set_ylabel("Disp. Energy (kcal/mol)")
+                    # ax_top.grid(True, linestyle="--", alpha=0.7)
+                    ax_top.minorticks_on()
+                    ax_top.tick_params(which="both", width=1)
+                    ax_top.legend(fontsize=14, loc="lower right")
+                    ax_top.xaxis.set_major_formatter(ScalarFormatter())
+                    ax_top.yaxis.set_major_formatter(ScalarFormatter())
+
+                    # ===== BOTTOM PLOT: -D4(S), -D4(I), HF-D4, SAPT(PBE0), ref =====
+                    ax_bot = axs[1]
+
+                    if min_distance is not None:
+                        ax_bot.axvline(
+                            min_distance,
+                            color="grey",
+                            linestyle="--",
+                            # label="Equilibrium",
+                        )
+
+                    # Plot damped D4 methods
+                    damped_cols = [
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE)",
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra)",
+                        "-D4 (HF_ATM)",
+                    ]
+                    for col in damped_cols:
+                        if col in df_sys.columns:
+                            ax_bot.plot(
+                                df_sys["distance (A)"],
+                                df_sys[col],
+                                color=colors[col],
+                                marker=markers[col],
+                                label=labels[col],
+                            )
+
+                    # Plot SAPT(PBE0)/aDZ
+                    if sapt_adz_col in df_sys.columns:
+                        ax_bot.plot(
+                            df_sys["distance (A)"],
+                            df_sys[sapt_adz_col],
+                            color=colors["SAPT(PBE0)/aDZ"],
+                            marker=markers["SAPT(PBE0)/aDZ"],
+                            label=labels["SAPT(PBE0)/aDZ"],
+                        )
+
+                    # Plot SAPT(PBE0)/aTZ
+                    if sapt_atz_col in df_sys.columns:
+                        ax_bot.plot(
+                            df_sys["distance (A)"],
+                            df_sys[sapt_atz_col],
+                            color=colors["SAPT(PBE0)/aTZ"],
+                            marker=markers["SAPT(PBE0)/aTZ"],
+                            label=labels["SAPT(PBE0)/aTZ"],
+                        )
+
+                    # Plot reference
+                    ax_bot.plot(
+                        df_sys["distance (A)"],
+                        df_sys["E_ref_hlsapt_atz"],
+                        color=colors["E_ref_hlsapt_atz"],
+                        marker=markers["E_ref_hlsapt_atz"],
+                        label=labels["E_ref_hlsapt_atz"],
+                    )
+
+                    ax_bot.set_title("Damped D4 Comparison")
+                    ax_bot.set_xlabel(r"Distance (\AA)")
+                    ax_bot.set_ylabel("Disp. Energy (kcal/mol)")
+                    # ax_bot.grid(True, linestyle="--", alpha=0.7)
+                    ax_bot.minorticks_on()
+                    ax_bot.tick_params(which="both", width=1, labelsize=12)
+                    ax_bot.legend(fontsize=14, loc="lower right")
+                    ax_bot.xaxis.set_major_formatter(ScalarFormatter())
+                    ax_bot.yaxis.set_major_formatter(ScalarFormatter())
+
+                    # Set consistent y-limits
+                    y_min = min(ax_top.get_ylim()[0], ax_bot.get_ylim()[0])
+                    y_max = max(ax_top.get_ylim()[1], ax_bot.get_ylim()[1])
+                    ax_top.set_ylim(y_min, min(y_max, 1.0))
+                    ax_bot.set_ylim(y_min, min(y_max, 1.0))
+
+                    plt.tight_layout()
+                    plt.savefig(
+                        f"./plots/disp_curves_ddft_d4/{db}/{i}_nd_comparison.pdf"
+                    )
+                    plt.close()
+
+                    # add figure to tex file
+                    i_safe = i.replace("_", r"\_")
+                    f.write(
+                        f"""\\begin{{figure}}[ht]
+    \\centering
+    \\includegraphics[width=0.8\\textwidth]{{{db}/{i}_nd_comparison.pdf}}
+    \\caption{{ND vs Damped D4 Dispersion for \\textbf{{{db} {i_safe}}}}}.
+\\end{{figure}}
+
+\\clearpage
+
+"""
+                    )
+        f.write(r"""\end{document}""")
+    if build_pdf:
+        os.chdir("./plots/disp_curves_ddft_d4/")
+        os.system("pdflatex LoS_disp_curves_nd.tex")
         os.chdir("../../")
     return
 
@@ -1621,8 +1883,11 @@ def main():
     # print(df['R'])
     # subplot_all_curves_LoS(df, basis_sets=["adz"])
     # subplot_all_curves_LoS_basis_set(df, basis_sets=["adz", "atz"])
-    subplot_all_curves_LoS_basis_set_D4_versions(
-        df, basis_sets=["adz", "atz"], build_pdf=True
+    # subplot_all_curves_LoS_basis_set_D4_versions(
+    #     df, basis_sets=["adz", "atz"], build_pdf=True
+    # )
+    subplot_all_curves_LoS_basis_set_D4_versions_nondamped(
+        df, build_pdf=True
     )
     return
 
