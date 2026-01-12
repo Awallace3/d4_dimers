@@ -1037,6 +1037,7 @@ def subplot_all_curves_LoS_basis_set_D4_versions(
             if db.lower() in ["achc", "ssi", "ion43"]:
                 continue
             sys_numbers = df_db["System Label"].unique()
+            sys_numbers = sys_numbers[:3]
             if len(sys_numbers) > 0:
                 os.makedirs(f"./plots/disp_curves_ddft_d4/{db}", exist_ok=True)
                 for n1, i in enumerate(sys_numbers):
@@ -1078,7 +1079,7 @@ def subplot_all_curves_LoS_basis_set_D4_versions(
                         axs[n].plot(
                             df_sys["distance (A)"],
                             df_sys[label],
-                            label=f"HF-D4 (S)",
+                            label=f"HF-D4(S)",
                             marker="o",
                             markersize=4.0,
                             # color="orange",
@@ -1088,7 +1089,7 @@ def subplot_all_curves_LoS_basis_set_D4_versions(
                         axs[n].plot(
                             df_sys["distance (A)"],
                             df_sys[label],
-                            label=f"SAPT(PBE0)-D4 (S)",
+                            label=f"SAPT(PBE0)-D4(S)",
                             marker="o",
                             markersize=4.0,
                             # color="orange",
@@ -1098,7 +1099,7 @@ def subplot_all_curves_LoS_basis_set_D4_versions(
                         axs[n].plot(
                             df_sys["distance (A)"],
                             df_sys[label],
-                            label=f"SAPT(PBE0)-D4 (I)",
+                            label=f"SAPT(PBE0)-D4(I)",
                             marker="o",
                             markersize=4.0,
                             # color="orange",
@@ -1108,7 +1109,7 @@ def subplot_all_curves_LoS_basis_set_D4_versions(
                         axs[n].plot(
                             df_sys["distance (A)"],
                             df_sys[label],
-                            label=f"SAPT(PBE0)-D4 (S, ND)",
+                            label=f"SAPT(PBE0)-D4(S, ND)",
                             marker="o",
                             markersize=4.0,
                             # color="orange",
@@ -1118,7 +1119,7 @@ def subplot_all_curves_LoS_basis_set_D4_versions(
                         axs[n].plot(
                             df_sys["distance (A)"],
                             df_sys[label],
-                            label=f"SAPT(PBE0)-D4 (I, ND)",
+                            label=f"SAPT(PBE0)-D4(I, ND)",
                             marker="o",
                             markersize=4.0,
                             # color="orange",
@@ -1154,7 +1155,7 @@ def subplot_all_curves_LoS_basis_set_D4_versions(
                             f"Disp. Energy (kcal$\cdot$mol$^{-1}$)", fontsize=20
                         )
                         axs[n].tick_params(axis="both", which="major", labelsize=18)
-                        axs[n].legend(loc="lower right", fontsize=18)
+                        axs[n].legend(loc="lower right", fontsize=15)
                         axs[n].yaxis.set_minor_locator(AutoMinorLocator())
                         axs[n].xaxis.set_minor_locator(AutoMinorLocator())
                         # make x-axis log scale
@@ -1208,7 +1209,8 @@ def subplot_all_curves_water_benzene_functional_form(
     sys_labels=[
         '01_Water-Water',
      '54_Benzene-Water',
-    ]
+    ],
+    db='s66x8',
 ):
     df = pd.read_pickle("./plots/ddft_curves.pkl")
     df = df[df["System Label"].isin(sys_labels)]
@@ -1370,9 +1372,10 @@ def subplot_all_curves_water_benzene_functional_form(
                     # plt.savefig(
                     #     f"""./plots/disp_curves_ddft/{db}/{i}_ddft_super_ddft_curve.png"""
                     # )
-                    plt.savefig(
-                        f"""./plots/disp_curves_ddft_d4/{db}/{i}_ddft_super_ddft_curve.pdf"""
-                    )
+                    path = f"""./plots/disp_curves_ddft_d4/{db}/{i}_ddft_super_ddft_curve.pdf"""
+
+                    plt.savefig(path)
+                    print(path)
                     # fmt: on
                     plt.close()
                     # if n1 > 1:
@@ -1380,22 +1383,22 @@ def subplot_all_curves_water_benzene_functional_form(
                     # add figure to tex file
                     i_safe = i.replace("_", f"\\_")
                     # \\includegraphics[width=0.9\\textwidth]{{{db}/{i}_ddft_super_ddft_curve.png}}
-                    f.write(
-                        f"""\\begin{{figure}}[ht]
-    \\centering
-    \\includegraphics[width=0.7\\textwidth]{{{db}/{i}_ddft_super_ddft_curve.pdf}}
-    \\caption{{LoS Dispersion Curves for \\textbf{{{db} {i_safe}}}}}.
-\\end{{figure}}
-
-\\clearpage
-
-"""
-                    )
-        f.write(r"""\end{document}""")
-    if build_pdf:
-        os.chdir("./plots/disp_curves_ddft_d4/")
-        os.system("pdflatex LoS_disp_curves.tex")
-        os.chdir("../../")
+#                     f.write(
+#                         f"""\\begin{{figure}}[ht]
+#     \\centering
+#     \\includegraphics[width=0.7\\textwidth]{{{db}/{i}_ddft_super_ddft_curve.pdf}}
+#     \\caption{{LoS Dispersion Curves for \\textbf{{{db} {i_safe}}}}}.
+# \\end{{figure}}
+#
+# \\clearpage
+#
+# """
+#                     )
+#         f.write(r"""\end{document}""")
+    # if build_pdf:
+    #     os.chdir("./plots/disp_curves_ddft_d4/")
+    #     os.system("pdflatex LoS_disp_curves.tex")
+    #     os.chdir("../../")
     return
 
 def monomer_C6s_from_dimer(dimer_C6s, monA_C6s, monB_C6s):
@@ -1527,19 +1530,19 @@ def main():
     # plot_hbc6(df)
     # plot_all_curves(df)
     #
-    df = pd.read_pickle("./curves/ddft_curves_start.pkl")
-    df = df_setup(df, ddft=True)
-    subplot_all_curves_water_benzene_functional_form()
-    return
+    # df = pd.read_pickle("./curves/ddft_curves_start.pkl")
+    # df = df_setup(df, ddft=True)
+    # subplot_all_curves_water_benzene_functional_form()
+    # return
     df = df_setup(None, ddft=True)
-    c6_change_mon_dimer(df)
-    return
+    # c6_change_mon_dimer(df)
+    # return
     print(df['SAPT(DFT) [PBE0] DISP ENERGY atz'])
     df = plotting.prep_saptdft_components(df, "pbe0", "adz")
     df = plotting.prep_saptdft_components(df, "pbe0", "atz")
     df['SAPT(DFT) [PBE0] DISP ENERGY atz'] = df['SAPT(DFT) [PBE0] DISP ENERGY atz'] * h2kcalmol
-    df['SAPT(DFT) [PBE0] DISP ENERGY adz'] = df['SAPT(DFT) [PBE0] DISP ENERGY adz'] * h2kcalmol * h2kcalmol 
-    print(df['SAPT(DFT) [PBE0] DISP ENERGY atz'])
+    df['SAPT(DFT) [PBE0] DISP ENERGY adz'] = df['SAPT(DFT) [PBE0] DISP ENERGY adz'] * h2kcalmol
+    # print(df['SAPT(DFT) [PBE0] DISP ENERGY atz'])
     # pp(df.columns.values.tolist())
     # return
     # return
