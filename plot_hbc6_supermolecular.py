@@ -9,6 +9,7 @@ from scipy.optimize import curve_fit
 from src.plotting import prep_saptdft_components
 from qcelemental import constants
 from matplotlib.ticker import AutoMinorLocator, ScalarFormatter
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
 h2kcalmol = constants.conversion_factor("hartree", "kcal/mol")
 
@@ -1346,6 +1347,54 @@ def subplot_all_curves_LoS_basis_set_D4_versions_nondamped(
                     ax_top.xaxis.set_major_formatter(ScalarFormatter())
                     ax_top.yaxis.set_major_formatter(ScalarFormatter())
 
+                    # ===== INSET: Zoom on Reference vs SAPT(PBE0)-D4(I, ND) =====
+                    # Create inset in upper right, above the legend
+                    ax_inset = inset_axes(
+                        ax_top,
+                        width="40%",
+                        height="35%",
+                        loc="upper right",
+                        borderpad=1.5,
+                    )
+
+                    # Filter data up to equilibrium distance for inset
+                    if min_distance is not None:
+                        df_inset = df_sys[df_sys["distance (A)"] <= min_distance]
+                    else:
+                        df_inset = df_sys
+
+                    # Plot SAPT(PBE0)-D4 (I, ND) in inset
+                    i_nd_col = "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra_NO_DAMPING)"
+                    if i_nd_col in df_inset.columns:
+                        ax_inset.plot(
+                            df_inset["distance (A)"],
+                            df_inset[i_nd_col],
+                            color=colors[i_nd_col],
+                            marker=markers[i_nd_col],
+                            label=labels[i_nd_col],
+                            markersize=4,
+                        )
+
+                    # Plot reference in inset
+                    ax_inset.plot(
+                        df_inset["distance (A)"],
+                        df_inset["E_ref_hlsapt_atz"],
+                        color=colors["E_ref_hlsapt_atz"],
+                        marker=markers["E_ref_hlsapt_atz"],
+                        label=labels["E_ref_hlsapt_atz"],
+                        markersize=4,
+                    )
+
+                    # Style the inset
+                    ax_inset.tick_params(labelsize=8)
+                    ax_inset.set_xlabel("")
+                    ax_inset.set_ylabel("")
+                    ax_inset.minorticks_on()
+                    # Add light box around inset
+                    for spine in ax_inset.spines.values():
+                        spine.set_edgecolor("gray")
+                        spine.set_linewidth(0.8)
+
                     # ===== BOTTOM PLOT: -D4(S), -D4(I), HF-D4, SAPT(PBE0), ref =====
                     ax_bot = axs[1]
 
@@ -1413,8 +1462,12 @@ def subplot_all_curves_LoS_basis_set_D4_versions_nondamped(
                     ax_bot.yaxis.set_major_formatter(ScalarFormatter())
 
                     # Set consistent y-limits
-                    ax_top.set_ylim(ax_top.get_ylim()[0], max(ax_top.get_ylim()[1], 1.0))
-                    ax_bot.set_ylim(ax_bot.get_ylim()[0], max(ax_bot.get_ylim()[1], 1.0))
+                    ax_top.set_ylim(
+                        ax_top.get_ylim()[0], max(ax_top.get_ylim()[1], 1.0)
+                    )
+                    ax_bot.set_ylim(
+                        ax_bot.get_ylim()[0], max(ax_bot.get_ylim()[1], 1.0)
+                    )
 
                     plt.tight_layout()
                     plt.savefig(
@@ -1886,9 +1939,7 @@ def main():
     # subplot_all_curves_LoS_basis_set_D4_versions(
     #     df, basis_sets=["adz", "atz"], build_pdf=True
     # )
-    subplot_all_curves_LoS_basis_set_D4_versions_nondamped(
-        df, build_pdf=True
-    )
+    subplot_all_curves_LoS_basis_set_D4_versions_nondamped(df, build_pdf=True)
     return
 
 
