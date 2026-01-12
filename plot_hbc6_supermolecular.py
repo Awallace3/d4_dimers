@@ -1206,7 +1206,7 @@ def subplot_all_curves_water_benzene_functional_form(
     basis_sets=["adz"],
     build_pdf=True,
 ):
-    df = pd.read_pickle("./curves/curves.pkl")
+    df = pd.read_pickle("./plots/ddft_curves.pkl")
     pp(df.columns.tolist())
     for functional in functionals:
         for basis_set in basis_sets:
@@ -1508,8 +1508,8 @@ def main():
     # plot_hbc6(df)
     # plot_all_curves(df)
     #
-    # df = pd.read_pickle("./plots/ddft_study.pkl")
-    # df = df_setup(df, ddft=True)
+    df = pd.read_pickle("./curves/ddft_curves_start.pkl")
+    df = df_setup(df, ddft=True)
     subplot_all_curves_water_benzene_functional_form()
     return
     df = df_setup(None, ddft=True)

@@ -8753,6 +8753,7 @@ def plot_LoS_saptdft(
     for c in conv:
         df[c] /= h2kcalmol
     df = d3ml_saptdft(df, 'b3lyp')
+    df.to_pickle("./curves/ddft_curves_start.pkl")
     if presentation:
         # violin_plots_multi_components_subset(df, limit_to_column_not_nan="D3-ML")
         # return
