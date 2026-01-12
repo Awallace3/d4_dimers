@@ -1211,6 +1211,8 @@ def subplot_all_curves_LoS_basis_set_D4_versions_nondamped(
 \usepackage[margin=0.1in]{geometry}
 \begin{document}
 """
+    tick_fontsize = 14
+    legend_fontsize = 12
     with open("./plots/disp_curves_ddft_d4/LoS_disp_curves_nd.tex", "w") as f:
         f.write(tex_header)
         for db in dbs:
@@ -1233,7 +1235,7 @@ def subplot_all_curves_LoS_basis_set_D4_versions_nondamped(
                     fig, axs = plt.subplots(
                         2,
                         1,
-                        figsize=(6, 8),
+                        figsize=(6, 7),
                         dpi=300,
                     )
 
@@ -1251,8 +1253,8 @@ def subplot_all_curves_LoS_basis_set_D4_versions_nondamped(
                     markers = {
                         "-D4 (HF_ATM)": "o",
                         "-D4 (SAPT_DFT_pbe0_adz_3_IE)": "s",
-                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra)": "^",
-                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_NO_DAMPING)": "d",
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra)": "d",
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_NO_DAMPING)": "^",
                         "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra_NO_DAMPING)": "v",
                         "SAPT(PBE0)/aDZ": "X",
                         "SAPT(PBE0)/aTZ": "P",
@@ -1292,7 +1294,7 @@ def subplot_all_curves_LoS_basis_set_D4_versions_nondamped(
                             min_distance,
                             color="grey",
                             linestyle="--",
-                            label="Equilibrium",
+                            # label="Equilibrium",
                         )
 
                     # Plot ND curves
@@ -1339,8 +1341,8 @@ def subplot_all_curves_LoS_basis_set_D4_versions_nondamped(
                     ax_top.set_ylabel("Disp. Energy (kcal/mol)")
                     # ax_top.grid(True, linestyle="--", alpha=0.7)
                     ax_top.minorticks_on()
-                    ax_top.tick_params(which="both", width=1)
-                    ax_top.legend(fontsize=14, loc="lower right")
+                    ax_top.tick_params(which="both", width=1, labelsize=tick_fontsize)
+                    ax_top.legend(fontsize=legend_fontsize, loc="lower right")
                     ax_top.xaxis.set_major_formatter(ScalarFormatter())
                     ax_top.yaxis.set_major_formatter(ScalarFormatter())
 
@@ -1405,16 +1407,14 @@ def subplot_all_curves_LoS_basis_set_D4_versions_nondamped(
                     ax_bot.set_ylabel("Disp. Energy (kcal/mol)")
                     # ax_bot.grid(True, linestyle="--", alpha=0.7)
                     ax_bot.minorticks_on()
-                    ax_bot.tick_params(which="both", width=1, labelsize=12)
-                    ax_bot.legend(fontsize=14, loc="lower right")
+                    ax_bot.tick_params(which="both", width=1, labelsize=tick_fontsize)
+                    ax_bot.legend(fontsize=legend_fontsize, loc="lower right")
                     ax_bot.xaxis.set_major_formatter(ScalarFormatter())
                     ax_bot.yaxis.set_major_formatter(ScalarFormatter())
 
                     # Set consistent y-limits
-                    y_min = min(ax_top.get_ylim()[0], ax_bot.get_ylim()[0])
-                    y_max = max(ax_top.get_ylim()[1], ax_bot.get_ylim()[1])
-                    ax_top.set_ylim(y_min, min(y_max, 1.0))
-                    ax_bot.set_ylim(y_min, min(y_max, 1.0))
+                    ax_top.set_ylim(ax_top.get_ylim()[0], max(ax_top.get_ylim()[1], 1.0))
+                    ax_bot.set_ylim(ax_bot.get_ylim()[0], max(ax_bot.get_ylim()[1], 1.0))
 
                     plt.tight_layout()
                     plt.savefig(
