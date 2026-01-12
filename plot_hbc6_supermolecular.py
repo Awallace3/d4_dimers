@@ -9,7 +9,7 @@ from scipy.optimize import curve_fit
 from src.plotting import prep_saptdft_components
 from qcelemental import constants
 from matplotlib.ticker import AutoMinorLocator, ScalarFormatter
-from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes, mark_inset
 
 h2kcalmol = constants.conversion_factor("hartree", "kcal/mol")
 
@@ -1338,7 +1338,16 @@ def subplot_all_curves_LoS_basis_set_D4_versions_nondamped(
                         label=labels["E_ref_hlsapt_atz"],
                     )
 
-                    ax_top.set_title("Non-Damped D4 Comparison")
+                    ax_top.text(
+                        -0.12,
+                        1.0,
+                        "(A)",
+                        transform=ax_top.transAxes,
+                        fontsize=16,
+                        fontweight="bold",
+                        va="top",
+                        ha="left",
+                    )
                     ax_top.set_ylabel("Disp. Energy (kcal/mol)")
                     # ax_top.grid(True, linestyle="--", alpha=0.7)
                     ax_top.minorticks_on()
@@ -1394,6 +1403,19 @@ def subplot_all_curves_LoS_basis_set_D4_versions_nondamped(
                     for spine in ax_inset.spines.values():
                         spine.set_edgecolor("gray")
                         spine.set_linewidth(0.8)
+
+                    # Add rectangle and connecting lines to show inset region
+                    # mark_inset draws a box on ax_top and lines to ax_inset
+                    mark_inset(
+                        ax_top,
+                        ax_inset,
+                        loc1=2,  # upper left corner of inset
+                        loc2=3,  # lower left corner of inset
+                        fc="none",
+                        ec="gray",
+                        linestyle="--",
+                        linewidth=0.8,
+                    )
 
                     # ===== BOTTOM PLOT: -D4(S), -D4(I), HF-D4, SAPT(PBE0), ref =====
                     ax_bot = axs[1]
@@ -1451,7 +1473,16 @@ def subplot_all_curves_LoS_basis_set_D4_versions_nondamped(
                         label=labels["E_ref_hlsapt_atz"],
                     )
 
-                    ax_bot.set_title("Damped D4 Comparison")
+                    ax_bot.text(
+                        -0.12,
+                        1.0,
+                        "(B)",
+                        transform=ax_bot.transAxes,
+                        fontsize=16,
+                        fontweight="bold",
+                        va="top",
+                        ha="left",
+                    )
                     ax_bot.set_xlabel(r"Distance (\AA)")
                     ax_bot.set_ylabel("Disp. Energy (kcal/mol)")
                     # ax_bot.grid(True, linestyle="--", alpha=0.7)
