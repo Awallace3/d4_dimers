@@ -1243,10 +1243,11 @@ def subplot_all_curves_LoS_basis_set_D4_versions_nondamped(
                     # Define colors and markers for each method
                     colors = {
                         "-D4 (HF_ATM)": "blue",
-                        "-D4 (SAPT0_adz_3_IE)": "cyan",
+                        "-D4 (HF)": "cyan",
+                        "-D4 (SAPT0_adz_3_IE)": "purple",
                         "-D4 (SAPT_DFT_pbe0_adz_3_IE)": "red",
                         "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra)": "green",
-                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_NO_DAMPING)": "purple",
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_NO_DAMPING)": "teal",
                         "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra_NO_DAMPING)": "orange",
                         "SAPT(PBE0)/aDZ": "brown",
                         "SAPT(PBE0)/aTZ": "gray",
@@ -1254,6 +1255,7 @@ def subplot_all_curves_LoS_basis_set_D4_versions_nondamped(
                     }
                     markers = {
                         "-D4 (HF_ATM)": "o",
+                        "-D4 (HF)": "X",
                         "-D4 (SAPT0_adz_3_IE)": "s",
                         "-D4 (SAPT_DFT_pbe0_adz_3_IE)": "s",
                         "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra)": "d",
@@ -1264,7 +1266,8 @@ def subplot_all_curves_LoS_basis_set_D4_versions_nondamped(
                         "E_ref_hlsapt_atz": "o",
                     }
                     labels = {
-                        "-D4 (HF_ATM)": "HF-D4",
+                        "-D4 (HF_ATM)": "HF-D4(ATM)",
+                        "-D4 (HF)": "HF-D4",
                         "-D4 (SAPT0_adz_3_IE)": "SAPT0-D4(S)",
                         "-D4 (SAPT_DFT_pbe0_adz_3_IE)": "SAPT(PBE0)-D4(S)",
                         "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra)": "SAPT(PBE0)-D4(I)",
@@ -1354,7 +1357,14 @@ def subplot_all_curves_LoS_basis_set_D4_versions_nondamped(
                     ax_top.set_ylabel("Disp. Energy (kcal/mol)")
                     # ax_top.grid(True, linestyle="--", alpha=0.7)
                     ax_top.minorticks_on()
-                    ax_top.tick_params(which="both", width=1, labelsize=tick_fontsize)
+                    ax_top.tick_params(
+                        which="both",
+                        width=1,
+                        labelsize=tick_fontsize,
+                        direction="in",
+                        top=True,
+                        right=True,
+                    )
                     ax_top.legend(fontsize=legend_fontsize, loc="lower right")
                     ax_top.xaxis.set_major_formatter(ScalarFormatter())
                     ax_top.yaxis.set_major_formatter(ScalarFormatter())
@@ -1398,7 +1408,12 @@ def subplot_all_curves_LoS_basis_set_D4_versions_nondamped(
                     )
 
                     # Style the inset
-                    ax_inset.tick_params(labelsize=8)
+                    ax_inset.tick_params(
+                        labelsize=8,
+                        direction="in",
+                        top=True,
+                        right=True,
+                    )
                     ax_inset.set_xlabel("")
                     ax_inset.set_ylabel("")
                     ax_inset.minorticks_on()
@@ -1436,6 +1451,7 @@ def subplot_all_curves_LoS_basis_set_D4_versions_nondamped(
                         "-D4 (SAPT_DFT_pbe0_adz_3_IE)",
                         "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra)",
                         "-D4 (HF_ATM)",
+                        "-D4 (HF)",
                         "-D4 (SAPT0_adz_3_IE)",
                     ]
                     for col in damped_cols:
@@ -1491,7 +1507,14 @@ def subplot_all_curves_LoS_basis_set_D4_versions_nondamped(
                     ax_bot.set_ylabel("Disp. Energy (kcal/mol)")
                     # ax_bot.grid(True, linestyle="--", alpha=0.7)
                     ax_bot.minorticks_on()
-                    ax_bot.tick_params(which="both", width=1, labelsize=tick_fontsize)
+                    ax_bot.tick_params(
+                        which="both",
+                        width=1,
+                        labelsize=tick_fontsize,
+                        direction="in",
+                        top=True,
+                        right=True,
+                    )
                     ax_bot.legend(fontsize=legend_fontsize, loc="lower right")
                     ax_bot.xaxis.set_major_formatter(ScalarFormatter())
                     ax_bot.yaxis.set_major_formatter(ScalarFormatter())
@@ -1738,7 +1761,8 @@ def monomer_C6s_from_dimer(dimer_C6s, monA_C6s, monB_C6s):
 
 def c6_change_mon_dimer(df, print_lvl=0):
     # df_42 = df[df['System Label'] == '42_Uracil-Cyclopentane']
-    df_sys = df[df["System Label"] == "01_Water-Water"]
+    # df_sys = df[df["System Label"] == "01_Water-Water"]
+    df_sys = df[df["System Label"] == "43_Uracil-Neopentane"]
     # df_sys = df[df['System Label'] == '50_Benzene-Ethyne'].copy()
     df_sys.sort_values("distance (A)", inplace=True)
     # df_sys = plotting.compute_d4_from_opt_params(
@@ -1757,9 +1781,11 @@ def c6_change_mon_dimer(df, print_lvl=0):
     # )
     print(df_sys[["system_id", "R", "distance (A)"]])
     print(df_sys[["R", "-D4 (SAPT_DFT_pbe0_adz_3_IE)"]])
-    print(df_sys[["R", "-D4 (SAPT_DFT_pbe0_adz_3_IE_NO_DAMPING)"]])
-    params, _ = paramsTable.get_params("SAPT_DFT_pbe0_adz_3_IE_supra_NO_DAMPING")
+    # print(df_sys[["R", "-D4 (SAPT_DFT_pbe0_adz_3_IE_NO_DAMPING)"]])
+    print(df_sys[["R", "-D4 (SAPT0_adz_3_IE)", "-D4 (HF)", "-D4 (HF_ATM)"]])
+    # params, _ = paramsTable.get_params("SAPT_DFT_pbe0_adz_3_IE_supra_NO_DAMPING")
     # params, _ = paramsTable.get_params("SAPT_DFT_pbe0_adz_3_IE")
+    params = paramsTable.get_params("sadz")
     for n, r in df_sys.iterrows():
         print(f"System: {r['system_id']}, R: {r['R']}")
         dimer_C6s = r["C6s"]
@@ -1953,8 +1979,8 @@ def main():
     # subplot_all_curves_water_benzene_functional_form()
     # return
     df = df_setup(None, ddft=True)
-    # c6_change_mon_dimer(df)
-    # return
+    c6_change_mon_dimer(df)
+    return
     print(df["SAPT(DFT) [PBE0] DISP ENERGY atz"])
     df = plotting.prep_saptdft_components(df, "pbe0", "adz")
     df = plotting.prep_saptdft_components(df, "pbe0", "atz")
