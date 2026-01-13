@@ -545,6 +545,25 @@ def compute_disp_2B_supra_from_C6s(
     return e_d * hartree_to_kcalmol
 
 
+def compute_gd4(
+    pos,
+    carts,
+    monAs,
+    monBs,
+    method='hf',
+):
+    from dftd4.interface import DampingParam, DispersionModel
+    def compute_gd4_disp(numbers, positions):
+        model = DispersionModel(numbers, positions)
+        res = model.get_dispersion(DampingParam(method=method), grad=False)
+        return res.get("energy")
+    e_dimer = compute_gd4_disp(pos, carts)
+    e_monA = compute_gd4_disp(pos[monAs], carts[monAs])
+    e_monB = compute_gd4_disp(pos[monBs], carts[monBs])
+    e_d = e_dimer - (e_monA + e_monB)
+    return e_d * hartree_to_kcalmol
+
+
 def compute_disp_2B_dimer(
     params,
     r,

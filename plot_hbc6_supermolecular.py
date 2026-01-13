@@ -1760,6 +1760,7 @@ def monomer_C6s_from_dimer(dimer_C6s, monA_C6s, monB_C6s):
 
 
 def c6_change_mon_dimer(df, print_lvl=0):
+
     # df_42 = df[df['System Label'] == '42_Uracil-Cyclopentane']
     # df_sys = df[df["System Label"] == "01_Water-Water"]
     df_sys = df[df["System Label"] == "43_Uracil-Neopentane"]
@@ -1782,9 +1783,29 @@ def c6_change_mon_dimer(df, print_lvl=0):
     print(df_sys[["system_id", "R", "distance (A)"]])
     print(df_sys[["R", "-D4 (SAPT_DFT_pbe0_adz_3_IE)"]])
     # print(df_sys[["R", "-D4 (SAPT_DFT_pbe0_adz_3_IE_NO_DAMPING)"]])
-    print(df_sys[["R", "-D4 (SAPT0_adz_3_IE)", "-D4 (HF)", "-D4 (HF_ATM)"]])
     # params, _ = paramsTable.get_params("SAPT_DFT_pbe0_adz_3_IE_supra_NO_DAMPING")
     # params, _ = paramsTable.get_params("SAPT_DFT_pbe0_adz_3_IE")
+    print(df_sys['System Label'].iloc[0])
+    print("Energy in kcal/mol")
+    print(df_sys[["R", "-D4 (SAPT0_adz_3_IE)", "-D4 (HF)", "-D4 (HF_ATM)"]])
+    for n, r in df_sys.iterrows():
+        # print()
+        # print(r["Geometry"])
+        # print(r["Geometry"][r['monAs']])
+        # print(r["Geometry"][r['monBs']])
+        # print()
+        e = locald4.compute_gd4(
+            r["Geometry_bohr"][:, 0], r["Geometry_bohr"][:, 1:], r['monAs'], r['monBs']
+        )
+        e_pbe0 = locald4.compute_gd4(
+            r["Geometry_bohr"][:, 0], r["Geometry_bohr"][:, 1:], r['monAs'], r['monBs'],
+            method='pbe0'
+        )
+        e_b3lyp = locald4.compute_gd4(
+            r["Geometry_bohr"][:, 0], r["Geometry_bohr"][:, 1:], r['monAs'], r['monBs'],
+            method='b3lyp'
+        )
+        print(f"{r['R']}, GD4 HF-D4(ATM): {e:.6f}, GD4 PBE0-D4(ATM): {e_pbe0:.6f}, {e_b3lyp:.6f}")
     params = paramsTable.get_params("sadz")
     for n, r in df_sys.iterrows():
         print(f"System: {r['system_id']}, R: {r['R']}")
