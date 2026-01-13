@@ -1054,7 +1054,7 @@ def subplot_all_curves_LoS_basis_set_D4_versions(
                     # Define colors and markers for each method
                     colors = {
                         "-D4 (HF_ATM)": "blue",
-                        "-D4 (SAPT_DFT_pbe0_adz_3_IE)": "red",
+                        # "-D4 (SAPT_DFT_pbe0_adz_3_IE)": "red",
                         "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra)": "green",
                         "-D4 (SAPT_DFT_pbe0_adz_3_IE_NO_DAMPING)": "purple",
                         "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra_NO_DAMPING)": "orange",
@@ -1243,6 +1243,7 @@ def subplot_all_curves_LoS_basis_set_D4_versions_nondamped(
                     # Define colors and markers for each method
                     colors = {
                         "-D4 (HF_ATM)": "blue",
+                        "-D4 (SAPT0_adz_3_IE)": "cyan",
                         "-D4 (SAPT_DFT_pbe0_adz_3_IE)": "red",
                         "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra)": "green",
                         "-D4 (SAPT_DFT_pbe0_adz_3_IE_NO_DAMPING)": "purple",
@@ -1253,6 +1254,7 @@ def subplot_all_curves_LoS_basis_set_D4_versions_nondamped(
                     }
                     markers = {
                         "-D4 (HF_ATM)": "o",
+                        "-D4 (SAPT0_adz_3_IE)": "s",
                         "-D4 (SAPT_DFT_pbe0_adz_3_IE)": "s",
                         "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra)": "d",
                         "-D4 (SAPT_DFT_pbe0_adz_3_IE_NO_DAMPING)": "^",
@@ -1263,10 +1265,11 @@ def subplot_all_curves_LoS_basis_set_D4_versions_nondamped(
                     }
                     labels = {
                         "-D4 (HF_ATM)": "HF-D4",
-                        "-D4 (SAPT_DFT_pbe0_adz_3_IE)": "SAPT(PBE0)-D4 (S)",
-                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra)": "SAPT(PBE0)-D4 (I)",
-                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_NO_DAMPING)": "SAPT(PBE0)-D4 (S, ND)",
-                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra_NO_DAMPING)": "SAPT(PBE0)-D4 (I, ND)",
+                        "-D4 (SAPT0_adz_3_IE)": "SAPT0-D4(S)",
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE)": "SAPT(PBE0)-D4(S)",
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra)": "SAPT(PBE0)-D4(I)",
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_NO_DAMPING)": "SAPT(PBE0)-D4(S, ND)",
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra_NO_DAMPING)": "SAPT(PBE0)-D4(I, ND)",
                         "SAPT(PBE0)/aDZ": "SAPT(PBE0)/aDZ",
                         "SAPT(PBE0)/aTZ": "SAPT(PBE0)/aTZ",
                         "E_ref_hlsapt_atz": "SAPT2+3(CCD)/aTZ",
@@ -1315,8 +1318,8 @@ def subplot_all_curves_LoS_basis_set_D4_versions_nondamped(
 
                     # Plot damped -D4 curves for comparison
                     d4_cols = [
-                        "-D4 (SAPT_DFT_pbe0_adz_3_IE)",
-                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra)",
+                        # "-D4 (SAPT_DFT_pbe0_adz_3_IE)",
+                        # "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra)",
                     ]
                     for col in d4_cols:
                         if col in df_sys.columns:
@@ -1433,6 +1436,7 @@ def subplot_all_curves_LoS_basis_set_D4_versions_nondamped(
                         "-D4 (SAPT_DFT_pbe0_adz_3_IE)",
                         "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra)",
                         "-D4 (HF_ATM)",
+                        "-D4 (SAPT0_adz_3_IE)",
                     ]
                     for col in damped_cols:
                         if col in df_sys.columns:
@@ -1960,6 +1964,7 @@ def main():
     df["SAPT(DFT) [PBE0] DISP ENERGY adz"] = (
         df["SAPT(DFT) [PBE0] DISP ENERGY adz"] * h2kcalmol
     )
+    # pp(df.columns.values.tolist())
     # print(df['SAPT(DFT) [PBE0] DISP ENERGY atz'])
     # pp(df.columns.values.tolist())
     # return
