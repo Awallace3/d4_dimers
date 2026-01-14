@@ -249,21 +249,25 @@ def compute_bj_terms(
             if i == j:
                 continue
             for k in range(lattice_points):
-                rrij = 3 * Q_A * Q_B
-                r0ij = a1 * np.sqrt(rrij) + a2
-                print(f"{r0ij =:.2f} = {a1 =:.2f} * np.sqrt({rrij =:.2f}) + {a2 =:.2f}")
-                C6ij = C6s[i, j]
-
                 r1, r2 = carts[i, :], carts[j, :]
                 r2 = np.subtract(r1, r2)
                 r2 = np.sum(np.multiply(r2, r2))
+                rrij = 3 * Q_A * Q_B
+                C6ij = C6s[i, j]
+                if (a1 == 0.0) and (a2 == 0.0):
+                    t6, t8 = 1, 1
+                    r0ij = 0
+                else:
+                    r0ij = a1 * np.sqrt(rrij) + a2
+                    print(f"{r0ij =:.2f} = {a1 =:.2f} * np.sqrt({rrij =:.2f}) + {a2 =:.2f}")
 
-                t6 = r2**3 / (r2**3 + r0ij**6)
-                t8 = r2**4 / (r2**4 + r0ij**8)
+                    t6 = r2**3 / (r2**3 + r0ij**6)
+                    t8 = r2**4 / (r2**4 + r0ij**8)
 
                 edisp = s6 * t6 / r2**3 + s8 * rrij * t8 / r2**4
 
                 de = -C6ij * edisp * 0.5
+                print(f"{t6 =:.2f}, {t8 =:.2f}, {rrij =:.2f}, {Q_A=:.2f}, {Q_B=:.2f}, {edisp =:.6f}, {de =:.6f}")
                 energies[i] += de
                 if i != j:
                     energies[j] += de

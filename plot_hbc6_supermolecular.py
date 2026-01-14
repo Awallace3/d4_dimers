@@ -1756,16 +1756,23 @@ def subplot_all_curves_water_benzene_functional_form(
 def monomer_C6s_from_dimer(dimer_C6s, monA_C6s, monB_C6s):
     dimer_monA_C6s = dimer_C6s[: len(monA_C6s), : len(monA_C6s)]
     dimer_monB_C6s = dimer_C6s[len(monA_C6s) :, len(monA_C6s) :]
-    return dimer_monA_C6s, dimer_monB_C6s
+    intermolecular_C6s = dimer_C6s[: len(monA_C6s), len(monA_C6s) :] * 2
+    return dimer_monA_C6s, dimer_monB_C6s, intermolecular_C6s
 
 
-def c6_change_mon_dimer(df, print_lvl=0):
+def c6_change_mon_dimer(df, print_lvl=1):
 
     # df_42 = df[df['System Label'] == '42_Uracil-Cyclopentane']
     # df_sys = df[df["System Label"] == "01_Water-Water"]
+    
+    # Positive Dispersion
     df_sys = df[df["System Label"] == "43_Uracil-Neopentane"]
+    # Fig2, 45 SAPT(PBE0-D4(S)) goes positive but nondamped doesn't
+    df_sys = df[df["System Label"] == "45_Ethyne-Pentane"]
     # df_sys = df[df['System Label'] == '50_Benzene-Ethyne'].copy()
     df_sys.sort_values("distance (A)", inplace=True)
+    # make df_sys use .4f format for floats
+    pd.set_option("display.float_format", "{:.4f}".format)
     # df_sys = plotting.compute_d4_from_opt_params(
     #     df_sys,
     #     bases=[
@@ -1781,44 +1788,55 @@ def c6_change_mon_dimer(df, print_lvl=0):
     #     disp_compute=locald4.compute_disp_2B_NO_DAMPING,
     # )
     print(df_sys[["system_id", "R", "distance (A)"]])
-    print(df_sys[["R", "-D4 (SAPT_DFT_pbe0_adz_3_IE)"]])
-    # print(df_sys[["R", "-D4 (SAPT_DFT_pbe0_adz_3_IE_NO_DAMPING)"]])
+    print(df_sys[["R", "-D4 (SAPT_DFT_pbe0_adz_3_IE)", "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra)"]])
+    print(df_sys[["R", "-D4 (SAPT_DFT_pbe0_adz_3_IE_NO_DAMPING)", ]])
+    print(df_sys[["R", "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra_NO_DAMPING)"]])
     # params, _ = paramsTable.get_params("SAPT_DFT_pbe0_adz_3_IE_supra_NO_DAMPING")
     # params, _ = paramsTable.get_params("SAPT_DFT_pbe0_adz_3_IE")
     print(df_sys['System Label'].iloc[0])
     print("Energy in kcal/mol")
     print(df_sys[["R", "-D4 (SAPT0_adz_3_IE)", "-D4 (HF)", "-D4 (HF_ATM)"]])
-    for n, r in df_sys.iterrows():
-        # print()
-        # print(r["Geometry"])
-        # print(r["Geometry"][r['monAs']])
-        # print(r["Geometry"][r['monBs']])
-        # print()
-        e = locald4.compute_gd4(
-            r["Geometry_bohr"][:, 0], r["Geometry_bohr"][:, 1:], r['monAs'], r['monBs']
-        )
-        e_pbe0 = locald4.compute_gd4(
-            r["Geometry_bohr"][:, 0], r["Geometry_bohr"][:, 1:], r['monAs'], r['monBs'],
-            method='pbe0'
-        )
-        e_b3lyp = locald4.compute_gd4(
-            r["Geometry_bohr"][:, 0], r["Geometry_bohr"][:, 1:], r['monAs'], r['monBs'],
-            method='b3lyp'
-        )
-        print(f"{r['R']}, GD4 HF-D4(ATM): {e:.6f}, GD4 PBE0-D4(ATM): {e_pbe0:.6f}, {e_b3lyp:.6f}")
-    params = paramsTable.get_params("sadz")
-    for n, r in df_sys.iterrows():
+    if False:
+        for n, r in df_sys.iterrows():
+            # print()
+            # print(r["Geometry"])
+            # print(r["Geometry"][r['monAs']])
+            # print(r["Geometry"][r['monBs']])
+            # print()
+            e = locald4.compute_gd4(
+                r["Geometry_bohr"][:, 0], r["Geometry_bohr"][:, 1:], r['monAs'], r['monBs']
+            )
+            e_pbe0 = locald4.compute_gd4(
+                r["Geometry_bohr"][:, 0], r["Geometry_bohr"][:, 1:], r['monAs'], r['monBs'],
+                method='pbe0'
+            )
+            e_b3lyp = locald4.compute_gd4(
+                r["Geometry_bohr"][:, 0], r["Geometry_bohr"][:, 1:], r['monAs'], r['monBs'],
+                method='b3lyp'
+            )
+            print(f"{r['R']}, GD4 HF-D4(ATM): {e:.6f}, GD4 PBE0-D4(ATM): {e_pbe0:.6f}, B3LYP-D4(ATM) {e_b3lyp:.6f}")
+    params = "sadz"
+    params_no_damping = paramsTable.get_params("SAPT_DFT_pbe0_adz_3_IE_supra_NO_DAMPING")[0]
+    print(params_no_damping)
+    params = "SAPT_DFT_pbe0_adz_3_IE"
+    print(f"Using params: {params}")
+    if params == 'sadz':
+        params = paramsTable.get_params(params)
+    else:
+        params, _ = paramsTable.get_params(params)
+    for n, r in df_sys[::-1].iterrows():
         print(f"System: {r['system_id']}, R: {r['R']}")
         dimer_C6s = r["C6s"]
         monA_C6s = r["C6_A"]
         monB_C6s = r["C6_B"]
-        dimer_monA_C6s, dimer_monB_C6s = monomer_C6s_from_dimer(
+        dimer_monA_C6s, dimer_monB_C6s, intermolecular_C6s = monomer_C6s_from_dimer(
             dimer_C6s, monA_C6s, monB_C6s
         )
         dimer_geom = r["Geometry_bohr"][:, 1:]
         distance_matrix = np.linalg.norm(dimer_geom[:, np.newaxis] - dimer_geom, axis=2)
         monomer_distance_A = distance_matrix[: len(monA_C6s), : len(monA_C6s)]
         monomer_distance_B = distance_matrix[len(monA_C6s) :, len(monA_C6s) :]
+        intermolecular_distance = distance_matrix[: len(monA_C6s), len(monA_C6s) :]
         for i in range(len(monA_C6s)):
             monA_C6s[i, i] = 0.0
             dimer_monA_C6s[i, i] = 0.0
@@ -1829,45 +1847,75 @@ def c6_change_mon_dimer(df, print_lvl=0):
             monomer_distance_B[i, i] = 1.0
         avg_change_A = np.mean(dimer_monA_C6s - monA_C6s)
         avg_change_B = np.mean(dimer_monB_C6s - monB_C6s)
-        print(f"avg change A: {avg_change_A:.2f}, avg change B: {avg_change_B:.2f}")
-        print(
-            "* hartree2kcalmol because want to scale units to kcal/mol where I can think more clearly about them"
-        )
-        avg_change_A = np.mean(dimer_monA_C6s - monA_C6s) * constants.hartree2kcalmol
-        avg_change_B = np.mean(dimer_monB_C6s - monB_C6s) * constants.hartree2kcalmol
-        print(f"avg change A: {avg_change_A:.2f}, avg change B: {avg_change_B:.2f}")
-        print("divided by 1/r^6")
-        avg_change_A = (
-            np.mean(
-                dimer_monA_C6s / monomer_distance_A**6
-                - monA_C6s / monomer_distance_A**6
+        # average C6 percentage change - need to make diagonals 1 first to avoid div by 0
+        dimer_monA_C6s_diag1 = dimer_monA_C6s.copy()
+        dimer_monB_C6s_diag1 = dimer_monB_C6s.copy()
+        monA_C6s_diag1 = monA_C6s.copy()
+        monB_C6s_diag1 = monB_C6s.copy()
+        for i in range(len(monA_C6s)):
+            dimer_monA_C6s_diag1[i, i] = 1.0
+            monA_C6s_diag1[i, i] = 1.0
+        for i in range(len(monB_C6s)):
+            dimer_monB_C6s_diag1[i, i] = 1.0
+            monB_C6s_diag1[i, i] = 1.0
+        avg_pct_change_A = np.mean((dimer_monA_C6s_diag1 - monA_C6s_diag1) / monA_C6s_diag1) * 100.0
+        avg_pct_change_B = np.mean((dimer_monB_C6s_diag1 - monB_C6s_diag1) / monB_C6s_diag1) * 100.0
+        c6_diff_A = dimer_monA_C6s - monA_C6s
+        c6_diff_B = dimer_monB_C6s - monB_C6s
+        avg_change_A = np.mean(c6_diff_A) #* constants.hartree2kcalmol
+        avg_change_B = np.mean(c6_diff_B) #* constants.hartree2kcalmol
+        mae_change_A = np.mean(np.abs(c6_diff_A)) #* constants.hartree2kcalmol
+        mae_change_B = np.mean(np.abs(c6_diff_B)) #* constants.hart
+        min_change_A = np.min(c6_diff_A) #* constants.hartree2kcalmol
+        min_change_B = np.min(c6_diff_B) #* constants.hartree2kcalmol
+        max_change_A = np.max(c6_diff_A) #* constants.hartree2kcalmol
+        max_change_B = np.max(c6_diff_B) #
+        if False:
+            print(f"C6s*h2km    , avg change A: {avg_change_A:.2f}, avg change B: {avg_change_B:.2f}")
+            print("divided by 1/r^6")
+            avg_change_A_r6 = (
+                np.mean(
+                    dimer_monA_C6s / monomer_distance_A**6
+                    - monA_C6s / monomer_distance_A**6
+                )
+                * constants.hartree2kcalmol
             )
-            * constants.hartree2kcalmol
-        )
-        avg_change_B = (
-            np.mean(
-                dimer_monB_C6s / monomer_distance_B**6
-                - monB_C6s / monomer_distance_B**6
+            avg_change_B_r6 = (
+                np.mean(
+                    dimer_monB_C6s / monomer_distance_B**6
+                    - monB_C6s / monomer_distance_B**6
+                )
+                * constants.hartree2kcalmol
             )
-            * constants.hartree2kcalmol
-        )
-        print(f"avg change A: {avg_change_A:.2f}, avg change B: {avg_change_B:.2f}")
-        print("divided by 1/r^8")
-        avg_change_A = (
-            np.mean(
-                dimer_monA_C6s / monomer_distance_A**8
-                - monA_C6s / monomer_distance_A**8
+            avg_change_inter_r6 = (
+                np.mean(
+                    intermolecular_C6s / intermolecular_distance**6
+                )
+                * constants.hartree2kcalmol
             )
-            * constants.hartree2kcalmol
-        )
-        avg_change_B = (
-            np.mean(
-                dimer_monB_C6s / monomer_distance_B**8
-                - monB_C6s / monomer_distance_B**8
+            print(f"C6s*h2km/r^6, avg change A: {avg_change_A_r6:.2f}, avg change B: {avg_change_B_r6:.2f}")
+            print("divided by 1/r^8")
+            avg_change_A_r8 = (
+                np.mean(
+                    dimer_monA_C6s / monomer_distance_A**8
+                    - monA_C6s / monomer_distance_A**8
+                )
+                * constants.hartree2kcalmol
             )
-            * constants.hartree2kcalmol
-        )
-        print(f"avg change A: {avg_change_A:.2f}, avg change B: {avg_change_B:.2f}")
+            avg_change_B_r8 = (
+                np.mean(
+                    dimer_monB_C6s / monomer_distance_B**8
+                    - monB_C6s / monomer_distance_B**8
+                )
+                * constants.hartree2kcalmol
+            )
+            avgerage_inter_r8 = (
+                np.mean(
+                    intermolecular_C6s / intermolecular_distance**8
+                )
+                * constants.hartree2kcalmol
+            )
+            print(f"C6s*h2km/r^8, avg change A: {avg_change_A_r8:.2f}, avg change B: {avg_change_B_r8:.2f}")
 
         dimer_dispersion_supra = locald4.compute_disp_2B_supra_from_C6s(
             r["Geometry_bohr"][:, 0],
@@ -1878,33 +1926,35 @@ def c6_change_mon_dimer(df, print_lvl=0):
             params,
         )
         dimer_dispersion = locald4.compute_disp_2B_from_C6s_NO_DAMPING(
-            r["Geometry_bohr"][:, 0], r["Geometry_bohr"][:, 1:], dimer_C6s, params
+            r["Geometry_bohr"][:, 0], r["Geometry_bohr"][:, 1:], dimer_C6s, params_no_damping
         )
         monA_dispersion = locald4.compute_disp_2B_from_C6s_NO_DAMPING(
             r["Geometry_bohr"][: len(monA_C6s), 0],
             r["Geometry_bohr"][: len(monA_C6s), 1:],
             monA_C6s,
-            params,
+            params_no_damping,
+        )
+        monB_dispersion = locald4.compute_disp_2B_from_C6s_NO_DAMPING(
+            r["Geometry_bohr"][len(monA_C6s) :, 0],
+            r["Geometry_bohr"][len(monA_C6s) :, 1:],
+            monB_C6s,
+            params_no_damping,
         )
 
         dimer_C6s_d_zero = dimer_C6s.copy()
         for i in range(len(dimer_C6s_d_zero)):
             dimer_C6s_d_zero[i, i] = 0.0
+        dimer_C6s_monomers_zero = dimer_C6s.copy()
+        for i in range(len(monA_C6s)):
+            for j in range(len(monA_C6s)):
+                dimer_C6s_monomers_zero[i, j] = 0.0
+        for i in range(len(monB_C6s)):
+            for j in range(len(monB_C6s)):
+                dimer_C6s_monomers_zero[i + len(monA_C6s), j + len(monA_C6s)] = 0.0
         dimer_dispersion_diagonal_zero = locald4.compute_disp_2B_from_C6s_NO_DAMPING(
             r["Geometry_bohr"][:, 0],
             r["Geometry_bohr"][:, 1:],
             dimer_C6s_d_zero,
-            params,
-        )
-        # This test demonstrates that diagonal C6s do not contribute to the
-        # dispersion energy. This allows us to set diagonal to zero for monC6s
-        assert np.isclose(dimer_dispersion_diagonal_zero, dimer_dispersion)
-
-        print(f"Disp.    dimer diagonal zero: {dimer_dispersion_diagonal_zero:.4f}")
-        monB_dispersion = locald4.compute_disp_2B_from_C6s_NO_DAMPING(
-            r["Geometry_bohr"][len(monA_C6s) :, 0],
-            r["Geometry_bohr"][len(monA_C6s) :, 1:],
-            monB_C6s,
             params,
         )
         dimer_monA_dispersion = locald4.compute_disp_2B_from_C6s_NO_DAMPING(
@@ -1919,6 +1969,10 @@ def c6_change_mon_dimer(df, print_lvl=0):
             dimer_monB_C6s,
             params,
         )
+
+        # Intermolecular contributions of no_damping
+        dimer_dispersion_diagonal = dimer_dispersion - dimer_monA_dispersion - dimer_monB_dispersion
+
         dimer_C6s_mon = dimer_C6s.copy()
         dimer_C6s_mon[: len(monA_C6s), : len(monA_C6s)] = monA_C6s
         dimer_C6s_mon[len(monA_C6s) :, len(monA_C6s) :] = monB_C6s
@@ -1933,43 +1987,137 @@ def c6_change_mon_dimer(df, print_lvl=0):
         dimer_dispersion_c6s_mon = locald4.compute_disp_2B_from_C6s_NO_DAMPING(
             r["Geometry_bohr"][:, 0], r["Geometry_bohr"][:, 1:], dimer_C6s_mon, params
         )
-        print(
-            f"Disp.    dimer: {dimer_dispersion:.4f}, monA: {monA_dispersion:.4f}, monB: {monB_dispersion:.4f}"
-        )
-        print(
-            f"Disp.    Total: {dimer_dispersion - monA_dispersion - monB_dispersion:.4f}"
-        )
-        print(
-            f"Disp.MC6 dimer: {dimer_dispersion_c6s_mon:.4f}, monA: {monA_dispersion:.4f}, monB: {monB_dispersion:.4f}"
-        )
-        print(
-            f"Disp.MC6 Total: {dimer_dispersion_c6s_mon - dimer_monA_dispersion - dimer_monB_dispersion:.4f}"
-        )
-        print(
-            f"Disp.    dmonA: {dimer_monA_dispersion:.4f}, dmonB: {dimer_monB_dispersion:.4f}"
-        )
-        print(
-            f"Disp.    Total: {dimer_dispersion - dimer_monA_dispersion - dimer_monB_dispersion:.4f}"
-        )
-        print(f"Disp.    Supra: {dimer_dispersion_supra:.4f}")
-        print(f"Disp.    Supra monC6s: {dimer_dispersion_supra_monc6s:.4f}")
+        print(f"{dimer_dispersion_c6s_mon = }")
+        bj = True
+        non_damping = True
+        print("===============  NOTE  ==================")
+        print("dmonA/dmonB compute using dimer C6s subblocks")
+        print("monA/monB compute using monomer C6s")
+        print("change in C6s is defined as: dimer_monX_C6s - monX_C6s, X=A,B")
+        print("=========================================")
+        c6_sum_A = np.sum(monA_C6s)
+        c6_sum_B = np.sum(monB_C6s)
+        print(f"C6s sum, monA: {c6_sum_A:.2f}, monB: {c6_sum_B:.2f}")
+        c6_sum_dimer_monA = np.sum(dimer_monA_C6s)
+        c6_sum_dimer_monB = np.sum(dimer_monB_C6s)
+        print(f"C6s sum, dmonA: {c6_sum_dimer_monA:.2f}, dmonB: {c6_sum_dimer_monB:.2f}")
+        print(f"C6s sum change A: {c6_sum_dimer_monA - c6_sum_A:.2f}, change B: {c6_sum_dimer_monB - c6_sum_B:.2f}")
+        print(f"C6s, avg change A: {avg_change_A:.2f}, avg change B: {avg_change_B:.2f}")
+        print(f"C6s, mae change A: {mae_change_A:.2f}, mae change B: {mae_change_B:.2f}")
+        print(f"C6s, min change A: {min_change_A:.2f}, min change B: {min_change_B:.2f}")
+        print(f"C6s, max change A: {max_change_A:.2f}, max change B: {max_change_B:.2f}")
+        print(f"C6s pct chg, avg pct change A: {avg_pct_change_A:.2f}%, avg pct change B: {avg_pct_change_B:.2f}%")
+        if non_damping:
+            print("----- NO DAMPING -----")
+            # print(f"Disp.    dimer diagonal zero: {dimer_dispersion_diagonal_zero:.4f}")
+            print(
+                f"Disp.    dimer: {dimer_dispersion:.4f}, monA: {monA_dispersion:.4f}, monB: {monB_dispersion:.4f}"
+            )
+            print(
+                f"Disp.    Total: {dimer_dispersion - monA_dispersion - monB_dispersion:.4f}"
+            )
+            # print("    Using only C6s from the MONOMERS for intramolecular pairs (should agree with supra)")
+            # print(
+            #     f"Disp.MC6 dimer: {dimer_dispersion_c6s_mon:.4f}, monA: {monA_dispersion:.4f}, monB: {monB_dispersion:.4f}"
+            # )
+            # print(
+            #     f"Disp.MC6 Total: {dimer_dispersion_c6s_mon - monA_dispersion - monB_dispersion:.4f}"
+            # )
+            print(
+                f"Disp.    dmonA: {dimer_monA_dispersion:.4f}, dmonB: {dimer_monB_dispersion:.4f}"
+            )
+            print(
+                f"Disp.     monA: {monA_dispersion:.4f},  monB: {monB_dispersion:.4f}"
+            )
+            # Difference between monA_dispersion and dimer_monA_dispersion
+            monA_diff = dimer_monA_dispersion - monA_dispersion
+            monB_diff = dimer_monB_dispersion - monB_dispersion
+            print(
+                f"Disp.  delta A: {monA_diff:.4f}, delta B: {monB_diff:.4f}"
+            )
+            # Sum changes
+            print(f"Disp.  delta A+B: {monA_diff + monB_diff:.4f}")
+            print(f"Disp.  Intermolecular: {dimer_dispersion_diagonal:.4f}")
+            print(f"Disp.  delta A+B+Intermolecular: {monA_diff + monB_diff + dimer_dispersion_diagonal:.4f}")
+            print(f"{len(monA_C6s) = }, {len(monB_C6s) = }")
+        if bj:
+            print("----- BJ DAMPING -----")
+            # Now for BJ
+            dimer_dispersion_BJ = locald4.compute_disp_2B_from_C6s(
+                r["Geometry_bohr"][:, 0], r["Geometry_bohr"][:, 1:], dimer_C6s, params
+            )
+            monA_dispersion_BJ = locald4.compute_disp_2B_from_C6s(
+                r["Geometry_bohr"][: len(monA_C6s), 0],
+                r["Geometry_bohr"][: len(monA_C6s), 1:],
+                monA_C6s,
+                params,
+            )
+            monB_dispersion_BJ = locald4.compute_disp_2B_from_C6s(
+                r["Geometry_bohr"][len(monA_C6s) :, 0],
+                r["Geometry_bohr"][len(monA_C6s) :, 1:],
+                monB_C6s,
+                params,
+            )
+            dimer_monA_dispersion_BJ = locald4.compute_disp_2B_from_C6s(
+                r["Geometry_bohr"][: len(monA_C6s), 0],
+                r["Geometry_bohr"][: len(monA_C6s), 1:],
+                dimer_monA_C6s,
+                params,
+            )
+            dimer_monB_dispersion_BJ = locald4.compute_disp_2B_from_C6s(
+                r["Geometry_bohr"][len(monA_C6s) :, 0],
+                r["Geometry_bohr"][len(monA_C6s) :, 1:],
+                dimer_monB_C6s,
+                params,
+            )
+            print(
+                f"Disp.BJ dimer: {dimer_dispersion_BJ:.4f}, monA: {monA_dispersion_BJ:.4f}, monB: {monB_dispersion_BJ:.4f}"
+            )
+            print(
+                f"Disp.BJ Total: {dimer_dispersion_BJ - monA_dispersion_BJ - monB_dispersion_BJ:.4f}"
+            )
+            print(
+                f"Disp.BJ  dmonA: {dimer_monA_dispersion_BJ:.4f}, dmonB: {dimer_monB_dispersion_BJ:.4f}"
+            )
+            print(
+                f"Disp.BJ   monA: {monA_dispersion_BJ:.4f},  monB: {monB_dispersion_BJ:.4f}"
+            )
+            delta_monA_BJ = dimer_monA_dispersion_BJ - monA_dispersion_BJ
+            delta_monB_BJ = dimer_monB_dispersion_BJ - monB_dispersion_BJ
+            print(
+                f"Disp.BJ delta A: {delta_monA_BJ:.4f}, delta B: {delta_monB_BJ:.4f}"
+            )
+            print(
+                f"Disp.BJ delta A+B: {delta_monA_BJ + delta_monB_BJ:.4f}"
+            )
+            print(f"Disp.BJ Intermolecular: {dimer_dispersion_supra:.4f}")
+            print(
+                f"Disp.BJ delta A+B+Intermolecular: {delta_monA_BJ + delta_monB_BJ + dimer_dispersion_supra:.4f}"
+            )
+            print(f"{len(monA_C6s) = }, {len(monB_C6s) = }")
 
+        return
         if print_lvl == 0:
             params_damped, _ = paramsTable.param_lookup("sadz")
+            params_undamped = [1.0, 1.0, 0.0, 0.0]
             t6_2, t8_2, energies = locald4.compute_bj_terms(
                 dimer_geom[:, 0],
                 dimer_geom[:, 1:],
                 dimer_C6s,
                 params=params_damped,
+                # params=params_undamped,
                 damping_2d=True,
             )
+            print(sum(energies))
             print("dimer C6s")
             print(dimer_C6s)
-            print("Monomer C6s")
+            print("Monomer A C6s")
             print(monA_C6s)
-            print(monA_C6s)
-            print("Dimer Monomer C6s")
+            print("Dimer Monomer A C6s")
             print(dimer_monA_C6s)
+            print("Monomer B C6s")
+            print(monB_C6s)
+            print("Dimer Monomer B C6s")
             print(dimer_monB_C6s)
             print("C6 change")
             print(dimer_monA_C6s - monA_C6s)
