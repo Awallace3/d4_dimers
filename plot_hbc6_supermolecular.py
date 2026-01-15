@@ -1925,6 +1925,14 @@ def c6_change_mon_dimer(df, print_lvl=1):
             r["monBs"],
             params,
         )
+        dimer_dispersion_supra_no_damping = locald4.compute_disp_2B_supra_from_C6s_NO_DAMPING(
+            r["Geometry_bohr"][:, 0],
+            r["Geometry_bohr"][:, 1:],
+            dimer_C6s,
+            r["monAs"],
+            r["monBs"],
+            params_no_damping,
+        )
         dimer_dispersion = locald4.compute_disp_2B_from_C6s_NO_DAMPING(
             r["Geometry_bohr"][:, 0], r["Geometry_bohr"][:, 1:], dimer_C6s, params_no_damping
         )
@@ -1940,54 +1948,21 @@ def c6_change_mon_dimer(df, print_lvl=1):
             monB_C6s,
             params_no_damping,
         )
-
-        dimer_C6s_d_zero = dimer_C6s.copy()
-        for i in range(len(dimer_C6s_d_zero)):
-            dimer_C6s_d_zero[i, i] = 0.0
-        dimer_C6s_monomers_zero = dimer_C6s.copy()
-        for i in range(len(monA_C6s)):
-            for j in range(len(monA_C6s)):
-                dimer_C6s_monomers_zero[i, j] = 0.0
-        for i in range(len(monB_C6s)):
-            for j in range(len(monB_C6s)):
-                dimer_C6s_monomers_zero[i + len(monA_C6s), j + len(monA_C6s)] = 0.0
-        dimer_dispersion_diagonal_zero = locald4.compute_disp_2B_from_C6s_NO_DAMPING(
-            r["Geometry_bohr"][:, 0],
-            r["Geometry_bohr"][:, 1:],
-            dimer_C6s_d_zero,
-            params,
-        )
         dimer_monA_dispersion = locald4.compute_disp_2B_from_C6s_NO_DAMPING(
             r["Geometry_bohr"][: len(monA_C6s), 0],
             r["Geometry_bohr"][: len(monA_C6s), 1:],
             dimer_monA_C6s,
-            params,
+            params_no_damping,
         )
         dimer_monB_dispersion = locald4.compute_disp_2B_from_C6s_NO_DAMPING(
             r["Geometry_bohr"][len(monA_C6s) :, 0],
             r["Geometry_bohr"][len(monA_C6s) :, 1:],
             dimer_monB_C6s,
-            params,
+            params_no_damping,
         )
 
         # Intermolecular contributions of no_damping
-        dimer_dispersion_diagonal = dimer_dispersion - dimer_monA_dispersion - dimer_monB_dispersion
 
-        dimer_C6s_mon = dimer_C6s.copy()
-        dimer_C6s_mon[: len(monA_C6s), : len(monA_C6s)] = monA_C6s
-        dimer_C6s_mon[len(monA_C6s) :, len(monA_C6s) :] = monB_C6s
-        dimer_dispersion_supra_monc6s = locald4.compute_disp_2B_supra_from_C6s(
-            r["Geometry_bohr"][:, 0],
-            r["Geometry_bohr"][:, 1:],
-            dimer_C6s_mon,
-            r["monAs"],
-            r["monBs"],
-            params,
-        )
-        dimer_dispersion_c6s_mon = locald4.compute_disp_2B_from_C6s_NO_DAMPING(
-            r["Geometry_bohr"][:, 0], r["Geometry_bohr"][:, 1:], dimer_C6s_mon, params
-        )
-        print(f"{dimer_dispersion_c6s_mon = }")
         bj = True
         non_damping = True
         print("===============  NOTE  ==================")
@@ -2009,7 +1984,6 @@ def c6_change_mon_dimer(df, print_lvl=1):
         print(f"C6s pct chg, avg pct change A: {avg_pct_change_A:.2f}%, avg pct change B: {avg_pct_change_B:.2f}%")
         if non_damping:
             print("----- NO DAMPING -----")
-            # print(f"Disp.    dimer diagonal zero: {dimer_dispersion_diagonal_zero:.4f}")
             print(
                 f"Disp.    dimer: {dimer_dispersion:.4f}, monA: {monA_dispersion:.4f}, monB: {monB_dispersion:.4f}"
             )
@@ -2037,8 +2011,8 @@ def c6_change_mon_dimer(df, print_lvl=1):
             )
             # Sum changes
             print(f"Disp.  delta A+B: {monA_diff + monB_diff:.4f}")
-            print(f"Disp.  Intermolecular: {dimer_dispersion_diagonal:.4f}")
-            print(f"Disp.  delta A+B+Intermolecular: {monA_diff + monB_diff + dimer_dispersion_diagonal:.4f}")
+            print(f"Disp.  Intermolecular: {dimer_dispersion_supra_no_damping:.4f}")
+            print(f"Disp.  delta A+B+Intermolecular: {monA_diff + monB_diff + dimer_dispersion_supra_no_damping:.4f}")
             print(f"{len(monA_C6s) = }, {len(monB_C6s) = }")
         if bj:
             print("----- BJ DAMPING -----")
@@ -2149,16 +2123,7 @@ def main():
     # return
     df = df_setup(None, ddft=True)
     c6_change_mon_dimer(df)
-    return
-    print(df["SAPT(DFT) [PBE0] DISP ENERGY atz"])
-    df = plotting.prep_saptdft_components(df, "pbe0", "adz")
-    df = plotting.prep_saptdft_components(df, "pbe0", "atz")
-    df["SAPT(DFT) [PBE0] DISP ENERGY atz"] = (
-        df["SAPT(DFT) [PBE0] DISP ENERGY atz"] * h2kcalmol
-    )
-    df["SAPT(DFT) [PBE0] DISP ENERGY adz"] = (
-        df["SAPT(DFT) [PBE0] DISP ENERGY adz"] * h2kcalmol
-    )
+    # return
     # pp(df.columns.values.tolist())
     # print(df['SAPT(DFT) [PBE0] DISP ENERGY atz'])
     # pp(df.columns.values.tolist())
@@ -2170,6 +2135,17 @@ def main():
     # subplot_all_curves_LoS_basis_set_D4_versions(
     #     df, basis_sets=["adz", "atz"], build_pdf=True
     # )
+
+    # Precursors
+    print(df["SAPT(DFT) [PBE0] DISP ENERGY atz"])
+    df = plotting.prep_saptdft_components(df, "pbe0", "adz")
+    df = plotting.prep_saptdft_components(df, "pbe0", "atz")
+    df["SAPT(DFT) [PBE0] DISP ENERGY atz"] = (
+        df["SAPT(DFT) [PBE0] DISP ENERGY atz"] * h2kcalmol
+    )
+    df["SAPT(DFT) [PBE0] DISP ENERGY adz"] = (
+        df["SAPT(DFT) [PBE0] DISP ENERGY adz"] * h2kcalmol
+    )
     subplot_all_curves_LoS_basis_set_D4_versions_nondamped(df, build_pdf=True)
     return
 

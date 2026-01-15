@@ -529,6 +529,25 @@ def compute_disp_2B_from_C6s_NO_DAMPING(
     )
     return e_d * hartree_to_kcalmol
 
+def compute_disp_2B_supra_from_C6s_NO_DAMPING(
+    pos,
+    carts,
+    c6s,
+    monAs,
+    monBs,
+    params,
+):
+    e_d = disp.disp_2B_supra_NO_DAMPING(
+        np.array(pos, dtype=np.int32),
+        np.array(carts, dtype=np.float64),
+        np.array(c6s, dtype=np.float64),
+        np.array(monAs, dtype=np.int32),
+        np.array(monBs, dtype=np.int32),
+        params,
+    )
+    return e_d * hartree_to_kcalmol
+
+
 def compute_disp_2B_supra_from_C6s(
     pos,
     carts,
