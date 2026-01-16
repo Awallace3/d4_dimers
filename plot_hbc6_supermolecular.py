@@ -2159,10 +2159,23 @@ def c6_change_mon_dimer(df, system_label="45_Ethyne-Pentane", print_lvl=1):
                 params=np.array([0.73818347, 0.09542862, 3.63663899]),
                 d3data=r["D3Data_inter"],
             )
-            e_disp_d3 = jeff.compute_BJ_CPP(
+            d3data=r["D3Data"]
+            # dimer is where d3data[:, -1] > 0
+            dimer_d3 = d3data[d3data[:, -1] > 0]
+            monomers_d3 = d3data[d3data[:, -1] < 0]
+            monomers_d3[:, -2:] *= -1
+            e_disp_d3_dimer = jeff.compute_BJ_CPP(
                 params=np.array([0.73818347, 0.09542862, 3.63663899]),
-                d3data=r["D3Data"],
+                d3data=dimer_d3,
             )
+            e_disp_d3_monomers = jeff.compute_BJ_CPP(
+                params=np.array([0.73818347, 0.09542862, 3.63663899]),
+                d3data=monomers_d3,
+            )
+            e_disp_d3 = e_disp_d3_dimer - e_disp_d3_monomers
+            print(f"D3 Disp. dimer: {e_disp_d3_dimer:.4f}, monomers: {e_disp_d3_monomers:.4f}")
+            print(f"D3 Disp. intermolecular: {e_disp_d3_inter:.4f}")
+            print(f"D3 Disp. supermolecular: {e_disp_d3:.4f}")
 
         return
         if print_lvl == 0:
