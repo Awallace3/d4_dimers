@@ -652,7 +652,7 @@ def plot_basis_sets_d4_Inter_vs_Super(
                     "SAPT0_atz_3_IE",
                 ],
             ],
-            disp_compute=locald4.compute_disp_2B_BJ_dimer_supra,
+            disp_compute=locald4.compute_disp_2B_BJ_dimer_inter,
         )
         df.to_pickle(df_out)
     else:
@@ -2187,7 +2187,7 @@ def plotting_setup_dft_ddft(
                 ],
             ],
             benchmark_label="benchmark ref energy",
-            disp_compute=locald4.compute_disp_2B_BJ_dimer_supra,
+            disp_compute=locald4.compute_disp_2B_BJ_dimer_inter,
         )
     if False:
         df = compute_d4_from_opt_params(
@@ -2196,7 +2196,7 @@ def plotting_setup_dft_ddft(
                 [
                     "SAPT_DFT_pbe0_adz_total",
                     "SAPT_DFT_pbe0_adz_3_IE_NO_DAMPING",
-                    "SAPT_DFT_pbe0_adz_3_IE_supra_NO_DAMPING",
+                    "SAPT_DFT_pbe0_adz_3_IE_inter_NO_DAMPING",
                     # "pbe0",
                     "SAPT_DFT_pbe0_adz_3_IE",
                 ],
@@ -2209,26 +2209,26 @@ def plotting_setup_dft_ddft(
             bases=[
                 [
                     "SAPT_DFT_pbe0_adz_total",
-                    "SAPT_DFT_pbe0_adz_3_IE_supra",
-                    "SAPT_DFT_pbe0_adz_3_IE_supra",
+                    "SAPT_DFT_pbe0_adz_3_IE_inter",
+                    "SAPT_DFT_pbe0_adz_3_IE_inter",
                     "SAPT_DFT_pbe0_adz_3_IE",
                 ],
                 [
                     "SAPT_DFT_b3lyp_adz_total",
-                    "SAPT_DFT_b3lyp_adz_3_IE_supra",
-                    "SAPT_DFT_b3lyp_adz_3_IE_supra",
+                    "SAPT_DFT_b3lyp_adz_3_IE_inter",
+                    "SAPT_DFT_b3lyp_adz_3_IE_inter",
                     "SAPT_DFT_b3lyp_adz_3_IE",
                 ],
                 [
                     "SAPT_DFT_pbe0_adz_total",
-                    "SAPT_DFT_pbe0_adz_3_IE_supra_NO_DAMPING",
-                    "SAPT_DFT_pbe0_adz_3_IE_supra_NO_DAMPING",
+                    "SAPT_DFT_pbe0_adz_3_IE_inter_NO_DAMPING",
+                    "SAPT_DFT_pbe0_adz_3_IE_inter_NO_DAMPING",
                     # "pbe0",
                     "SAPT_DFT_pbe0_adz_3_IE",
                 ],
             ],
             benchmark_label="benchmark ref energy",
-            disp_compute=locald4.compute_disp_2B_BJ_dimer_supra,
+            disp_compute=locald4.compute_disp_2B_BJ_dimer_inter,
         )
         df = compute_d4_from_opt_params(
             df,
@@ -2255,16 +2255,16 @@ def plotting_setup_dft_ddft(
         #     bases=[
         #         [
         #             "SAPT_DFT_pbe0_adz_total",
-        #             "SAPT_DFT_adz_TT_supra",
-        #             "SAPT_DFT_adz_TT_supra",
+        #             "SAPT_DFT_adz_TT_inter",
+        #             "SAPT_DFT_adz_TT_inter",
         #             # "pbe0",
         #             "SAPT_DFT_pbe0_adz_3_IE",
         #         ],
         #     ],
         #     benchmark_label="benchmark ref energy",
-        #     disp_compute=locald4.compute_disp_2B_TT_dimer_supra,
+        #     disp_compute=locald4.compute_disp_2B_TT_dimer_inter,
         # )
-        # print(df[["-D4 (SAPT_DFT_adz_TT_supra)"]])
+        # print(df[["-D4 (SAPT_DFT_adz_TT_inter)"]])
         # df.to_pickle(df_out)
     # plot_violin_SAPT0_DFT_components(
     if original_plot:
@@ -8631,7 +8631,7 @@ def plot_components_sapt0_saptdft(df):
                 "SAPT0_atz_3_IE",
             ],
         ],
-        disp_compute=locald4.compute_disp_2B_BJ_dimer_supra,
+        disp_compute=locald4.compute_disp_2B_BJ_dimer_inter,
     )
     # violin_plots_multi_components_subset_sapt0d4(df)
     violin_plots_multi_components_sapt0d4(df)
@@ -8686,14 +8686,14 @@ def d4_conversions(df):
         axis=1,
     )
 
-    df['SAPT(PBE0)-D4 SUPRA DISP ENERGY'] = df['-D4 (SAPT_DFT_pbe0_adz_3_IE_supra)']
+    df['SAPT(PBE0)-D4 SUPRA DISP ENERGY'] = df['-D4 (SAPT_DFT_pbe0_adz_3_IE_inter)']
     df['SAPT(PBE0)-D4 SUPRA DISP ENERGY adz'] = df['SAPT(PBE0)-D4 SUPRA DISP ENERGY'] / h2kcalmol
     df['SAPT(PBE0)-D4 SUPRA DISP ENERGY atz'] = df['SAPT(PBE0)-D4 SUPRA DISP ENERGY'] / h2kcalmol
     df['SAPT(PBE0)-D4 SUPRA DISP ENERGY aqz'] = df['SAPT(PBE0)-D4 SUPRA DISP ENERGY'] / h2kcalmol
     df['SAPT(PBE0)-D4 SUPRA TOTAL ENERGY adz'] = df['SAPT(PBE0)-D4 SUPRA DISP ENERGY'] / h2kcalmol + df['SAPT_DFT_pbe0_adz_3_IE'] / h2kcalmol
     df['SAPT(PBE0)-D4 SUPRA TOTAL ENERGY atz'] = df['SAPT(PBE0)-D4 SUPRA DISP ENERGY'] / h2kcalmol + df['SAPT_DFT_pbe0_atz_3_IE'] / h2kcalmol
     df['SAPT(PBE0)-D4 SUPRA TOTAL ENERGY aqz'] = df['SAPT(PBE0)-D4 SUPRA DISP ENERGY'] / h2kcalmol + df['SAPT_DFT_pbe0_aqz_3_IE'] / h2kcalmol
-    df['SAPT(B3LYP)-D4 SUPRA DISP ENERGY'] = df['-D4 (SAPT_DFT_b3lyp_adz_3_IE_supra)']
+    df['SAPT(B3LYP)-D4 SUPRA DISP ENERGY'] = df['-D4 (SAPT_DFT_b3lyp_adz_3_IE_inter)']
     df['SAPT(B3LYP)-D4 SUPRA DISP ENERGY adz'] = df['SAPT(B3LYP)-D4 SUPRA DISP ENERGY'] / h2kcalmol
     df['SAPT(B3LYP)-D4 SUPRA DISP ENERGY atz'] = df['SAPT(B3LYP)-D4 SUPRA DISP ENERGY'] / h2kcalmol
     df['SAPT(B3LYP)-D4 SUPRA DISP ENERGY aqz'] = df['SAPT(B3LYP)-D4 SUPRA DISP ENERGY'] / h2kcalmol

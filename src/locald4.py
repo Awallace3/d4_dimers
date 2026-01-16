@@ -529,7 +529,7 @@ def compute_disp_2B_from_C6s_NO_DAMPING(
     )
     return e_d * hartree_to_kcalmol
 
-def compute_disp_2B_supra_from_C6s_NO_DAMPING(
+def compute_disp_2B_inter_from_C6s_NO_DAMPING(
     pos,
     carts,
     c6s,
@@ -537,7 +537,7 @@ def compute_disp_2B_supra_from_C6s_NO_DAMPING(
     monBs,
     params,
 ):
-    e_d = disp.disp_2B_supra_NO_DAMPING(
+    e_d = disp.disp_2B_inter_NO_DAMPING(
         np.array(pos, dtype=np.int32),
         np.array(carts, dtype=np.float64),
         np.array(c6s, dtype=np.float64),
@@ -548,7 +548,7 @@ def compute_disp_2B_supra_from_C6s_NO_DAMPING(
     return e_d * hartree_to_kcalmol
 
 
-def compute_disp_2B_supra_from_C6s(
+def compute_disp_2B_inter_from_C6s(
     pos,
     carts,
     c6s,
@@ -557,7 +557,7 @@ def compute_disp_2B_supra_from_C6s(
     params,
     params_ATM=None,
 ):
-    e_d = disp.disp_2B_BJ_supra(
+    e_d = disp.disp_2B_BJ_inter(
         np.array(pos, dtype=np.int32),
         np.array(carts, dtype=np.float64),
         np.array(c6s, dtype=np.float64),
@@ -625,7 +625,7 @@ def compute_disp_ATM_CHG_dimer(
     )
     return e_total * mult_out
 
-def compute_disp_2B_BJ_dimer_supra(
+def compute_disp_2B_BJ_dimer_inter(
     r,
     params_2B,
     params_ATM,
@@ -640,7 +640,7 @@ def compute_disp_2B_BJ_dimer_supra(
     monBs = np.array(monBs, dtype=np.int32)
     pA, cA = pos[monAs], carts[monAs, :]
     pB, cB = pos[monBs], carts[monBs, :]
-    e_total = disp.disp_2B_BJ_supra(
+    e_total = disp.disp_2B_BJ_inter(
         pos,
         carts,
         r["C6s"],
@@ -650,7 +650,7 @@ def compute_disp_2B_BJ_dimer_supra(
     )
     return e_total * mult_out
 
-def compute_disp_2B_TT_dimer_supra(
+def compute_disp_2B_TT_dimer_inter(
     r,
     params_2B,
     params_ATM,
@@ -665,7 +665,7 @@ def compute_disp_2B_TT_dimer_supra(
     monBs = np.array(monBs, dtype=np.int32)
     pA, cA = pos[monAs], carts[monAs, :]
     pB, cB = pos[monBs], carts[monBs, :]
-    e_total = disp.disp_2B_TT_supra(
+    e_total = disp.disp_2B_TT_inter(
         pos,
         carts,
         r["C6s"],

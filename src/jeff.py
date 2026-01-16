@@ -45,6 +45,7 @@ def compute_bj(params, d3data):
     energy *= -constants.conversion_factor("hartree", "kcal / mol")
     return energy
 
+
 def compute_BJ_CPP(params, d3data):
     cpp_e = dispersion.d3.compute_BJ(params, d3data)
     cpp_e *= -constants.conversion_factor("hartree", "kcal / mol")
@@ -141,6 +142,7 @@ def optimization_d3(
     out_params = ret.x
     return out_params
 
+
 def error_stats_fixed_params(
     df,
     bases=[
@@ -179,4 +181,3 @@ def error_stats_fixed_params(
         l_out = "D3_fixed_stats"
     df_to_latex_table_round(pd.DataFrame(stats), l_out=l_out)
     return
-

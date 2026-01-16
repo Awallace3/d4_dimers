@@ -354,7 +354,7 @@ def paramsDict() -> {}:
             ],
             dtype=np.float64,
         ),
-        "SAPT_DFT_adz_TT_supra": np.array(
+        "SAPT_DFT_adz_TT_inter": np.array(
             # [s8, b1, b2], optimized s8 for -0.33 and 4.39 params
             [
                 [1.0, 0.6602069470, -0.33, 4.39, 0.0],
@@ -625,27 +625,27 @@ def paramsDict() -> {}:
         "SAPT_DFT_pbe0_atz_3_IE_START": np.array(
             [1.19927447, 0.89007478, 0.10318306],
         ),
-        "SAPT_DFT_pbe0_adz_3_IE_supra": np.array(
+        "SAPT_DFT_pbe0_adz_3_IE_inter": np.array(
             [
                 [1.0, 0.89529649, -0.82043591, 0.03264695, 0.0],
                 [1.0, 0.89529649, -0.82043591, 0.03264695, 0.0],
             ]
         ),
-        "SAPT_DFT_pbe0_adz_3_IE_supra_START": np.array(
+        "SAPT_DFT_pbe0_adz_3_IE_inter_START": np.array(
             [
                 0.89529649,
                 -0.82043591,
                 0.03264695,
             ],
         ),
-        "SAPT_DFT_b3lyp_adz_3_IE_supra_START": np.array(
+        "SAPT_DFT_b3lyp_adz_3_IE_inter_START": np.array(
             [
                 1.0908259068502533,
                 -0.8067972978493638,
                 0.03264695,
             ],
         ),
-        "SAPT_DFT_b3lyp_adz_3_IE_supra": np.array(
+        "SAPT_DFT_b3lyp_adz_3_IE_inter": np.array(
             [
                 [1.0, 1.0908259068502533, -0.8067972978493638, 0.03264695, 0.0],
                 [1.0, 1.0908259068502533, -0.8067972978493638, 0.03264695, 0.0],
@@ -663,17 +663,17 @@ def paramsDict() -> {}:
                 [1.0, -0.69586661, -0.68624097, 5.37938684, 0.0],
             ]
         ),
-        "SAPT_DFT_pbe0_adz_3_IE_supra_DISP_CORRECTION_START": np.array(
+        "SAPT_DFT_pbe0_adz_3_IE_inter_DISP_CORRECTION_START": np.array(
             [1.0, 0.8, 1.02043591, 3.03264695],
             dtype=np.float64,
         ),
-        "SAPT_DFT_pbe0_adz_3_IE_supra_NO_DAMPING": np.array(
+        "SAPT_DFT_pbe0_adz_3_IE_inter_NO_DAMPING": np.array(
             [
                 [1.0, 0.89529649, 0.0, 0.0, 0.0],
                 [1.0, 0.89529649, 0.0, 0.0, 0.0],
             ]
         ),
-        # "SAPT_DFT_pbe0_adz_3_IE_supra_NO_DAMPING": np.array(
+        # "SAPT_DFT_pbe0_adz_3_IE_inter_NO_DAMPING": np.array(
         #     [
         #         [1.0, 0.29529649, 0.0, 0.0, 0.0],
         #         [1.0, 0.29529649, 0.0, 0.0, 0.0],
@@ -687,7 +687,7 @@ def paramsDict() -> {}:
         "pbe0_2B_BJ_ATM_CHG_start": [1.20065498, 0.40085597, 5.02928789],
         "pbe0_2B_BJ_start": [1.20065498, 0.40085597, 5.02928789],
         "pbe0_2B_BJ": [1.4270674615413297, 0.4271715402929506, 5.164142983334787],
-        "sadz_supra": np.array(
+        "sadz_inter": np.array(
             [
                 [1.0, 0.56063068, 0.65540802, 1.06422537, 0.0],
                 [1.0, 0.56063068, 0.65540802, 1.06422537, 0.0],

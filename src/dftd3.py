@@ -54,6 +54,7 @@ def dftd3_bjm(pos, carts, params, ATM=False):
     os.remove("tmp.xyz")
     return e_disp
 
+
 def collect_bjm_d3data(pos, carts, ATM=False, s_dftd3_bin=None):
     if s_dftd3_bin is None:
         s_dftd3_bin = "s-dftd3"
@@ -62,11 +63,11 @@ def collect_bjm_d3data(pos, carts, ATM=False, s_dftd3_bin=None):
     if ATM:
         cmd = [s_dftd3_bin, "--bj", "hf", "--pair-resolved", "--atm", "tmp.xyz"]
     else:
-        cmd = [s_dftd3_bin, "--bj", "hf", "--pair-resolved",  "tmp.xyz"]
+        cmd = [s_dftd3_bin, "--bj", "hf", "--pair-resolved", "tmp.xyz"]
     # proc1 = subprocess.Popen(cmd, stdout=subprocess.PIPE)
     # proc1.wait()
     subprocess.run(cmd, stdout=subprocess.PIPE)
-    
+
     # print(proc1.stdout.read())
     data = tools.json_to_dict("d3data.json")
     # os.remove("tmp.xyz")
@@ -78,28 +79,109 @@ def collect_bjm_d3data(pos, carts, ATM=False, s_dftd3_bin=None):
     output = []
     n = len(pos)
     for i in range(n):
-        for j in range(i+1, n):
+        for j in range(i + 1, n):
             output.append(
-                [i + 1, j + 1, 
-                data['rs'][j, i], 
-                data['r0s'][j, i], 
-                data['c6s'][j, i], 
-                data['c8s'][j, i],
-                 ]
+                [
+                    i + 1,
+                    j + 1,
+                    data["rs"][j, i],
+                    data["r0s"][j, i],
+                    data["c6s"][j, i],
+                    data["c8s"][j, i],
+                ]
             )
     return data, np.array(output), e_disp
 
+
+def collect_bjm_d3data_dimer_intermolecular(pos, carts, monAs, monBs, ATM=False, s_dftd3_bin=None):
+    if s_dftd3_bin is None:
+        s_dftd3_bin = "s-dftd3"
+    with open("tmp.xyz", "w") as f:
+        f.write(tools.carts_to_xyz(pos, carts))
+    if ATM:
+        cmd = [s_dftd3_bin, "--bj", "hf", "--pair-resolved", "--atm", "tmp.xyz"]
+    else:
+        cmd = [s_dftd3_bin, "--bj", "hf", "--pair-resolved", "tmp.xyz"]
+    # proc1 = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+    # proc1.wait()
+    subprocess.run(cmd, stdout=subprocess.PIPE)
+
+    # print(proc1.stdout.read())
+    data = tools.json_to_dict("d3data.json")
+    os.remove("tmp.xyz")
+    os.remove("d3data.json")
+    output = []
+    for i in monAs:
+        for j in monBs:
+            output.append(
+                [
+                    i + 1,
+                    j + 1,
+                    data["rs"][j, i],
+                    data["r0s"][j, i],
+                    data["c6s"][j, i],
+                    data["c8s"][j, i],
+                ]
+            )
+    # return data, np.array(output), e_disp
+    return np.array(output)
+
+
+def filter_d3data_intermolecular(d3data, monAs, monBs):
+    """
+    Filter d3data to include only intermolecular pairs (one atom from A, one from B).
+    
+    Parameters
+    ----------
+    d3data : np.ndarray
+        Output from collect_bjm_d3data with columns [i, j, r, r0, c6, c8]
+        where i, j are 1-indexed atom indices
+    monAs : array-like
+        0-indexed atom indices for monomer A
+    monBs : array-like
+        0-indexed atom indices for monomer B
+    
+    Returns
+    -------
+    np.ndarray
+        Filtered d3data with only intermolecular pairs
+    """
+    if d3data is None or len(d3data) == 0:
+        return np.array([])
+    # Convert monAs/monBs to sets for O(1) lookup, and to 1-indexed
+    monAs_set = set(i + 1 for i in monAs)
+    monBs_set = set(i + 1 for i in monBs)
+    
+    intermolecular = []
+    for row in d3data:
+        i, j = int(row[0]), int(row[1])
+        # Check if one atom is in A and other is in B (either direction)
+        if row[-1] < 0:
+            break
+        if (i in monAs_set and j in monBs_set):
+            intermolecular.append(row)
+    
+    return np.array(intermolecular)
+
+
 def collect_bjm_d3data_dimer(pos, carts, monAs, monBs, ATM=False, s_dftd3_bin=None):
     try:
-        _, dimer_d3data = collect_bjm_d3data(pos, carts, ATM=False, s_dftd3_bin=s_dftd3_bin)
-        _, monA_d3data = collect_bjm_d3data(pos[monAs], carts[monAs], ATM=False, s_dftd3_bin=s_dftd3_bin)
+        _, dimer_d3data, _ = collect_bjm_d3data(
+            pos, carts, ATM=False, s_dftd3_bin=s_dftd3_bin
+        )
+        _, monA_d3data, _ = collect_bjm_d3data(
+            pos[monAs], carts[monAs], ATM=False, s_dftd3_bin=s_dftd3_bin
+        )
         monA_d3data[:, -2:] *= -1
-        _, monB_d3data = collect_bjm_d3data(pos[monBs], carts[monBs], ATM=False, s_dftd3_bin=s_dftd3_bin)
+        _, monB_d3data, _ = collect_bjm_d3data(
+            pos[monBs], carts[monBs], ATM=False, s_dftd3_bin=s_dftd3_bin
+        )
         monB_d3data[:, -2:] *= -1
         return np.concatenate([dimer_d3data, monA_d3data, monB_d3data])
     except Exception as e:
         print(e)
         return None
+
 
 def dftd3_bjm_og(pos, carts, ATM=False):
     with open("tmp.xyz", "w") as f:

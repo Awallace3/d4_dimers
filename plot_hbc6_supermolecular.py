@@ -10,6 +10,8 @@ from src.plotting import prep_saptdft_components
 from qcelemental import constants
 from matplotlib.ticker import AutoMinorLocator, ScalarFormatter
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes, mark_inset
+from src import dftd3
+from src import jeff
 
 h2kcalmol = constants.conversion_factor("hartree", "kcal/mol")
 
@@ -53,10 +55,18 @@ def df_setup(
 ):
     # pp(df.columns.values.tolist())
     if os.path.exists("./plots/ddft_curves.pkl") and df is None:
+        # convert every SUPRA or supra to INTER or inter in DB column
+        # df = pd.read_pickle("./plots/ddft_curves.pkl")
+        # pp(df.columns.values.tolist())
+        # df.columns = [
+        #     x.replace("SUPRA", "INTER").replace("supra", "inter") for x in df.columns
+        # ]
+        # pp(df.columns.values.tolist())
+        # df.to_pickle("./plots/ddft_curves.pkl")
         return pd.read_pickle("./plots/ddft_curves.pkl")
     elif df is None:
         raise ValueError("No dataframe provided")
-    p_2b, p_atm = paramsTable.param_lookup("sadz_supra")
+    p_2b, p_atm = paramsTable.param_lookup("sadz_inter")
     print(p_2b, p_atm)
     df["Geometry"] = df.apply(lambda r: np.array(r["Geometry"]), axis=1)
     df["monAs"] = df.apply(lambda r: np.array(r["monAs"]), axis=1)
@@ -67,8 +77,8 @@ def df_setup(
         ),
         axis=1,
     )
-    # df["d4_supra"] = df.apply(
-    #     lambda row: locald4.compute_disp_2B_BJ_dimer_supra(
+    # df["d4_inter"] = df.apply(
+    #     lambda row: locald4.compute_disp_2B_BJ_dimer_inter(
     #         row,
     #         p_2b,
     #         p_atm,
@@ -125,7 +135,7 @@ def plot_all_curves(df):
     df_hbc6 = df[df["DB"] == "HBC1"]
     print(
         df_hbc6[
-            ["SAPT0_disp", "d4_supra", "d4_super", "E_res", "System #", "distance (A)"]
+            ["SAPT0_disp", "d4_inter", "d4_super", "E_res", "System #", "distance (A)"]
         ]
     )
     # plt usetex
@@ -145,7 +155,7 @@ def plot_all_curves(df):
                     df_sys[
                         [
                             "SAPT0_disp",
-                            "d4_supra",
+                            "d4_inter",
                             "d4_super",
                             "E_res",
                             "System #",
@@ -157,7 +167,7 @@ def plot_all_curves(df):
                 fig = plt.figure(dpi=400)
                 plt.plot(
                     df_sys["distance (A)"],
-                    df_sys["d4_supra"],
+                    df_sys["d4_inter"],
                     label=f"-D4 Non-Super",
                     marker="o",
                     markersize=2.0,
@@ -297,7 +307,7 @@ def plot_all_curves_LoS(
                 )
                 # plt.plot(
                 #     df_sys["distance (A)"],
-                #     df_sys["d4_supra"],
+                #     df_sys["d4_inter"],
                 #     label=f"-D4 Non-Super",
                 #     marker="o",
                 #     markersize=2.0,
@@ -1055,9 +1065,9 @@ def subplot_all_curves_LoS_basis_set_D4_versions(
                     colors = {
                         "-D4 (HF_ATM)": "blue",
                         # "-D4 (SAPT_DFT_pbe0_adz_3_IE)": "red",
-                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra)": "green",
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_inter)": "green",
                         "-D4 (SAPT_DFT_pbe0_adz_3_IE_NO_DAMPING)": "purple",
-                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra_NO_DAMPING)": "orange",
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_inter_NO_DAMPING)": "orange",
                         "PBD0-D4": "red",
                         "SAPT(PBE0)": "gray",
                         "E_ref_hlsapt_atz": "black",
@@ -1065,9 +1075,9 @@ def subplot_all_curves_LoS_basis_set_D4_versions(
                     markers = {
                         "-D4 (HF_ATM)": "o",
                         "-D4 (SAPT_DFT_pbe0_adz_3_IE)": "s",
-                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra)": "^",
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_inter)": "^",
                         "-D4 (SAPT_DFT_pbe0_adz_3_IE_NO_DAMPING)": "d",
-                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra_NO_DAMPING)": "v",
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_inter_NO_DAMPING)": "v",
                         "PBD0-D4": "*",
                         "SAPT(PBE0)": "X",
                         "E_ref_hlsapt_atz": "o",
@@ -1075,9 +1085,9 @@ def subplot_all_curves_LoS_basis_set_D4_versions(
                     labels = {
                         "-D4 (HF_ATM)": "HF-D4 (S)",
                         "-D4 (SAPT_DFT_pbe0_adz_3_IE)": "SAPT(PBE0)-D4 (S)",
-                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra)": "SAPT(PBE0)-D4 (I)",
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_inter)": "SAPT(PBE0)-D4 (I)",
                         "-D4 (SAPT_DFT_pbe0_adz_3_IE_NO_DAMPING)": "SAPT(PBE0)-D4 (S, ND)",
-                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra_NO_DAMPING)": "SAPT(PBE0)-D4 (I, ND)",
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_inter_NO_DAMPING)": "SAPT(PBE0)-D4 (I, ND)",
                         "PBD0-D4": "PBE0-D4 DISP ENERGY adz",
                         "SAPT(PBE0)": "SAPT(PBE0)",
                         "E_ref_hlsapt_atz": "SAPT2+3(CCD)/aTZ",
@@ -1104,9 +1114,9 @@ def subplot_all_curves_LoS_basis_set_D4_versions(
                         d4_cols = [
                             "-D4 (HF_ATM)",
                             "-D4 (SAPT_DFT_pbe0_adz_3_IE)",
-                            "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra)",
+                            "-D4 (SAPT_DFT_pbe0_adz_3_IE_inter)",
                             "-D4 (SAPT_DFT_pbe0_adz_3_IE_NO_DAMPING)",
-                            "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra_NO_DAMPING)",
+                            "-D4 (SAPT_DFT_pbe0_adz_3_IE_inter_NO_DAMPING)",
                         ]
 
                         for col in d4_cols:
@@ -1249,9 +1259,9 @@ def subplot_all_curves_LoS_basis_set_D4_versions_nondamped(
                         "-D4 (HF)": "cyan",
                         "-D4 (SAPT0_adz_3_IE)": "purple",
                         "-D4 (SAPT_DFT_pbe0_adz_3_IE)": "teal",
-                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra)": "orange",
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_inter)": "orange",
                         "-D4 (SAPT_DFT_pbe0_adz_3_IE_NO_DAMPING)": "teal",
-                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra_NO_DAMPING)": "orange",
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_inter_NO_DAMPING)": "orange",
                         "SAPT(PBE0)/aDZ": "brown",
                         "SAPT(PBE0)/aTZ": "gray",
                         "E_ref_hlsapt_atz": "black",
@@ -1262,9 +1272,9 @@ def subplot_all_curves_LoS_basis_set_D4_versions_nondamped(
                         "-D4 (HF)": "o",
                         "-D4 (SAPT0_adz_3_IE)": "o",
                         "-D4 (SAPT_DFT_pbe0_adz_3_IE)": "d",
-                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra)": "d",
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_inter)": "d",
                         "-D4 (SAPT_DFT_pbe0_adz_3_IE_NO_DAMPING)": "^",
-                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra_NO_DAMPING)": "^",
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_inter_NO_DAMPING)": "^",
                         "SAPT(PBE0)/aDZ": "P",
                         "SAPT(PBE0)/aTZ": "P",
                         "E_ref_hlsapt_atz": "s",
@@ -1275,9 +1285,9 @@ def subplot_all_curves_LoS_basis_set_D4_versions_nondamped(
                         "-D4 (HF)": "HF-D4",
                         "-D4 (SAPT0_adz_3_IE)": "SAPT0-D4(S)",
                         "-D4 (SAPT_DFT_pbe0_adz_3_IE)": "SAPT(PBE0)-D4(S)",
-                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra)": "SAPT(PBE0)-D4(I)",
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_inter)": "SAPT(PBE0)-D4(I)",
                         "-D4 (SAPT_DFT_pbe0_adz_3_IE_NO_DAMPING)": "SAPT(PBE0)-D4(S, ND)",
-                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra_NO_DAMPING)": "SAPT(PBE0)-D4(I, ND)",
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_inter_NO_DAMPING)": "SAPT(PBE0)-D4(I, ND)",
                         "SAPT(PBE0)/aDZ": "SAPT(PBE0)/aDZ",
                         "SAPT(PBE0)/aTZ": "SAPT(PBE0)/aTZ",
                         "E_ref_hlsapt_atz": "SAPT2+3(CCD)/aTZ",
@@ -1313,7 +1323,7 @@ def subplot_all_curves_LoS_basis_set_D4_versions_nondamped(
                     # Plot ND curves
                     nd_cols = [
                         "-D4 (SAPT_DFT_pbe0_adz_3_IE_NO_DAMPING)",
-                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra_NO_DAMPING)",
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_inter_NO_DAMPING)",
                     ]
                     for col in nd_cols:
                         if col in df_sys.columns:
@@ -1328,7 +1338,7 @@ def subplot_all_curves_LoS_basis_set_D4_versions_nondamped(
                     # Plot damped -D4 curves for comparison
                     d4_cols = [
                         # "-D4 (SAPT_DFT_pbe0_adz_3_IE)",
-                        # "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra)",
+                        # "-D4 (SAPT_DFT_pbe0_adz_3_IE_inter)",
                     ]
                     for col in d4_cols:
                         if col in df_sys.columns:
@@ -1392,7 +1402,7 @@ def subplot_all_curves_LoS_basis_set_D4_versions_nondamped(
                         df_inset = df_sys
 
                     # Plot SAPT(PBE0)-D4 (I, ND) in inset
-                    i_nd_col = "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra_NO_DAMPING)"
+                    i_nd_col = "-D4 (SAPT_DFT_pbe0_adz_3_IE_inter_NO_DAMPING)"
                     if i_nd_col in df_inset.columns:
                         ax_inset.plot(
                             df_inset["distance (A)"],
@@ -1456,7 +1466,7 @@ def subplot_all_curves_LoS_basis_set_D4_versions_nondamped(
                     damped_cols = [
                         "-D4 (HF_ATM)",
                         "-D4 (SAPT_DFT_pbe0_adz_3_IE)",
-                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra)",
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_inter)",
                         "PBE0-D4 DISP ENERGY adz",
                         # "-D4 (HF)",
                         "-D4 (SAPT0_adz_3_IE)",
@@ -1667,7 +1677,7 @@ def subplot_all_curves_water_benzene_functional_form(
                             markersize=4.0,
                             # color="orange",
                         )
-                        label = "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra)"
+                        label = "-D4 (SAPT_DFT_pbe0_adz_3_IE_inter)"
                         # N_neg = compute_N(df_sys, label, sign_flip=True)
                         axs[n].plot(
                             df_sys["distance (A)"],
@@ -1687,7 +1697,7 @@ def subplot_all_curves_water_benzene_functional_form(
                             markersize=4.0,
                             # color="orange",
                         )
-                        label = "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra_NO_DAMPING)"
+                        label = "-D4 (SAPT_DFT_pbe0_adz_3_IE_inter_NO_DAMPING)"
                         # N_neg = compute_N(df_sys, label, sign_flip=True)
                         axs[n].plot(
                             df_sys["distance (A)"],
@@ -1799,7 +1809,7 @@ def c6_change_mon_dimer(df, system_label="45_Ethyne-Pentane", print_lvl=1):
     #         [
     #             "SAPT_DFT_pbe0_adz_total",
     #             "SAPT_DFT_pbe0_adz_3_IE_NO_DAMPING",
-    #             "SAPT_DFT_pbe0_adz_3_IE_supra_NO_DAMPING",
+    #             "SAPT_DFT_pbe0_adz_3_IE_inter_NO_DAMPING",
     #             # "pbe0",
     #             "SAPT_DFT_pbe0_adz_3_IE",
     #         ],
@@ -1810,7 +1820,7 @@ def c6_change_mon_dimer(df, system_label="45_Ethyne-Pentane", print_lvl=1):
     print(df_sys[["system_id", "R", "distance (A)"]])
     print(
         df_sys[
-            ["R", "-D4 (SAPT_DFT_pbe0_adz_3_IE)", "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra)"]
+            ["R", "-D4 (SAPT_DFT_pbe0_adz_3_IE)", "-D4 (SAPT_DFT_pbe0_adz_3_IE_inter)"]
         ]
     )
     print(
@@ -1821,8 +1831,8 @@ def c6_change_mon_dimer(df, system_label="45_Ethyne-Pentane", print_lvl=1):
             ]
         ]
     )
-    print(df_sys[["R", "-D4 (SAPT_DFT_pbe0_adz_3_IE_supra_NO_DAMPING)"]])
-    # params, _ = paramsTable.get_params("SAPT_DFT_pbe0_adz_3_IE_supra_NO_DAMPING")
+    print(df_sys[["R", "-D4 (SAPT_DFT_pbe0_adz_3_IE_inter_NO_DAMPING)"]])
+    # params, _ = paramsTable.get_params("SAPT_DFT_pbe0_adz_3_IE_inter_NO_DAMPING")
     # params, _ = paramsTable.get_params("SAPT_DFT_pbe0_adz_3_IE")
     print(df_sys["System Label"].iloc[0])
     print("Energy in kcal/mol")
@@ -1859,7 +1869,7 @@ def c6_change_mon_dimer(df, system_label="45_Ethyne-Pentane", print_lvl=1):
             )
     params = "sadz"
     params_no_damping = paramsTable.get_params(
-        "SAPT_DFT_pbe0_adz_3_IE_supra_NO_DAMPING"
+        "SAPT_DFT_pbe0_adz_3_IE_inter_NO_DAMPING"
     )[0]
     print(params_no_damping)
     params = "SAPT_DFT_pbe0_adz_3_IE"
@@ -1868,6 +1878,12 @@ def c6_change_mon_dimer(df, system_label="45_Ethyne-Pentane", print_lvl=1):
         params = paramsTable.get_params(params)
     else:
         params, _ = paramsTable.get_params(params)
+    df_sys["D3Data_inter"] = df_sys.apply(
+        lambda r: dftd3.filter_d3data_intermolecular(
+            r["D3Data"], r["monAs"], r["monBs"]
+        ),
+        axis=1,
+    )
     for n, r in df_sys[::-1].iterrows():
         print(f"System: {r['system_id']}, R: {r['R']}")
         dimer_C6s = r["C6s"]
@@ -1968,7 +1984,7 @@ def c6_change_mon_dimer(df, system_label="45_Ethyne-Pentane", print_lvl=1):
                 f"C6s*h2km/r^8, avg change A: {avg_change_A_r8:.2f}, avg change B: {avg_change_B_r8:.2f}"
             )
 
-        dimer_dispersion_supra = locald4.compute_disp_2B_supra_from_C6s(
+        dimer_dispersion_inter = locald4.compute_disp_2B_inter_from_C6s(
             r["Geometry_bohr"][:, 0],
             r["Geometry_bohr"][:, 1:],
             dimer_C6s,
@@ -1976,8 +1992,8 @@ def c6_change_mon_dimer(df, system_label="45_Ethyne-Pentane", print_lvl=1):
             r["monBs"],
             params,
         )
-        dimer_dispersion_supra_no_damping = (
-            locald4.compute_disp_2B_supra_from_C6s_NO_DAMPING(
+        dimer_dispersion_inter_no_damping = (
+            locald4.compute_disp_2B_inter_from_C6s_NO_DAMPING(
                 r["Geometry_bohr"][:, 0],
                 r["Geometry_bohr"][:, 1:],
                 dimer_C6s,
@@ -2021,6 +2037,7 @@ def c6_change_mon_dimer(df, system_label="45_Ethyne-Pentane", print_lvl=1):
 
         bj = True
         non_damping = True
+        d3 = True
         print("===============  NOTE  ==================")
         print("dmonA/dmonB compute using dimer C6s subblocks")
         print("monA/monB compute using monomer C6s")
@@ -2079,9 +2096,9 @@ def c6_change_mon_dimer(df, system_label="45_Ethyne-Pentane", print_lvl=1):
             print(f"Disp.  delta A: {monA_diff:.4f}, delta B: {monB_diff:.4f}")
             # Sum changes
             print(f"Disp.  delta A+B: {monA_diff + monB_diff:.4f}")
-            print(f"Disp.  Intermolecular: {dimer_dispersion_supra_no_damping:.4f}")
+            print(f"Disp.  Intermolecular: {dimer_dispersion_inter_no_damping:.4f}")
             print(
-                f"Disp.  delta A+B+Intermolecular: {monA_diff + monB_diff + dimer_dispersion_supra_no_damping:.4f}"
+                f"Disp.  delta A+B+Intermolecular: {monA_diff + monB_diff + dimer_dispersion_inter_no_damping:.4f}"
             )
             print(f"{len(monA_C6s) = }, {len(monB_C6s) = }")
         if bj:
@@ -2130,11 +2147,22 @@ def c6_change_mon_dimer(df, system_label="45_Ethyne-Pentane", print_lvl=1):
             delta_monB_BJ = dimer_monB_dispersion_BJ - monB_dispersion_BJ
             print(f"Disp.BJ delta A: {delta_monA_BJ:.4f}, delta B: {delta_monB_BJ:.4f}")
             print(f"Disp.BJ delta A+B: {delta_monA_BJ + delta_monB_BJ:.4f}")
-            print(f"Disp.BJ Intermolecular: {dimer_dispersion_supra:.4f}")
+            print(f"Disp.BJ Intermolecular: {dimer_dispersion_inter:.4f}")
             print(
-                f"Disp.BJ delta A+B+Intermolecular: {delta_monA_BJ + delta_monB_BJ + dimer_dispersion_supra:.4f}"
+                f"Disp.BJ delta A+B+Intermolecular: {delta_monA_BJ + delta_monB_BJ + dimer_dispersion_inter:.4f}"
             )
             print(f"{len(monA_C6s) = }, {len(monB_C6s) = }")
+        if d3:
+            print("----- D3 -----")
+            # change in c6s
+            e_disp_d3_inter = jeff.compute_BJ_CPP(
+                params=np.array([0.73818347, 0.09542862, 3.63663899]),
+                d3data=r["D3Data_inter"],
+            )
+            e_disp_d3 = jeff.compute_BJ_CPP(
+                params=np.array([0.73818347, 0.09542862, 3.63663899]),
+                d3data=r["D3Data"],
+            )
 
         return
         if print_lvl == 0:

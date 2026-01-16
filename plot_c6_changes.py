@@ -11,6 +11,7 @@ from qcelemental import constants
 from matplotlib.ticker import AutoMinorLocator, ScalarFormatter
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes, mark_inset
 from src import dftd3
+from src import jeff
 
 h2kcalmol = constants.conversion_factor("hartree", "kcal/mol")
 
@@ -37,7 +38,7 @@ def c6_change_mon_dimer_plotting(df, system_label="45_Ethyne-Pentane", print_lvl
     pd.set_option("display.float_format", "{:.4f}".format)
     params = "sadz"
     params_no_damping = paramsTable.get_params(
-        "SAPT_DFT_pbe0_adz_3_IE_supra_NO_DAMPING"
+        "SAPT_DFT_pbe0_adz_3_IE_inter_NO_DAMPING"
     )[0]
     print(params_no_damping)
     params = "SAPT_DFT_pbe0_adz_3_IE"
@@ -46,6 +47,7 @@ def c6_change_mon_dimer_plotting(df, system_label="45_Ethyne-Pentane", print_lvl
         params = paramsTable.get_params(params)
     else:
         params, _ = paramsTable.get_params(params)
+    df_sys['D3Data_inter'] = df_sys.apply(lambda r: dftd3.filter_d3data_intermolecular(r['D3Data'], r['monAs'], r['monBs']), axis=1)
     for n, r in df_sys[::-1].iterrows():
         print(f"System: {r['system_id']}, R: {r['R']}")
         dimer_C6s = r["C6s"]
@@ -146,7 +148,7 @@ def c6_change_mon_dimer_plotting(df, system_label="45_Ethyne-Pentane", print_lvl
                 f"C6s*h2km/r^8, avg change A: {avg_change_A_r8:.2f}, avg change B: {avg_change_B_r8:.2f}"
             )
 
-        dimer_dispersion_supra = locald4.compute_disp_2B_supra_from_C6s(
+        dimer_dispersion_inter = locald4.compute_disp_2B_inter_from_C6s(
             r["Geometry_bohr"][:, 0],
             r["Geometry_bohr"][:, 1:],
             dimer_C6s,
@@ -154,8 +156,8 @@ def c6_change_mon_dimer_plotting(df, system_label="45_Ethyne-Pentane", print_lvl
             r["monBs"],
             params,
         )
-        dimer_dispersion_supra_no_damping = (
-            locald4.compute_disp_2B_supra_from_C6s_NO_DAMPING(
+        dimer_dispersion_inter_no_damping = (
+            locald4.compute_disp_2B_inter_from_C6s_NO_DAMPING(
                 r["Geometry_bohr"][:, 0],
                 r["Geometry_bohr"][:, 1:],
                 dimer_C6s,
@@ -199,6 +201,7 @@ def c6_change_mon_dimer_plotting(df, system_label="45_Ethyne-Pentane", print_lvl
 
         bj = True
         non_damping = True
+        d3 = True
         print("===============  NOTE  ==================")
         print("dmonA/dmonB compute using dimer C6s subblocks")
         print("monA/monB compute using monomer C6s")
@@ -257,9 +260,9 @@ def c6_change_mon_dimer_plotting(df, system_label="45_Ethyne-Pentane", print_lvl
             print(f"Disp.  delta A: {monA_diff:.4f}, delta B: {monB_diff:.4f}")
             # Sum changes
             print(f"Disp.  delta A+B: {monA_diff + monB_diff:.4f}")
-            print(f"Disp.  Intermolecular: {dimer_dispersion_supra_no_damping:.4f}")
+            print(f"Disp.  Intermolecular: {dimer_dispersion_inter_no_damping:.4f}")
             print(
-                f"Disp.  delta A+B+Intermolecular: {monA_diff + monB_diff + dimer_dispersion_supra_no_damping:.4f}"
+                f"Disp.  delta A+B+Intermolecular: {monA_diff + monB_diff + dimer_dispersion_inter_no_damping:.4f}"
             )
             print(f"{len(monA_C6s) = }, {len(monB_C6s) = }")
         if bj:
@@ -308,11 +311,12 @@ def c6_change_mon_dimer_plotting(df, system_label="45_Ethyne-Pentane", print_lvl
             delta_monB_BJ = dimer_monB_dispersion_BJ - monB_dispersion_BJ
             print(f"Disp.BJ delta A: {delta_monA_BJ:.4f}, delta B: {delta_monB_BJ:.4f}")
             print(f"Disp.BJ delta A+B: {delta_monA_BJ + delta_monB_BJ:.4f}")
-            print(f"Disp.BJ Intermolecular: {dimer_dispersion_supra:.4f}")
+            print(f"Disp.BJ Intermolecular: {dimer_dispersion_inter:.4f}")
             print(
-                f"Disp.BJ delta A+B+Intermolecular: {delta_monA_BJ + delta_monB_BJ + dimer_dispersion_supra:.4f}"
+                f"Disp.BJ delta A+B+Intermolecular: {delta_monA_BJ + delta_monB_BJ + dimer_dispersion_inter:.4f}"
             )
             print(f"{len(monA_C6s) = }, {len(monB_C6s) = }")
+
 
         return
         if print_lvl == 0:
@@ -396,7 +400,7 @@ def c6_change_mon_dimer_extrapolation(
 
     # Get parameters
     params_no_damping = paramsTable.get_params(
-        "SAPT_DFT_pbe0_adz_3_IE_supra_NO_DAMPING"
+        "SAPT_DFT_pbe0_adz_3_IE_inter_NO_DAMPING"
     )[0]
     params_damped, _ = paramsTable.get_params("SAPT_DFT_pbe0_adz_3_IE")
 
@@ -541,7 +545,7 @@ def c6_change_mon_dimer_extrapolation(
             c6_sum_dimer_monB_D3 = np.sum(dimer_monB_C6s_D3)
 
             # Compute dispersion energies
-            disp_inter_nd = locald4.compute_disp_2B_supra_from_C6s_NO_DAMPING(
+            disp_inter_nd = locald4.compute_disp_2B_inter_from_C6s_NO_DAMPING(
                 atom_numbers,
                 new_geom_bohr,
                 C6s_dimer,
@@ -549,7 +553,7 @@ def c6_change_mon_dimer_extrapolation(
                 monBs,
                 params_no_damping,
             )
-            disp_inter_d = locald4.compute_disp_2B_supra_from_C6s(
+            disp_inter_d = locald4.compute_disp_2B_inter_from_C6s(
                 atom_numbers,
                 new_geom_bohr,
                 C6s_dimer,
@@ -559,7 +563,7 @@ def c6_change_mon_dimer_extrapolation(
             )
 
             # Compute intermolecular damped dispersion using D3 C6s
-            disp_inter_d_D3_C6s = locald4.compute_disp_2B_supra_from_C6s(
+            disp_inter_d_D3_C6s = locald4.compute_disp_2B_inter_from_C6s(
                 atom_numbers,
                 new_geom_bohr,
                 C6s_dimer_D3,

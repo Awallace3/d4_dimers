@@ -43,11 +43,11 @@ def compute_d4_ie():
         axis=1,
     )
         
-    params_2b, params_3b = paramsTable.get_params("SAPT_DFT_pbe0_adz_3_IE_supra")
+    params_2b, params_3b = paramsTable.get_params("SAPT_DFT_pbe0_adz_3_IE_inter")
     # Need (I), compute C6s and then compute
     df['SAPT(PBE0)-D4/aDZ (I)'] = df.apply(
         # TODO
-        lambda r: locald4.compute_disp_2B_BJ_dimer_supra(
+        lambda r: locald4.compute_disp_2B_BJ_dimer_inter(
             r,
             params_2B=params_2b, 
             params_ATM=params_3b,

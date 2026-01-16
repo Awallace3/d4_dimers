@@ -412,7 +412,7 @@ def compute_int_energy_stats_DISP_2B_BJ_ATM_TT(
     return mae, rmse, max_e, mad, mean_dif
 
 
-def compute_int_energy_stats_DISP_2B_BJ_supra(
+def compute_int_energy_stats_DISP_2B_BJ_inter(
     params: [float],
     df: pd.DataFrame,
     hf_key: str = "HF INTERACTION ENERGY",
@@ -452,7 +452,7 @@ def compute_int_energy_stats_DISP_2B_BJ_supra(
     diff = np.zeros(len(df))
     r4r2_ls = r4r2.r4r2_vals_ls()
     df["d4"] = df.apply(
-        lambda row: locald4.compute_disp_2B_BJ_dimer_supra(
+        lambda row: locald4.compute_disp_2B_BJ_dimer_inter(
             row,
             params_2B,
             params_ATM,
@@ -474,7 +474,7 @@ def compute_int_energy_stats_DISP_2B_BJ_supra(
     return mae, rmse, max_e, mad, mean_dif
 
 
-def compute_int_energy_stats_DISP_2B_TT_supra(
+def compute_int_energy_stats_DISP_2B_TT_inter(
     params: [float],
     df: pd.DataFrame,
     hf_key: str = "HF INTERACTION ENERGY",
@@ -512,7 +512,7 @@ def compute_int_energy_stats_DISP_2B_TT_supra(
     diff = np.zeros(len(df))
     r4r2_ls = r4r2.r4r2_vals_ls()
     df["d4"] = df.apply(
-        lambda row: locald4.compute_disp_2B_TT_dimer_supra(
+        lambda row: locald4.compute_disp_2B_TT_dimer_inter(
             row,
             params_2B,
             params_ATM,
@@ -793,7 +793,7 @@ def compute_int_energy_DISP_2B_TT_ATM_TT(
     return rmse
 
 
-def compute_int_energy_DISP_2B_BJ_supra(
+def compute_int_energy_DISP_2B_BJ_inter(
     params,
     df: pd.DataFrame,
     hf_key: str = "HF INTERACTION ENERGY",
@@ -818,7 +818,7 @@ def compute_int_energy_DISP_2B_BJ_supra(
             raise ValueError("params must be of length 3 or 4")
     rmse = 0
     df["d4"] = df.apply(
-        lambda row: locald4.compute_disp_2B_BJ_dimer_supra(
+        lambda row: locald4.compute_disp_2B_BJ_dimer_inter(
             row,
             params_2B,
             params_ATM,
@@ -839,7 +839,7 @@ def compute_int_energy_DISP_2B_BJ_supra(
     return rmse
 
 
-def compute_int_energy_DISP_2B_TT_supra(
+def compute_int_energy_DISP_2B_TT_inter(
     params,
     df: pd.DataFrame,
     hf_key: str = "HF INTERACTION ENERGY",
@@ -861,7 +861,7 @@ def compute_int_energy_DISP_2B_TT_supra(
             raise ValueError("params must be of length 3")
     rmse = 0
     df["d4"] = df.apply(
-        lambda row: locald4.compute_disp_2B_TT_dimer_supra(
+        lambda row: locald4.compute_disp_2B_TT_dimer_inter(
             row,
             params_2B,
             params_ATM,
@@ -1260,10 +1260,10 @@ def optimization(
         compute = compute_int_energy_DISP
     elif version["compute_energy"] == "compute_int_energy_DISP_C6_only":
         compute = compute_int_energy_DISP_C6_only
-    elif version["compute_energy"] == "compute_int_energy_DISP_2B_BJ_supra":
-        compute = compute_int_energy_DISP_2B_BJ_supra
-    elif version["compute_energy"] == "compute_int_energy_DISP_2B_TT_supra":
-        compute = compute_int_energy_DISP_2B_TT_supra
+    elif version["compute_energy"] == "compute_int_energy_DISP_2B_BJ_inter":
+        compute = compute_int_energy_DISP_2B_BJ_inter
+    elif version["compute_energy"] == "compute_int_energy_DISP_2B_TT_inter":
+        compute = compute_int_energy_DISP_2B_TT_inter
         if type(params[0]) == float and len(params) == 1:
             bounds = [(0.0, 1.0)]
         if len(params) == 2:
@@ -1312,6 +1312,8 @@ def optimization(
         compute = compute_int_energy_least_squares
     elif version["compute_energy"] == "compute_int_energy_least_squares_ATM":
         compute = compute_int_energy_least_squares_ATM
+    elif version["compute_energy"] == "jeff_d3":
+        compute = jeff.compute_int_energy_d3
     elif version["compute_energy"] == "jeff_d3":
         compute = jeff.compute_int_energy_d3
     else:
@@ -1391,10 +1393,10 @@ def opt_val_no_folds(
         compute_stats = compute_int_energy_stats_DISP_C6_only
     elif version["compute_stats"] == "compute_int_energy_DISP_2B_BJ_ATM_TT":
         compute_stats = compute_int_energy_stats_DISP_2B_BJ_ATM_TT
-    elif version["compute_stats"] == "compute_int_energy_stats_DISP_2B_BJ_supra":
-        compute_stats = compute_int_energy_stats_DISP_2B_BJ_supra
-    elif version["compute_stats"] == "compute_int_energy_stats_DISP_2B_TT_supra":
-        compute_stats = compute_int_energy_stats_DISP_2B_TT_supra
+    elif version["compute_stats"] == "compute_int_energy_stats_DISP_2B_BJ_inter":
+        compute_stats = compute_int_energy_stats_DISP_2B_BJ_inter
+    elif version["compute_stats"] == "compute_int_energy_stats_DISP_2B_TT_inter":
+        compute_stats = compute_int_energy_stats_DISP_2B_TT_inter
     elif version["compute_stats"] == "compute_int_energy_DISP_2B_TT_ATM_TT":
         compute_stats = compute_int_energy_stats_DISP_2B_TT_ATM_TT
     elif version["compute_stats"] == "compute_int_energy_stats":
