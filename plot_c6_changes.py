@@ -462,6 +462,8 @@ def c6_change_mon_dimer_extrapolation(
         # Dispersion energies
         "disp_inter_no_damping": [],
         "disp_inter_damped": [],
+        "disp_inter_damped_D3_C6s": [],  # D4 damping with D3 C6s
+        "disp_D3_supermolecular": [],  # D3 supermolecular (d3_dimer - d3_monA - d3_monB)
         "disp_delta_A_no_damping": [],
         "disp_delta_B_no_damping": [],
         "disp_delta_A_damped": [],
@@ -512,10 +514,14 @@ def c6_change_mon_dimer_extrapolation(
             # Collect D3 C6 coefficients (uses Angstrom coords)
             d3bin = "./simple-dftd3/_build/app/s-dftd3"
             d3_dimer_data, _, d3_dimer = dftd3.collect_bjm_d3data(
-                atom_numbers, new_geom, ATM=False,s_dftd3_bin=d3bin
+                atom_numbers, new_geom, ATM=False, s_dftd3_bin=d3bin
             )
-            d3_monA_data, _, d3_monA = dftd3.collect_bjm_d3data(atom_A, geom_A, ATM=False, s_dftd3_bin=d3bin)
-            d3_monB_data, _, d3_monB = dftd3.collect_bjm_d3data(atom_B, geom_B, ATM=False, s_dftd3_bin=d3bin)
+            d3_monA_data, _, d3_monA = dftd3.collect_bjm_d3data(
+                atom_A, geom_A, ATM=False, s_dftd3_bin=d3bin
+            )
+            d3_monB_data, _, d3_monB = dftd3.collect_bjm_d3data(
+                atom_B, geom_B, ATM=False, s_dftd3_bin=d3bin
+            )
 
             # Extract D3 C6 matrices
             C6s_dimer_D3 = d3_dimer_data["c6s"]
@@ -551,6 +557,19 @@ def c6_change_mon_dimer_extrapolation(
                 monBs,
                 params_damped,
             )
+
+            # Compute intermolecular damped dispersion using D3 C6s
+            disp_inter_d_D3_C6s = locald4.compute_disp_2B_supra_from_C6s(
+                atom_numbers,
+                new_geom_bohr,
+                C6s_dimer_D3,
+                monAs,
+                monBs,
+                params_damped,
+            )
+
+            # D3 supermolecular dispersion (d3_dimer - d3_monA - d3_monB)
+            disp_D3_supermolecular = (d3_dimer - d3_monA - d3_monB)
 
             # Compute intramolecular dispersion changes
             monA_disp = locald4.compute_disp_2B_from_C6s_NO_DAMPING(
@@ -602,6 +621,8 @@ def c6_change_mon_dimer_extrapolation(
             # Dispersion energies
             results["disp_inter_no_damping"].append(disp_inter_nd)
             results["disp_inter_damped"].append(disp_inter_d)
+            results["disp_inter_damped_D3_C6s"].append(disp_inter_d_D3_C6s)
+            results["disp_D3_supermolecular"].append(disp_D3_supermolecular)
             results["disp_delta_A_no_damping"].append(delta_A)
             results["disp_delta_B_no_damping"].append(delta_B)
             results["disp_delta_A_damped"].append(delta_A_BJ)
@@ -671,6 +692,8 @@ def plot_c6_extrapolation(
         # Dispersion energies
         "disp_nd": "orange",
         "disp_d": "teal",
+        "disp_d_D3_C6s": "cyan",
+        "disp_D3_supermolecular": "magenta",
         "delta_A": "purple",
         "delta_B": "green",
         "delta_A_BJ": "darkviolet",
@@ -683,6 +706,8 @@ def plot_c6_extrapolation(
         "C6_change_B_D3": "v",
         "disp_nd": "^",
         "disp_d": "d",
+        "disp_d_D3_C6s": "h",
+        "disp_D3_supermolecular": "H",
         "delta_A": "v",
         "delta_B": "P",
         "delta_A_BJ": "<",
@@ -771,6 +796,22 @@ def plot_c6_extrapolation(
     )
     ax_bot.plot(
         df_results["distance"],
+        df_results["disp_inter_damped_D3_C6s"],
+        color=colors["disp_d_D3_C6s"],
+        marker=markers["disp_d_D3_C6s"],
+        label="Intermolecular D3-C6 (Damped)",
+        markersize=4,
+    )
+    ax_bot.plot(
+        df_results["distance"],
+        df_results["disp_D3_supermolecular"],
+        color=colors["disp_D3_supermolecular"],
+        marker=markers["disp_D3_supermolecular"],
+        label="-D3 Supermolecular",
+        markersize=4,
+    )
+    ax_bot.plot(
+        df_results["distance"],
         df_results["disp_delta_A_no_damping"],
         color=colors["delta_A"],
         marker=markers["delta_A"],
@@ -805,6 +846,67 @@ def plot_c6_extrapolation(
     # Add horizontal line at 0
     ax_bot.axhline(0, color="grey", linestyle="--", linewidth=0.8)
 
+    # Create inset plot for close distances (zoomed view of small energies)
+    # Focus on the first few points to highlight the smaller intermolecular energies
+    n_inset_points = min(8, len(df_results))
+    inset_data = df_results.iloc[:n_inset_points]
+
+    ax_inset = inset_axes(
+        ax_bot,
+        width="40%",
+        height="35%",
+        loc="center right",
+        borderpad=1.5,
+    )
+
+    # Plot only the key intermolecular dispersion curves in inset
+    ax_inset.plot(
+        inset_data["distance"],
+        inset_data["disp_inter_no_damping"],
+        color=colors["disp_nd"],
+        marker=markers["disp_nd"],
+        markersize=3,
+        linewidth=1,
+    )
+    ax_inset.plot(
+        inset_data["distance"],
+        inset_data["disp_inter_damped"],
+        color=colors["disp_d"],
+        marker=markers["disp_d"],
+        markersize=3,
+        linewidth=1,
+    )
+    ax_inset.plot(
+        inset_data["distance"],
+        inset_data["disp_inter_damped_D3_C6s"],
+        color=colors["disp_d_D3_C6s"],
+        marker=markers["disp_d_D3_C6s"],
+        markersize=3,
+        linewidth=1,
+    )
+    ax_inset.plot(
+        inset_data["distance"],
+        inset_data["disp_D3_supermolecular"],
+        color=colors["disp_D3_supermolecular"],
+        marker=markers["disp_D3_supermolecular"],
+        markersize=3,
+        linewidth=1,
+    )
+
+    ax_inset.axhline(0, color="grey", linestyle="--", linewidth=0.5)
+    ax_inset.tick_params(
+        which="both",
+        labelsize=8,
+        direction="in",
+        top=True,
+        right=True,
+    )
+    ax_inset.set_xlabel(r"Distance (\AA)", fontsize=8)
+    ax_inset.set_ylabel("Disp. (kcal/mol)", fontsize=8)
+
+    # Mark the inset region on the main plot
+    mark_inset(ax_bot, ax_inset, loc1=2, loc2=4, fc="none", ec="0.5", lw=0.5)
+
     ax_bot.text(
         -0.12,
         1.0,
@@ -826,7 +928,7 @@ def plot_c6_extrapolation(
         top=True,
         right=True,
     )
-    ax_bot.legend(fontsize=legend_fontsize - 2, loc="upper right")
+    ax_bot.legend(fontsize=legend_fontsize - 4, loc="lower left", ncol=2)
     ax_bot.xaxis.set_major_formatter(ScalarFormatter())
     ax_bot.yaxis.set_major_formatter(ScalarFormatter())
 
