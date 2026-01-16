@@ -31,6 +31,21 @@ def chunkify(df: pd.DataFrame, chunk_size: int):
         yield df[start:]
 
 
+def evaluate_energy(
+    df,
+    hf_key: str = "HF INTERACTION ENERGY",
+    energy_target="Benchmark",
+    fit_dispersion_term=False,
+):
+    if fit_dispersion_term and hf_key == "":
+        df["diff"] = df.apply(lambda r: r[energy_target] - (r["d4"]), axis=1)
+    else:
+        df["diff"] = df.apply(
+            lambda r: r[energy_target] - (r[hf_key] + r["d4"]), axis=1
+        )
+    return df
+
+
 def HF_only() -> (float, float, float):
     """
     HF_only ...
@@ -130,21 +145,6 @@ def compute_int_energy_stats_dftd4_key(
     df[f"{hf_key}_d4_sum"] = df.apply(lambda r: r[hf_key] + r["HF_jdz_d4"], axis=1)
     df["HF_diff"] = df.apply(lambda r: r[f"{hf_key}_d4_sum"] - r[dftd4_key], axis=1)
     return
-
-
-def evaluate_energy(
-    df,
-    hf_key: str = "HF INTERACTION ENERGY",
-    energy_target="Benchmark",
-    fit_dispersion_term=False,
-):
-    if fit_dispersion_term and hf_key == "":
-        df["diff"] = df.apply(lambda r: r[energy_target] - (r["d4"]), axis=1)
-    else:
-        df["diff"] = df.apply(
-            lambda r: r[energy_target] - (r[hf_key] + r["d4"]), axis=1
-        )
-    return df
 
 
 def compute_int_energy_stats_DISP(
@@ -443,7 +443,7 @@ def compute_int_energy_stats_DISP_2B_BJ_inter(
             params_2B = np.array([1.0, params[0], params[1], params[2], 0.0])
             params_ATM = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
         elif len(params) == 4:
-            params_2B = np.array([params[0], params[1], params[2],params[3], 0.0])
+            params_2B = np.array([params[0], params[1], params[2], params[3], 0.0])
             params_ATM = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
         else:
             raise ValueError("params must be of length 3 or 4")
@@ -812,7 +812,7 @@ def compute_int_energy_DISP_2B_BJ_inter(
             params_2B = np.array([1.0, params[0], params[1], params[2], 0.0])
             params_ATM = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
         elif len(params) == 4:
-            params_2B = np.array([params[0], params[1], params[2],params[3], 0.0])
+            params_2B = np.array([params[0], params[1], params[2], params[3], 0.0])
             params_ATM = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
         else:
             raise ValueError("params must be of length 3 or 4")
@@ -928,6 +928,89 @@ def compute_int_energy_DISP_2B_BJ_ATM_TT(
     if np.isnan(rmse):
         return 10
     return rmse
+
+
+def compute_int_energy_D3_BJ_inter(
+    params: [float],
+    df: pd.DataFrame,
+    hf_key: str = "HF INTERACTION ENERGY",
+    force_ATM_on: bool = False,
+    energy_target="Benchmark",
+    fit_dispersion_term=False,
+):
+    """
+    Compute D3 BJ dispersion energy using only intermolecular pairs (D3Data_inter).
+
+    Parameters
+    ----------
+    params : list
+        D3 BJ parameters [s8, a1, a2]
+    df : pd.DataFrame
+        DataFrame with D3Data_inter column
+    hf_key : str
+        Column name for HF interaction energy
+    """
+    rmse = 0
+    df["d3"] = df.apply(
+        lambda r: jeff.compute_BJ_CPP(params, r["D3Data_inter"]),
+        axis=1,
+    )
+    if fit_dispersion_term and hf_key == "":
+        df["diff"] = df.apply(lambda r: r[energy_target] - (r["d3"]), axis=1)
+    else:
+        df["diff"] = df.apply(
+            lambda r: r[energy_target] - (r[hf_key] + r["d3"]), axis=1
+        )
+    rmse = (df["diff"] ** 2).mean() ** 0.5
+    print("%.8f\t" % rmse, params.tolist())
+    df["diff"] = 0
+    return rmse
+
+
+def compute_int_energy_stats_D3_BJ_inter(
+    params: [float],
+    df: pd.DataFrame,
+    hf_key: str = "HF INTERACTION ENERGY",
+    parallel=False,
+    print_results=False,
+    chunk_count=1000,
+    force_ATM_on=False,
+    energy_target="Benchmark",
+    fit_dispersion_term=False,
+) -> (
+    float,
+    float,
+    float,
+):
+    """
+    Compute error stats for D3 BJ using only intermolecular pairs (D3Data_inter).
+    """
+    if hf_key != "":
+        t = df[hf_key].isna().sum()
+        assert t == 0, f"The HF_col provided has np.nan values present, {t}"
+
+    df["d3"] = df.apply(
+        lambda r: jeff.compute_BJ_CPP(params, r["D3Data_inter"]),
+        axis=1,
+    )
+    if fit_dispersion_term and hf_key == "":
+        df["diff"] = df.apply(lambda r: r[energy_target] - (r["d3"]), axis=1)
+    else:
+        df["diff"] = df.apply(
+            lambda r: r[energy_target] - (r[hf_key] + r["d3"]), axis=1
+        )
+    mae = df["diff"].abs().mean()
+    rmse = (df["diff"] ** 2).mean() ** 0.5
+    max_e = df["diff"].abs().max()
+    mad = abs(df["diff"] - df["diff"].mean()).mean()
+    mean_dif = df["diff"].mean()
+    if print_results:
+        print("        1. MAE  = %.4f" % mae)
+        print("        2. RMSE = %.4f" % rmse)
+        print("        3. MAX  = %.4f" % max_e)
+        print("        4. MAD  = %.4f" % mad)
+        print("        4. MD   = %.4f" % mean_dif)
+    return mae, rmse, max_e, mad, mean_dif
 
 
 def compute_int_energy_stats(
@@ -1250,9 +1333,9 @@ def optimization(
 ):
     bounds = [bounds for i in range(len(params))]
     if version["compute_energy"] == "compute_int_energy_DISP":
-        bounds=(0.0, 8.0)
+        bounds = (0.0, 8.0)
         if len(params) == 5 and params[0] < 0:
-            bounds = [(-1.0, 0,0), (-1.0, 0.0), (0.0, 8.0), (0.0, 8.0), (0.0, 0.0)]
+            bounds = [(-1.0, 0, 0), (-1.0, 0.0), (0.0, 8.0), (0.0, 8.0), (0.0, 0.0)]
         else:
             bounds = [bounds for i in range(len(params))]
         if not force_ATM_on and len(params) == 5:
@@ -1316,6 +1399,10 @@ def optimization(
         compute = jeff.compute_int_energy_d3
     elif version["compute_energy"] == "jeff_d3":
         compute = jeff.compute_int_energy_d3
+    elif version["compute_energy"] == "compute_int_energy_D3_BJ_inter":
+        compute = compute_int_energy_D3_BJ_inter
+        # D3 BJ params: [s8, a1, a2] - all positive
+        bounds = [(-3.0, 12.0) for i in range(len(params))]
     else:
         raise Exception("compute_energy not defined")
     print(f"{bounds = }")
@@ -1403,6 +1490,8 @@ def opt_val_no_folds(
         compute_stats = compute_int_energy_stats
     elif version["compute_stats"] == "jeff_d3":
         compute_stats = jeff.compute_error_stats_d3
+    elif version["compute_stats"] == "compute_int_energy_stats_D3_BJ_inter":
+        compute_stats = compute_int_energy_stats_D3_BJ_inter
     else:
         raise Exception("compute_stats not defined")
     opt_type = version["method"]
@@ -1414,9 +1503,9 @@ def opt_val_no_folds(
             df.dropna(subset=[hf_key], inplace=True)
         nans = df[hf_key].isna().sum()
         inds = df.index[df[hf_key].isna()]
-        assert (
-            nans == 0
-        ), f"The HF_col provided has np.nan values present with {inds} nans"
+        assert nans == 0, (
+            f"The HF_col provided has np.nan values present with {inds} nans"
+        )
     start = time.time()
     print(start_params)
     print(f"{energy_target = }, {fit_dispersion_term = }")
@@ -1546,7 +1635,7 @@ def opt_cross_val(
         p_out[n] = o_params
         print(f"Fold {n} End")
 
-        stats["method"].append(f"{hf_key} fold {n+1}")
+        stats["method"].append(f"{hf_key} fold {n + 1}")
         # stats["Optimization Algorithm"].append(opt_type)
         stats["RMSE"].append(rmse)
         stats["MAD"].append(mad)

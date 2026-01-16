@@ -8,6 +8,20 @@ from qcelemental import constants
 import dispersion
 
 
+def evaluate_energy(
+    df,
+    hf_key: str = "HF INTERACTION ENERGY",
+    energy_target="Benchmark",
+    fit_dispersion_term=False,
+):
+    if fit_dispersion_term and hf_key == "":
+        df["diff"] = df.apply(lambda r: r[energy_target] - (r["d4"]), axis=1)
+    else:
+        df["diff"] = df.apply(
+            lambda r: r[energy_target] - (r[hf_key] + r["d4"]), axis=1
+        )
+    return df
+
 def d3data_stats(df):
     bases = [
         "HF_dz",

@@ -752,6 +752,26 @@ def paramsDict() -> {}:
                 [1.1935300819461523, 0.6455474850772446, 1.1203694226056238],
             ]
         ),
+        # D3 BJ starting params [s8, a1, a2]
+        "D3_BJ_START": np.array(
+            # [1.0, 0.73818347, 0.09542862, 3.63663899, 0.0]
+            [0.7683276390453782, 0.09699087897359535, 3.6407701963142745],
+            dtype=np.float64,
+        ),
+        # D3 BJ params for SAPT0/aug-cc-pVDZ
+        "D3_BJ_SAPT0_adz": np.array(
+            [0.73818347, 0.09542862, 3.63663899],
+            dtype=np.float64,
+        ),
+        # D3 BJ params for SAPT(DFT)/PBE0/aug-cc-pVDZ
+        "D3_BJ_SAPT_DFT_pbe0_adz": np.array(
+            [0.732484, 0.094481, 3.632253],
+            dtype=np.float64,
+        ),
+        "SAPT_DFT_pbe0_adz_3_IE_D3_inter": np.array(
+            [[1., 0.86141425, 0.71710032, 0.53745925, 0.],
+             [1., 0.86141425, 0.71710032, 0.53745925, 0.]]
+        ),
     }
     return params_dict
 

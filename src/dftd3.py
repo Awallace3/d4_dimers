@@ -165,22 +165,26 @@ def filter_d3data_intermolecular(d3data, monAs, monBs):
 
 
 def collect_bjm_d3data_dimer(pos, carts, monAs, monBs, ATM=False, s_dftd3_bin=None):
-    try:
-        _, dimer_d3data, _ = collect_bjm_d3data(
-            pos, carts, ATM=False, s_dftd3_bin=s_dftd3_bin
-        )
-        _, monA_d3data, _ = collect_bjm_d3data(
-            pos[monAs], carts[monAs], ATM=False, s_dftd3_bin=s_dftd3_bin
-        )
+    _, dimer_d3data, _ = collect_bjm_d3data(
+        pos, carts, ATM=False, s_dftd3_bin=s_dftd3_bin
+    )
+    v = [dimer_d3data]
+    _, monA_d3data, _ = collect_bjm_d3data(
+        pos[monAs], carts[monAs], ATM=False, s_dftd3_bin=s_dftd3_bin
+    )
+    # check if monA_d3data is empty, if so skip multiplying by -1. Ions don't
+    # have any meaningful pairwise interactions, so collect_bjm_d3data returns
+    # an empty array. We can just skip it
+    if len(monA_d3data) > 0:
         monA_d3data[:, -2:] *= -1
-        _, monB_d3data, _ = collect_bjm_d3data(
-            pos[monBs], carts[monBs], ATM=False, s_dftd3_bin=s_dftd3_bin
-        )
+        v.append(monA_d3data)
+    _, monB_d3data, _ = collect_bjm_d3data(
+        pos[monBs], carts[monBs], ATM=False, s_dftd3_bin=s_dftd3_bin
+    )
+    if len(monB_d3data) > 0:
         monB_d3data[:, -2:] *= -1
-        return np.concatenate([dimer_d3data, monA_d3data, monB_d3data])
-    except Exception as e:
-        print(e)
-        return None
+        v.append(monB_d3data)
+    return np.concatenate(v)
 
 
 def dftd3_bjm_og(pos, carts, ATM=False):

@@ -11,10 +11,11 @@ import argparse
 def optimize_paramaters(
     df,
     level_theories,
-    start_params_d3=[0.7683276390453782, 0.09699087897359535, 3.6407701963142745],
+    start_params_d3_key="D3_BJ_START",
     start_params_d4_key="HF",
     D3={
         "powell": True,
+        "powell_intermolecular": False,
     },
     D4={
         "powell": False,
@@ -39,8 +40,10 @@ def optimize_paramaters(
     print(f"{D4 = }")
 
     params = src.paramsTable.get_params(start_params_d4_key)
+    start_params_d3 = src.paramsTable.get_params(start_params_d3_key)
     dispersion.omp_set_num_threads(omp_threads)
-    print(f"Starting Key: {start_params_d4_key}")
+    print(f"Starting D4 Key: {start_params_d4_key}")
+    print(f"Starting D3 Key: {start_params_d3_key}")
     if drop_na:
         df = df[df[level_theories].notna().all(axis=1)].copy()
         print(f"Dropped NaNs, new size: {len(df)}")
@@ -72,6 +75,50 @@ def optimize_paramaters(
                 # fit_dispersion_term=fit_dispersion_term,
             )
             extra_added = extra
+
+        if D3["powell_intermolecular"]:
+            print("D3 powell intermolecular (using D3Data_inter)")
+            extra_added += "D3_inter_"
+            # Create D3Data_inter column if it doesn't exist
+            if "D3Data_inter" not in df.columns:
+                print("Creating D3Data_inter column from D3Data...")
+                from src import dftd3
+
+                df["D3Data_inter"] = df.apply(
+                    lambda r: dftd3.filter_d3data_intermolecular(
+                        r["D3Data"], r["monAs"], r["monBs"]
+                    ),
+                    axis=1,
+                )
+            version = {
+                "method": "powell",
+                "compute_energy": "compute_int_energy_D3_BJ_inter",
+                "compute_stats": "compute_int_energy_stats_D3_BJ_inter",
+            }
+
+            if five_fold:
+                src.optimization.opt_cross_val(
+                    df,
+                    nfolds=5,
+                    start_params=start_params_d3,
+                    hf_key=i,
+                    output_l_marker="D3_" + extra_added,
+                    version=version,
+                    force_ATM_on=ATM,
+                )
+            else:
+                src.optimization.opt_val_no_folds(
+                    df,
+                    start_params=start_params_d3,
+                    hf_key=i,
+                    version=version,
+                    output_marker="D3_inter",
+                    force_ATM_on=ATM,
+                    energy_target=energy_target,
+                    fit_dispersion_term=fit_dispersion_term,
+                )
+            extra_added = extra
+
         if D4["powell"]:
             print("D4 powell")
             if ATM:
@@ -377,8 +424,18 @@ def main():
     parser.add_argument(
         "--start_params_d4_key",
         type=str,
-        help="Key for the start parameters for the D4 optimization. Find available options in src/paramsTable.py:paramsDict() (Default: SAPT_DFT_OPT_START4)",
+        help="Key for the start parameters for the D4 optimization. "
+        "Find available options in src/paramsTable.py:paramsDict() "
+        "(Default: SAPT_DFT_OPT_START4)",
         default="SAPT_DFT_OPT_START4",
+    )
+    parser.add_argument(
+        "--start_params_d3_key",
+        type=str,
+        help="Key for the start parameters for the D3 optimization. "
+        "Find available options in src/paramsTable.py:paramsDict() "
+        "(Default: D3_BJ_START)",
+        default="D3_BJ_START",
     )
     parser.add_argument(
         "--powell",
@@ -423,8 +480,8 @@ def main():
         default=False,
     )
     parser.add_argument(
-        "--D3",
-        help="Flag for using D3 (Default: False)",
+        "--supermolecular_BJ_D3",
+        help="Flag for supermolecular D3 BJ dispersion (Default: False)",
         action="store_true",
         default=False,
     )
@@ -451,6 +508,12 @@ def main():
     parser.add_argument(
         "--intermolecular_TT",
         help="Flag for intermolecular dipsersion interaction energy only using dimer C6s (Default: False)",
+        action="store_true",
+        default=False,
+    )
+    parser.add_argument(
+        "--intermolecular_BJ_D3",
+        help="Flag for intermolecular D3 BJ dispersion using D3Data_inter (Default: False)",
         action="store_true",
         default=False,
     )
@@ -493,6 +556,7 @@ def main():
     optimize_paramaters(
         df=df,
         level_theories=args.level_theories,
+        start_params_d3_key=args.start_params_d3_key,
         start_params_d4_key=args.start_params_d4_key,
         D4={
             "powell": args.powell,
@@ -503,7 +567,10 @@ def main():
             "powell_2B_BJ_intermolecular": args.intermolecular_BJ,
             "powell_2B_TT_intermolecular": args.intermolecular_TT,
         },
-        D3={"powell": args.D3},
+        D3={
+            "powell": args.supermolecular_BJ_D3,
+            "powell_intermolecular": args.intermolecular_BJ_D3,
+        },
         ATM=args.ATM,
         extra=args.extra_label,
         use_2B_C6s=args.use_2B_C6s,
