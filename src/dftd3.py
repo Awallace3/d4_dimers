@@ -60,17 +60,21 @@ def collect_bjm_d3data(pos, carts, ATM=False, s_dftd3_bin=None):
     with open("tmp.xyz", "w") as f:
         f.write(tools.carts_to_xyz(pos, carts))
     if ATM:
-        cmd = ["s-dftd3", "--bj", "hf", "--pair-resolved", "--atm", "tmp.xyz"]
+        cmd = [s_dftd3_bin, "--bj", "hf", "--pair-resolved", "--atm", "tmp.xyz"]
     else:
-        cmd = ["s-dftd3", "--bj", "hf", "--pair-resolved",  "tmp.xyz"]
+        cmd = [s_dftd3_bin, "--bj", "hf", "--pair-resolved",  "tmp.xyz"]
     # proc1 = subprocess.Popen(cmd, stdout=subprocess.PIPE)
     # proc1.wait()
     subprocess.run(cmd, stdout=subprocess.PIPE)
     
     # print(proc1.stdout.read())
     data = tools.json_to_dict("d3data.json")
-    os.remove("tmp.xyz")
+    # os.remove("tmp.xyz")
     os.remove("d3data.json")
+    # read energy from .EDISP file
+    with open(".EDISP", "r") as f:
+        lines = f.readlines()
+    e_disp = float(lines[-1].strip().split()[-1]) * hartree_to_kcalmol
     output = []
     n = len(pos)
     for i in range(n):
@@ -83,7 +87,7 @@ def collect_bjm_d3data(pos, carts, ATM=False, s_dftd3_bin=None):
                 data['c8s'][j, i],
                  ]
             )
-    return data, np.array(output)
+    return data, np.array(output), e_disp
 
 def collect_bjm_d3data_dimer(pos, carts, monAs, monBs, ATM=False, s_dftd3_bin=None):
     try:
