@@ -1397,8 +1397,7 @@ def optimization(
         compute = compute_int_energy_least_squares_ATM
     elif version["compute_energy"] == "jeff_d3":
         compute = jeff.compute_int_energy_d3
-    elif version["compute_energy"] == "jeff_d3":
-        compute = jeff.compute_int_energy_d3
+        bounds = [(-3.0, 12.0) for i in range(len(params))]
     elif version["compute_energy"] == "compute_int_energy_D3_BJ_inter":
         compute = compute_int_energy_D3_BJ_inter
         # D3 BJ params: [s8, a1, a2] - all positive

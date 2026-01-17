@@ -64,16 +64,28 @@ def optimize_paramaters(
                 "compute_energy": "jeff_d3",
                 "compute_stats": "jeff_d3",
             }
-            src.optimization.opt_cross_val(
-                df,
-                nfolds=5,
-                start_params=start_params_d3,
-                hf_key=i,
-                output_l_marker="D3_" + extra_added,
-                version=version,
-                # energy_target=energy_target,
-                # fit_dispersion_term=fit_dispersion_term,
-            )
+            if five_fold:
+                src.optimization.opt_cross_val(
+                    df,
+                    nfolds=5,
+                    start_params=start_params_d3,
+                    hf_key=i,
+                    output_l_marker="D3_" + extra_added,
+                    version=version,
+                    # energy_target=energy_target,
+                    # fit_dispersion_term=fit_dispersion_term,
+                )
+            else:
+                src.optimization.opt_val_no_folds(
+                    df,
+                    start_params=start_params_d3,
+                    hf_key=i,
+                    version=version,
+                    output_marker="D3_" + extra_added,
+                    force_ATM_on=ATM,
+                    # energy_target=energy_target,
+                    # fit_dispersion_term=fit_dispersion_term,
+                )
             extra_added = extra
 
         if D3["powell_intermolecular"]:

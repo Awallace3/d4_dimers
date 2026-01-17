@@ -16,11 +16,14 @@ def main():
     df = src.plotting.plotting_setup_dft_ddft(
         # df_name,
         "./plots/LoS.pkl",
-        build_df=False,
+        build_df=True,
         df_out="./plots/LoS_ddft.pkl",
         original_plot=False,
     )
     print(df)
+    from pprint import pprint as pp
+
+    pp(df.columns.to_list())
     # return
     src.plotting.plot_LoS_saptdft(
         df,

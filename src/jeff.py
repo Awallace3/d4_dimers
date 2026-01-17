@@ -13,14 +13,16 @@ def evaluate_energy(
     hf_key: str = "HF INTERACTION ENERGY",
     energy_target="Benchmark",
     fit_dispersion_term=False,
+    disp_col="d4",
 ):
     if fit_dispersion_term and hf_key == "":
-        df["diff"] = df.apply(lambda r: r[energy_target] - (r["d4"]), axis=1)
+        df["diff"] = df.apply(lambda r: r[energy_target] - (r[disp_col]), axis=1)
     else:
         df["diff"] = df.apply(
-            lambda r: r[energy_target] - (r[hf_key] + r["d4"]), axis=1
+            lambda r: r[energy_target] - (r[hf_key] + r[disp_col]), axis=1
         )
     return df
+
 
 def d3data_stats(df):
     bases = [
@@ -70,9 +72,10 @@ def compute_error_stats_d3(
     params,
     df,
     hf_key,
-    cpp=True,
+    force_ATM_on=False,
     energy_target="Benchmark",
     fit_dispersion_term=False,
+    cpp=True,
     # params=[0.713190, 0.079541, 3.627854],
 ) -> []:
     """
@@ -91,7 +94,7 @@ def compute_error_stats_d3(
         )
 
     # df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d3"]), axis=1)
-    df = evaluate_energy(df, hf_key=hf_key, energy_target=energy_target)
+    df = evaluate_energy(df, hf_key=hf_key, energy_target=energy_target, disp_col="d3")
     df["y_pred"] = df.apply(lambda r: r[hf_key] + r["d3"], axis=1)
     mae = df["diff"].abs().mean()
     rmse = (df["diff"] ** 2).mean() ** 0.5
@@ -106,9 +109,9 @@ def compute_int_energy_d3(
     df: pd.DataFrame,
     hf_key: str = "HF INTERACTION ENERGY",
     force_ATM_on: bool = False,
-    cpp=True,
     energy_target="Benchmark",
     fit_dispersion_term=False,
+    cpp=True,
 ):
     """
     compute_int_energy_d3 is used to optimize paramaters for d3
@@ -129,7 +132,7 @@ def compute_int_energy_d3(
             axis=1,
         )
     # df["diff"] = df.apply(lambda r: r["Benchmark"] - (r[hf_key] + r["d3"]), axis=1)
-    df = evaluate_energy(df, hf_key=hf_key, energy_target=energy_target)
+    df = evaluate_energy(df, hf_key=hf_key, energy_target=energy_target, disp_col="d3")
     rmse = (df["diff"] ** 2).mean() ** 0.5
     print("%.8f\t" % rmse, params.tolist())
     df["diff"] = 0
