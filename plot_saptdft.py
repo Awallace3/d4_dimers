@@ -16,7 +16,7 @@ def main():
     df = src.plotting.plotting_setup_dft_ddft(
         # df_name,
         "./plots/LoS.pkl",
-        build_df=True,
+        build_df=False,
         df_out="./plots/LoS_ddft.pkl",
         original_plot=False,
     )
