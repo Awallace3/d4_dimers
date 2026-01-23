@@ -574,10 +574,11 @@ def compute_gd4(
     monAs,
     monBs,
     method='hf',
+    model='d4',
 ):
     from dftd4.interface import DampingParam, DispersionModel
-    def compute_gd4_disp(numbers, positions):
-        model = DispersionModel(numbers, positions)
+    def compute_gd4_disp(numbers, positions, model=model):
+        model = DispersionModel(numbers, positions, model=model)
         res = model.get_dispersion(DampingParam(method=method), grad=False)
         return res.get("energy")
     e_dimer = compute_gd4_disp(pos, carts)

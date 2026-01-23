@@ -1837,7 +1837,7 @@ def c6_change_mon_dimer(df, system_label="45_Ethyne-Pentane", print_lvl=1):
     print(df_sys["System Label"].iloc[0])
     print("Energy in kcal/mol")
     print(df_sys[["R", "-D4 (SAPT0_adz_3_IE)", "-D4 (HF)", "-D4 (HF_ATM)"]])
-    if False:
+    if True:
         for n, r in df_sys.iterrows():
             # print()
             # print(r["Geometry"])
@@ -1850,12 +1850,30 @@ def c6_change_mon_dimer(df, system_label="45_Ethyne-Pentane", print_lvl=1):
                 r["monAs"],
                 r["monBs"],
             )
+            # TESTING if d4s fixes this issue, no... worse
+            # https://pubs.acs.org/doi/full/10.1021/acs.jpclett.4c02653
+            e_d4s = locald4.compute_gd4(
+                r["Geometry_bohr"][:, 0],
+                r["Geometry_bohr"][:, 1:],
+                r["monAs"],
+                r["monBs"],
+                method="hf",
+                model='d4s',
+            )
             e_pbe0 = locald4.compute_gd4(
                 r["Geometry_bohr"][:, 0],
                 r["Geometry_bohr"][:, 1:],
                 r["monAs"],
                 r["monBs"],
                 method="pbe0",
+            )
+            e_pbe0_d4s = locald4.compute_gd4(
+                r["Geometry_bohr"][:, 0],
+                r["Geometry_bohr"][:, 1:],
+                r["monAs"],
+                r["monBs"],
+                method="pbe0",
+                model='d4s',
             )
             e_b3lyp = locald4.compute_gd4(
                 r["Geometry_bohr"][:, 0],
@@ -1864,8 +1882,19 @@ def c6_change_mon_dimer(df, system_label="45_Ethyne-Pentane", print_lvl=1):
                 r["monBs"],
                 method="b3lyp",
             )
+            e_b3lyp_d4s = locald4.compute_gd4(
+                r["Geometry_bohr"][:, 0],
+                r["Geometry_bohr"][:, 1:],
+                r["monAs"],
+                r["monBs"],
+                method="b3lyp",
+                model='d4s',
+            )
             print(
                 f"{r['R']}, GD4 HF-D4(ATM): {e:.6f}, GD4 PBE0-D4(ATM): {e_pbe0:.6f}, B3LYP-D4(ATM) {e_b3lyp:.6f}"
+            )
+            print(
+                f"{r['R']}, GD4 HF-D4S: {e_d4s:.6f}, GD4 PBE0-D4S: {e_pbe0_d4s:.6f}, B3LYP-D4S {e_b3lyp_d4s:.6f}"
             )
     params = "sadz"
     params_no_damping = paramsTable.get_params(
