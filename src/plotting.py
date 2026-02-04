@@ -6332,6 +6332,14 @@ def violin_plots_multi_components(df, limit_to_column_not_nan=None, slide=False)
     df = prep_saptdft_components(df, "wb97x", "adz")
     df = prep_saptdft_components(df, "wb97x", "atz")
 
+    df['size'] = df['Geometry'].apply(lambda x: len(x))
+    df.sort_values('size', inplace=True)
+    pd.set_option('display.max_rows', None)
+    print(df[['system_id', 'Geometry', 'size']])
+    df[df['system_id'] == '01_Water-Water_1.50'].to_pickle("water_water.pkl")
+
+
+
     df["SAPT0-D4 DISP ENERGY adz"] = df["-D4 (SAPT0_adz_3_IE)"] / h2kcalmol
     df["SAPT0-D4 DISP ENERGY atz"] = df["-D4 (SAPT0_adz_3_IE)"] / h2kcalmol
     df["SAPT0-D4 DISP ENERGY aqz"] = df["-D4 (SAPT0_adz_3_IE)"] / h2kcalmol
@@ -6465,7 +6473,6 @@ def violin_plots_multi_components(df, limit_to_column_not_nan=None, slide=False)
         [-2, 2],
         [-2, 2],
     ]
-
     dfs = [
         {
             "df": df_adz,
