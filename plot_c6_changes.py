@@ -492,7 +492,7 @@ def c6_change_mon_dimer_extrapolation(
 
         try:
             # Compute C6s for dimer and monomers
-            C6s_dimer, C6s_mA, C6s_mB = locald4.calc_dftd4_c6_for_d_a_b(
+            C6s_dimer, C6s_mA, C6s_mB, q_dimer, q_A, q_B = locald4.calc_dftd4_c6_for_d_a_b_partial_charges(
                 new_geom,  # dimer coords (Angstrom)
                 atom_numbers,  # dimer atom numbers
                 atom_A,  # monA atom numbers
@@ -500,7 +500,8 @@ def c6_change_mon_dimer_extrapolation(
                 atom_B,  # monB atom numbers
                 geom_B,  # monB coords
                 charges,
-                dftd4_bin="dftd4",
+                # dftd4_bin="dftd4",
+                dftd4_bin="/home/amwalla3/gits/dftd4/_build/app/dftd4", # needs AMW dftd4 with charges in C_n.json
             )
 
             # Extract dimer monomer C6 subblocks
@@ -953,8 +954,8 @@ def main():
     df_results = c6_change_mon_dimer_extrapolation(
         df,
         system_label="45_Ethyne-Pentane",
-        step_size=1.0,
-        upper_boundary=50.0,
+        step_size=1.5,
+        upper_boundary=5.0,
     )
     plot_c6_extrapolation(df_results, system_label="45_Ethyne-Pentane")
     return

@@ -107,6 +107,77 @@ def calc_dftd4_c6_c8_pairDisp2(
         return C6s, C8s, pairs, e
 
 
+def calc_dftd4_c6_c8_pairDisp2_charges(
+    atom_numbers: np.array,
+    carts: np.array,  # angstroms
+    charges: np.array,
+    input_xyz: str = "dat.xyz",
+    dftd4_bin: str = "/theoryfs2/ds/amwalla3/.local/bin/dftd4",
+    p: [] = [1.0, 1.61679827, 0.44959224, 3.35743605],
+    s9=0.0,
+    C6s_ATM=False,
+):
+    """
+    Ensure that dftd4 binary is from compiling git@github.com:Awallace3/dftd4
+        - this is used to generate more decimal places on values for c6, c8,
+          and pairDisp2
+    """
+
+    write_xyz_from_np(
+        atom_numbers,
+        carts,
+        outfile=input_xyz,
+        charges=charges,
+    )
+    args = [
+        dftd4_bin,
+        input_xyz,
+        "--property",
+        "--param",
+        str(p[0]),
+        str(p[1]),
+        str(p[2]),
+        str(p[3]),
+        "--mbdscale",
+        f"{s9}",
+        "-c",
+        str(charges[0]),
+        "--pair-resolved",
+    ]
+    # print(" ".join(args))
+    v = subprocess.call(
+        args=args,
+        shell=False,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.STDOUT,
+    )
+    assert v == 0
+    output_json = "C_n.json"
+    with open(output_json) as f:
+        cs = json.load(f)
+    C6s = np.array(cs["c6"], dtype=np.float64)
+    C8s = np.array(cs["c8"], dtype=np.float64)
+    partial_charges = np.array(cs['partial_charges'], dtype=np.float64)
+    output_json = "pairs.json"
+    with open(output_json) as f:
+        pairs = json.load(f)
+        pairs = np.array(pairs["pairs2"])
+    with open(".EDISP", "r") as f:
+        e = float(f.read())
+    os.remove(input_xyz)
+    os.remove("C_n.json")
+    os.remove("pairs.json")
+    os.remove(".EDISP")
+    if C6s_ATM:
+        with open("C_n_ATM.json") as f:
+            cs = json.load(f)
+        C6s_ATM = np.array(cs["c6_ATM"], dtype=np.float64)
+        os.remove("C_n_ATM.json")
+        return C6s, C8s, pairs, e, C6s_ATM, partial_charges
+    else:
+        return C6s, C8s, pairs, e, partial_charges
+
+
 def calc_dftd4_c6_for_d_a_b(
     cD,
     pD,
@@ -142,6 +213,43 @@ def calc_dftd4_c6_for_d_a_b(
         dftd4_bin=dftd4_bin,
     )
     return C6s_dimer, C6s_mA, C6s_mB
+
+
+def calc_dftd4_c6_for_d_a_b_partial_charges(
+    cD,
+    pD,
+    pA,
+    cA,
+    pB,
+    cB,
+    charges: np.array,
+    input_xyz: str = "dat.xyz",
+    dftd4_bin: str = "/theoryfs2/ds/amwalla3/.local/bin/dftd4",
+    p: [] = [1.0, 1.61679827, 0.44959224, 3.35743605],
+    s9=0.0,
+):
+    C6s_dimer, _, _, df_c_e, q_dimer = calc_dftd4_c6_c8_pairDisp2_charges(
+        pD,
+        cD,
+        charges[0],
+        p=p,
+        dftd4_bin=dftd4_bin,
+    )
+    C6s_mA, _, _, _, q_monA = calc_dftd4_c6_c8_pairDisp2_charges(
+        pA,
+        cA,
+        charges[1],
+        p=p,
+        dftd4_bin=dftd4_bin,
+    )
+    C6s_mB, _, _, _, q_monB = calc_dftd4_c6_c8_pairDisp2_charges(
+        pB,
+        cB,
+        charges[2],
+        p=p,
+        dftd4_bin=dftd4_bin,
+    )
+    return C6s_dimer, C6s_mA, C6s_mB, q_dimer, q_monA, q_monB
 
 
 def read_EDISP() -> None:
