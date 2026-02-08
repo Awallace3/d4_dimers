@@ -228,28 +228,31 @@ def calc_dftd4_c6_for_d_a_b_partial_charges(
     p: [] = [1.0, 1.61679827, 0.44959224, 3.35743605],
     s9=0.0,
 ):
-    C6s_dimer, _, _, df_c_e, q_dimer = calc_dftd4_c6_c8_pairDisp2_charges(
+    C6s_dimer, _, _, e_dimer, q_dimer = calc_dftd4_c6_c8_pairDisp2_charges(
         pD,
         cD,
         charges[0],
         p=p,
         dftd4_bin=dftd4_bin,
     )
-    C6s_mA, _, _, _, q_monA = calc_dftd4_c6_c8_pairDisp2_charges(
+    C6s_mA, _, _, e_monA, q_monA = calc_dftd4_c6_c8_pairDisp2_charges(
         pA,
         cA,
         charges[1],
         p=p,
         dftd4_bin=dftd4_bin,
     )
-    C6s_mB, _, _, _, q_monB = calc_dftd4_c6_c8_pairDisp2_charges(
+    C6s_mB, _, _, e_monB, q_monB = calc_dftd4_c6_c8_pairDisp2_charges(
         pB,
         cB,
         charges[2],
         p=p,
         dftd4_bin=dftd4_bin,
     )
-    return C6s_dimer, C6s_mA, C6s_mB, q_dimer, q_monA, q_monB
+    e_dimer *= hartree_to_kcalmol
+    e_monA *= hartree_to_kcalmol
+    e_monB *= hartree_to_kcalmol
+    return C6s_dimer, C6s_mA, C6s_mB, q_dimer, q_monA, q_monB, e_dimer, e_monA, e_monB
 
 
 def read_EDISP() -> None:

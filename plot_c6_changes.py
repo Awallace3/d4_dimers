@@ -32,6 +32,12 @@ def monomer_C6s_from_dimer(dimer_C6s, monA_C6s, monB_C6s):
     return dimer_monA_C6s, dimer_monB_C6s, intermolecular_C6s
 
 
+def monomer_qs_from_dimer(dimer_qs, monA_qs, monB_qs):
+    dimer_monA_qs = dimer_qs[: len(monA_qs)]
+    dimer_monB_qs = dimer_qs[len(monA_qs) :]
+    return dimer_monA_qs, dimer_monB_qs
+
+
 def c6_change_mon_dimer_plotting(df, system_label="45_Ethyne-Pentane", print_lvl=1):
     df_sys = df[df["System Label"] == system_label]
     df_sys.sort_values("distance (A)", inplace=True)
@@ -47,7 +53,12 @@ def c6_change_mon_dimer_plotting(df, system_label="45_Ethyne-Pentane", print_lvl
         params = paramsTable.get_params(params)
     else:
         params, _ = paramsTable.get_params(params)
-    df_sys['D3Data_inter'] = df_sys.apply(lambda r: dftd3.filter_d3data_intermolecular(r['D3Data'], r['monAs'], r['monBs']), axis=1)
+    df_sys["D3Data_inter"] = df_sys.apply(
+        lambda r: dftd3.filter_d3data_intermolecular(
+            r["D3Data"], r["monAs"], r["monBs"]
+        ),
+        axis=1,
+    )
     for n, r in df_sys[::-1].iterrows():
         print(f"System: {r['system_id']}, R: {r['R']}")
         dimer_C6s = r["C6s"]
@@ -317,7 +328,6 @@ def c6_change_mon_dimer_plotting(df, system_label="45_Ethyne-Pentane", print_lvl
             )
             print(f"{len(monA_C6s) = }, {len(monB_C6s) = }")
 
-
         return
         if print_lvl == 0:
             params_damped, _ = paramsTable.param_lookup("sadz")
@@ -408,6 +418,12 @@ def c6_change_mon_dimer_extrapolation(
     # Use the two closest points
     r1 = df_sys.iloc[0]
     r2 = df_sys.iloc[1]
+    print(df_sys[["distance (A)", "SAPT2+(CCD)DMP2 TOTAL ENERGY adz"]])
+    eq_id = df_sys["SAPT2+(CCD)DMP2 TOTAL ENERGY adz"].idxmin()
+    print(
+        f"Equilibrium geometry at index {eq_id}, distance {df_sys.loc[eq_id, 'distance (A)']:.2f} Å"
+    )
+    eq_distance = df_sys.loc[eq_id, "distance (A)"]
 
     geom1 = r1["Geometry"][:, 1:]  # xyz coordinates in Angstroms
     geom2 = r2["Geometry"][:, 1:]
@@ -448,9 +464,23 @@ def c6_change_mon_dimer_extrapolation(
     # Generate distances to evaluate
     distances = np.arange(starting_distance, upper_boundary + step_size, step_size)
 
+    # ensure to add the equilibrium distance if it's not already included
+    if eq_distance not in distances:
+        distances = np.sort(np.append(distances, eq_distance))
+
     # Storage for results
     results = {
+        "Geometry": [],
+        "monAs": [],
+        "monBs": [],
+        "charges": [],
         "distance": [],
+        # D4 qs sums
+        "qs_sum_dimer_D4": [],
+        "qs_sum_monA_D4": [],
+        "qs_sum_monB_D4": [],
+        "qs_sum_change_A_D4": [],
+        "qs_sum_change_B_D4": [],
         # D4 C6 sums
         "C6_sum_dimer_D4": [],
         "C6_sum_monA_D4": [],
@@ -472,6 +502,10 @@ def c6_change_mon_dimer_extrapolation(
         "disp_delta_B_no_damping": [],
         "disp_delta_A_damped": [],
         "disp_delta_B_damped": [],
+        "disp_hfd4_dimer": [],
+        "disp_hfd4_monA": [],
+        'disp_hfd4_monB': [],
+        'disp_hfd4_supermolecular': [],
     }
 
     # Compute C6s at each distance
@@ -492,22 +526,31 @@ def c6_change_mon_dimer_extrapolation(
 
         try:
             # Compute C6s for dimer and monomers
-            C6s_dimer, C6s_mA, C6s_mB, q_dimer, q_A, q_B = locald4.calc_dftd4_c6_for_d_a_b_partial_charges(
-                new_geom,  # dimer coords (Angstrom)
-                atom_numbers,  # dimer atom numbers
-                atom_A,  # monA atom numbers
-                geom_A,  # monA coords
-                atom_B,  # monB atom numbers
-                geom_B,  # monB coords
-                charges,
-                # dftd4_bin="dftd4",
-                dftd4_bin="/home/amwalla3/gits/dftd4/_build/app/dftd4", # needs AMW dftd4 with charges in C_n.json
+            C6s_dimer, C6s_mA, C6s_mB, q_dimer, q_A, q_B, d4_e_dimer, d4_e_monA, d4_e_monB = (
+                locald4.calc_dftd4_c6_for_d_a_b_partial_charges(
+                    new_geom,  # dimer coords (Angstrom)
+                    atom_numbers,  # dimer atom numbers
+                    atom_A,  # monA atom numbers
+                    geom_A,  # monA coords
+                    atom_B,  # monB atom numbers
+                    geom_B,  # monB coords
+                    charges,
+                    # dftd4_bin="dftd4",
+                    dftd4_bin="/home/amwalla3/gits/dftd4/_build/app/dftd4",  # needs AMW dftd4 with charges in C_n.json
+                )
             )
+
+            d4_supermolceular_hf = d4_e_dimer - d4_e_monA - d4_e_monB
+            results["disp_hfd4_dimer"].append(d4_e_dimer)
+            results["disp_hfd4_monA"].append(d4_e_monA)
+            results["disp_hfd4_monB"].append(d4_e_monB)
+            results["disp_hfd4_supermolecular"].append(d4_supermolceular_hf)
 
             # Extract dimer monomer C6 subblocks
             dimer_monA_C6s, dimer_monB_C6s, _ = monomer_C6s_from_dimer(
                 C6s_dimer, C6s_mA, C6s_mB
             )
+
 
             # Compute C6 sums (D4)
             c6_sum_dimer = np.sum(C6s_dimer)
@@ -574,7 +617,7 @@ def c6_change_mon_dimer_extrapolation(
             )
 
             # D3 supermolecular dispersion (d3_dimer - d3_monA - d3_monB)
-            disp_D3_supermolecular = (d3_dimer - d3_monA - d3_monB)
+            disp_D3_supermolecular = d3_dimer - d3_monA - d3_monB
 
             # Compute intramolecular dispersion changes
             monA_disp = locald4.compute_disp_2B_from_C6s_NO_DAMPING(
@@ -609,6 +652,20 @@ def c6_change_mon_dimer_extrapolation(
             delta_A_BJ = dimer_monA_disp_BJ - monA_disp_BJ
             delta_B_BJ = dimer_monB_disp_BJ - monB_disp_BJ
 
+            # partial charges
+            dimer_monA_qs, dimer_monB_qs = monomer_qs_from_dimer(q_dimer, q_A, q_B)
+            qs_sum_dimer = np.sum(q_dimer)
+            qs_sum_monA = np.sum(q_A)
+            qs_sum_monB = np.sum(q_B)
+            qs_sum_dimer_monA = np.sum(dimer_monA_qs)
+            qs_sum_dimer_monB = np.sum(dimer_monB_qs)
+
+            results["qs_sum_dimer_D4"].append(qs_sum_dimer)
+            results["qs_sum_monA_D4"].append(qs_sum_monA)
+            results["qs_sum_monB_D4"].append(qs_sum_monB)
+            results["qs_sum_change_A_D4"].append(qs_sum_dimer_monA - qs_sum_monA)
+            results["qs_sum_change_B_D4"].append(qs_sum_dimer_monB - qs_sum_monB)
+
             # Store results
             results["distance"].append(dist)
             # D4 C6 results
@@ -633,6 +690,12 @@ def c6_change_mon_dimer_extrapolation(
             results["disp_delta_A_damped"].append(delta_A_BJ)
             results["disp_delta_B_damped"].append(delta_B_BJ)
 
+            Geometry = np.hstack((atom_numbers[:, None], new_geom))
+            results["Geometry"].append(Geometry)
+            results["monAs"].append(monAs)
+            results["monBs"].append(monBs)
+            results["charges"].append(charges)
+
             if print_lvl > 1:
                 print(
                     f"d={dist:.2f} Å: C6 change A={c6_sum_dimer_monA - c6_sum_monA:.2f}, "
@@ -651,11 +714,12 @@ def c6_change_mon_dimer_extrapolation(
         print(f"\nGenerated {len(df_results)} data points")
         print(df_results.head(10))
 
-    return df_results
+    return df_results, eq_distance
 
 
 def plot_c6_extrapolation(
     df_results,
+    eq_distance,
     system_label="45_Ethyne-Pentane",
     output_dir="./plots/c6_extrapolation",
 ):
@@ -663,9 +727,10 @@ def plot_c6_extrapolation(
     Plot C6 changes and dispersion energies vs distance.
 
     Uses similar plotting logic to subplot_all_curves_LoS_basis_set_D4_versions_nondamped()
-    with two vertical subplots:
+    with three vertical subplots:
     - Top: C6 sum changes for monomers A and B
-    - Bottom: Dispersion energies (damped and non-damped)
+    - Middle: Dispersion energies (damped and non-damped)
+    - Bottom: Partial charge changes for monomers A and B
 
     Parameters
     ----------
@@ -681,10 +746,11 @@ def plot_c6_extrapolation(
     tick_fontsize = 14
     legend_fontsize = 12
 
-    # Create 2x1 subplot
-    fig, axs = plt.subplots(2, 1, figsize=(6, 7), dpi=300)
+    # Create 3x1 subplot
+    fig, axs = plt.subplots(3, 1, figsize=(6, 10), dpi=300)
     ax_top = axs[0]
-    ax_bot = axs[1]
+    ax_mid = axs[1]
+    ax_bot = axs[2]
 
     # Define colors
     colors = {
@@ -694,6 +760,9 @@ def plot_c6_extrapolation(
         # D3 C6 changes
         "C6_change_A_D3": "deepskyblue",
         "C6_change_B_D3": "salmon",
+        # Partial charge changes
+        "q_change_A_D4": "navy",
+        "q_change_B_D4": "darkred",
         # Dispersion energies
         "disp_nd": "orange",
         "disp_d": "teal",
@@ -703,16 +772,20 @@ def plot_c6_extrapolation(
         "delta_B": "green",
         "delta_A_BJ": "darkviolet",
         "delta_B_BJ": "darkgreen",
+        "disp_hfd4_supermolecular": "brown",
     }
     markers = {
         "C6_change_A_D4": "o",
         "C6_change_B_D4": "s",
         "C6_change_A_D3": "^",
         "C6_change_B_D3": "v",
+        "q_change_A_D4": "D",
+        "q_change_B_D4": "X",
         "disp_nd": "^",
         "disp_d": "d",
         "disp_d_D3_C6s": "h",
         "disp_D3_supermolecular": "H",
+        "disp_hfd4_supermolecular": "P",
         "delta_A": "v",
         "delta_B": "P",
         "delta_A_BJ": "<",
@@ -757,6 +830,8 @@ def plot_c6_extrapolation(
 
     # Add horizontal line at 0
     ax_top.axhline(0, color="grey", linestyle="--", linewidth=0.8)
+    # Add vertical line at equilibrium distance
+    ax_top.axvline(eq_distance, color="grey", linestyle="-", linewidth=1.0, alpha=0.6)
 
     ax_top.text(
         -0.12,
@@ -782,24 +857,24 @@ def plot_c6_extrapolation(
     ax_top.xaxis.set_major_formatter(ScalarFormatter())
     ax_top.yaxis.set_major_formatter(ScalarFormatter())
 
-    # ===== BOTTOM PLOT: Dispersion energies =====
-    ax_bot.plot(
-        df_results["distance"],
-        df_results["disp_inter_no_damping"],
-        color=colors["disp_nd"],
-        marker=markers["disp_nd"],
-        label="Intermolecular -D4 (ND)",
-        markersize=4,
-    )
-    ax_bot.plot(
+    # ===== MIDDLE PLOT: Dispersion energies =====
+    # ax_mid.plot(
+    #     df_results["distance"],
+    #     df_results["disp_inter_no_damping"],
+    #     color=colors["disp_nd"],
+    #     marker=markers["disp_nd"],
+    #     label="Intermolecular -D4 (ND)",
+    #     markersize=4,
+    # )
+    ax_mid.plot(
         df_results["distance"],
         df_results["disp_inter_damped"],
         color=colors["disp_d"],
         marker=markers["disp_d"],
-        label="Intermolecular -D4 (Damped)",
+        label="Intermolecular HF-D4",
         markersize=4,
     )
-    ax_bot.plot(
+    ax_mid.plot(
         df_results["distance"],
         df_results["disp_inter_damped_D3_C6s"],
         color=colors["disp_d_D3_C6s"],
@@ -807,31 +882,39 @@ def plot_c6_extrapolation(
         label="Intermolecular D3-C6 (Damped)",
         markersize=4,
     )
-    ax_bot.plot(
+    ax_mid.plot(
         df_results["distance"],
         df_results["disp_D3_supermolecular"],
         color=colors["disp_D3_supermolecular"],
         marker=markers["disp_D3_supermolecular"],
-        label="-D3 Supermolecular",
+        label="HF-D3(BJ) Supermolecular",
         markersize=4,
     )
-    ax_bot.plot(
+    ax_mid.plot(
         df_results["distance"],
-        df_results["disp_delta_A_no_damping"],
-        color=colors["delta_A"],
-        marker=markers["delta_A"],
-        label=r"$\delta$ -D4 A (ND)",
+        df_results["disp_hfd4_supermolecular"],
+        color=colors["disp_hfd4_supermolecular"],
+        marker=markers["disp_hfd4_supermolecular"],
+        label="HF-D4(BJ) Supermolecular",
         markersize=4,
     )
-    ax_bot.plot(
-        df_results["distance"],
-        df_results["disp_delta_B_no_damping"],
-        color=colors["delta_B"],
-        marker=markers["delta_B"],
-        label=r"$\delta$ -D4 B (ND)",
-        markersize=4,
-    )
-    ax_bot.plot(
+    # ax_mid.plot(
+    #     df_results["distance"],
+    #     df_results["disp_delta_A_no_damping"],
+    #     color=colors["delta_A"],
+    #     marker=markers["delta_A"],
+    #     label=r"$\delta$ -D4 A (ND)",
+    #     markersize=4,
+    # )
+    # ax_mid.plot(
+    #     df_results["distance"],
+    #     df_results["disp_delta_B_no_damping"],
+    #     color=colors["delta_B"],
+    #     marker=markers["delta_B"],
+    #     label=r"$\delta$ -D4 B (ND)",
+    #     markersize=4,
+    # )
+    ax_mid.plot(
         df_results["distance"],
         df_results["disp_delta_A_damped"],
         color=colors["delta_A_BJ"],
@@ -839,7 +922,7 @@ def plot_c6_extrapolation(
         label=r"$\delta$ -D4 A (BJ)",
         markersize=4,
     )
-    ax_bot.plot(
+    ax_mid.plot(
         df_results["distance"],
         df_results["disp_delta_B_damped"],
         color=colors["delta_B_BJ"],
@@ -849,17 +932,20 @@ def plot_c6_extrapolation(
     )
 
     # Add horizontal line at 0
-    ax_bot.axhline(0, color="grey", linestyle="--", linewidth=0.8)
+    ax_mid.axhline(0, color="grey", linestyle="--", linewidth=0.8)
+    # Add vertical line at equilibrium distance
+    ax_mid.axvline(eq_distance, color="grey", linestyle="-", linewidth=1.0, alpha=0.6)
 
     # Create inset plot for close distances (zoomed view of small energies)
-    # Focus on the first few points to highlight the smaller intermolecular energies
-    n_inset_points = min(8, len(df_results))
-    inset_data = df_results.iloc[:n_inset_points]
+    # Focus on the last few points to highlight the smaller intermolecular energies
+    # n_inset_points = min(8, len(df_results))
+    n_inset_points = len(df_results) // 3  # Last third of points
+    inset_data = df_results.iloc[n_inset_points:]
 
     ax_inset = inset_axes(
-        ax_bot,
+        ax_mid,
         width="40%",
-        height="35%",
+        height="30%",
         loc="center right",
         borderpad=1.5,
     )
@@ -897,8 +983,21 @@ def plot_c6_extrapolation(
         markersize=3,
         linewidth=1,
     )
+    ax_inset.plot(
+        inset_data["distance"],
+        inset_data["disp_hfd4_supermolecular"],
+        color=colors["disp_hfd4_supermolecular"],
+        marker=markers["disp_hfd4_supermolecular"],
+        markersize=3,
+        linewidth=1,
+    )
 
     ax_inset.axhline(0, color="grey", linestyle="--", linewidth=0.5)
+    # Add vertical line at equilibrium distance (if within inset range)
+    if eq_distance <= inset_data["distance"].max():
+        ax_inset.axvline(
+            eq_distance, color="grey", linestyle="-", linewidth=0.8, alpha=0.6
+        )
     ax_inset.tick_params(
         which="both",
         labelsize=8,
@@ -910,12 +1009,60 @@ def plot_c6_extrapolation(
     ax_inset.set_ylabel("Disp. (kcal/mol)", fontsize=8)
 
     # Mark the inset region on the main plot
-    mark_inset(ax_bot, ax_inset, loc1=2, loc2=4, fc="none", ec="0.5", lw=0.5)
+    # mark_inset(ax_mid, ax_inset, loc1=2, loc2=4, fc="none", ec="0.5", lw=0.5)
+    mark_inset(ax_mid, ax_inset, loc1=2, loc2=4, fc="none", ec="0.5", lw=0.5)
+
+    ax_mid.text(
+        -0.12,
+        1.0,
+        "(B)",
+        transform=ax_mid.transAxes,
+        fontsize=16,
+        fontweight="bold",
+        va="top",
+        ha="left",
+    )
+    ax_mid.set_ylabel("Disp. Energy (kcal/mol)")
+    ax_mid.minorticks_on()
+    ax_mid.tick_params(
+        which="both",
+        width=1,
+        labelsize=tick_fontsize,
+        direction="in",
+        top=True,
+        right=True,
+    )
+    ax_mid.legend(fontsize=legend_fontsize - 4, loc="lower left", ncol=2)
+    ax_mid.xaxis.set_major_formatter(ScalarFormatter())
+    ax_mid.yaxis.set_major_formatter(ScalarFormatter())
+
+    # ===== BOTTOM PLOT: Partial charge changes =====
+    ax_bot.plot(
+        df_results["distance"],
+        df_results["qs_sum_change_A_D4"],
+        color=colors["q_change_A_D4"],
+        marker=markers["q_change_A_D4"],
+        label=r"$\Delta q^{A}$ (D4)",
+        markersize=4,
+    )
+    ax_bot.plot(
+        df_results["distance"],
+        df_results["qs_sum_change_B_D4"],
+        color=colors["q_change_B_D4"],
+        marker=markers["q_change_B_D4"],
+        label=r"$\Delta q^{B}$ (D4)",
+        markersize=4,
+    )
+
+    # Add horizontal line at 0
+    ax_bot.axhline(0, color="grey", linestyle="--", linewidth=0.8)
+    # Add vertical line at equilibrium distance
+    ax_bot.axvline(eq_distance, color="grey", linestyle="-", linewidth=1.0, alpha=0.6)
 
     ax_bot.text(
         -0.12,
         1.0,
-        "(B)",
+        "(C)",
         transform=ax_bot.transAxes,
         fontsize=16,
         fontweight="bold",
@@ -923,7 +1070,7 @@ def plot_c6_extrapolation(
         ha="left",
     )
     ax_bot.set_xlabel(r"Distance (\AA)")
-    ax_bot.set_ylabel("Disp. Energy (kcal/mol)")
+    ax_bot.set_ylabel(r"$\Delta q$ Sum (e)")
     ax_bot.minorticks_on()
     ax_bot.tick_params(
         which="both",
@@ -933,7 +1080,7 @@ def plot_c6_extrapolation(
         top=True,
         right=True,
     )
-    ax_bot.legend(fontsize=legend_fontsize - 4, loc="lower left", ncol=2)
+    ax_bot.legend(fontsize=legend_fontsize, loc="upper right")
     ax_bot.xaxis.set_major_formatter(ScalarFormatter())
     ax_bot.yaxis.set_major_formatter(ScalarFormatter())
 
@@ -941,7 +1088,7 @@ def plot_c6_extrapolation(
 
     # Save figure
     safe_label = system_label.replace(" ", "_").replace("/", "_")
-    output_path = os.path.join(output_dir, f"{safe_label}_c6_extrapolation.pdf")
+    output_path = os.path.join(output_dir, f"{safe_label}_c6_extrapolation.png")
     plt.savefig(output_path)
     print(f"{output_path}")
     plt.close()
@@ -951,13 +1098,14 @@ def plot_c6_extrapolation(
 
 def main():
     df = pd.read_pickle("./plots/ddft_curves.pkl")
-    df_results = c6_change_mon_dimer_extrapolation(
+    df_results, eq_distance = c6_change_mon_dimer_extrapolation(
         df,
         system_label="45_Ethyne-Pentane",
-        step_size=1.5,
-        upper_boundary=5.0,
+        step_size=2.0,
+        upper_boundary=20.0,
     )
-    plot_c6_extrapolation(df_results, system_label="45_Ethyne-Pentane")
+    plot_c6_extrapolation(df_results, eq_distance, system_label="45_Ethyne-Pentane")
+    df_results.to_pickle("./plots/c6_extrapolation/45_Ethyne-Pentane_c6_extrapolation_results.pkl")
     return
 
 
