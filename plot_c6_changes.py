@@ -412,7 +412,8 @@ def c6_change_mon_dimer_extrapolation(
     params_no_damping = paramsTable.get_params(
         "SAPT_DFT_pbe0_adz_3_IE_inter_NO_DAMPING"
     )[0]
-    params_damped, _ = paramsTable.get_params("SAPT_DFT_pbe0_adz_3_IE")
+    # params_damped, _ = paramsTable.get_params("SAPT_DFT_pbe0_adz_3_IE")
+    params_damped = paramsTable.get_params("HF")
 
     # Get two geometries to compute displacement vector
     # Use the two closest points
@@ -524,189 +525,187 @@ def c6_change_mon_dimer_extrapolation(
         atom_A = atom_numbers[monAs]
         atom_B = atom_numbers[monBs]
 
-        try:
-            # Compute C6s for dimer and monomers
-            C6s_dimer, C6s_mA, C6s_mB, q_dimer, q_A, q_B, d4_e_dimer, d4_e_monA, d4_e_monB = (
-                locald4.calc_dftd4_c6_for_d_a_b_partial_charges(
-                    new_geom,  # dimer coords (Angstrom)
-                    atom_numbers,  # dimer atom numbers
-                    atom_A,  # monA atom numbers
-                    geom_A,  # monA coords
-                    atom_B,  # monB atom numbers
-                    geom_B,  # monB coords
-                    charges,
-                    # dftd4_bin="dftd4",
-                    dftd4_bin="/home/amwalla3/gits/dftd4/_build/app/dftd4",  # needs AMW dftd4 with charges in C_n.json
-                )
+        C6s_dimer, C6s_mA, C6s_mB, q_dimer, q_A, q_B, d4_e_dimer, d4_e_monA, d4_e_monB = (
+            locald4.calc_dftd4_c6_for_d_a_b_partial_charges(
+                new_geom,  # dimer coords (Angstrom)
+                atom_numbers,  # dimer atom numbers
+                atom_A,  # monA atom numbers
+                geom_A,  # monA coords
+                atom_B,  # monB atom numbers
+                geom_B,  # monB coords
+                charges,
+                # dftd4_bin="dftd4",
+                dftd4_bin="/home/amwalla3/gits/dftd4/_build/app/dftd4",  # needs AMW dftd4 with charges in C_n.json
             )
+        )
 
-            d4_supermolceular_hf = d4_e_dimer - d4_e_monA - d4_e_monB
-            results["disp_hfd4_dimer"].append(d4_e_dimer)
-            results["disp_hfd4_monA"].append(d4_e_monA)
-            results["disp_hfd4_monB"].append(d4_e_monB)
-            results["disp_hfd4_supermolecular"].append(d4_supermolceular_hf)
+        d4_supermolceular_hf = d4_e_dimer - d4_e_monA - d4_e_monB
 
-            # Extract dimer monomer C6 subblocks
-            dimer_monA_C6s, dimer_monB_C6s, _ = monomer_C6s_from_dimer(
-                C6s_dimer, C6s_mA, C6s_mB
+        # Extract dimer monomer C6 subblocks
+        dimer_monA_C6s, dimer_monB_C6s, _ = monomer_C6s_from_dimer(
+            C6s_dimer, C6s_mA, C6s_mB
+        )
+
+
+        # Compute C6 sums (D4)
+        c6_sum_dimer = np.sum(C6s_dimer)
+        c6_sum_monA = np.sum(C6s_mA)
+        c6_sum_monB = np.sum(C6s_mB)
+        c6_sum_dimer_monA = np.sum(dimer_monA_C6s)
+        c6_sum_dimer_monB = np.sum(dimer_monB_C6s)
+
+        # Collect D3 C6 coefficients (uses Angstrom coords)
+        d3bin = "./simple-dftd3/_build/app/s-dftd3"
+        d3_dimer_data, _, d3_dimer = dftd3.collect_bjm_d3data(
+            atom_numbers, new_geom, ATM=False, s_dftd3_bin=d3bin
+        )
+        d3_monA_data, _, d3_monA = dftd3.collect_bjm_d3data(
+            atom_A, geom_A, ATM=False, s_dftd3_bin=d3bin
+        )
+        d3_monB_data, _, d3_monB = dftd3.collect_bjm_d3data(
+            atom_B, geom_B, ATM=False, s_dftd3_bin=d3bin
+        )
+
+        # Extract D3 C6 matrices
+        C6s_dimer_D3 = d3_dimer_data["c6s"]
+        C6s_mA_D3 = d3_monA_data["c6s"]
+        C6s_mB_D3 = d3_monB_data["c6s"]
+
+        # Extract dimer monomer C6 subblocks (D3)
+        dimer_monA_C6s_D3, dimer_monB_C6s_D3, _ = monomer_C6s_from_dimer(
+            C6s_dimer_D3, C6s_mA_D3, C6s_mB_D3
+        )
+
+        # Compute D3 C6 sums
+        c6_sum_dimer_D3 = np.sum(C6s_dimer_D3)
+        c6_sum_monA_D3 = np.sum(C6s_mA_D3)
+        c6_sum_monB_D3 = np.sum(C6s_mB_D3)
+        c6_sum_dimer_monA_D3 = np.sum(dimer_monA_C6s_D3)
+        c6_sum_dimer_monB_D3 = np.sum(dimer_monB_C6s_D3)
+
+        # Compute dispersion energies
+        disp_inter_nd = locald4.compute_disp_2B_inter_from_C6s_NO_DAMPING(
+            atom_numbers,
+            new_geom_bohr,
+            C6s_dimer,
+            monAs,
+            monBs,
+            params_no_damping,
+        )
+        disp_inter_d = locald4.compute_disp_2B_inter_from_C6s(
+            atom_numbers,
+            new_geom_bohr,
+            C6s_dimer,
+            monAs,
+            monBs,
+            params_damped,
+        )
+
+        # Compute intermolecular damped dispersion using D3 C6s
+        disp_inter_d_D3_C6s = locald4.compute_disp_2B_inter_from_C6s(
+            atom_numbers,
+            new_geom_bohr,
+            C6s_dimer_D3,
+            monAs,
+            monBs,
+            params_damped,
+        )
+
+        # D3 supermolecular dispersion (d3_dimer - d3_monA - d3_monB)
+        disp_D3_supermolecular = d3_dimer - d3_monA - d3_monB
+
+        # Compute intramolecular dispersion changes
+        monA_disp = locald4.compute_disp_2B_from_C6s_NO_DAMPING(
+            atom_A, new_geom_bohr[monAs], C6s_mA, params_no_damping
+        )
+        monB_disp = locald4.compute_disp_2B_from_C6s_NO_DAMPING(
+            atom_B, new_geom_bohr[monBs], C6s_mB, params_no_damping
+        )
+        dimer_monA_disp = locald4.compute_disp_2B_from_C6s_NO_DAMPING(
+            atom_A, new_geom_bohr[monAs], dimer_monA_C6s, params_no_damping
+        )
+        dimer_monB_disp = locald4.compute_disp_2B_from_C6s_NO_DAMPING(
+            atom_B, new_geom_bohr[monBs], dimer_monB_C6s, params_no_damping
+        )
+
+        delta_A = dimer_monA_disp - monA_disp
+        delta_B = dimer_monB_disp - monB_disp
+
+        # Compute BJ-damped intramolecular dispersion changes
+        monA_disp_BJ = locald4.compute_disp_2B_from_C6s(
+            atom_A, new_geom_bohr[monAs], C6s_mA, params_damped
+        )
+        monB_disp_BJ = locald4.compute_disp_2B_from_C6s(
+            atom_B, new_geom_bohr[monBs], C6s_mB, params_damped
+        )
+        dimer_monA_disp_BJ = locald4.compute_disp_2B_from_C6s(
+            atom_A, new_geom_bohr[monAs], dimer_monA_C6s, params_damped
+        )
+        dimer_monB_disp_BJ = locald4.compute_disp_2B_from_C6s(
+            atom_B, new_geom_bohr[monBs], dimer_monB_C6s, params_damped
+        )
+        delta_A_BJ = dimer_monA_disp_BJ - monA_disp_BJ
+        delta_B_BJ = dimer_monB_disp_BJ - monB_disp_BJ
+
+        print(f"Distance: {dist:.2f} Å")
+        print(f"delta_A_BJ: {delta_A_BJ:.4f}, delta_B_BJ: {delta_B_BJ:.4f}")
+        print(f"{dimer_monA_disp_BJ=:.4f} {monA_disp_BJ=:.4f}")
+
+        # partial charges
+        dimer_monA_qs, dimer_monB_qs = monomer_qs_from_dimer(q_dimer, q_A, q_B)
+        qs_sum_dimer = np.sum(q_dimer)
+        qs_sum_monA = np.sum(q_A)
+        qs_sum_monB = np.sum(q_B)
+        qs_sum_dimer_monA = np.sum(dimer_monA_qs)
+        qs_sum_dimer_monB = np.sum(dimer_monB_qs)
+
+        results["qs_sum_dimer_D4"].append(qs_sum_dimer)
+        results["qs_sum_monA_D4"].append(qs_sum_monA)
+        results["qs_sum_monB_D4"].append(qs_sum_monB)
+        results["qs_sum_change_A_D4"].append(qs_sum_dimer_monA - qs_sum_monA)
+        results["qs_sum_change_B_D4"].append(qs_sum_dimer_monB - qs_sum_monB)
+
+        # Store results
+        results["distance"].append(dist)
+        # D4 C6 results
+        results["C6_sum_dimer_D4"].append(c6_sum_dimer)
+        results["C6_sum_monA_D4"].append(c6_sum_monA)
+        results["C6_sum_monB_D4"].append(c6_sum_monB)
+        results["C6_sum_change_A_D4"].append(c6_sum_dimer_monA - c6_sum_monA)
+        results["C6_sum_change_B_D4"].append(c6_sum_dimer_monB - c6_sum_monB)
+        # D3 C6 results
+        results["C6_sum_dimer_D3"].append(c6_sum_dimer_D3)
+        results["C6_sum_monA_D3"].append(c6_sum_monA_D3)
+        results["C6_sum_monB_D3"].append(c6_sum_monB_D3)
+        results["C6_sum_change_A_D3"].append(c6_sum_dimer_monA_D3 - c6_sum_monA_D3)
+        results["C6_sum_change_B_D3"].append(c6_sum_dimer_monB_D3 - c6_sum_monB_D3)
+        # Dispersion energies
+        results["disp_inter_no_damping"].append(disp_inter_nd)
+        results["disp_inter_damped"].append(disp_inter_d)
+        results["disp_inter_damped_D3_C6s"].append(disp_inter_d_D3_C6s)
+        results["disp_D3_supermolecular"].append(disp_D3_supermolecular)
+        results["disp_delta_A_no_damping"].append(delta_A)
+        results["disp_delta_B_no_damping"].append(delta_B)
+        results["disp_delta_A_damped"].append(delta_A_BJ)
+        results["disp_delta_B_damped"].append(delta_B_BJ)
+
+        results["disp_hfd4_dimer"].append(d4_e_dimer)
+        results["disp_hfd4_monA"].append(d4_e_monA)
+        results["disp_hfd4_monB"].append(d4_e_monB)
+        results["disp_hfd4_supermolecular"].append(d4_supermolceular_hf)
+
+        Geometry = np.hstack((atom_numbers[:, None], new_geom))
+        results["Geometry"].append(Geometry)
+        results["monAs"].append(monAs)
+        results["monBs"].append(monBs)
+        results["charges"].append(charges)
+
+        if print_lvl > 1:
+            print(
+                f"d={dist:.2f} Å: C6 change A={c6_sum_dimer_monA - c6_sum_monA:.2f}, "
+                f"B={c6_sum_dimer_monB - c6_sum_monB:.2f}, "
+                f"Disp(ND)={disp_inter_nd:.4f}"
             )
-
-
-            # Compute C6 sums (D4)
-            c6_sum_dimer = np.sum(C6s_dimer)
-            c6_sum_monA = np.sum(C6s_mA)
-            c6_sum_monB = np.sum(C6s_mB)
-            c6_sum_dimer_monA = np.sum(dimer_monA_C6s)
-            c6_sum_dimer_monB = np.sum(dimer_monB_C6s)
-
-            # Collect D3 C6 coefficients (uses Angstrom coords)
-            d3bin = "./simple-dftd3/_build/app/s-dftd3"
-            d3_dimer_data, _, d3_dimer = dftd3.collect_bjm_d3data(
-                atom_numbers, new_geom, ATM=False, s_dftd3_bin=d3bin
-            )
-            d3_monA_data, _, d3_monA = dftd3.collect_bjm_d3data(
-                atom_A, geom_A, ATM=False, s_dftd3_bin=d3bin
-            )
-            d3_monB_data, _, d3_monB = dftd3.collect_bjm_d3data(
-                atom_B, geom_B, ATM=False, s_dftd3_bin=d3bin
-            )
-
-            # Extract D3 C6 matrices
-            C6s_dimer_D3 = d3_dimer_data["c6s"]
-            C6s_mA_D3 = d3_monA_data["c6s"]
-            C6s_mB_D3 = d3_monB_data["c6s"]
-
-            # Extract dimer monomer C6 subblocks (D3)
-            dimer_monA_C6s_D3, dimer_monB_C6s_D3, _ = monomer_C6s_from_dimer(
-                C6s_dimer_D3, C6s_mA_D3, C6s_mB_D3
-            )
-
-            # Compute D3 C6 sums
-            c6_sum_dimer_D3 = np.sum(C6s_dimer_D3)
-            c6_sum_monA_D3 = np.sum(C6s_mA_D3)
-            c6_sum_monB_D3 = np.sum(C6s_mB_D3)
-            c6_sum_dimer_monA_D3 = np.sum(dimer_monA_C6s_D3)
-            c6_sum_dimer_monB_D3 = np.sum(dimer_monB_C6s_D3)
-
-            # Compute dispersion energies
-            disp_inter_nd = locald4.compute_disp_2B_inter_from_C6s_NO_DAMPING(
-                atom_numbers,
-                new_geom_bohr,
-                C6s_dimer,
-                monAs,
-                monBs,
-                params_no_damping,
-            )
-            disp_inter_d = locald4.compute_disp_2B_inter_from_C6s(
-                atom_numbers,
-                new_geom_bohr,
-                C6s_dimer,
-                monAs,
-                monBs,
-                params_damped,
-            )
-
-            # Compute intermolecular damped dispersion using D3 C6s
-            disp_inter_d_D3_C6s = locald4.compute_disp_2B_inter_from_C6s(
-                atom_numbers,
-                new_geom_bohr,
-                C6s_dimer_D3,
-                monAs,
-                monBs,
-                params_damped,
-            )
-
-            # D3 supermolecular dispersion (d3_dimer - d3_monA - d3_monB)
-            disp_D3_supermolecular = d3_dimer - d3_monA - d3_monB
-
-            # Compute intramolecular dispersion changes
-            monA_disp = locald4.compute_disp_2B_from_C6s_NO_DAMPING(
-                atom_A, new_geom_bohr[monAs], C6s_mA, params_no_damping
-            )
-            monB_disp = locald4.compute_disp_2B_from_C6s_NO_DAMPING(
-                atom_B, new_geom_bohr[monBs], C6s_mB, params_no_damping
-            )
-            dimer_monA_disp = locald4.compute_disp_2B_from_C6s_NO_DAMPING(
-                atom_A, new_geom_bohr[monAs], dimer_monA_C6s, params_no_damping
-            )
-            dimer_monB_disp = locald4.compute_disp_2B_from_C6s_NO_DAMPING(
-                atom_B, new_geom_bohr[monBs], dimer_monB_C6s, params_no_damping
-            )
-
-            delta_A = dimer_monA_disp - monA_disp
-            delta_B = dimer_monB_disp - monB_disp
-
-            # Compute BJ-damped intramolecular dispersion changes
-            monA_disp_BJ = locald4.compute_disp_2B_from_C6s(
-                atom_A, new_geom_bohr[monAs], C6s_mA, params_damped
-            )
-            monB_disp_BJ = locald4.compute_disp_2B_from_C6s(
-                atom_B, new_geom_bohr[monBs], C6s_mB, params_damped
-            )
-            dimer_monA_disp_BJ = locald4.compute_disp_2B_from_C6s(
-                atom_A, new_geom_bohr[monAs], dimer_monA_C6s, params_damped
-            )
-            dimer_monB_disp_BJ = locald4.compute_disp_2B_from_C6s(
-                atom_B, new_geom_bohr[monBs], dimer_monB_C6s, params_damped
-            )
-            delta_A_BJ = dimer_monA_disp_BJ - monA_disp_BJ
-            delta_B_BJ = dimer_monB_disp_BJ - monB_disp_BJ
-
-            # partial charges
-            dimer_monA_qs, dimer_monB_qs = monomer_qs_from_dimer(q_dimer, q_A, q_B)
-            qs_sum_dimer = np.sum(q_dimer)
-            qs_sum_monA = np.sum(q_A)
-            qs_sum_monB = np.sum(q_B)
-            qs_sum_dimer_monA = np.sum(dimer_monA_qs)
-            qs_sum_dimer_monB = np.sum(dimer_monB_qs)
-
-            results["qs_sum_dimer_D4"].append(qs_sum_dimer)
-            results["qs_sum_monA_D4"].append(qs_sum_monA)
-            results["qs_sum_monB_D4"].append(qs_sum_monB)
-            results["qs_sum_change_A_D4"].append(qs_sum_dimer_monA - qs_sum_monA)
-            results["qs_sum_change_B_D4"].append(qs_sum_dimer_monB - qs_sum_monB)
-
-            # Store results
-            results["distance"].append(dist)
-            # D4 C6 results
-            results["C6_sum_dimer_D4"].append(c6_sum_dimer)
-            results["C6_sum_monA_D4"].append(c6_sum_monA)
-            results["C6_sum_monB_D4"].append(c6_sum_monB)
-            results["C6_sum_change_A_D4"].append(c6_sum_dimer_monA - c6_sum_monA)
-            results["C6_sum_change_B_D4"].append(c6_sum_dimer_monB - c6_sum_monB)
-            # D3 C6 results
-            results["C6_sum_dimer_D3"].append(c6_sum_dimer_D3)
-            results["C6_sum_monA_D3"].append(c6_sum_monA_D3)
-            results["C6_sum_monB_D3"].append(c6_sum_monB_D3)
-            results["C6_sum_change_A_D3"].append(c6_sum_dimer_monA_D3 - c6_sum_monA_D3)
-            results["C6_sum_change_B_D3"].append(c6_sum_dimer_monB_D3 - c6_sum_monB_D3)
-            # Dispersion energies
-            results["disp_inter_no_damping"].append(disp_inter_nd)
-            results["disp_inter_damped"].append(disp_inter_d)
-            results["disp_inter_damped_D3_C6s"].append(disp_inter_d_D3_C6s)
-            results["disp_D3_supermolecular"].append(disp_D3_supermolecular)
-            results["disp_delta_A_no_damping"].append(delta_A)
-            results["disp_delta_B_no_damping"].append(delta_B)
-            results["disp_delta_A_damped"].append(delta_A_BJ)
-            results["disp_delta_B_damped"].append(delta_B_BJ)
-
-            Geometry = np.hstack((atom_numbers[:, None], new_geom))
-            results["Geometry"].append(Geometry)
-            results["monAs"].append(monAs)
-            results["monBs"].append(monBs)
-            results["charges"].append(charges)
-
-            if print_lvl > 1:
-                print(
-                    f"d={dist:.2f} Å: C6 change A={c6_sum_dimer_monA - c6_sum_monA:.2f}, "
-                    f"B={c6_sum_dimer_monB - c6_sum_monB:.2f}, "
-                    f"Disp(ND)={disp_inter_nd:.4f}"
-                )
-
-        except Exception as e:
-            if print_lvl > 0:
-                print(f"Error at distance {dist:.2f}: {e}")
-            continue
 
     df_results = pd.DataFrame(results)
 

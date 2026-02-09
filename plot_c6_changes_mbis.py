@@ -150,7 +150,7 @@ def plot_c6_extrapolation_charges(
     ax_mid.text(
         -0.14,
         1.0,
-        "(A)",
+        "(B)",
         transform=ax_mid.transAxes,
         fontsize=16,
         fontweight="bold",
@@ -266,8 +266,8 @@ def plot_c6_extrapolation_charges(
 
     ax_inset = inset_axes(
         ax_top,
-        width="40%",
-        height="25%",
+        width="60%",
+        height="30%",
         loc="center right",
         borderpad=1.5,
     )
@@ -322,6 +322,23 @@ def plot_c6_extrapolation_charges(
         linewidth=1,
         label="SAPT0/aug-cc-pV(D+d)Z",
     )
+    # delta -D4 terms
+    ax_inset.plot(
+        inset_data["distance"],
+        inset_data["disp_delta_A_damped"],
+        color=colors["delta_A_BJ"],
+        marker=markers["delta_A_BJ"],
+        markersize=3,
+        linewidth=1,
+    )
+    ax_inset.plot(
+        inset_data["distance"],
+        inset_data["disp_delta_B_damped"],
+        color=colors["delta_B_BJ"],
+        marker=markers["delta_B_BJ"],
+        markersize=3,
+        linewidth=1,
+    )
 
     ax_inset.axhline(0, color="grey", linestyle="--", linewidth=0.5)
     # Add vertical line at equilibrium distance (if within inset range)
@@ -337,7 +354,7 @@ def plot_c6_extrapolation_charges(
         right=True,
     )
     ax_inset.set_xlabel(r"Distance (\AA)", fontsize=8)
-    ax_inset.set_ylabel("Disp. (kcal/mol)", fontsize=8)
+    ax_inset.set_ylabel("Disp. Energy\n(kcal/mol)", fontsize=8)
     ax_inset.set_xlim(inset_data["distance"].min()-0.2, inset_data["distance"].max()+0.2)
     # ax_inset minor ticks
     ax_inset.xaxis.set_minor_locator(AutoMinorLocator(2))
@@ -349,7 +366,7 @@ def plot_c6_extrapolation_charges(
     ax_top.text(
         -0.14,
         1.0,
-        "(B)",
+        "(A)",
         transform=ax_top.transAxes,
         fontsize=16,
         fontweight="bold",
@@ -550,10 +567,11 @@ def main():
     #     "./plots/c6_extrapolation/45_Ethyne-Pentane_c6_extrapolation_results_with_mbis_with_sapt.pkl"
     # )
     # Reload dataframe with MBIS charges
+
+    # Ensure that these are all dimer - monomer, says from monomer to dimer
     df = pd.read_pickle(
         "./plots/c6_extrapolation/45_Ethyne-Pentane_c6_extrapolation_results_with_mbis_with_sapt.pkl"
     )
-    print(df)
 
     # Add MBIS charge change calculations
     df = add_mbis_charge_changes(df)
