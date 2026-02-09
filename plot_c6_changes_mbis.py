@@ -167,7 +167,7 @@ def plot_c6_extrapolation_charges(
         top=True,
         right=True,
     )
-    ax_mid.legend(fontsize=legend_fontsize, loc="upper right")
+    ax_mid.legend(fontsize=legend_fontsize, loc="center right")
     ax_mid.xaxis.set_major_formatter(ScalarFormatter())
     ax_mid.yaxis.set_major_formatter(ScalarFormatter())
 
@@ -233,7 +233,7 @@ def plot_c6_extrapolation_charges(
         df_results["disp_delta_A_damped"],
         color=colors["delta_A_BJ"],
         marker=markers["delta_A_BJ"],
-        label=r"$\delta$ -D4(BJ)$^{AA}$",
+        label=r"$\Delta^{AB}_{A}$ HF-D4(BJ)",
         markersize=4,
     )
     ax_top.plot(
@@ -241,7 +241,7 @@ def plot_c6_extrapolation_charges(
         df_results["disp_delta_B_damped"],
         color=colors["delta_B_BJ"],
         marker=markers["delta_B_BJ"],
-        label=r"$\delta$ -D4 (BJ)$^{BB}$",
+        label=r"$\Delta^{AB}_{B}$ HF-D4(BJ)",
         markersize=4,
     )
     ax_top.plot(
@@ -267,8 +267,10 @@ def plot_c6_extrapolation_charges(
     ax_inset = inset_axes(
         ax_top,
         width="60%",
-        height="30%",
+        height="35%",
         loc="center right",
+        bbox_to_anchor=(0, 0.1, 1, 1),
+        bbox_transform=ax_top.transAxes,
         borderpad=1.5,
     )
 
@@ -355,7 +357,9 @@ def plot_c6_extrapolation_charges(
     )
     ax_inset.set_xlabel(r"Distance (\AA)", fontsize=8)
     ax_inset.set_ylabel("Disp. Energy\n(kcal/mol)", fontsize=8)
-    ax_inset.set_xlim(inset_data["distance"].min()-0.2, inset_data["distance"].max()+0.2)
+    ax_inset.set_xlim(
+        inset_data["distance"].min() - 0.2, inset_data["distance"].max() + 0.2
+    )
     # ax_inset minor ticks
     ax_inset.xaxis.set_minor_locator(AutoMinorLocator(2))
     ax_inset.yaxis.set_minor_locator(AutoMinorLocator(2))
@@ -383,7 +387,7 @@ def plot_c6_extrapolation_charges(
         top=True,
         right=True,
     )
-    ax_top.legend(fontsize=legend_fontsize - 4, loc="lower left", ncol=2)
+    ax_top.legend(fontsize=legend_fontsize - 4, loc="lower right", ncol=2)
     ax_top.xaxis.set_major_formatter(ScalarFormatter())
     ax_top.yaxis.set_major_formatter(ScalarFormatter())
 
@@ -451,7 +455,7 @@ def plot_c6_extrapolation_charges(
         top=True,
         right=True,
     )
-    ax_bot.legend(fontsize=legend_fontsize, loc="upper right")
+    ax_bot.legend(fontsize=legend_fontsize, loc="center right")
     ax_bot.xaxis.set_major_formatter(ScalarFormatter())
     ax_bot.yaxis.set_major_formatter(ScalarFormatter())
 
@@ -498,7 +502,7 @@ def compute_mbis_charges(df):
         charges_B.append(q_B)
     df["q_A"] = charges_A
     df["q_B"] = charges_B
-    df['q_dimer'] = charges_dimer
+    df["q_dimer"] = charges_dimer
     df.to_pickle(
         "./plots/c6_extrapolation/45_Ethyne-Pentane_c6_extrapolation_results_with_mbis.pkl"
     )
@@ -519,7 +523,7 @@ def compute_sapt_charges(df):
         pp(qcvars)
         sapt_disp.append(qcvars["SAPT DISP ENERGY"] * h2kcalmol)
         print("SAPT DISP:", sapt_disp[-1])
-    df['sapt0/adz'] = sapt_disp
+    df["sapt0/adz"] = sapt_disp
     df.to_pickle(
         "./plots/c6_extrapolation/45_Ethyne-Pentane_c6_extrapolation_results_with_sapt.pkl"
     )
@@ -543,13 +547,19 @@ def add_mbis_charge_changes(df):
 
     for idx, row in df.iterrows():
         # Sum of MBIS charges for monomers in current geometry
-        q_dimer_sum_A = np.sum(row['q_dimer'][:len(row["q_A"])])  # Charges for monomer A in dimer
-        q_dimer_sum_B = np.sum(row['q_dimer'][len(row["q_A"]):])  # Charges for monomer B in dimer
+        q_dimer_sum_A = np.sum(
+            row["q_dimer"][: len(row["q_A"])]
+        )  # Charges for monomer A in dimer
+        q_dimer_sum_B = np.sum(
+            row["q_dimer"][len(row["q_A"]) :]
+        )  # Charges for monomer B in dimer
 
         # Change relative to first (reference) geometry
         mbis_change_A.append(q_dimer_sum_A - q_A_sum)
         mbis_change_B.append(q_dimer_sum_B - q_B_sum)
-        print(f"{idx}: MBIS d A = {mbis_change_A[-1]:.8f}, for B = {mbis_change_B[-1]:.8f}")
+        print(
+            f"{idx}: MBIS d A = {mbis_change_A[-1]:.8f}, for B = {mbis_change_B[-1]:.8f}"
+        )
 
     df["qs_sum_change_A_MBIS"] = mbis_change_A
     df["qs_sum_change_B_MBIS"] = mbis_change_B
