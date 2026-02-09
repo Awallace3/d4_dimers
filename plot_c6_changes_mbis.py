@@ -7,6 +7,7 @@ import os
 import numpy as np
 import psi4
 from qm_tools_aw import tools
+from pprint import pprint as pp
 
 psi4.set_memory("32 GB")
 psi4.set_num_threads(12)
@@ -81,6 +82,8 @@ def plot_c6_extrapolation_charges(
         "delta_B": "green",
         "delta_A_BJ": "darkviolet",
         "delta_B_BJ": "darkgreen",
+        "disp_hfd4_supermolecular": "brown",
+        "sapt0/adz": "black",
     }
     markers = {
         "C6_change_A_D4": "o",
@@ -99,62 +102,64 @@ def plot_c6_extrapolation_charges(
         "delta_B": "P",
         "delta_A_BJ": "<",
         "delta_B_BJ": ">",
+        "disp_hfd4_supermolecular": "P",
+        "sapt0/adz": "*",
     }
 
     # ===== TOP PLOT: C6 sum changes =====
     # D4 C6 changes
-    ax_top.plot(
+    ax_mid.plot(
         df_results["distance"],
         df_results["C6_sum_change_A_D4"],
         color=colors["C6_change_A_D4"],
         marker=markers["C6_change_A_D4"],
-        label=r"$\Delta C_6^{AA}$ (D4)",
+        label=r"$\Delta C_6^{AA}$ (-D4)",
         markersize=4,
     )
-    ax_top.plot(
+    ax_mid.plot(
         df_results["distance"],
         df_results["C6_sum_change_B_D4"],
         color=colors["C6_change_B_D4"],
         marker=markers["C6_change_B_D4"],
-        label=r"$\Delta C_6^{BB}$ (D4)",
+        label=r"$\Delta C_6^{BB}$ (-D4)",
         markersize=4,
     )
     # D3 C6 changes
-    ax_top.plot(
+    ax_mid.plot(
         df_results["distance"],
         df_results["C6_sum_change_A_D3"],
         color=colors["C6_change_A_D3"],
         marker=markers["C6_change_A_D3"],
-        label=r"$\Delta C_6^{AA}$ (D3)",
+        label=r"$\Delta C_6^{AA}$ (-D3)",
         markersize=4,
     )
-    ax_top.plot(
+    ax_mid.plot(
         df_results["distance"],
         df_results["C6_sum_change_B_D3"],
         color=colors["C6_change_B_D3"],
         marker=markers["C6_change_B_D3"],
-        label=r"$\Delta C_6^{BB}$ (D3)",
+        label=r"$\Delta C_6^{BB}$ (-D3)",
         markersize=4,
     )
 
     # Add horizontal line at 0
-    ax_top.axhline(0, color="grey", linestyle="--", linewidth=0.8)
+    ax_mid.axhline(0, color="grey", linestyle="--", linewidth=0.8)
     # Add vertical line at equilibrium distance
-    ax_top.axvline(eq_distance, color="grey", linestyle="-", linewidth=1.0, alpha=0.6)
+    ax_mid.axvline(eq_distance, color="grey", linestyle="-", linewidth=1.0, alpha=0.6)
 
-    ax_top.text(
+    ax_mid.text(
         -0.14,
         1.0,
         "(A)",
-        transform=ax_top.transAxes,
+        transform=ax_mid.transAxes,
         fontsize=16,
         fontweight="bold",
         va="top",
         ha="left",
     )
-    ax_top.set_ylabel(r"$\Delta C_6$ Sum (a.u.)")
-    ax_top.minorticks_on()
-    ax_top.tick_params(
+    ax_mid.set_ylabel(r"$\Delta C_6$ Sum (a.u.)")
+    ax_mid.minorticks_on()
+    ax_mid.tick_params(
         which="both",
         width=1,
         labelsize=tick_fontsize,
@@ -162,41 +167,49 @@ def plot_c6_extrapolation_charges(
         top=True,
         right=True,
     )
-    ax_top.legend(fontsize=legend_fontsize, loc="upper right")
-    ax_top.xaxis.set_major_formatter(ScalarFormatter())
-    ax_top.yaxis.set_major_formatter(ScalarFormatter())
+    ax_mid.legend(fontsize=legend_fontsize, loc="upper right")
+    ax_mid.xaxis.set_major_formatter(ScalarFormatter())
+    ax_mid.yaxis.set_major_formatter(ScalarFormatter())
 
     # ===== MIDDLE PLOT: Dispersion energies =====
-    ax_mid.plot(
-        df_results["distance"],
-        df_results["disp_inter_no_damping"],
-        color=colors["disp_nd"],
-        marker=markers["disp_nd"],
-        label="Intermolecular -D4 (ND)",
-        markersize=5,
-    )
-    ax_mid.plot(
+    # ax_mid.plot(
+    #     df_results["distance"],
+    #     df_results["disp_inter_no_damping"],
+    #     color=colors["disp_nd"],
+    #     marker=markers["disp_nd"],
+    #     label="Intermolecular -D4 (ND)",
+    #     markersize=5,
+    # )
+    ax_top.plot(
         df_results["distance"],
         df_results["disp_inter_damped"],
         color=colors["disp_d"],
         marker=markers["disp_d"],
-        label="Intermolecular -D4 (Damped)",
+        label="HF-D4(BJ) Intermolecular ",
         markersize=4,
     )
-    ax_mid.plot(
+    ax_top.plot(
         df_results["distance"],
         df_results["disp_inter_damped_D3_C6s"],
         color=colors["disp_d_D3_C6s"],
         marker=markers["disp_d_D3_C6s"],
-        label="Intermolecular D3-C6 (Damped)",
+        label="HF-D3(BJ) Intermolecular",
         markersize=4,
     )
-    ax_mid.plot(
+    ax_top.plot(
         df_results["distance"],
         df_results["disp_D3_supermolecular"],
         color=colors["disp_D3_supermolecular"],
         marker=markers["disp_D3_supermolecular"],
-        label="-D3 Supermolecular",
+        label="HF-D3(BJ) Supermolecular IE",
+        markersize=4,
+    )
+    ax_top.plot(
+        df_results["distance"],
+        df_results["disp_hfd4_supermolecular"],
+        color=colors["disp_hfd4_supermolecular"],
+        marker=markers["disp_hfd4_supermolecular"],
+        label="HF-D4(BJ) Supermolecular IE",
         markersize=4,
     )
     # ax_mid.plot(
@@ -215,37 +228,46 @@ def plot_c6_extrapolation_charges(
     #     label=r"$\delta$ -D4 B (ND)",
     #     markersize=4,
     # )
-    ax_mid.plot(
+    ax_top.plot(
         df_results["distance"],
         df_results["disp_delta_A_damped"],
         color=colors["delta_A_BJ"],
         marker=markers["delta_A_BJ"],
-        label=r"$\delta$ -D4 A (BJ)",
+        label=r"$\delta$ -D4(BJ)$^{AA}$",
         markersize=4,
     )
-    ax_mid.plot(
+    ax_top.plot(
         df_results["distance"],
         df_results["disp_delta_B_damped"],
         color=colors["delta_B_BJ"],
         marker=markers["delta_B_BJ"],
-        label=r"$\delta$ -D4 B (BJ)",
+        label=r"$\delta$ -D4 (BJ)$^{BB}$",
+        markersize=4,
+    )
+    ax_top.plot(
+        df_results["distance"],
+        df_results["sapt0/adz"],
+        color=colors["sapt0/adz"],
+        marker=markers["sapt0/adz"],
+        label="SAPT0/aug-cc-pV(D+d)Z",
         markersize=4,
     )
 
     # Add horizontal line at 0
-    ax_mid.axhline(0, color="grey", linestyle="--", linewidth=0.8)
+    ax_top.axhline(0, color="grey", linestyle="--", linewidth=0.8)
     # Add vertical line at equilibrium distance
-    ax_mid.axvline(eq_distance, color="grey", linestyle="-", linewidth=1.0, alpha=0.6)
+    ax_top.axvline(eq_distance, color="grey", linestyle="-", linewidth=1.0, alpha=0.6)
 
     # Create inset plot for close distances (zoomed view of small energies)
-    # Focus on the first few points to highlight the smaller intermolecular energies
-    n_inset_points = min(8, len(df_results))
-    inset_data = df_results.iloc[:n_inset_points]
+    # Focus on the last few points to highlight the smaller intermolecular energies
+    # n_inset_points = min(8, len(df_results))
+    n_inset_points = len(df_results) // 3  # Last third of points
+    inset_data = df_results.iloc[n_inset_points:]
 
     ax_inset = inset_axes(
-        ax_mid,
+        ax_top,
         width="40%",
-        height="35%",
+        height="25%",
         loc="center right",
         borderpad=1.5,
     )
@@ -283,6 +305,23 @@ def plot_c6_extrapolation_charges(
         markersize=3,
         linewidth=1,
     )
+    ax_inset.plot(
+        inset_data["distance"],
+        inset_data["disp_hfd4_supermolecular"],
+        color=colors["disp_hfd4_supermolecular"],
+        marker=markers["disp_hfd4_supermolecular"],
+        markersize=3,
+        linewidth=1,
+    )
+    ax_inset.plot(
+        inset_data["distance"],
+        inset_data["sapt0/adz"],
+        color=colors["sapt0/adz"],
+        marker=markers["sapt0/adz"],
+        markersize=3,
+        linewidth=1,
+        label="SAPT0/aug-cc-pV(D+d)Z",
+    )
 
     ax_inset.axhline(0, color="grey", linestyle="--", linewidth=0.5)
     # Add vertical line at equilibrium distance (if within inset range)
@@ -299,23 +338,27 @@ def plot_c6_extrapolation_charges(
     )
     ax_inset.set_xlabel(r"Distance (\AA)", fontsize=8)
     ax_inset.set_ylabel("Disp. (kcal/mol)", fontsize=8)
+    ax_inset.set_xlim(inset_data["distance"].min()-0.2, inset_data["distance"].max()+0.2)
+    # ax_inset minor ticks
+    ax_inset.xaxis.set_minor_locator(AutoMinorLocator(2))
+    ax_inset.yaxis.set_minor_locator(AutoMinorLocator(2))
 
     # Mark the inset region on the main plot
-    mark_inset(ax_mid, ax_inset, loc1=2, loc2=4, fc="none", ec="0.5", lw=0.5)
+    mark_inset(ax_top, ax_inset, loc1=2, loc2=4, fc="none", ec="0.5", lw=0.5)
 
-    ax_mid.text(
+    ax_top.text(
         -0.14,
         1.0,
         "(B)",
-        transform=ax_mid.transAxes,
+        transform=ax_top.transAxes,
         fontsize=16,
         fontweight="bold",
         va="top",
         ha="left",
     )
-    ax_mid.set_ylabel("Disp. Energy (kcal/mol)")
-    ax_mid.minorticks_on()
-    ax_mid.tick_params(
+    ax_top.set_ylabel("Disp. Energy (kcal/mol)")
+    ax_top.minorticks_on()
+    ax_top.tick_params(
         which="both",
         width=1,
         labelsize=tick_fontsize,
@@ -323,9 +366,9 @@ def plot_c6_extrapolation_charges(
         top=True,
         right=True,
     )
-    ax_mid.legend(fontsize=legend_fontsize - 4, loc="lower left", ncol=2)
-    ax_mid.xaxis.set_major_formatter(ScalarFormatter())
-    ax_mid.yaxis.set_major_formatter(ScalarFormatter())
+    ax_top.legend(fontsize=legend_fontsize - 4, loc="lower left", ncol=2)
+    ax_top.xaxis.set_major_formatter(ScalarFormatter())
+    ax_top.yaxis.set_major_formatter(ScalarFormatter())
 
     # ===== BOTTOM PLOT: Partial charge changes =====
     # D4 charges
@@ -334,7 +377,7 @@ def plot_c6_extrapolation_charges(
         df_results["qs_sum_change_A_D4"],
         color=colors["q_change_A_D4"],
         marker=markers["q_change_A_D4"],
-        label=r"$\Delta q^{A}$ (D4)",
+        label=r"$\Delta q^{A}$ (-D4)",
         markersize=4,
     )
     ax_bot.plot(
@@ -342,7 +385,7 @@ def plot_c6_extrapolation_charges(
         df_results["qs_sum_change_B_D4"],
         color=colors["q_change_B_D4"],
         marker=markers["q_change_B_D4"],
-        label=r"$\Delta q^{B}$ (D4)",
+        label=r"$\Delta q^{B}$ (-D4)",
         markersize=4,
     )
 
@@ -454,8 +497,11 @@ def compute_sapt_charges(df):
         )
         psi4.geometry(geom_d)
         # e_dimer, wfn_dimer = psi4.energy("sapt2+3(ccd)/aug-cc-pv(d+d)z", return_wfn=True)
-        e_dimer, wfn_dimer = psi4.energy("sapt0/aug-cc-pv(d+d)z", return_wfn=True)
-        sapt_disp.append(psi4.core.get_variable("SAPT DISPERSION ENERGY") * h2kcalmol)
+        e_dimer = psi4.energy("sapt0/aug-cc-pv(d+d)z")
+        qcvars = psi4.core.variables()
+        pp(qcvars)
+        sapt_disp.append(qcvars["SAPT DISP ENERGY"] * h2kcalmol)
+        print("SAPT DISP:", sapt_disp[-1])
     df['sapt0/adz'] = sapt_disp
     df.to_pickle(
         "./plots/c6_extrapolation/45_Ethyne-Pentane_c6_extrapolation_results_with_sapt.pkl"
@@ -495,14 +541,14 @@ def add_mbis_charge_changes(df):
 
 
 def main():
-    df = pd.read_pickle(
-        "./plots/c6_extrapolation/45_Ethyne-Pentane_c6_extrapolation_results.pkl"
-    )
-    compute_sapt_charges(df)
-    compute_mbis_charges(df)
-    df.to_pickle(
-        "./plots/c6_extrapolation/45_Ethyne-Pentane_c6_extrapolation_results_with_mbis_with_sapt.pkl"
-    )
+    # df = pd.read_pickle(
+    #     "./plots/c6_extrapolation/45_Ethyne-Pentane_c6_extrapolation_results.pkl"
+    # )
+    # compute_sapt_charges(df)
+    # compute_mbis_charges(df)
+    # df.to_pickle(
+    #     "./plots/c6_extrapolation/45_Ethyne-Pentane_c6_extrapolation_results_with_mbis_with_sapt.pkl"
+    # )
     # Reload dataframe with MBIS charges
     df = pd.read_pickle(
         "./plots/c6_extrapolation/45_Ethyne-Pentane_c6_extrapolation_results_with_mbis_with_sapt.pkl"
@@ -511,8 +557,8 @@ def main():
 
     # Add MBIS charge change calculations
     df = add_mbis_charge_changes(df)
-
-    plot_c6_extrapolation_charges(df, 2.6, system_label="45_Ethyne-Pentane")
+    plot_c6_extrapolation_charges(df, 3.14, system_label="45_Ethyne-Pentane")
+    return
 
 
 if __name__ == "__main__":

@@ -799,7 +799,7 @@ def plot_c6_extrapolation(
         df_results["C6_sum_change_A_D4"],
         color=colors["C6_change_A_D4"],
         marker=markers["C6_change_A_D4"],
-        label=r"$\Delta C_6^{AA}$ (D4)",
+        label=r"$\Delta C_6^{AA}$ (-D4)",
         markersize=4,
     )
     ax_top.plot(
@@ -807,7 +807,7 @@ def plot_c6_extrapolation(
         df_results["C6_sum_change_B_D4"],
         color=colors["C6_change_B_D4"],
         marker=markers["C6_change_B_D4"],
-        label=r"$\Delta C_6^{BB}$ (D4)",
+        label=r"$\Delta C_6^{BB}$ (-D4)",
         markersize=4,
     )
     # D3 C6 changes
@@ -816,7 +816,7 @@ def plot_c6_extrapolation(
         df_results["C6_sum_change_A_D3"],
         color=colors["C6_change_A_D3"],
         marker=markers["C6_change_A_D3"],
-        label=r"$\Delta C_6^{AA}$ (D3)",
+        label=r"$\Delta C_6^{AA}$ (-D3)",
         markersize=4,
     )
     ax_top.plot(
@@ -824,7 +824,7 @@ def plot_c6_extrapolation(
         df_results["C6_sum_change_B_D3"],
         color=colors["C6_change_B_D3"],
         marker=markers["C6_change_B_D3"],
-        label=r"$\Delta C_6^{BB}$ (D3)",
+        label=r"$\Delta C_6^{BB}$ (-D3)",
         markersize=4,
     )
 
@@ -919,7 +919,7 @@ def plot_c6_extrapolation(
         df_results["disp_delta_A_damped"],
         color=colors["delta_A_BJ"],
         marker=markers["delta_A_BJ"],
-        label=r"$\delta$ -D4 A (BJ)",
+        label=r"$\delta$ -D4 AA (BJ)",
         markersize=4,
     )
     ax_mid.plot(
@@ -927,7 +927,7 @@ def plot_c6_extrapolation(
         df_results["disp_delta_B_damped"],
         color=colors["delta_B_BJ"],
         marker=markers["delta_B_BJ"],
-        label=r"$\delta$ -D4 B (BJ)",
+        label=r"$\delta$ -D4 BB (BJ)",
         markersize=4,
     )
 
@@ -1042,7 +1042,7 @@ def plot_c6_extrapolation(
         df_results["qs_sum_change_A_D4"],
         color=colors["q_change_A_D4"],
         marker=markers["q_change_A_D4"],
-        label=r"$\Delta q^{A}$ (D4)",
+        label=r"$\Delta q^{A}$ (-D4)",
         markersize=4,
     )
     ax_bot.plot(
@@ -1050,7 +1050,7 @@ def plot_c6_extrapolation(
         df_results["qs_sum_change_B_D4"],
         color=colors["q_change_B_D4"],
         marker=markers["q_change_B_D4"],
-        label=r"$\Delta q^{B}$ (D4)",
+        label=r"$\Delta q^{B}$ (-D4)",
         markersize=4,
     )
 
