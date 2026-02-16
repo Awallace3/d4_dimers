@@ -19,14 +19,19 @@
 # python3 -u main.py --df_path plots/ddft_study.pkl --level_theories 'SAPT_DFT_pbe0_atz_3_IE' --start_params_d3_key 'D3_BJ_START' --intermolecular_BJ_D3
 
 # Supermolecular
-python3 -u main.py --df_path plots/ddft_study.pkl --level_theories 'SAPT_DFT_b3lyp_adz_3_IE' --start_params_d3_key 'D3_BJ_START' --supermolecular_BJ_D3
-
-python3 -u main.py --df_path plots/ddft_study.pkl --level_theories 'SAPT_DFT_b3lyp_atz_3_IE' --start_params_d3_key 'D3_BJ_START' --supermolecular_BJ_D3
-
-python3 -u main.py --df_path plots/ddft_study.pkl --level_theories 'SAPT_DFT_pbe0_adz_3_IE' --start_params_d3_key 'D3_BJ_START' --supermolecular_BJ_D3
-
-python3 -u main.py --df_path plots/ddft_study.pkl --level_theories 'SAPT_DFT_pbe0_atz_3_IE' --start_params_d3_key 'D3_BJ_START' --supermolecular_BJ_D3
+# python3 -u main.py --df_path plots/ddft_study.pkl --level_theories 'SAPT_DFT_b3lyp_adz_3_IE' --start_params_d3_key 'D3_BJ_START' --supermolecular_BJ_D3
+#
+# python3 -u main.py --df_path plots/ddft_study.pkl --level_theories 'SAPT_DFT_b3lyp_atz_3_IE' --start_params_d3_key 'D3_BJ_START' --supermolecular_BJ_D3
+#
+# python3 -u main.py --df_path plots/ddft_study.pkl --level_theories 'SAPT_DFT_pbe0_adz_3_IE' --start_params_d3_key 'D3_BJ_START' --supermolecular_BJ_D3
+#
+# python3 -u main.py --df_path plots/ddft_study.pkl --level_theories 'SAPT_DFT_pbe0_atz_3_IE' --start_params_d3_key 'D3_BJ_START' --supermolecular_BJ_D3
 
 # Can we improve DFT-D4 fitting?
 # python3 -u main.py --df_path plots/ddft_study.pkl --level_theories "SAPT(DFT) [PBE0] Sum" --start_params_d4_key 'SAPT_DFT_pbe0_adz_3_IE_inter_START' --intermolecular_BJ
 # python3 -u main.py --df_path train.pkl --level_theories "SAPT(DFT) [PBE0] Sum" --start_params_d4_key 'SAPT_DFT_pbe0_adz_3_IE_inter_START'  --intermolecular_BJ
+
+# python3 -u main.py --df_path plots/ddft_study.pkl --level_theories 'SAPT_DFT_b3lyp_adz_3_IE' --start_params_d3_key 'D3_BJ_START' --supermolecular_BJ_D3 --energy_target 'SAPT_DFT_b3lyp_adz_DIFF_SAPT2+3(CCD)DMP2' --fit_dispersion_term
+# python3 -u main.py --df_path plots/ddft_study.pkl --level_theories 'SAPT_DFT_b3lyp_atz_3_IE' --start_params_d3_key 'D3_BJ_START' --supermolecular_BJ_D3 --energy_target 'SAPT_DFT_b3lyp_adz_DIFF_SAPT2+3(CCD)DMP2' --fit_dispersion_term
+# python3 -u main.py --df_path plots/ddft_study.pkl --level_theories 'SAPT_DFT_pbe0_adz_3_IE' --start_params_d3_key 'D3_BJ_START' --supermolecular_BJ_D3 --energy_target 'SAPT_DFT_b3lyp_adz_DIFF_SAPT2+3(CCD)DMP2' --fit_dispersion_term
+# python3 -u main.py --df_path plots/ddft_study.pkl --level_theories 'SAPT_DFT_pbe0_atz_3_IE' --start_params_d3_key 'D3_BJ_START' --supermolecular_BJ_D3 --energy_target 'SAPT_DFT_b3lyp_adz_DIFF_SAPT2+3(CCD)DMP2' --fit_dispersion_term

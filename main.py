@@ -83,7 +83,7 @@ def optimize_paramaters(
                     version=version,
                     output_marker="D3_" + extra_added,
                     force_ATM_on=ATM,
-                    # energy_target=energy_target,
+                    energy_target=energy_target,
                     # fit_dispersion_term=fit_dispersion_term,
                 )
             extra_added = extra
