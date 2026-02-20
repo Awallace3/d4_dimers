@@ -9307,10 +9307,10 @@ def plot_LoS_saptdft(
         # violin_plots_multi_individual(df)
         # violin_plots_multi_components_df_individual(df)
         # violin_plots_multi_subset_individual(df)
-        # violin_plots_multi(df)
-        # violin_plots_multi_subset(df)
-        violin_plots_multi_components(df, limit_to_column_not_nan="D3-ML")
-        violin_plots_multi_components_subset(df, limit_to_column_not_nan="D3-ML")
+        violin_plots_multi(df, limit_to_column_not_nan="B3LYP-D3 TOTAL ENERGY adz")
+        violin_plots_multi_subset(df, limit_to_column_not_nan="B3LYP-D3 TOTAL ENERGY adz")
+        violin_plots_multi_components(df, limit_to_column_not_nan="B3LYP-D3 TOTAL ENERGY adz")
+        violin_plots_multi_components_subset(df, limit_to_column_not_nan="B3LYP-D3 TOTAL ENERGY adz")
     else:
         # return
         # return
