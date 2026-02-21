@@ -12,6 +12,7 @@
 # python3 -u main.py --df_path plots/ddft_study.pkl --level_theories SAPT_DFT_pbe0_adz_3_IE --start_params_d4_key 2B_TT_START --intermolecular_TT # > BJ_inter_saptdftd4.log 
 # python3 -u main.py --df_path plots/ddft_study.pkl --level_theories 'SAPT_DFT_b3lyp_adz_3_IE' --start_params_d4_key 'SAPT_DFT_pbe0_adz_3_IE_inter_START'  --intermolecular_BJ 
 
+python3 -u main.py --df_path plots/ddft_study.pkl --level_theories 'SAPT_DFT_pbe0_adz_3_IE' 'SAPT_DFT_b3lyp_adz_3_IE' --start_params_d4_key HF_OPT_2B_START --intermolecular_BJ
 # python3 -u main.py --df_path plots/ddft_study.pkl --level_theories 'SAPT_DFT_b3lyp_adz_3_IE' --start_params_d3_key 'D3_BJ_START' --intermolecular_BJ_D3
 #
 # python3 -u main.py --df_path plots/ddft_study.pkl --level_theories 'SAPT_DFT_b3lyp_atz_3_IE' --start_params_d3_key 'D3_BJ_START' --intermolecular_BJ_D3

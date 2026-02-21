@@ -1344,6 +1344,7 @@ def optimization(
     elif version["compute_energy"] == "compute_int_energy_DISP_C6_only":
         compute = compute_int_energy_DISP_C6_only
     elif version["compute_energy"] == "compute_int_energy_DISP_2B_BJ_inter":
+        bounds = [(0.0, 4.0) for i in range(len(params))]
         compute = compute_int_energy_DISP_2B_BJ_inter
     elif version["compute_energy"] == "compute_int_energy_DISP_2B_TT_inter":
         compute = compute_int_energy_DISP_2B_TT_inter

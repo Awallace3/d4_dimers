@@ -1,4 +1,5 @@
 from . import plotting
+from . import plotting_saptdft
 from . import paramsTable
 from . import structs
 from . import r4r2
