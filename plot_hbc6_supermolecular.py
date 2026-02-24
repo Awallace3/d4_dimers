@@ -47,9 +47,9 @@ def df_setup(
     ddft=False,
     functionals=[
         "pbe0",
-        "b2plyp",
+        # "b2plyp",
         "b3lyp",
-        "wb97x",
+        # "wb97x",
     ],
     basis_sets=["adz", "atz"],
 ):
@@ -67,7 +67,6 @@ def df_setup(
     elif df is None:
         raise ValueError("No dataframe provided")
     p_2b, p_atm = paramsTable.param_lookup("SAPT_DFT_pbe0_adz_3_IE_inter")
-    print(p_2b, p_atm)
     df["Geometry"] = df.apply(lambda r: np.array(r["Geometry"]), axis=1)
     df["monAs"] = df.apply(lambda r: np.array(r["monAs"]), axis=1)
     df["monBs"] = df.apply(lambda r: np.array(r["monBs"]), axis=1)
@@ -94,6 +93,39 @@ def df_setup(
     #     ),
     #     axis=1,
     # )
+    df = plotting.compute_d4_from_opt_params(
+        df,
+        bases=[
+            [
+                "SAPT_DFT_pbe0_adz_total",
+                "SAPT_DFT_pbe0_adz_3_IE_inter",
+                "SAPT_DFT_pbe0_adz_3_IE_inter",
+                "SAPT_DFT_pbe0_adz_3_IE",
+            ],
+            [
+                "SAPT_DFT_b3lyp_adz_total",
+                "SAPT_DFT_b3lyp_adz_3_IE_inter",
+                "SAPT_DFT_b3lyp_adz_3_IE_inter",
+                "SAPT_DFT_b3lyp_adz_3_IE",
+            ],
+        ],
+        benchmark_label="benchmark ref energy",
+        disp_compute=locald4.compute_disp_2B_BJ_dimer_inter,
+    )
+    df = plotting.compute_d4_from_opt_params(
+        df,
+        bases=[
+            [
+                "SAPT_DFT_pbe0_adz_total",
+                "SAPT_DFT_pbe0_adz_3_IE_inter_NO_DAMPING",
+                "SAPT_DFT_pbe0_adz_3_IE_inter_NO_DAMPING",
+                # "pbe0",
+                "SAPT_DFT_pbe0_adz_3_IE",
+            ],
+        ],
+        benchmark_label="benchmark ref energy",
+        disp_compute=locald4.compute_disp_2B_NO_DAMPING,
+    )
     if ddft:
         df["d4_ddft"] = df["SAPT_DFT_pbe0_adz_d4_disp"]
     print(df["SAPT_DFT_b2plyp_atz"])
@@ -1121,8 +1153,8 @@ def subplot_all_curves_LoS_basis_set_D4_versions(
                         ]
 
                         for col in d4_cols:
-                            if col not in df_sys.columns:
-                                continue
+                            # if col not in df_sys.columns:
+                            #     continue
                             # plot plot for data points
                             axs[n].plot(
                                 df_sys["distance (A)"],
@@ -1131,10 +1163,6 @@ def subplot_all_curves_LoS_basis_set_D4_versions(
                                 marker=markers[col],
                                 label=f"{labels[col]}",
                             )
-                            # Set y-limits based on data
-                            # ylims = [df_sys[col].min() + 0.05 * df_sys[col].min(), 2]
-                            # print(f"{col} ylims: {ylims}")
-                            # axs[n].set_ylim(ylims)
 
                         # Plot SAPT(PBE0) reference
                         if func_col in df_sys.columns:
@@ -2257,8 +2285,8 @@ def main():
     # plot_hbc6(df)
     # plot_all_curves(df)
     #
-    # df = pd.read_pickle("./curves/ddft_curves_start.pkl")
-    # df = df_setup(df, ddft=True)
+    df = pd.read_pickle("./curves/ddft_curves_start.pkl")
+    df = df_setup(df, ddft=True)
     # subplot_all_curves_water_benzene_functional_form()
     # return
     df = df_setup(None, ddft=True)
