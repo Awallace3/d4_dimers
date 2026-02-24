@@ -207,10 +207,8 @@ def paramsDict() -> {}:
         ),
         "SAPT_DFT_atz_3_IE_2B_TT": np.array(
             [
-                [1.0, 0.23411801809020494, -
-                    0.4800724594734656, 5.861178021182603, 0.0],
-                [1.0, 0.23411801809020494, -
-                    0.4800724594734656, 5.861178021182603, 0.0],
+                [1.0, 0.23411801809020494, -0.4800724594734656, 5.861178021182603, 0.0],
+                [1.0, 0.23411801809020494, -0.4800724594734656, 5.861178021182603, 0.0],
             ]
         ),
         "3B_TT": np.array(
@@ -979,10 +977,8 @@ def generate_2B_ATM_param_subsets(
     elif len(params) == 2 and (
         type(params[0]) == float or type(params[0]) == np.float64
     ):
-        params_2B = np.array(
-            [1.0, 0.0, params[0], params[1], s9], dtype=np.float64)
-        params_ATM = np.array(
-            [1.0, 0.0, params[0], params[1], s9], dtype=np.float64)
+        params_2B = np.array([1.0, 0.0, params[0], params[1], s9], dtype=np.float64)
+        params_ATM = np.array([1.0, 0.0, params[0], params[1], s9], dtype=np.float64)
     elif len(params) == 2:
         params_2B, params_ATM = get_params(params_2B_key)
         params_ATM[2] = params[0]
@@ -999,3 +995,40 @@ param_dict = paramsDict()
 
 def param_lookup(param_name):
     return generate_2B_ATM_param_subsets(param_dict[param_name])
+
+
+def parameters_to_latex_table(param_names: dict):
+    rows = []
+    for lookup_name, latex_name in param_names.items():
+        if lookup_name not in param_dict:
+            raise KeyError(f"Unknown parameter name: {lookup_name}")
+
+        params_2b, _ = generate_2B_ATM_param_subsets(param_dict[lookup_name])
+        if len(params_2b) < 4:
+            raise ValueError(
+                f"2B parameters for '{lookup_name}' must contain at least 4 values."
+            )
+
+        s8 = float(params_2b[1])
+        a1 = float(params_2b[2])
+        a2 = float(params_2b[3])
+        escaped_name = str(latex_name).replace("_", "\\_")
+        rows.append(f"{escaped_name} & {s8:.8f} & {a1:.8f} & {a2:.8f} \\\\")
+
+    table_lines = [
+        "\\begin{table}[ht]",
+        "\\centering",
+        "\\begin{tabular}{lrrr}",
+        "\\hline",
+        "Parameter Set & $s_6$ & $a_1$ & $a_2$ \\\\",
+        "\\hline",
+        *rows,
+        "\\hline",
+        "\\end{tabular}",
+        "\\caption{Selected 2B damping parameters}",
+        "\\label{tab:selected_2b_params}",
+        "\\end{table}",
+    ]
+    latex_table = "\n".join(table_lines)
+    print(latex_table)
+    return latex_table
