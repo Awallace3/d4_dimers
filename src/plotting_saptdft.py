@@ -4429,48 +4429,50 @@ def _total_plot_labels_si():
         "SAPT2+3(CCD)DMP2": "SAPT2+3(CCD)DMP2 TOTAL ENERGY Error",
     }
 
+
 def _disp_plot_labels():
     return {
-            "SAPT(PBE0)": "SAPT(DFT) [PBE0] DISP ENERGY Error",
-            "SAPT(B3LYP)": "SAPT(DFT) [B3LYP] DISP ENERGY Error",
-            "PBE0-D4(SAPT)": "PBE0-D4 DISP ENERGY Error",
-            "B3LYP-D4(SAPT)": "B3LYP-D4 DISP ENERGY Error",
-            "PBE0-D3(SAPT)": "PBE0-D3 DISP ENERGY Error",
-            "B3LYP-D3(SAPT)": "B3LYP-D3 DISP ENERGY Error",
-            "SAPT(PBE0)-D4(S)": "SAPT(DFT)-D4 DISP ENERGY Error",
-            "SAPT(PBE0)-D4(I)": "SAPT(PBE0)-D4 INTER DISP ENERGY Error",
-            "SAPT(B3LYP)-D4(I)": "SAPT(B3LYP)-D4 INTER DISP ENERGY Error",
-            "SAPT(PBE0)-D3(I)": "SAPT(PBE0)-D3 INTER DISP ENERGY Error",
-            "SAPT(B3LYP)-D3(I)": "SAPT(B3LYP)-D3 INTER DISP ENERGY Error",
-            # "D3-ML": "D3-ML DISP ENERGY Error",
-            "SAPT0": "SAPT0 DISP ENERGY Error",
-            "SAPT0-D4": "SAPT0-D4 DISP ENERGY Error",
-            "SAPT2+": "SAPT2+ DISP ENERGY Error",
-            "SAPT2+3": "SAPT2+3 DISP ENERGY Error",
-            "SAPT2+3(CCD)": "SAPT2+3(CCD) DISP ENERGY Error",
+        "SAPT(PBE0)": "SAPT(DFT) [PBE0] DISP ENERGY Error",
+        "SAPT(B3LYP)": "SAPT(DFT) [B3LYP] DISP ENERGY Error",
+        "PBE0-D4(SAPT)": "PBE0-D4 DISP ENERGY Error",
+        "B3LYP-D4(SAPT)": "B3LYP-D4 DISP ENERGY Error",
+        "PBE0-D3(SAPT)": "PBE0-D3 DISP ENERGY Error",
+        "B3LYP-D3(SAPT)": "B3LYP-D3 DISP ENERGY Error",
+        "SAPT(PBE0)-D4(S)": "SAPT(DFT)-D4 DISP ENERGY Error",
+        "SAPT(PBE0)-D4(I)": "SAPT(PBE0)-D4 INTER DISP ENERGY Error",
+        "SAPT(B3LYP)-D4(I)": "SAPT(B3LYP)-D4 INTER DISP ENERGY Error",
+        "SAPT(PBE0)-D3(I)": "SAPT(PBE0)-D3 INTER DISP ENERGY Error",
+        "SAPT(B3LYP)-D3(I)": "SAPT(B3LYP)-D3 INTER DISP ENERGY Error",
+        # "D3-ML": "D3-ML DISP ENERGY Error",
+        "SAPT0": "SAPT0 DISP ENERGY Error",
+        "SAPT0-D4": "SAPT0-D4 DISP ENERGY Error",
+        "SAPT2+": "SAPT2+ DISP ENERGY Error",
+        "SAPT2+3": "SAPT2+3 DISP ENERGY Error",
+        "SAPT2+3(CCD)": "SAPT2+3(CCD) DISP ENERGY Error",
     }
 
 
 def _disp_plot_labels_SI():
     return {
-            "SAPT(PBE0)": "SAPT(DFT) [PBE0] DISP ENERGY Error",
-            "SAPT(B3LYP)": "SAPT(DFT) [B3LYP] DISP ENERGY Error",
-            "PBE0-D4(SAPT)": "PBE0-D4 DISP ENERGY Error",
-            "B3LYP-D4(SAPT)": "B3LYP-D4 DISP ENERGY Error",
-            "PBE0-D3(SAPT)": "PBE0-D3 DISP ENERGY Error",
-            "B3LYP-D3(SAPT)": "B3LYP-D3 DISP ENERGY Error",
-            "SAPT(PBE0)-D4(S)": "SAPT(DFT)-D4 DISP ENERGY Error",
-            "SAPT(PBE0)-D4(I)": "SAPT(PBE0)-D4 INTER DISP ENERGY Error",
-            "SAPT(B3LYP)-D4(I)": "SAPT(B3LYP)-D4 INTER DISP ENERGY Error",
-            "SAPT(PBE0)-D3(I)": "SAPT(PBE0)-D3 INTER DISP ENERGY Error",
-            "SAPT(B3LYP)-D3(I)": "SAPT(B3LYP)-D3 INTER DISP ENERGY Error",
-            "D3-ML": "D3-ML DISP ENERGY Error",
-            "SAPT0": "SAPT0 DISP ENERGY Error",
-            "SAPT0-D4": "SAPT0-D4 DISP ENERGY Error",
-            "SAPT2+": "SAPT2+ DISP ENERGY Error",
-            "SAPT2+3": "SAPT2+3 DISP ENERGY Error",
-            "SAPT2+3(CCD)": "SAPT2+3(CCD) DISP ENERGY Error",
+        "SAPT(PBE0)": "SAPT(DFT) [PBE0] DISP ENERGY Error",
+        "SAPT(B3LYP)": "SAPT(DFT) [B3LYP] DISP ENERGY Error",
+        "PBE0-D4(SAPT)": "PBE0-D4 DISP ENERGY Error",
+        "B3LYP-D4(SAPT)": "B3LYP-D4 DISP ENERGY Error",
+        "PBE0-D3(SAPT)": "PBE0-D3 DISP ENERGY Error",
+        "B3LYP-D3(SAPT)": "B3LYP-D3 DISP ENERGY Error",
+        "SAPT(PBE0)-D4(S)": "SAPT(DFT)-D4 DISP ENERGY Error",
+        "SAPT(PBE0)-D4(I)": "SAPT(PBE0)-D4 INTER DISP ENERGY Error",
+        "SAPT(B3LYP)-D4(I)": "SAPT(B3LYP)-D4 INTER DISP ENERGY Error",
+        "SAPT(PBE0)-D3(I)": "SAPT(PBE0)-D3 INTER DISP ENERGY Error",
+        "SAPT(B3LYP)-D3(I)": "SAPT(B3LYP)-D3 INTER DISP ENERGY Error",
+        "D3-ML": "D3-ML DISP ENERGY Error",
+        "SAPT0": "SAPT0 DISP ENERGY Error",
+        "SAPT0-D4": "SAPT0-D4 DISP ENERGY Error",
+        "SAPT2+": "SAPT2+ DISP ENERGY Error",
+        "SAPT2+3": "SAPT2+3 DISP ENERGY Error",
+        "SAPT2+3(CCD)": "SAPT2+3(CCD) DISP ENERGY Error",
     }
+
 
 def _filter_plot_labels_by_available_columns(df_labels_and_columns, dfs):
     if not dfs:
@@ -4545,7 +4547,13 @@ def _prepare_total_violin_dfs(
     return dfs
 
 
-def violin_plots_multi(df, limit_to_column_not_nan=None, slide=True, dfs=None):
+def violin_plots_multi(
+    df,
+    limit_to_column_not_nan=None,
+    slide=True,
+    dfs=None,
+    figure_name="./plots/fig1-totals_adz_atz_saptdft.jpg",
+):
     if dfs is None:
         dfs = _prepare_total_violin_dfs(
             df,
@@ -4572,7 +4580,7 @@ def violin_plots_multi(df, limit_to_column_not_nan=None, slide=True, dfs=None):
     cdsg_plot.error_statistics.violin_plot_table_multi_SAPT_components(
         dfs,
         df_labels_and_columns_total=df_labels_and_columns,
-        output_filename="./plots/fig1-totals_adz_atz_saptdft.jpg",
+        output_filename=figure_name,
         wspace=0.8,
         usetex=True,
         colors=colors_total_saptdftd4,
@@ -4629,7 +4637,12 @@ def violin_plots_multi_individual(df, limit_to_column_not_nan=None, dfs=None):
     return
 
 
-def violin_plots_multi_subset(df, limit_to_column_not_nan=None, dfs=None):
+def violin_plots_multi_subset(
+    df,
+    limit_to_column_not_nan=None,
+    dfs=None,
+    figure_name="./plots/fig2-totals_adz_atz_aqz_saptdft_subset.jpg",
+):
     if dfs is None:
         dfs = _prepare_total_violin_dfs(
             df,
@@ -4646,7 +4659,7 @@ def violin_plots_multi_subset(df, limit_to_column_not_nan=None, dfs=None):
     cdsg_plot.error_statistics.violin_plot_table_multi_SAPT_components(
         dfs,
         df_labels_and_columns_total=df_labels_and_columns,
-        output_filename="./plots/fig2-totals_adz_atz_aqz_saptdft_subset.jpg",
+        output_filename=figure_name,
         colors=colors_total_saptdftd4,
         wspace=0.8,
         usetex=True,
@@ -5815,6 +5828,8 @@ def violin_plots_multi_components(
     limit_to_column_not_nan=None,
     slide=False,
     dfs=None,
+    figure_name_nondisp="./plots/fig3-components_adz_atz_nondisp.jpg",
+    figure_name_disp="./plots/fig4-components_adz_atz_disp.jpg",
 ):
     if dfs is None:
         dfs = _prepare_component_violin_dfs(
@@ -6097,7 +6112,7 @@ def violin_plots_multi_components(
         x_label_fontsize = 12
         y_label_fontsize = 12
         extra_label = ""
-    output_filename = "./plots/fig3-components_adz_atz_nondisp.jpg"
+    output_filename = figure_name_nondisp
 
     print(f"Plotting Extra label: {extra_label}")
     cdsg_plot.error_statistics.violin_plot_table_multi_SAPT_components(
@@ -6160,7 +6175,7 @@ def violin_plots_multi_components(
         figure_size=fig_size,
         grid_heights=grid_heights,
         grid_widths=[1.0],
-        output_filename="./plots/fig4-components_adz_atz_disp.jpg",
+        output_filename=figure_name_disp,
         # mcure=mcure_labels,
     )
     return
@@ -7176,6 +7191,8 @@ def violin_plots_multi_components_subset(
     df,
     limit_to_column_not_nan=None,
     dfs=None,
+    figure_name_nondisp="./plots/SI-fig-components_adz_atz_aqz_subset_nondisp.jpg",
+    figure_name_disp="./plots/fig5_components_adz_atz_aqz_subset_disp.jpg",
 ):
     if dfs is None:
         dfs = _prepare_component_violin_dfs(
@@ -7252,7 +7269,7 @@ def violin_plots_multi_components_subset(
         figure_size=fig_size,
         grid_heights=grid_heights,
         grid_widths=[5, 5, 6],
-        output_filename=f"./plots/SI-fig-components_adz_atz_aqz_subset_nondisp.jpg",
+        output_filename=figure_name_nondisp,
         # mcure=mcure_labels,
     )
     cdsg_plot.error_statistics.violin_plot_table_multi_SAPT_components(
@@ -7268,7 +7285,7 @@ def violin_plots_multi_components_subset(
         figure_size=fig_size,
         grid_heights=grid_heights,
         grid_widths=[1.0],
-        output_filename=f"./plots/fig5_components_adz_atz_aqz_subset_disp.jpg",
+        output_filename=figure_name_disp,
     )
 
     # Compute differences between SAPT0 vs DFT and SAPT0 vs SAPT2+3(CCD),
@@ -8322,7 +8339,10 @@ def d3_conversions(df):
     df["SAPT(B3LYP)-D3 INTER DISP ENERGY adz"] = df["SAPT(B3LYP)-D3 INTER DISP ENERGY"]
     df["SAPT(B3LYP)-D3 INTER DISP ENERGY atz"] = df["SAPT(B3LYP)-D3 INTER DISP ENERGY"]
     df["SAPT(B3LYP)-D3 INTER DISP ENERGY aqz"] = df["SAPT(B3LYP)-D3 INTER DISP ENERGY"]
-    df["SAPT(B3LYP)-D3 INTER TOTAL ENERGY adz"] = df["SAPT(B3LYP)-D3 INTER DISP ENERGY"] + df["SAPT_DFT_b3lyp_adz_3_IE"] / h2kcalmol
+    df["SAPT(B3LYP)-D3 INTER TOTAL ENERGY adz"] = (
+        df["SAPT(B3LYP)-D3 INTER DISP ENERGY"]
+        + df["SAPT_DFT_b3lyp_adz_3_IE"] / h2kcalmol
+    )
     print(df[["SAPT(B3LYP)-D3 INTER TOTAL ENERGY adz"]])
     print(df[["SAPT_DFT_b3lyp_adz_3_IE"]])
     print(df[["SAPT(B3LYP)-D3 INTER DISP ENERGY"]])
@@ -8398,6 +8418,8 @@ def plot_LoS_saptdft(
         return data
 
     limit_col = "B3LYP-D3 TOTAL ENERGY adz"
+    limit_col_si = "D3-ML"
+
     # Main Paper
     total_full_dfs = _load_or_build(
         "./dfs/LoS_total_full_dfs.pkl",
@@ -8438,4 +8460,64 @@ def plot_LoS_saptdft(
     violin_plots_multi_subset(df, dfs=total_subset_dfs)
     violin_plots_multi_components(df, dfs=components_full_dfs)
     violin_plots_multi_components_subset(df, dfs=components_subset_dfs)
+
+    # SI figures using only entries with D3-ML available
+    total_full_dfs_si = _load_or_build(
+        "./dfs/LoS_total_full_dfs_D3-ML.pkl",
+        lambda: _prepare_total_violin_dfs(
+            df,
+            bases=("adz", "atz"),
+            limit_to_column_not_nan=limit_col_si,
+        ),
+    )
+    total_subset_dfs_si = _load_or_build(
+        "./dfs/LoS_total_subset_dfs_D3-ML.pkl",
+        lambda: _prepare_total_violin_dfs(
+            df,
+            bases=("adz", "atz", "aqz"),
+            limit_to_column_not_nan=limit_col_si,
+            subset_only=True,
+        ),
+    )
+    components_full_dfs_si = _load_or_build(
+        "./dfs/LoS_components_full_dfs_D3-ML.pkl",
+        lambda: _prepare_component_violin_dfs(
+            df,
+            bases=("adz", "atz"),
+            limit_to_column_not_nan=limit_col_si,
+            subset_only=False,
+        ),
+    )
+    components_subset_dfs_si = _load_or_build(
+        "./dfs/LoS_components_subset_dfs_D3-ML.pkl",
+        lambda: _prepare_component_violin_dfs(
+            df,
+            bases=("adz", "atz", "aqz"),
+            limit_to_column_not_nan=limit_col_si,
+            subset_only=True,
+        ),
+    )
+
+    violin_plots_multi(
+        df,
+        dfs=total_full_dfs_si,
+        figure_name="./plots/SI-fig1-totals_adz_atz_saptdft_D3-ML.jpg",
+    )
+    violin_plots_multi_subset(
+        df,
+        dfs=total_subset_dfs_si,
+        figure_name="./plots/SI-fig2-totals_adz_atz_aqz_saptdft_subset_D3-ML.jpg",
+    )
+    violin_plots_multi_components(
+        df,
+        dfs=components_full_dfs_si,
+        figure_name_nondisp="./plots/SI-fig3-components_adz_atz_nondisp_D3-ML.jpg",
+        figure_name_disp="./plots/SI-fig4-components_adz_atz_disp_D3-ML.jpg",
+    )
+    violin_plots_multi_components_subset(
+        df,
+        dfs=components_subset_dfs_si,
+        figure_name_nondisp="./plots/SI-fig5-components_adz_atz_aqz_subset_nondisp_D3-ML.jpg",
+        figure_name_disp="./plots/SI-fig6-components_adz_atz_aqz_subset_disp_D3-ML.jpg",
+    )
     return
