@@ -998,6 +998,7 @@ def subplot_all_curves_LoS_basis_set_D4_versions(
         for db in dbs:
             print(db)
             df_db = df[df["DB"] == db]
+            print(df_db)
             f.write(f"\\section*{{{db}}}\n")
             # write a latex table for MAE and ME for each functional and basis set
             f.write("\\begin{table}[h!]\n")
@@ -1064,7 +1065,7 @@ def subplot_all_curves_LoS_basis_set_D4_versions(
                     # Define colors and markers for each method
                     colors = {
                         "-D4 (HF_ATM)": "blue",
-                        # "-D4 (SAPT_DFT_pbe0_adz_3_IE)": "red",
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE)": "red",
                         "-D4 (SAPT_DFT_pbe0_adz_3_IE_inter)": "green",
                         "-D4 (SAPT_DFT_pbe0_adz_3_IE_NO_DAMPING)": "purple",
                         "-D4 (SAPT_DFT_pbe0_adz_3_IE_inter_NO_DAMPING)": "orange",
@@ -1083,11 +1084,11 @@ def subplot_all_curves_LoS_basis_set_D4_versions(
                         "E_ref_hlsapt_atz": "o",
                     }
                     labels = {
-                        "-D4 (HF_ATM)": "HF-D4 (S)",
-                        "-D4 (SAPT_DFT_pbe0_adz_3_IE)": "SAPT(PBE0)-D4 (S)",
-                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_inter)": "SAPT(PBE0)-D4 (I)",
-                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_NO_DAMPING)": "SAPT(PBE0)-D4 (S, ND)",
-                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_inter_NO_DAMPING)": "SAPT(PBE0)-D4 (I, ND)",
+                        "-D4 (HF_ATM)": "HF-D4(BJ)ATM(S)",
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE)": "SAPT(PBE0)-D4(S)",
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_inter)": "SAPT(PBE0)-D4(I)",
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_NO_DAMPING)": "SAPT(PBE0)-D4(S, ND)",
+                        "-D4 (SAPT_DFT_pbe0_adz_3_IE_inter_NO_DAMPING)": "SAPT(PBE0)-D4(I, ND)",
                         "PBD0-D4": "PBE0-D4 DISP ENERGY adz",
                         "SAPT(PBE0)": "SAPT(PBE0)",
                         "E_ref_hlsapt_atz": "SAPT2+3(CCD)/aTZ",
@@ -1128,7 +1129,7 @@ def subplot_all_curves_LoS_basis_set_D4_versions(
                                 df_sys[col],
                                 color=colors[col],
                                 marker=markers[col],
-                                label=f"{labels[col]} (Data)",
+                                label=f"{labels[col]}",
                             )
                             # Set y-limits based on data
                             axs[n].set_ylim(
@@ -1142,7 +1143,7 @@ def subplot_all_curves_LoS_basis_set_D4_versions(
                                 df_sys[func_col],
                                 color=colors["SAPT(PBE0)"],
                                 marker=markers["SAPT(PBE0)"],
-                                label=f"{labels['SAPT(PBE0)']} (Data)",
+                                label=f"{labels['SAPT(PBE0)']}",
                             )
 
                         # Plot SAPT2+3(CCD) reference
@@ -1151,7 +1152,7 @@ def subplot_all_curves_LoS_basis_set_D4_versions(
                             df_sys["E_ref_hlsapt_atz"],
                             color=colors["E_ref_hlsapt_atz"],
                             marker=markers["E_ref_hlsapt_atz"],
-                            label=f"{labels['E_ref_hlsapt_atz']} (Data)",
+                            label=f"{labels['E_ref_hlsapt_atz']}",
                         )
 
                         # Set plot properties
@@ -1225,7 +1226,7 @@ def subplot_all_curves_LoS_basis_set_D4_versions_nondamped(
 \usepackage[margin=0.1in]{geometry}
 \begin{document}
 """
-    tick_fontsize = 14
+    tick_fontsize = 18
     legend_fontsize = 12
     with open("./plots/disp_curves_ddft_d4/LoS_disp_curves_nd.tex", "w") as f:
         f.write(tex_header)
@@ -1249,7 +1250,7 @@ def subplot_all_curves_LoS_basis_set_D4_versions_nondamped(
                     fig, axs = plt.subplots(
                         2,
                         1,
-                        figsize=(6, 7),
+                        figsize=(10, 6),
                         dpi=300,
                     )
 
@@ -1731,14 +1732,14 @@ def subplot_all_curves_water_benzene_functional_form(
                             linewidth=2.0,
                             color="k",
                         )
-                        axs[n].set_title(f"\\textbf{{{basis_set_label}}}", fontsize=20)
+                        axs[n].set_title(f"\\textbf{{{basis_set_label}}}", fontsize=24)
                         if n >= (n_basis_sets - 1) * 2 - 1:
                             axs[n].set_xlabel(r"Distance (\AA)", fontsize=16)
                         axs[n].set_ylabel(
                             f"Disp. Energy (kcal$\cdot$mol$^{-1}$)", fontsize=20
                         )
                         axs[n].tick_params(axis="both", which="major", labelsize=18)
-                        axs[n].legend(loc="lower right", fontsize=18)
+                        axs[n].legend(loc="lower right", fontsize=14)
                         axs[n].yaxis.set_minor_locator(AutoMinorLocator())
                         axs[n].xaxis.set_minor_locator(AutoMinorLocator())
                         # make x-axis log scale
@@ -2258,9 +2259,9 @@ def main():
     # subplot_all_curves_water_benzene_functional_form()
     # return
     df = df_setup(None, ddft=True)
-    c6_change_mon_dimer(df, system_label="45_Ethyne-Pentane", print_lvl=1)
-    c6_change_mon_dimer(df, system_label="43_Uracil-Neopentane", print_lvl=1)
-    return
+    # c6_change_mon_dimer(df, system_label="45_Ethyne-Pentane", print_lvl=1)
+    # c6_change_mon_dimer(df, system_label="43_Uracil-Neopentane", print_lvl=1)
+    # return
     # pp(df.columns.values.tolist())
     # print(df['SAPT(DFT) [PBE0] DISP ENERGY atz'])
     # pp(df.columns.values.tolist())
@@ -2269,9 +2270,10 @@ def main():
     # print(df['R'])
     # subplot_all_curves_LoS(df, basis_sets=["adz"])
     # subplot_all_curves_LoS_basis_set(df, basis_sets=["adz", "atz"])
-    # subplot_all_curves_LoS_basis_set_D4_versions(
-    #     df, basis_sets=["adz", "atz"], build_pdf=True
-    # )
+    subplot_all_curves_LoS_basis_set_D4_versions(
+        df, basis_sets=["adz", "atz"], build_pdf=True
+    )
+    return
 
     # Precursors
     print(df["SAPT(DFT) [PBE0] DISP ENERGY atz"])
