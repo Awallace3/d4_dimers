@@ -66,7 +66,7 @@ def df_setup(
         return pd.read_pickle("./plots/ddft_curves.pkl")
     elif df is None:
         raise ValueError("No dataframe provided")
-    p_2b, p_atm = paramsTable.param_lookup("sadz_inter")
+    p_2b, p_atm = paramsTable.param_lookup("SAPT_DFT_pbe0_adz_3_IE_inter")
     print(p_2b, p_atm)
     df["Geometry"] = df.apply(lambda r: np.array(r["Geometry"]), axis=1)
     df["monAs"] = df.apply(lambda r: np.array(r["monAs"]), axis=1)
@@ -1043,7 +1043,7 @@ def subplot_all_curves_LoS_basis_set_D4_versions(
             if db.lower() in ["achc", "ssi", "ion43"]:
                 continue
             sys_numbers = df_db["System Label"].unique()
-            sys_numbers = sys_numbers[:3]
+            # sys_numbers = sys_numbers[:3]
             if len(sys_numbers) > 0:
                 os.makedirs(f"./plots/disp_curves_ddft_d4/{db}", exist_ok=True)
                 for n1, i in enumerate(sys_numbers):
@@ -1132,9 +1132,9 @@ def subplot_all_curves_LoS_basis_set_D4_versions(
                                 label=f"{labels[col]}",
                             )
                             # Set y-limits based on data
-                            axs[n].set_ylim(
-                                df_sys[col].min() + 0.05 * df_sys[col].min(), 0.5
-                            )
+                            # ylims = [df_sys[col].min() + 0.05 * df_sys[col].min(), 2]
+                            # print(f"{col} ylims: {ylims}")
+                            # axs[n].set_ylim(ylims)
 
                         # Plot SAPT(PBE0) reference
                         if func_col in df_sys.columns:
@@ -1166,6 +1166,9 @@ def subplot_all_curves_LoS_basis_set_D4_versions(
                         # Format tick labels
                         axs[n].xaxis.set_major_formatter(ScalarFormatter())
                         axs[n].yaxis.set_major_formatter(ScalarFormatter())
+                        ylims = [df_sys['E_ref_hlsapt_atz'].min() + 0.05 * df_sys['E_ref_hlsapt_atz'].min(), 2]
+                        print(f"{col} ylims: {ylims}")
+                        axs[n].set_ylim(ylims)
 
                     axs[-1].set_xlabel(r"Distance (\AA)")
                     plt.tight_layout()
