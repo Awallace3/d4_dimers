@@ -124,7 +124,7 @@ def df_setup(
             ],
         ],
         benchmark_label="benchmark ref energy",
-        disp_compute=locald4.compute_disp_2B_NO_DAMPING,
+        disp_compute=locald4.compute_disp_2B_BJ_dimer_inter,
     )
     if ddft:
         df["d4_ddft"] = df["SAPT_DFT_pbe0_adz_d4_disp"]
