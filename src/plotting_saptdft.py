@@ -4483,6 +4483,22 @@ def _filter_plot_labels_by_available_columns(df_labels_and_columns, dfs):
     return {k: v for k, v in df_labels_and_columns.items() if v in common}
 
 
+def _limit_df_to_non_nan_columns(df, limit_to_column_not_nan=None):
+    if limit_to_column_not_nan is None:
+        return df
+
+    if isinstance(limit_to_column_not_nan, (list, tuple)):
+        limit_cols = list(limit_to_column_not_nan)
+    else:
+        limit_cols = [limit_to_column_not_nan]
+
+    for col in limit_cols:
+        size_prior = len(df)
+        df = df[df[col].notna()].copy()
+        print(f"Limiting to {col} not NaN: {size_prior} -> {len(df)}")
+    return df
+
+
 def _prepare_total_violin_dfs(
     df,
     bases,
@@ -4492,12 +4508,7 @@ def _prepare_total_violin_dfs(
     if subset_only:
         df = df[df["subset"]].copy()
         print(f"Subset: {len(df)}")
-    if limit_to_column_not_nan is not None:
-        size_prior = len(df)
-        df = df[df[limit_to_column_not_nan].notna()].copy()
-        print(
-            f"Limiting to {limit_to_column_not_nan} not NaN: {size_prior} -> {len(df)}"
-        )
+    df = _limit_df_to_non_nan_columns(df, limit_to_column_not_nan)
 
     sapt_methods = _total_sapt_methods()
     base_cols = ["DB", "system_id", "benchmark ref energy", "E_R_eq", "R"]
@@ -4507,6 +4518,8 @@ def _prepare_total_violin_dfs(
         "aqz": "aug-cc-pVQZ",
     }
     dfs = []
+    adz_keys = None
+    key_cols = ["DB", "system_id", "R"]
 
     for basis in bases:
         local_rename = _total_local_method_map(basis)
@@ -4520,6 +4533,13 @@ def _prepare_total_violin_dfs(
         df_basis.columns = [c.replace(f" {basis}", "") for c in df_basis.columns]
         rename_map = {k: v for k, v in local_rename.items() if k in df_basis.columns}
         df_basis.rename(columns=rename_map, inplace=True)
+
+        if basis == "adz" and all(c in df_basis.columns for c in key_cols):
+            adz_keys = df_basis[key_cols].drop_duplicates().copy()
+        elif basis in {"atz", "aqz"} and adz_keys is not None:
+            size_prior = len(df_basis)
+            df_basis = df_basis.merge(adz_keys, on=key_cols, how="inner")
+            print(f"Limiting {basis} to adz keys: {size_prior} -> {len(df_basis)}")
 
         methods_for_error = [m for m in sapt_methods if m in df_basis.columns]
         methods_for_error.extend(
@@ -4547,6 +4567,42 @@ def _prepare_total_violin_dfs(
     return dfs
 
 
+def _align_total_violin_dfs_to_adz(dfs):
+    key_cols = ["DB", "system_id", "R"]
+    if not dfs:
+        return dfs
+
+    adz_entry = None
+    for d in dfs:
+        if d.get("name") == "adz":
+            adz_entry = d
+            break
+    if adz_entry is None:
+        return dfs
+
+    adz_df = adz_entry["df"]
+    if not all(c in adz_df.columns for c in key_cols):
+        return dfs
+
+    adz_keys = adz_df[key_cols].drop_duplicates().copy()
+    adz_size = len(adz_keys)
+
+    for d in dfs:
+        df_basis = d["df"]
+        if not all(c in df_basis.columns for c in key_cols):
+            continue
+        size_prior = len(df_basis)
+        df_basis = df_basis.drop_duplicates(subset=key_cols, keep="first")
+        if d.get("name") != "adz":
+            df_basis = df_basis.merge(adz_keys, on=key_cols, how="inner")
+        d["df"] = df_basis
+        print(
+            f"Aligning {d.get('name', 'unknown')} to adz keys: "
+            f"{size_prior} -> {len(df_basis)} (adz={adz_size})"
+        )
+    return dfs
+
+
 def violin_plots_multi(
     df,
     limit_to_column_not_nan=None,
@@ -4563,6 +4619,7 @@ def violin_plots_multi(
     df_labels_and_columns = _filter_plot_labels_by_available_columns(
         _total_plot_labels(), dfs
     )
+    dfs = _align_total_violin_dfs_to_adz(dfs)
 
     import cdsg_plot
 
@@ -4653,6 +4710,7 @@ def violin_plots_multi_subset(
     df_labels_and_columns = _filter_plot_labels_by_available_columns(
         _total_plot_labels(), dfs
     )
+    dfs = _align_total_violin_dfs_to_adz(dfs)
 
     import cdsg_plot
 
@@ -5746,12 +5804,7 @@ def _prepare_component_violin_dfs(
     if subset_only:
         df = df[df["subset"]].copy()
         print(f"Subset: {len(df)}")
-    if limit_to_column_not_nan is not None:
-        size_prior = len(df)
-        df = df[df[limit_to_column_not_nan].notna()].copy()
-        print(
-            f"Limiting to {limit_to_column_not_nan} not NaN: {size_prior} -> {len(df)}"
-        )
+    df = _limit_df_to_non_nan_columns(df, limit_to_column_not_nan)
 
     for functional in ("pbe0", "b3lyp", "b2plyp", "wb97x"):
         for basis in bases:
@@ -8419,105 +8472,108 @@ def plot_LoS_saptdft(
 
     limit_col = "B3LYP-D3 TOTAL ENERGY adz"
     limit_col_si = "D3-ML"
+    limit_cols_si = [limit_col_si, limit_col]
 
-    # Main Paper
-    total_full_dfs = _load_or_build(
-        "./dfs/LoS_total_full_dfs.pkl",
-        lambda: _prepare_total_violin_dfs(
-            df,
-            bases=("adz", "atz"),
-            limit_to_column_not_nan=limit_col,
-        ),
-    )
-    total_subset_dfs = _load_or_build(
-        "./dfs/LoS_total_subset_dfs.pkl",
-        lambda: _prepare_total_violin_dfs(
-            df,
-            bases=("adz", "atz", "aqz"),
-            limit_to_column_not_nan=limit_col,
-            subset_only=True,
-        ),
-    )
-    components_full_dfs = _load_or_build(
-        "./dfs/LoS_components_full_dfs.pkl",
-        lambda: _prepare_component_violin_dfs(
-            df,
-            bases=("adz", "atz"),
-            limit_to_column_not_nan=limit_col,
-            subset_only=False,
-        ),
-    )
-    components_subset_dfs = _load_or_build(
-        "./dfs/LoS_components_subset_dfs.pkl",
-        lambda: _prepare_component_violin_dfs(
-            df,
-            bases=("adz", "atz", "aqz"),
-            limit_to_column_not_nan=limit_col,
-            subset_only=True,
-        ),
-    )
-    violin_plots_multi(df, dfs=total_full_dfs)
-    violin_plots_multi_subset(df, dfs=total_subset_dfs)
-    violin_plots_multi_components(df, dfs=components_full_dfs)
-    violin_plots_multi_components_subset(df, dfs=components_subset_dfs)
+    if False:
+        # Main Paper
+        total_full_dfs = _load_or_build(
+            "./dfs/LoS_total_full_dfs.pkl",
+            lambda: _prepare_total_violin_dfs(
+                df,
+                bases=("adz", "atz"),
+                limit_to_column_not_nan=limit_col,
+            ),
+        )
+        total_subset_dfs = _load_or_build(
+            "./dfs/LoS_total_subset_dfs.pkl",
+            lambda: _prepare_total_violin_dfs(
+                df,
+                bases=("adz", "atz", "aqz"),
+                limit_to_column_not_nan=limit_col,
+                subset_only=True,
+            ),
+        )
+        components_full_dfs = _load_or_build(
+            "./dfs/LoS_components_full_dfs.pkl",
+            lambda: _prepare_component_violin_dfs(
+                df,
+                bases=("adz", "atz"),
+                limit_to_column_not_nan=limit_col,
+                subset_only=False,
+            ),
+        )
+        components_subset_dfs = _load_or_build(
+            "./dfs/LoS_components_subset_dfs.pkl",
+            lambda: _prepare_component_violin_dfs(
+                df,
+                bases=("adz", "atz", "aqz"),
+                limit_to_column_not_nan=limit_col,
+                subset_only=True,
+            ),
+        )
+        violin_plots_multi(df, dfs=total_full_dfs)
+        violin_plots_multi_subset(df, dfs=total_subset_dfs)
+        violin_plots_multi_components(df, dfs=components_full_dfs)
+        violin_plots_multi_components_subset(df, dfs=components_subset_dfs)
 
-    # SI figures using only entries with D3-ML available
-    total_full_dfs_si = _load_or_build(
-        "./dfs/LoS_total_full_dfs_D3-ML.pkl",
-        lambda: _prepare_total_violin_dfs(
-            df,
-            bases=("adz", "atz"),
-            limit_to_column_not_nan=limit_col_si,
-        ),
-    )
-    total_subset_dfs_si = _load_or_build(
-        "./dfs/LoS_total_subset_dfs_D3-ML.pkl",
-        lambda: _prepare_total_violin_dfs(
-            df,
-            bases=("adz", "atz", "aqz"),
-            limit_to_column_not_nan=limit_col_si,
-            subset_only=True,
-        ),
-    )
-    components_full_dfs_si = _load_or_build(
-        "./dfs/LoS_components_full_dfs_D3-ML.pkl",
-        lambda: _prepare_component_violin_dfs(
-            df,
-            bases=("adz", "atz"),
-            limit_to_column_not_nan=limit_col_si,
-            subset_only=False,
-        ),
-    )
-    components_subset_dfs_si = _load_or_build(
-        "./dfs/LoS_components_subset_dfs_D3-ML.pkl",
-        lambda: _prepare_component_violin_dfs(
-            df,
-            bases=("adz", "atz", "aqz"),
-            limit_to_column_not_nan=limit_col_si,
-            subset_only=True,
-        ),
-    )
+    if True:
+        # SI figures using only entries with D3-ML available
+        total_full_dfs_si = _load_or_build(
+            "./dfs/LoS_total_full_dfs_D3-ML.pkl",
+            lambda: _prepare_total_violin_dfs(
+                df,
+                bases=("adz", "atz"),
+                limit_to_column_not_nan=limit_cols_si,
+            ),
+        )
+        total_subset_dfs_si = _load_or_build(
+            "./dfs/LoS_total_subset_dfs_D3-ML.pkl",
+            lambda: _prepare_total_violin_dfs(
+                df,
+                bases=("adz", "atz", "aqz"),
+                limit_to_column_not_nan=limit_cols_si,
+                subset_only=True,
+            ),
+        )
+        components_full_dfs_si = _load_or_build(
+            "./dfs/LoS_components_full_dfs_D3-ML.pkl",
+            lambda: _prepare_component_violin_dfs(
+                df,
+                bases=("adz", "atz"),
+                limit_to_column_not_nan=limit_cols_si,
+                subset_only=False,
+            ),
+        )
+        components_subset_dfs_si = _load_or_build(
+            "./dfs/LoS_components_subset_dfs_D3-ML.pkl",
+            lambda: _prepare_component_violin_dfs(
+                df,
+                bases=("adz", "atz", "aqz"),
+                limit_to_column_not_nan=limit_cols_si,
+                subset_only=True,
+            ),
+        )
 
-    violin_plots_multi(
-        df,
-        dfs=total_full_dfs_si,
-        figure_name="./plots/SI-fig1-totals_adz_atz_saptdft_D3-ML.jpg",
-    )
-    violin_plots_multi_subset(
-        df,
-        dfs=total_subset_dfs_si,
-        figure_name="./plots/SI-fig2-totals_adz_atz_aqz_saptdft_subset_D3-ML.jpg",
-    )
-    violin_plots_multi_components(
-        df,
-        dfs=components_full_dfs_si,
-        figure_name_nondisp="./plots/SI-fig3-components_adz_atz_nondisp_D3-ML.jpg",
-        figure_name_disp="./plots/SI-fig4-components_adz_atz_disp_D3-ML.jpg",
-    )
-    violin_plots_multi_components_subset(
-        df,
-        dfs=components_subset_dfs_si,
-        figure_name_nondisp="./plots/SI-fig5-components_adz_atz_aqz_subset_nondisp_D3-ML.jpg",
-        figure_name_disp="./plots/SI-fig6-components_adz_atz_aqz_subset_disp_D3-ML.jpg",
-    )
+        violin_plots_multi(
+            df,
+            dfs=total_full_dfs_si,
+            figure_name="./plots/SI-fig1-totals_adz_atz_saptdft_D3-ML.jpg",
+        )
+        violin_plots_multi_subset(
+            df,
+            dfs=total_subset_dfs_si,
+            figure_name="./plots/SI-fig2-totals_adz_atz_aqz_saptdft_subset_D3-ML.jpg",
+        )
+        violin_plots_multi_components(
+            df,
+            dfs=components_full_dfs_si,
+            figure_name_nondisp="./plots/SI-fig3-components_adz_atz_nondisp_D3-ML.jpg",
+            figure_name_disp="./plots/SI-fig4-components_adz_atz_disp_D3-ML.jpg",
+        )
+        violin_plots_multi_components_subset(
+            df,
+            dfs=components_subset_dfs_si,
+            figure_name_nondisp="./plots/SI-fig5-components_adz_atz_aqz_subset_nondisp_D3-ML.jpg",
+            figure_name_disp="./plots/SI-fig6-components_adz_atz_aqz_subset_disp_D3-ML.jpg",
+        )
     return
