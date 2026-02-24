@@ -55,6 +55,41 @@ colors_total_saptdftd4 = [
         TEAL,
         LIGHT_PURPLE,
         TEAL,
+        LIGHT_PURPLE,
+        PURPLE,
+        PURPLE,
+        BLUE,
+        GREEN,
+        BLUE,
+    ]
+    for i in range(5)
+]
+
+
+colors_total_saptdftd4_si = [
+    [
+        # TEAL,
+        # LIGHT_BLUE,
+        # Medium_Sea_Green,
+        # INDIGO,
+        TEAL,
+        LIGHT_PURPLE,
+        # Medium_Sea_Green,
+        # INDIGO,
+        # TEAL,
+        # LIGHT_PURPLE,
+        # Medium_Sea_Green,
+        # INDIGO,
+        TEAL,
+        LIGHT_PURPLE,
+        # Medium_Sea_Green,
+        # INDIGO,
+        TEAL,
+        LIGHT_PURPLE,
+        TEAL,
+        TEAL,
+        LIGHT_PURPLE,
+        TEAL,
         TEAL,
         LIGHT_PURPLE,
         PURPLE,
@@ -92,6 +127,28 @@ colors_comps_saptdftd4 = [
 ]
 
 colors_disp_saptdftd4 = [
+    [
+        TEAL,
+        LIGHT_PURPLE,
+        # Medium_Sea_Green,
+        TEAL,
+        LIGHT_PURPLE,
+        TEAL,
+        LIGHT_PURPLE,
+        TEAL,
+        TEAL,
+        LIGHT_PURPLE,
+        TEAL,
+        LIGHT_PURPLE,
+        PURPLE,
+        PURPLE,
+        GREEN,
+        BLUE,
+        GREY,
+    ]
+]
+
+colors_disp_saptdftd4_SI = [
     [
         TEAL,
         LIGHT_PURPLE,
@@ -4342,6 +4399,27 @@ def _total_plot_labels():
         "SAPT(PBE0)-D4(I)": "SAPT(PBE0)-D4 INTER TOTAL ENERGY Error",
         "SAPT(B3LYP)-D4(I)": "SAPT(B3LYP)-D4 INTER TOTAL ENERGY Error",
         "SAPT(PBE0)-D3(I)": "SAPT(PBE0)-D3 INTER TOTAL ENERGY Error",
+        "SAPT(B3LYP)-D3(I)": "SAPT(B3LYP)-D3 INTER TOTAL ENERGY Error",
+        "SAPT0-D4": "SAPT0-D4 TOTAL ENERGY Error",
+        "SAPT0": "SAPT0 TOTAL ENERGY Error",
+        "SAPT2+3": "SAPT2+3 TOTAL ENERGY Error",
+        "SAPT2+3(CCD)": "SAPT2+3(CCD) TOTAL ENERGY Error",
+        "SAPT2+3(CCD)DMP2": "SAPT2+3(CCD)DMP2 TOTAL ENERGY Error",
+    }
+
+
+def _total_plot_labels_si():
+    return {
+        "SAPT(PBE0)": "SAPT(DFT) [PBE0] TOTAL ENERGY Error",
+        "SAPT(B3LYP)": "SAPT(DFT) [B3LYP] TOTAL ENERGY Error",
+        "PBE0-D4": "PBE0-D4 TOTAL ENERGY Error",
+        "B3LYP-D4": "B3LYP-D4 TOTAL ENERGY Error",
+        "PBE0-D3": "PBE0-D3 TOTAL ENERGY Error",
+        "B3LYP-D3": "B3LYP-D3 TOTAL ENERGY Error",
+        "SAPT(PBE0)-D4(S)": "SAPT(DFT)-D4 TOTAL ENERGY Error",
+        "SAPT(PBE0)-D4(I)": "SAPT(PBE0)-D4 INTER TOTAL ENERGY Error",
+        "SAPT(B3LYP)-D4(I)": "SAPT(B3LYP)-D4 INTER TOTAL ENERGY Error",
+        "SAPT(PBE0)-D3(I)": "SAPT(PBE0)-D3 INTER TOTAL ENERGY Error",
         "SAPT(PBE0)D3-ML": "SAPT(DFT)D3-ML TOTAL ENERGY Error",
         "SAPT(B3LYP)D3-ML": "SAPT(B3LYP)D3-ML TOTAL ENERGY Error",
         "SAPT0-D4": "SAPT0-D4 TOTAL ENERGY Error",
@@ -4351,6 +4429,48 @@ def _total_plot_labels():
         "SAPT2+3(CCD)DMP2": "SAPT2+3(CCD)DMP2 TOTAL ENERGY Error",
     }
 
+def _disp_plot_labels():
+    return {
+            "SAPT(PBE0)": "SAPT(DFT) [PBE0] DISP ENERGY Error",
+            "SAPT(B3LYP)": "SAPT(DFT) [B3LYP] DISP ENERGY Error",
+            "PBE0-D4(SAPT)": "PBE0-D4 DISP ENERGY Error",
+            "B3LYP-D4(SAPT)": "B3LYP-D4 DISP ENERGY Error",
+            "PBE0-D3(SAPT)": "PBE0-D3 DISP ENERGY Error",
+            "B3LYP-D3(SAPT)": "B3LYP-D3 DISP ENERGY Error",
+            "SAPT(PBE0)-D4(S)": "SAPT(DFT)-D4 DISP ENERGY Error",
+            "SAPT(PBE0)-D4(I)": "SAPT(PBE0)-D4 INTER DISP ENERGY Error",
+            "SAPT(B3LYP)-D4(I)": "SAPT(B3LYP)-D4 INTER DISP ENERGY Error",
+            "SAPT(PBE0)-D3(I)": "SAPT(PBE0)-D3 INTER DISP ENERGY Error",
+            "SAPT(B3LYP)-D3(I)": "SAPT(B3LYP)-D3 INTER DISP ENERGY Error",
+            # "D3-ML": "D3-ML DISP ENERGY Error",
+            "SAPT0": "SAPT0 DISP ENERGY Error",
+            "SAPT0-D4": "SAPT0-D4 DISP ENERGY Error",
+            "SAPT2+": "SAPT2+ DISP ENERGY Error",
+            "SAPT2+3": "SAPT2+3 DISP ENERGY Error",
+            "SAPT2+3(CCD)": "SAPT2+3(CCD) DISP ENERGY Error",
+    }
+
+
+def _disp_plot_labels_SI():
+    return {
+            "SAPT(PBE0)": "SAPT(DFT) [PBE0] DISP ENERGY Error",
+            "SAPT(B3LYP)": "SAPT(DFT) [B3LYP] DISP ENERGY Error",
+            "PBE0-D4(SAPT)": "PBE0-D4 DISP ENERGY Error",
+            "B3LYP-D4(SAPT)": "B3LYP-D4 DISP ENERGY Error",
+            "PBE0-D3(SAPT)": "PBE0-D3 DISP ENERGY Error",
+            "B3LYP-D3(SAPT)": "B3LYP-D3 DISP ENERGY Error",
+            "SAPT(PBE0)-D4(S)": "SAPT(DFT)-D4 DISP ENERGY Error",
+            "SAPT(PBE0)-D4(I)": "SAPT(PBE0)-D4 INTER DISP ENERGY Error",
+            "SAPT(B3LYP)-D4(I)": "SAPT(B3LYP)-D4 INTER DISP ENERGY Error",
+            "SAPT(PBE0)-D3(I)": "SAPT(PBE0)-D3 INTER DISP ENERGY Error",
+            "SAPT(B3LYP)-D3(I)": "SAPT(B3LYP)-D3 INTER DISP ENERGY Error",
+            "D3-ML": "D3-ML DISP ENERGY Error",
+            "SAPT0": "SAPT0 DISP ENERGY Error",
+            "SAPT0-D4": "SAPT0-D4 DISP ENERGY Error",
+            "SAPT2+": "SAPT2+ DISP ENERGY Error",
+            "SAPT2+3": "SAPT2+3 DISP ENERGY Error",
+            "SAPT2+3(CCD)": "SAPT2+3(CCD) DISP ENERGY Error",
+    }
 
 def _filter_plot_labels_by_available_columns(df_labels_and_columns, dfs):
     if not dfs:
@@ -4452,7 +4572,7 @@ def violin_plots_multi(df, limit_to_column_not_nan=None, slide=True, dfs=None):
     cdsg_plot.error_statistics.violin_plot_table_multi_SAPT_components(
         dfs,
         df_labels_and_columns_total=df_labels_and_columns,
-        output_filename="./plots/LoS_all_adz_atz_saptdft.jpg",
+        output_filename="./plots/fig1-totals_adz_atz_saptdft.jpg",
         wspace=0.8,
         usetex=True,
         colors=colors_total_saptdftd4,
@@ -4526,7 +4646,7 @@ def violin_plots_multi_subset(df, limit_to_column_not_nan=None, dfs=None):
     cdsg_plot.error_statistics.violin_plot_table_multi_SAPT_components(
         dfs,
         df_labels_and_columns_total=df_labels_and_columns,
-        output_filename="./plots/LoS_all_adz_atz_aqz_saptdft_subset.jpg",
+        output_filename="./plots/fig2-totals_adz_atz_aqz_saptdft_subset.jpg",
         colors=colors_total_saptdftd4,
         wspace=0.8,
         usetex=True,
@@ -5964,7 +6084,6 @@ def violin_plots_multi_components(
         x_label_fontsize = 16
         y_label_fontsize = 18
         extra_label = "_slide"
-        output_filename = f"./plots/individual_components.jpg"
         dfs = dfs[:1]
     else:
         fig_size = (9, 7)
@@ -5978,7 +6097,7 @@ def violin_plots_multi_components(
         x_label_fontsize = 12
         y_label_fontsize = 12
         extra_label = ""
-        output_filename = f"./plots/LoS_components_adz_atz_nondisp{extra_label}.jpg"
+    output_filename = "./plots/fig3-components_adz_atz_nondisp.jpg"
 
     print(f"Plotting Extra label: {extra_label}")
     cdsg_plot.error_statistics.violin_plot_table_multi_SAPT_components(
@@ -6033,9 +6152,6 @@ def violin_plots_multi_components(
         df_labels_and_columns_disp={
             "SAPT(PBE0)": "SAPT(DFT) [PBE0] DISP ENERGY Error",
             "SAPT(B3LYP)": "SAPT(DFT) [B3LYP] DISP ENERGY Error",
-            # "SAPT(B2PLYP)": "SAPT(DFT) [B2PLYP] DISP ENERGY Error",
-            # "SAPT(WB97X)": "SAPT(DFT) [WB97X] DISP ENERGY Error",
-            # "SAPT(DFT)+D4": "SAPT(DFT)+D4 DISP ENERGY Error",
             "PBE0-D4(SAPT)": "PBE0-D4 DISP ENERGY Error",
             "B3LYP-D4(SAPT)": "B3LYP-D4 DISP ENERGY Error",
             "PBE0-D3(SAPT)": "PBE0-D3 DISP ENERGY Error",
@@ -6045,17 +6161,11 @@ def violin_plots_multi_components(
             "SAPT(B3LYP)-D4(I)": "SAPT(B3LYP)-D4 INTER DISP ENERGY Error",
             "SAPT(PBE0)-D3(I)": "SAPT(PBE0)-D3 INTER DISP ENERGY Error",
             "SAPT(B3LYP)-D3(I)": "SAPT(B3LYP)-D3 INTER DISP ENERGY Error",
-            # "B2PLYP-D4": "B2PLYP-D4 DISP ENERGY Error",
-            # "WB97X-D4": "WB97X-D4 DISP ENERGY Error",
-            "D3-ML": "D3-ML DISP ENERGY Error",
+            # "D3-ML": "D3-ML DISP ENERGY Error",
             "SAPT0": "SAPT0 DISP ENERGY Error",
             "SAPT0-D4": "SAPT0-D4 DISP ENERGY Error",
-            # "sSAPT0": "SSAPT0 DISP ENERGY Error",
             "SAPT2+": "SAPT2+ DISP ENERGY Error",
-            # "SAPT2+(3)": "SAPT2+(3) DISP ENERGY Error",
             "SAPT2+3": "SAPT2+3 DISP ENERGY Error",
-            # "SAPT2+(CCD)": "SAPT2+(CCD) DISP ENERGY Error",
-            # "SAPT2+(3)(CCD)": "SAPT2+(3)(CCD) DISP ENERGY Error",
             "SAPT2+3(CCD)": "SAPT2+3(CCD) DISP ENERGY Error",
         },
         colors=colors_disp_saptdftd4,
@@ -6068,7 +6178,7 @@ def violin_plots_multi_components(
         figure_size=fig_size,
         grid_heights=grid_heights,
         grid_widths=[1.0],
-        output_filename=f"./plots/LoS_components_adz_atz_disp{extra_label}.jpg",
+        output_filename="./plots/fig4-components_adz_atz_disp.jpg",
         # mcure=mcure_labels,
     )
     return
@@ -7160,7 +7270,7 @@ def violin_plots_multi_components_subset(
         figure_size=fig_size,
         grid_heights=grid_heights,
         grid_widths=[5, 5, 6],
-        output_filename=f"./plots/LoS_components_adz_atz_aqz_subset_nondisp.jpg",
+        output_filename=f"./plots/SI-fig-components_adz_atz_aqz_subset_nondisp.jpg",
         # mcure=mcure_labels,
     )
     cdsg_plot.error_statistics.violin_plot_table_multi_SAPT_components(
@@ -7203,7 +7313,7 @@ def violin_plots_multi_components_subset(
         figure_size=fig_size,
         grid_heights=grid_heights,
         grid_widths=[1.0],
-        output_filename=f"./plots/LoS_components_adz_atz_aqz_subset_disp.jpg",
+        output_filename=f"./plots/fig5_components_adz_atz_aqz_subset_disp.jpg",
     )
 
     # Compute differences between SAPT0 vs DFT and SAPT0 vs SAPT2+3(CCD),
@@ -8257,9 +8367,7 @@ def d3_conversions(df):
     df["SAPT(B3LYP)-D3 INTER DISP ENERGY adz"] = df["SAPT(B3LYP)-D3 INTER DISP ENERGY"]
     df["SAPT(B3LYP)-D3 INTER DISP ENERGY atz"] = df["SAPT(B3LYP)-D3 INTER DISP ENERGY"]
     df["SAPT(B3LYP)-D3 INTER DISP ENERGY aqz"] = df["SAPT(B3LYP)-D3 INTER DISP ENERGY"]
-    df["SAPT(B3LYP)-D3 INTER TOTAL ENERGY adz"] = (
-        df["SAPT(B3LYP)-D3 INTER DISP ENERGY"] + df["SAPT_DFT_b3lyp_adz_3_IE"]
-    ) / h2kcalmol
+    df["SAPT(B3LYP)-D3 INTER TOTAL ENERGY adz"] = df["SAPT(B3LYP)-D3 INTER DISP ENERGY"] + df["SAPT_DFT_b3lyp_adz_3_IE"] / h2kcalmol
     print(df[["SAPT(B3LYP)-D3 INTER TOTAL ENERGY adz"]])
     print(df[["SAPT_DFT_b3lyp_adz_3_IE"]])
     print(df[["SAPT(B3LYP)-D3 INTER DISP ENERGY"]])

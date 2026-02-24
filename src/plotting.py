@@ -9283,22 +9283,13 @@ def d3_conversions(df):
     df["SAPT(B3LYP)-D3 INTER DISP ENERGY adz"] = df["SAPT(B3LYP)-D3 INTER DISP ENERGY"]
     df["SAPT(B3LYP)-D3 INTER DISP ENERGY atz"] = df["SAPT(B3LYP)-D3 INTER DISP ENERGY"]
     df["SAPT(B3LYP)-D3 INTER DISP ENERGY aqz"] = df["SAPT(B3LYP)-D3 INTER DISP ENERGY"]
-    df["SAPT(B3LYP)-D3 INTER TOTAL ENERGY adz"] = (
-        df["SAPT(B3LYP)-D3 INTER DISP ENERGY"]
-        + df["SAPT_DFT_b3lyp_adz_3_IE"] 
-    )/ h2kcalmol
+    df["SAPT(B3LYP)-D3 INTER TOTAL ENERGY adz"] = df["SAPT(B3LYP)-D3 INTER DISP ENERGY"] + df["SAPT_DFT_b3lyp_adz_3_IE"]  / h2kcalmol
     print(df[["SAPT(B3LYP)-D3 INTER TOTAL ENERGY adz"]])
     print(df[["SAPT_DFT_b3lyp_adz_3_IE"]])
     print(df[["SAPT(B3LYP)-D3 INTER DISP ENERGY"]])
 
-    df["SAPT(B3LYP)-D3 INTER TOTAL ENERGY atz"] = (
-        df["SAPT(B3LYP)-D3 INTER DISP ENERGY"]
-        + df["SAPT_DFT_b3lyp_atz_3_IE"] 
-    ) / h2kcalmol
-    df["SAPT(B3LYP)-D3 INTER TOTAL ENERGY aqz"] = (
-        df["SAPT(B3LYP)-D3 INTER DISP ENERGY"]
-        + df["SAPT_DFT_b3lyp_aqz_3_IE"] 
-    )/ h2kcalmol
+    df["SAPT(B3LYP)-D3 INTER TOTAL ENERGY atz"] = df["SAPT(B3LYP)-D3 INTER DISP ENERGY"] + df["SAPT_DFT_b3lyp_atz_3_IE"] / h2kcalmol
+    df["SAPT(B3LYP)-D3 INTER TOTAL ENERGY aqz"] = df["SAPT(B3LYP)-D3 INTER DISP ENERGY"] + df["SAPT_DFT_b3lyp_aqz_3_IE"] / h2kcalmol
 
     # SAPT(B3LYP)-D3(S) - Supermolecular D3
     df["SAPT(B3LYP)-D3 SUPER DISP ENERGY"] = df.apply(
