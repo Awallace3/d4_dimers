@@ -19,41 +19,40 @@ def compute_dispml_row(row: pd.Series, dispml_model="D3-ML", path_dispml="./disp
     # print(row['monAs'])
     # print(row['monBs'])
     # print(row['charges'])
-    # try:
-    geom_A = row['Geometry'][row['monAs']]
-    geom_B = row['Geometry'][row['monBs']]
-    # ensure that geom_A and geom_B are 2D arrays
-    if geom_A.ndim == 1:
-        geom_A = geom_A.reshape(1, -1)
-    if geom_B.ndim == 1:
-        geom_B = geom_B.reshape(1, -1)
-    if bohr2ang:
-        geom_A[:, 1:] *= bohr_to_angstrom
-        geom_B[:, 1:] *= bohr_to_angstrom
-    tools.write_cartesians_to_xyz(geom_A[:, 0], geom_A[:, 1:], "monA.xyz", charge_multiplicity=row['charges'][1], charge=True, multiplicty=False)
-    tools.write_cartesians_to_xyz(geom_B[:, 0], geom_B[:, 1:], "monB.xyz", charge_multiplicity=row['charges'][2], charge=True, multiplicty=False)
-    dispml_output = subprocess.check_output(
-        f"python3 {path_dispml}main.py --model {dispml_model} monA.xyz monB.xyz",
-        shell=True,
-    ).decode("utf-8")
-    # If python call fails, capture the error and print it
-    if dispml_output is None:
-        print(f"Error in dispml for {row['id'] = } from {row['DB']} {row['system_id']}: No output from dispml")
-        return np.nan
-    print(dispml_output)
-    if "Valence of atom" in dispml_output:
-        print(f"Error in dispml for {row['id'] = } from {row['DB']} {row['system_id']}: Valence of atom error")
-        return np.nan
-    ml_disp = float(dispml_output.split(":")[-1].split()[-1])
-    if print_updates:
-        print(f"{row['id'] = } {ml_disp = :.2f}, {row['-D4 (SAPT0_adz_3_IE)'] = :.2f}")
-    # except (Exception) as e:
-    #     if print_updates:
-    #         print(f"Error in dispml for {row['id'] = } from {row['DB']}:", e)
-    #         print(f"{row['system_id'] = }")
-    #         print(dispml_output)
-    #         tools.print_cartesians(row['Geometry'])
-    #     ml_disp = np.nan
+    try:
+        geom_A = row['Geometry'][row['monAs']]
+        geom_B = row['Geometry'][row['monBs']]
+        # ensure that geom_A and geom_B are 2D arrays
+        if geom_A.ndim == 1:
+            geom_A = geom_A.reshape(1, -1)
+        if geom_B.ndim == 1:
+            geom_B = geom_B.reshape(1, -1)
+        if bohr2ang:
+            geom_A[:, 1:] *= bohr_to_angstrom
+            geom_B[:, 1:] *= bohr_to_angstrom
+        tools.write_cartesians_to_xyz(geom_A[:, 0], geom_A[:, 1:], "monA.xyz", charge_multiplicity=row['charges'][1], charge=True, multiplicty=False)
+        tools.write_cartesians_to_xyz(geom_B[:, 0], geom_B[:, 1:], "monB.xyz", charge_multiplicity=row['charges'][2], charge=True, multiplicty=False)
+        dispml_output = subprocess.check_output(
+            f"python3 {path_dispml}main.py --model {dispml_model} monA.xyz monB.xyz",
+            shell=True,
+        ).decode("utf-8")
+        # If python call fails, capture the error and print it
+        if dispml_output is None:
+            print(f"Error in dispml for {row['id'] = } from {row['DB']} {row['system_id']}: No output from dispml")
+            return np.nan
+        print(dispml_output)
+        if "Valence of atom" in dispml_output:
+            print(f"Error in dispml for {row['id'] = } from {row['DB']} {row['system_id']}: Valence of atom error")
+            return np.nan
+        ml_disp = float(dispml_output.split(":")[-1].split()[-1])
+        if print_updates:
+            print(f"{row['id'] = } {ml_disp = :.2f}, {row['-D4 (SAPT0_adz_3_IE)'] = :.2f}")
+    except (Exception) as e:
+        if print_updates:
+            print(f"Error in dispml for {row['id'] = } from {row['DB']}:", e)
+            print(f"{row['system_id'] = }")
+            tools.print_cartesians(row['Geometry'])
+        ml_disp = np.nan
     return ml_disp
 
 def compute_dispml_df(df: pd.DataFrame, dispml_model="D3-ML", path_dispml="./dispml/", print_updates=False):

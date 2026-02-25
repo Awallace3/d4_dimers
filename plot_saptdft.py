@@ -13,19 +13,23 @@ def main():
         subprocess.call("tar -xzf plots/ddft_study.pkl.tar.gz", shell=True)
         subprocess.call("rm plots/ddft_study.pkl.tar.gz", shell=True)
         subprocess.call("mv ddft_study.pkl plots/ddft_study.pkl", shell=True)
+    regen = True
+    if regen:
+        if os.path.exists("./dfs/LoS_total_full_dfs_D3-ML.pkl"):
+            os.remove("./dfs/LoS_total_full_dfs_D3-ML.pkl")
+            os.remove("./dfs/LoS_total_subset_dfs_D3-ML.pkl")
+            os.remove("./dfs/LoS_components_full_dfs_D3-ML.pkl")
+            os.remove("./dfs/LoS_components_subset_dfs_D3-ML.pkl")
+
     df = src.plotting.plotting_setup_dft_ddft(
         # df_name,
         "./plots/LoS.pkl",
-        build_df=False,
+        build_df=regen,
+        # build_df=False,
         df_out="./plots/LoS_ddft.pkl",
         original_plot=False,
     )
-    # return
-    print(df)
-    from pprint import pprint as pp
-
-    pp(df.columns.to_list())
-    # return
+    return
     # src.plotting.plot_LoS_saptdft(
     #     df,
     #     presentation=True,

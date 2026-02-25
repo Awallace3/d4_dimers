@@ -1013,14 +1013,14 @@ def parameters_to_latex_table(param_names: dict):
         a1 = float(params_2b[2])
         a2 = float(params_2b[3])
         escaped_name = str(latex_name).replace("_", "\\_")
-        rows.append(f"{escaped_name} & {s8:.8f} & {a1:.8f} & {a2:.8f} \\\\")
+        rows.append(f"{escaped_name} & {s8:.4f} & {a1:.4f} & {a2:.4f} \\\\")
 
     table_lines = [
         "\\begin{table}[ht]",
         "\\centering",
         "\\begin{tabular}{lrrr}",
         "\\hline",
-        "Parameter Set & $s_6$ & $a_1$ & $a_2$ \\\\",
+        "Parameter Set & $s_8$ & $a_1$ & $a_2$ \\\\",
         "\\hline",
         *rows,
         "\\hline",

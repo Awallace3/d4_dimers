@@ -9,7 +9,7 @@ def compute(df):
     df = df.dropna(subset=['benchmark ref energy'])
     df = dispml_calls.compute_dispml_df(df, print_updates=True)
     print(df['D3-ML'])
-    # df.to_pickle("./plots/ddft_study.pkl")
+    df.to_pickle("./plots/ddft_study.pkl")
     return
 
 def main():

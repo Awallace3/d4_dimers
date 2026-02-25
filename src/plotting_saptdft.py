@@ -4363,6 +4363,7 @@ def _total_sapt_methods():
         "SAPT TOTAL ENERGY",
         "SAPT(DFT)D3-ML TOTAL ENERGY",
         "SAPT(B3LYP)D3-ML TOTAL ENERGY",
+        "B3LYP-D3-ML TOTAL ENERGY",
         "SAPT(DFT)-D4 TOTAL ENERGY",
         "SAPT(DFT)+D4 TOTAL ENERGY",
         "SAPT(PBE0)-D4 INTER TOTAL ENERGY",
@@ -4421,7 +4422,7 @@ def _total_plot_labels_si():
         "SAPT(B3LYP)-D4(I)": "SAPT(B3LYP)-D4 INTER TOTAL ENERGY Error",
         "SAPT(PBE0)-D3(I)": "SAPT(PBE0)-D3 INTER TOTAL ENERGY Error",
         "SAPT(PBE0)D3-ML": "SAPT(DFT)D3-ML TOTAL ENERGY Error",
-        "SAPT(B3LYP)D3-ML": "SAPT(B3LYP)D3-ML TOTAL ENERGY Error",
+        "B3LYP-D3-ML": "B3LYP-D3-ML TOTAL ENERGY Error",
         "SAPT0-D4": "SAPT0-D4 TOTAL ENERGY Error",
         "SAPT0": "SAPT0 TOTAL ENERGY Error",
         "SAPT2+3": "SAPT2+3 TOTAL ENERGY Error",
@@ -4616,9 +4617,16 @@ def violin_plots_multi(
             bases=("adz", "atz"),
             limit_to_column_not_nan=limit_to_column_not_nan,
         )
-    df_labels_and_columns = _filter_plot_labels_by_available_columns(
-        _total_plot_labels(), dfs
-    )
+    if "SI-" in figure_name:
+        df_labels_and_columns = _filter_plot_labels_by_available_columns(
+            _total_plot_labels_si(), dfs
+        )
+        colors = colors_total_saptdftd4_si
+    else:
+        df_labels_and_columns = _filter_plot_labels_by_available_columns(
+            _total_plot_labels(), dfs
+        )
+        colors = colors_total_saptdftd4
     dfs = _align_total_violin_dfs_to_adz(dfs)
 
     import cdsg_plot
@@ -4640,7 +4648,7 @@ def violin_plots_multi(
         output_filename=figure_name,
         wspace=0.8,
         usetex=True,
-        colors=colors_total_saptdftd4,
+        colors=colors,
         violin_alphas=0.9,
         legend_loc="lower right",
         table_fontsize=table_fontsize,
@@ -4707,9 +4715,16 @@ def violin_plots_multi_subset(
             limit_to_column_not_nan=limit_to_column_not_nan,
             subset_only=True,
         )
-    df_labels_and_columns = _filter_plot_labels_by_available_columns(
-        _total_plot_labels(), dfs
-    )
+    if "SI-" in figure_name:
+        df_labels_and_columns = _filter_plot_labels_by_available_columns(
+            _total_plot_labels_si(), dfs
+        )
+        colors = colors_total_saptdftd4_si
+    else:
+        df_labels_and_columns = _filter_plot_labels_by_available_columns(
+            _total_plot_labels(), dfs
+        )
+        colors = colors_total_saptdftd4
     dfs = _align_total_violin_dfs_to_adz(dfs)
 
     import cdsg_plot
@@ -4718,7 +4733,7 @@ def violin_plots_multi_subset(
         dfs,
         df_labels_and_columns_total=df_labels_and_columns,
         output_filename=figure_name,
-        colors=colors_total_saptdftd4,
+        colors=colors,
         wspace=0.8,
         usetex=True,
         violin_alphas=0.9,
