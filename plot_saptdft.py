@@ -13,7 +13,7 @@ def main():
         subprocess.call("tar -xzf plots/ddft_study.pkl.tar.gz", shell=True)
         subprocess.call("rm plots/ddft_study.pkl.tar.gz", shell=True)
         subprocess.call("mv ddft_study.pkl plots/ddft_study.pkl", shell=True)
-    regen = True
+    regen = False
     if regen:
         if os.path.exists("./dfs/LoS_total_full_dfs_D3-ML.pkl"):
             os.remove("./dfs/LoS_total_full_dfs_D3-ML.pkl")
@@ -29,7 +29,7 @@ def main():
         df_out="./plots/LoS_ddft.pkl",
         original_plot=False,
     )
-    return
+    # return
     # src.plotting.plot_LoS_saptdft(
     #     df,
     #     presentation=True,

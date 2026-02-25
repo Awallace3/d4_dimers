@@ -4422,7 +4422,7 @@ def _total_plot_labels_si():
         "SAPT(B3LYP)-D4(I)": "SAPT(B3LYP)-D4 INTER TOTAL ENERGY Error",
         "SAPT(PBE0)-D3(I)": "SAPT(PBE0)-D3 INTER TOTAL ENERGY Error",
         "SAPT(PBE0)D3-ML": "SAPT(DFT)D3-ML TOTAL ENERGY Error",
-        "B3LYP-D3-ML": "B3LYP-D3-ML TOTAL ENERGY Error",
+        "SAPT(B3LYP)D3-ML": "SAPT(B3LYP)D3-ML TOTAL ENERGY Error",
         "SAPT0-D4": "SAPT0-D4 TOTAL ENERGY Error",
         "SAPT0": "SAPT0 TOTAL ENERGY Error",
         "SAPT2+3": "SAPT2+3 TOTAL ENERGY Error",
