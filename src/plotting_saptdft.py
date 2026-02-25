@@ -148,7 +148,7 @@ colors_disp_saptdftd4 = [
     ]
 ]
 
-colors_disp_saptdftd4_SI = [
+colors_disp_saptdftd4_si = [
     [
         TEAL,
         LIGHT_PURPLE,
@@ -4453,7 +4453,7 @@ def _disp_plot_labels():
     }
 
 
-def _disp_plot_labels_SI():
+def _disp_plot_labels_si():
     return {
         "SAPT(PBE0)": "SAPT(DFT) [PBE0] DISP ENERGY Error",
         "SAPT(B3LYP)": "SAPT(DFT) [B3LYP] DISP ENERGY Error",
@@ -5906,6 +5906,17 @@ def violin_plots_multi_components(
             limit_to_column_not_nan=limit_to_column_not_nan,
             subset_only=False,
         )
+
+    if "SI-" in figure_name_disp:
+        df_labels_and_columns = _filter_plot_labels_by_available_columns(
+            _disp_plot_labels_si(), dfs
+        )
+        colors = colors_disp_saptdftd4_si
+    else:
+        df_labels_and_columns = _filter_plot_labels_by_available_columns(
+            _disp_plot_labels(), dfs
+        )
+        colors = colors_disp_saptdftd4
     mcures_labels_start = [
         {
             "SAPT0,sSAPT0": "SAPT0 ELST ENERGY Error",
@@ -6232,8 +6243,8 @@ def violin_plots_multi_components(
     )
     cdsg_plot.error_statistics.violin_plot_table_multi_SAPT_components(
         dfs,
-        df_labels_and_columns_disp=_disp_plot_labels(),
-        colors=colors_disp_saptdftd4,
+        df_labels_and_columns_disp=df_labels_and_columns,
+        colors=colors,
         usetex=True,
         legend_loc="lower right",
         table_fontsize=table_fontsize,
@@ -7269,6 +7280,16 @@ def violin_plots_multi_components_subset(
             limit_to_column_not_nan=limit_to_column_not_nan,
             subset_only=True,
         )
+    if "SI-" in figure_name_disp:
+        df_labels_and_columns = _filter_plot_labels_by_available_columns(
+            _disp_plot_labels_si(), dfs
+        )
+        colors = colors_disp_saptdftd4
+    else:
+        df_labels_and_columns = _filter_plot_labels_by_available_columns(
+            _disp_plot_labels(), dfs
+        )
+        colors = colors_disp_saptdftd4_si
 
     sapt_reference = _COMPONENT_SAPT_REFERENCE
     sapt_methods = _COMPONENT_METHODS_SUBSET.copy()
@@ -7342,8 +7363,8 @@ def violin_plots_multi_components_subset(
     )
     cdsg_plot.error_statistics.violin_plot_table_multi_SAPT_components(
         dfs,
-        df_labels_and_columns_disp=_disp_plot_labels(),
-        colors=colors_disp_saptdftd4,
+        df_labels_and_columns_disp=df_labels_and_columns,
+        colors=colors,
         usetex=True,
         legend_loc="lower right",
         table_fontsize=table_fontsize,
@@ -8489,7 +8510,7 @@ def plot_LoS_saptdft(
     limit_col_si = "D3-ML"
     limit_cols_si = [limit_col_si, limit_col]
 
-    if False:
+    if True:
         # Main Paper
         total_full_dfs = _load_or_build(
             "./dfs/LoS_total_full_dfs.pkl",
