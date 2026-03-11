@@ -633,7 +633,6 @@ def compute_int_energy_DISP(
             if i < 0:
                 return 10
     rmse = 0
-    diff = np.zeros(len(df))
     if parallel:
         chunks = []
         cnt = 0
@@ -1333,11 +1332,16 @@ def optimization(
 ):
     bounds = [bounds for i in range(len(params))]
     if version["compute_energy"] == "compute_int_energy_DISP":
-        bounds = (0.0, 8.0)
+        bounds_init = (0.0, 8.0)
+        if not force_ATM_on:
+            params_2B, _ = paramsTable.generate_2B_ATM_param_subsets(
+                params, force_ATM_on=False
+            )
+            params = np.array(params_2B[1:4], dtype=np.float64)
         if len(params) == 5 and params[0] < 0:
             bounds = [(-1.0, 0, 0), (-1.0, 0.0), (0.0, 8.0), (0.0, 8.0), (0.0, 0.0)]
         else:
-            bounds = [bounds for i in range(len(params))]
+            bounds = [bounds_init for i in range(len(params))]
         if not force_ATM_on and len(params) == 5:
             bounds[-1] = (0.0, 0.0)
         compute = compute_int_energy_DISP
@@ -1713,14 +1717,16 @@ def compute_dftd4_values(
     """
     m = constants.conversion_factor("hartree", "kcal / mol")
     df[key] = df.apply(
-        lambda r: m
-        * calc_dftd4_disp_pieces(
-            r["Geometry"][:, 0],
-            r["Geometry"][:, 1:],
-            r["monAs"],
-            r["monBs"],
-            params,
-            s9=s9,
+        lambda r: (
+            m
+            * calc_dftd4_disp_pieces(
+                r["Geometry"][:, 0],
+                r["Geometry"][:, 1:],
+                r["monAs"],
+                r["monBs"],
+                params,
+                s9=s9,
+            )
         ),
         axis=1,
     )
