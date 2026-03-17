@@ -536,6 +536,8 @@ def subplot_all_curves_LoS(
     include_titles=False,
     dispersion_model="D4",
 ):
+    subplot_label_code = ord("A")
+
     def get_saptdft_disp_col(df_local, functional, basis_set):
         candidates = [
             f"SAPT(DFT) [{functional.upper()}] DISP ENERGY {basis_set}",
@@ -765,6 +767,17 @@ def subplot_all_curves_LoS(
 
                 if include_titles:
                     ax_main.set_title(f"{db} {system_label} ({basis_set_label})")
+                ax_main.text(
+                    0.08,
+                    0.96,
+                    f"({chr(subplot_label_code)})",
+                    transform=ax_main.transAxes,
+                    ha="left",
+                    va="top",
+                    fontsize=10,
+                    fontweight="bold",
+                )
+                subplot_label_code += 1
                 ax_main.set_ylabel("Disp. Energy (kcal/mol)")
                 ax_main.grid(True, linestyle="--", alpha=0.7)
                 ax_main.minorticks_on()
@@ -919,6 +932,18 @@ def subplot_all_curves_LoS(
 
                 if include_titles:
                     ax_sub.set_title(f"Subterms ({basis_set_label})")
+                ax_sub.text(
+                    -0.22,
+                    0.96,
+                    f"({chr(subplot_label_code)})",
+                    transform=ax_sub.transAxes,
+                    ha="left",
+                    va="top",
+                    fontsize=10,
+                    fontweight="bold",
+                    clip_on=False,
+                )
+                subplot_label_code += 1
                 ax_sub.grid(True, linestyle="--", alpha=0.7)
                 ax_sub.minorticks_on()
                 ax_sub.tick_params(which="both", width=1)
