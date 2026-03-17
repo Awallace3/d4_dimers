@@ -533,6 +533,7 @@ def subplot_all_curves_LoS(
     basis_sets=["adz", "atz"],
     fit=False,
     subterm_functionals=["pbe0"],
+    include_titles=False,
 ):
     def get_saptdft_disp_col(df_local, functional, basis_set):
         candidates = [
@@ -594,7 +595,7 @@ def subplot_all_curves_LoS(
             fig, axes = plt.subplots(
                 n_basis_sets,
                 ncols,
-                figsize=(6 * ncols, 5 * n_basis_sets),
+                figsize=(4 * ncols, 3 * n_basis_sets),
                 dpi=300,
                 sharex=True,
             )
@@ -659,17 +660,18 @@ def subplot_all_curves_LoS(
                                 "scale": h2kcalmol,
                             }
                         )
-                    plotted_columns.append(
-                        {
-                            "col": (
-                                f"{functional.upper()}-D4 DISP ENERGY "
-                                f"{basis_set.lower()}"
-                            ),
-                            "label": f"{functional.upper()}-D4/" + basis_set_label,
-                            "color": color_map.get(functional.upper(), None),
-                            "marker": "^",
-                        }
-                    )
+                    if not (plot_ddft_curve and functional.lower() == "pbe0"):
+                        plotted_columns.append(
+                            {
+                                "col": (
+                                    f"{functional.upper()}-D4 DISP ENERGY "
+                                    f"{basis_set.lower()}"
+                                ),
+                                "label": f"{functional.upper()}-D4/" + basis_set_label,
+                                "color": color_map.get(functional.upper(), None),
+                                "marker": "^",
+                            }
+                        )
 
                 plotted_columns.append(
                     {
@@ -740,7 +742,8 @@ def subplot_all_curves_LoS(
                     y_min = min(main_values)
                     ax_main.set_ylim(y_min + 0.05 * y_min, 0.1)
 
-                ax_main.set_title(f"{db} {system_label} ({basis_set_label})")
+                if include_titles:
+                    ax_main.set_title(f"{db} {system_label} ({basis_set_label})")
                 ax_main.set_ylabel("Disp. Energy (kcal/mol)")
                 ax_main.grid(True, linestyle="--", alpha=0.7)
                 ax_main.minorticks_on()
@@ -761,8 +764,9 @@ def subplot_all_curves_LoS(
 
                     functional_upper = functional.upper()
                     functional_color = color_map.get(functional_upper, None)
+                    functional_basis_label = f"{functional_upper}/{basis_set_label}"
                     sapt_disp_col = get_saptdft_disp_col(df_sys, functional, basis_set)
-                    if sapt_disp_col is not None:
+                    if sapt_disp_col is not None and functional.lower() != "pbe0":
                         sapt_disp = df_sys[sapt_disp_col] * h2kcalmol
                         subterm_values.extend(
                             sapt_disp[np.isfinite(sapt_disp)].tolist()
@@ -770,15 +774,19 @@ def subplot_all_curves_LoS(
                         ax_sub.plot(
                             df_sys["distance (A)"],
                             sapt_disp,
-                            color=functional_color,
+                            color="gray"
+                            if functional.lower() == "pbe0"
+                            else functional_color,
+                            linewidth=2.0,
                             marker="o",
-                            label=f"SAPT({functional_upper})",
+                            label=f"SAPT({functional_upper})/{basis_set_label}",
                         )
                         plotted_subterms = True
 
                     dhf_col = f"SAPT_DFT_{functional.lower()}_{basis_set}_dHF"
                     ddft_col = f"SAPT_DFT_{functional.lower()}_{basis_set}_dDFT"
                     d4_col = f"SAPT_DFT_{functional.lower()}_{basis_set}_D4_IE"
+                    d4_disp_col = f"SAPT_DFT_{functional.lower()}_{basis_set}_d4_disp"
 
                     if dhf_col in df_sys.columns:
                         dhf = df_sys[dhf_col]
@@ -834,6 +842,22 @@ def subplot_all_curves_LoS(
                         )
                         plotted_subterms = True
 
+                    if d4_disp_col in df_sys.columns:
+                        d4_disp = df_sys[d4_disp_col]
+                        subterm_values.extend(d4_disp[np.isfinite(d4_disp)].tolist())
+                        ax_sub.plot(
+                            df_sys["distance (A)"],
+                            d4_disp,
+                            color="red"
+                            if functional.lower() == "pbe0"
+                            else functional_color,
+                            linestyle="-",
+                            linewidth=2.0,
+                            marker="s",
+                            label=f"{functional_basis_label}-D4",
+                        )
+                        plotted_subterms = True
+
                 if reference_energy is not None:
                     subterm_values.extend(
                         reference_energy[np.isfinite(reference_energy)].tolist()
@@ -868,7 +892,8 @@ def subplot_all_curves_LoS(
                     y_min = min(subterm_values)
                     ax_sub.set_ylim(y_min + 0.05 * y_min, 0.1)
 
-                ax_sub.set_title(f"Subterms ({basis_set_label})")
+                if include_titles:
+                    ax_sub.set_title(f"Subterms ({basis_set_label})")
                 ax_sub.grid(True, linestyle="--", alpha=0.7)
                 ax_sub.minorticks_on()
                 ax_sub.tick_params(which="both", width=1)
@@ -2488,7 +2513,7 @@ def main():
     # return
     # return
     # print(df['R'])
-    subplot_all_curves_LoS(df, basis_sets=["adz"])
+    subplot_all_curves_LoS(df, basis_sets=["adz", "atz"])
     return
     # subplot_all_curves_LoS_basis_set(df, basis_sets=["adz", "atz"])
 
