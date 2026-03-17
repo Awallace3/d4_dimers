@@ -534,6 +534,7 @@ def subplot_all_curves_LoS(
     fit=False,
     subterm_functionals=["pbe0"],
     include_titles=False,
+    dispersion_model="D4",
 ):
     def get_saptdft_disp_col(df_local, functional, basis_set):
         candidates = [
@@ -556,6 +557,21 @@ def subplot_all_curves_LoS(
                 return candidate
         return None
 
+    def get_dispersion_col(functional, basis_set, model):
+        return f"{functional.upper()}-{model} DISP ENERGY {basis_set.lower()}"
+
+    def get_full_model_col(functional, basis_set, model):
+        if model == "D4":
+            return f"SAPT_DFT_{functional.lower()}_{basis_set}_d4_disp"
+        return get_dispersion_col(functional, basis_set, model)
+
+    def get_model_ie_col(functional, basis_set, model):
+        return f"SAPT_DFT_{functional.lower()}_{basis_set}_{model}_IE"
+
+    dispersion_model = dispersion_model.upper()
+    if dispersion_model == "D3" and "PBE0-D3 DISP ENERGY adz" not in df.columns:
+        df = plotting.d3_conversions(df.copy())
+
     dbs = df["DB"].unique()
     print(dbs)
     subterm_functionals = [i.lower() for i in subterm_functionals]
@@ -568,7 +584,7 @@ def subplot_all_curves_LoS(
         df_db = df[df["DB"] == db]
         for functional in functionals:
             for basis_set in basis_sets:
-                func_col = f"{functional.upper()}-D4 DISP ENERGY {basis_set.lower()}"
+                func_col = get_dispersion_col(functional, basis_set, dispersion_model)
                 mae = np.mean(np.abs(df_db[func_col] - df_db["E_ref_hlsapt_atz"]))
                 me = np.mean(df_db[func_col] - df_db["E_ref_hlsapt_atz"])
                 print(
@@ -595,7 +611,7 @@ def subplot_all_curves_LoS(
             fig, axes = plt.subplots(
                 n_basis_sets,
                 ncols,
-                figsize=(4 * ncols, 3 * n_basis_sets),
+                figsize=(3.5 * ncols, 2.5 * n_basis_sets),
                 dpi=300,
                 sharex=True,
                 sharey=True,
@@ -617,6 +633,7 @@ def subplot_all_curves_LoS(
                         color="grey",
                         linestyle="--",
                         label="Equilibrium Distance",
+                        zorder=0,
                     )
 
                 if reference_col is not None:
@@ -639,10 +656,13 @@ def subplot_all_curves_LoS(
 
                 plotted_columns = []
                 if plot_ddft_curve:
+                    pbe0_model_col = get_full_model_col(
+                        "pbe0", basis_set, dispersion_model
+                    )
                     plotted_columns.append(
                         {
-                            "col": f"SAPT_DFT_pbe0_{basis_set}_d4_disp",
-                            "label": "PBE0-D4/" + basis_set_label,
+                            "col": pbe0_model_col,
+                            "label": f"PBE0-{dispersion_model}/" + basis_set_label,
                             "color": TEAL,
                             "marker": "s",
                         }
@@ -650,6 +670,22 @@ def subplot_all_curves_LoS(
 
                 for functional in functionals:
                     sapt_disp_col = get_saptdft_disp_col(df_sys, functional, basis_set)
+                    if not (plot_ddft_curve and functional.lower() == "pbe0"):
+                        plotted_columns.append(
+                            {
+                                "col": get_dispersion_col(
+                                    functional, basis_set, dispersion_model
+                                ),
+                                "label": (
+                                    f"{functional.upper()}-{dispersion_model}/"
+                                    + basis_set_label
+                                ),
+                                "color": color_map.get(functional.upper(), None),
+                                "marker": "^",
+                            }
+                        )
+                    if not (plot_ddft_curve and functional.lower() == "pbe0"):
+                        pass
                     if sapt_disp_col is not None:
                         plotted_columns.append(
                             {
@@ -659,18 +695,6 @@ def subplot_all_curves_LoS(
                                 "color": color_map.get(functional.upper(), None),
                                 "marker": "o",
                                 "scale": h2kcalmol,
-                            }
-                        )
-                    if not (plot_ddft_curve and functional.lower() == "pbe0"):
-                        plotted_columns.append(
-                            {
-                                "col": (
-                                    f"{functional.upper()}-D4 DISP ENERGY "
-                                    f"{basis_set.lower()}"
-                                ),
-                                "label": f"{functional.upper()}-D4/" + basis_set_label,
-                                "color": color_map.get(functional.upper(), None),
-                                "marker": "^",
                             }
                         )
 
@@ -759,6 +783,16 @@ def subplot_all_curves_LoS(
                 ax_sub = axes[row_idx, 1]
                 subterm_values = []
                 plotted_subterms = False
+                if reference_total_col is not None:
+                    min_index = df_sys[reference_total_col].idxmin()
+                    min_distance = df_sys.loc[min_index, "distance (A)"]
+                    ax_sub.axvline(
+                        min_distance,
+                        color="grey",
+                        linestyle="--",
+                        label="Equilibrium Distance",
+                        zorder=0,
+                    )
                 for functional in functionals:
                     if functional.lower() not in subterm_functionals:
                         continue
@@ -793,8 +827,10 @@ def subplot_all_curves_LoS(
 
                     dhf_col = f"SAPT_DFT_{functional.lower()}_{basis_set}_dHF"
                     ddft_col = f"SAPT_DFT_{functional.lower()}_{basis_set}_dDFT"
-                    d4_col = f"SAPT_DFT_{functional.lower()}_{basis_set}_D4_IE"
-                    d4_disp_col = f"SAPT_DFT_{functional.lower()}_{basis_set}_d4_disp"
+                    d4_col = get_model_ie_col(functional, basis_set, dispersion_model)
+                    d4_disp_col = get_full_model_col(
+                        functional, basis_set, dispersion_model
+                    )
 
                     if dhf_col in df_sys.columns:
                         dhf = df_sys[dhf_col]
@@ -833,7 +869,7 @@ def subplot_all_curves_LoS(
                             color=subterm_color_map["ddft"],
                             linestyle="-.",
                             marker="^",
-                            label=rf"$\delta_{{\rm {functional_upper}}}^{{[2]}}$"
+                            label=rf"$\delta_{{\rm {functional_upper}}}^{{[2]}}$",
                         )
                         plotted_subterms = True
 
@@ -846,7 +882,7 @@ def subplot_all_curves_LoS(
                             color=subterm_color_map["d4"],
                             linestyle="-",
                             marker="d",
-                            label=f"-D4[{functional_upper}]",
+                            label=f"-{dispersion_model}[{functional_upper}]",
                         )
                         plotted_subterms = True
 
@@ -860,7 +896,7 @@ def subplot_all_curves_LoS(
                             linestyle="-",
                             linewidth=2.0,
                             marker="s",
-                            label=f"{functional_basis_label}-D4",
+                            label=f"{functional_basis_label}-{dispersion_model}",
                         )
                         plotted_subterms = True
 
@@ -877,15 +913,6 @@ def subplot_all_curves_LoS(
                     )
                     plotted_subterms = True
 
-                if reference_total_col is not None:
-                    min_index = df_sys[reference_total_col].idxmin()
-                    min_distance = df_sys.loc[min_index, "distance (A)"]
-                    ax_sub.axvline(
-                        min_distance,
-                        color="grey",
-                        linestyle="--",
-                        label="Equilibrium Distance",
-                    )
                 if fit and fit_start is not None:
                     ax_sub.axvline(
                         fit_start,

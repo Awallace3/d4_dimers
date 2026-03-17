@@ -34,33 +34,10 @@ def main():
         df_out="./plots/LoS_ddft.pkl",
         original_plot=False,
     )
-    # return
-    # src.plotting.plot_LoS_saptdft(
-    #     df,
-    #     presentation=True,
-    # )
-    # src.plotting_saptdft.plot_LoS_saptdft(
-    #     df,
-    #     presentation=True,
-    # )
-
-    # df = pd.read_pickle("./dfs/LoS_components_full_dfs.pkl")[1]['df']
-    pp(df.columns.tolist())
-    df = df[df['DB'] == 's66x8']
-    system_ids = [
-        '01_Water-Water_1.00',
-    ]
-    df = df[df["system_id"].isin(system_ids)]
-    df['SAPT(PBE0)-D3 INTER DISP ENERGY atz'] = df['SAPT(PBE0)-D3 INTER DISP ENERGY atz'].astype(float) * hartree2kcalmol
-    df['SAPT2+3(CCD) DISP ENERGY atz'] = df['SAPT2+3(CCD) DISP ENERGY atz'].astype(float) * hartree2kcalmol
-    print(df[['system_id', 'SAPT(PBE0)-D3 INTER DISP ENERGY atz', 'SAPT2+3(CCD) DISP ENERGY atz']])
-    # np print for array as list 6 decimal places
-    pd.set_option('display.float_format', lambda x: '%.6f' % x)
-    np.set_printoptions(precision=6, suppress=True)
-    # no truncation
-    np.set_printoptions(threshold=np.inf)
-    print(df.iloc[0]['D3Data'])
-    print(df.iloc[0]['qcel_molecule'])
+    src.plotting_saptdft.plot_LoS_saptdft(
+        df,
+        presentation=True,
+    )
     return
 
 

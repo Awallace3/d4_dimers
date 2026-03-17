@@ -130,7 +130,6 @@ colors_disp_saptdftd4 = [
     [
         TEAL,
         LIGHT_PURPLE,
-        # Medium_Sea_Green,
         TEAL,
         LIGHT_PURPLE,
         TEAL,
@@ -144,6 +143,18 @@ colors_disp_saptdftd4 = [
         PURPLE,
         GREEN,
         BLUE,
+        GREY,
+    ]
+]
+
+colors_disp_saptdftd4_reduced = [
+    [
+        TEAL,
+        LIGHT_PURPLE,
+        TEAL,
+        LIGHT_PURPLE,
+        TEAL,
+        LIGHT_PURPLE,
         GREY,
     ]
 ]
@@ -4453,6 +4464,18 @@ def _disp_plot_labels():
     }
 
 
+def _disp_plot_labels_reduced():
+    return {
+        "SAPT(PBE0)": "SAPT(DFT) [PBE0] DISP ENERGY Error",
+        "SAPT(B3LYP)": "SAPT(DFT) [B3LYP] DISP ENERGY Error",
+        "PBE0-D4(SAPT)": "PBE0-D4 DISP ENERGY Error",
+        "B3LYP-D4(SAPT)": "B3LYP-D4 DISP ENERGY Error",
+        "PBE0-D3(SAPT)": "PBE0-D3 DISP ENERGY Error",
+        "B3LYP-D3(SAPT)": "B3LYP-D3 DISP ENERGY Error",
+        "SAPT2+3(CCD)": "SAPT2+3(CCD) DISP ENERGY Error",
+    }
+
+
 def _disp_plot_labels_si():
     return {
         "SAPT(PBE0)": "SAPT(DFT) [PBE0] DISP ENERGY Error",
@@ -5912,6 +5935,11 @@ def violin_plots_multi_components(
             _disp_plot_labels_si(), dfs
         )
         colors = colors_disp_saptdftd4_si
+    elif "REDUCED" in figure_name_disp:
+        df_labels_and_columns = _filter_plot_labels_by_available_columns(
+            _disp_plot_labels_reduced(), dfs
+        )
+        colors = colors_disp_saptdftd4
     else:
         df_labels_and_columns = _filter_plot_labels_by_available_columns(
             _disp_plot_labels(), dfs
@@ -6239,6 +6267,22 @@ def violin_plots_multi_components(
         grid_heights=grid_heights,
         grid_widths=[5, 5, 6],
         output_filename=output_filename,
+        # mcure=mcure_labels,
+    )
+    cdsg_plot.error_statistics.violin_plot_table_multi_SAPT_components(
+        dfs,
+        df_labels_and_columns_disp=df_labels_and_columns,
+        colors=colors,
+        usetex=True,
+        legend_loc="lower right",
+        table_fontsize=table_fontsize,
+        x_label_fontsize=x_label_fontsize,
+        violin_alphas=0.9,
+        y_label_fontsize=11,
+        figure_size=fig_size,
+        grid_heights=grid_heights,
+        grid_widths=[1.0],
+        output_filename=figure_name_disp,
         # mcure=mcure_labels,
     )
     cdsg_plot.error_statistics.violin_plot_table_multi_SAPT_components(
@@ -8546,6 +8590,12 @@ def plot_LoS_saptdft(
                 limit_to_column_not_nan=limit_col,
                 subset_only=True,
             ),
+        )
+        violin_plots_multi_components(
+            df,
+            dfs=components_full_dfs,
+            figure_name_nondisp="./plots/fig-REDUCED-components_adz_atz_nondisp.jpg",
+            figure_name_disp="./plots/fig-REDUCED-components_adz_atz_disp.jpg",
         )
         violin_plots_multi(df, dfs=total_full_dfs)
         violin_plots_multi_subset(df, dfs=total_subset_dfs)
