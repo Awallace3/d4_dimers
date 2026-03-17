@@ -598,6 +598,7 @@ def subplot_all_curves_LoS(
                 figsize=(4 * ncols, 3 * n_basis_sets),
                 dpi=300,
                 sharex=True,
+                sharey=True,
             )
             axes = np.atleast_2d(axes)
 
@@ -642,7 +643,7 @@ def subplot_all_curves_LoS(
                         {
                             "col": f"SAPT_DFT_pbe0_{basis_set}_d4_disp",
                             "label": "PBE0-D4/" + basis_set_label,
-                            "color": "red",
+                            "color": TEAL,
                             "marker": "s",
                         }
                     )
@@ -765,6 +766,13 @@ def subplot_all_curves_LoS(
                     functional_upper = functional.upper()
                     functional_color = color_map.get(functional_upper, None)
                     functional_basis_label = f"{functional_upper}/{basis_set_label}"
+                    subterm_color_map = {
+                        "dhf": BLUE,
+                        "delta": GREEN,
+                        "ddft": LIME_GREEN,
+                        "d4": Slate_Blue,
+                        "full": functional_color,
+                    }
                     sapt_disp_col = get_saptdft_disp_col(df_sys, functional, basis_set)
                     if sapt_disp_col is not None and functional.lower() != "pbe0":
                         sapt_disp = df_sys[sapt_disp_col] * h2kcalmol
@@ -794,10 +802,10 @@ def subplot_all_curves_LoS(
                         ax_sub.plot(
                             df_sys["distance (A)"],
                             dhf,
-                            color=functional_color,
+                            color=subterm_color_map["dhf"],
                             linestyle=":",
                             marker="x",
-                            label=rf"$\delta$HF[{functional_upper}]",
+                            label=r"$\delta_{\rm HF}^{[2]}$",
                         )
                         plotted_subterms = True
 
@@ -809,10 +817,10 @@ def subplot_all_curves_LoS(
                         ax_sub.plot(
                             df_sys["distance (A)"],
                             delta_ddft,
-                            color=functional_color,
+                            color=subterm_color_map["delta"],
                             linestyle="--",
                             marker="s",
-                            label=rf"$\delta$DFT[{functional_upper}] - $\delta$HF",
+                            label=rf"$\delta_{{\rm {functional_upper}}}^{{[2]}}$ - $\delta_{{\rm HF}}^{{[2]}}$",
                         )
                         plotted_subterms = True
 
@@ -822,10 +830,10 @@ def subplot_all_curves_LoS(
                         ax_sub.plot(
                             df_sys["distance (A)"],
                             ddft,
-                            color=functional_color,
+                            color=subterm_color_map["ddft"],
                             linestyle="-.",
                             marker="^",
-                            label=rf"$\delta$DFT[{functional_upper}]",
+                            label=rf"$\delta_{{\rm {functional_upper}}}^{{[2]}}$"
                         )
                         plotted_subterms = True
 
@@ -835,7 +843,7 @@ def subplot_all_curves_LoS(
                         ax_sub.plot(
                             df_sys["distance (A)"],
                             d4,
-                            color=functional_color,
+                            color=subterm_color_map["d4"],
                             linestyle="-",
                             marker="d",
                             label=f"-D4[{functional_upper}]",
@@ -848,9 +856,7 @@ def subplot_all_curves_LoS(
                         ax_sub.plot(
                             df_sys["distance (A)"],
                             d4_disp,
-                            color="red"
-                            if functional.lower() == "pbe0"
-                            else functional_color,
+                            color=subterm_color_map["full"],
                             linestyle="-",
                             linewidth=2.0,
                             marker="s",
@@ -903,7 +909,7 @@ def subplot_all_curves_LoS(
                     ax_sub.legend(loc="lower right", fontsize=8)
 
             for col_idx in range(ncols):
-                axes[-1, col_idx].set_xlabel("Distance (A)")
+                axes[-1, col_idx].set_xlabel("Distance (Å)")
 
             plt.tight_layout()
             plt.savefig(
