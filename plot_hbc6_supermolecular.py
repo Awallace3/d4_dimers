@@ -763,10 +763,6 @@ def subplot_all_curves_LoS(
                                 label=f"{entry['label']} (Fit, N={n_value:.1f})",
                             )
 
-                if main_values:
-                    y_min = min(main_values)
-                    ax_main.set_ylim(y_min + 0.05 * y_min, 0.1)
-
                 if include_titles:
                     ax_main.set_title(f"{db} {system_label} ({basis_set_label})")
                 ax_main.set_ylabel("Disp. Energy (kcal/mol)")
@@ -882,7 +878,7 @@ def subplot_all_curves_LoS(
                             color=subterm_color_map["d4"],
                             linestyle="-",
                             marker="d",
-                            label=f"-{dispersion_model}[{functional_upper}]",
+                            label=rf"$E_{{\rm int}}^{{\rm -{dispersion_model}}}$",
                         )
                         plotted_subterms = True
 
@@ -896,7 +892,7 @@ def subplot_all_curves_LoS(
                             linestyle="-",
                             linewidth=2.0,
                             marker="s",
-                            label=f"{functional_basis_label}-{dispersion_model}",
+                            label=f"{functional_upper}-D4/{basis_set_label}",
                         )
                         plotted_subterms = True
 
@@ -921,10 +917,6 @@ def subplot_all_curves_LoS(
                         label="Fit Start",
                     )
 
-                if subterm_values:
-                    y_min = min(subterm_values)
-                    ax_sub.set_ylim(y_min + 0.05 * y_min, 0.1)
-
                 if include_titles:
                     ax_sub.set_title(f"Subterms ({basis_set_label})")
                 ax_sub.grid(True, linestyle="--", alpha=0.7)
@@ -934,6 +926,20 @@ def subplot_all_curves_LoS(
                 ax_sub.yaxis.set_major_formatter(ScalarFormatter())
                 if plotted_subterms:
                     ax_sub.legend(loc="lower right", fontsize=8)
+
+                combined_values = main_values + subterm_values
+                if combined_values:
+                    y_min = min(combined_values)
+                    y_max = max(combined_values)
+                    y_min_pad = 0.05 * abs(y_min) if y_min != 0 else 0.05
+                    y_max_pad = 0.05 * abs(y_max) if y_max != 0 else 0.05
+                    ax_main.set_ylim(y_min - y_min_pad, y_max + y_max_pad)
+                elif main_values:
+                    y_min = min(main_values)
+                    y_max = max(main_values)
+                    y_min_pad = 0.05 * abs(y_min) if y_min != 0 else 0.05
+                    y_max_pad = 0.05 * abs(y_max) if y_max != 0 else 0.05
+                    ax_main.set_ylim(y_min - y_min_pad, y_max + y_max_pad)
 
             for col_idx in range(ncols):
                 axes[-1, col_idx].set_xlabel("Distance (Å)")
