@@ -536,8 +536,6 @@ def subplot_all_curves_LoS(
     include_titles=False,
     dispersion_model="D4",
 ):
-    subplot_label_code = ord("A")
-
     def get_saptdft_disp_col(df_local, functional, basis_set):
         candidates = [
             f"SAPT(DFT) [{functional.upper()}] DISP ENERGY {basis_set}",
@@ -570,6 +568,11 @@ def subplot_all_curves_LoS(
     def get_model_ie_col(functional, basis_set, model):
         return f"SAPT_DFT_{functional.lower()}_{basis_set}_{model}_IE"
 
+    basis_set_ylabel_map = {
+        "adz": r"\textbf{aug-cc-pVDZ}",
+        "atz": r"\textbf{aug-cc-pVTZ}",
+    }
+
     dispersion_model = dispersion_model.upper()
     if dispersion_model == "D3" and "PBE0-D3 DISP ENERGY adz" not in df.columns:
         df = plotting.d3_conversions(df.copy())
@@ -577,6 +580,11 @@ def subplot_all_curves_LoS(
     dbs = df["DB"].unique()
     print(dbs)
     subterm_functionals = [i.lower() for i in subterm_functionals]
+    dbs = [
+        "s66x8",
+        # "hbc6",
+        # "X4010",
+    ]
 
     for db in dbs:
         print(db)
@@ -603,6 +611,7 @@ def subplot_all_curves_LoS(
             if len(df_sys) < 4:
                 continue
 
+            subplot_label_code = ord("A")
             print(db, system_label)
             df_sys = df_sys.sort_values("distance (A)")
             n_basis_sets = len(basis_sets)
@@ -634,7 +643,7 @@ def subplot_all_curves_LoS(
                         min_distance,
                         color="grey",
                         linestyle="--",
-                        label="Equilibrium Distance",
+                        # label="Equilibrium Distance",
                         zorder=0,
                     )
 
@@ -703,8 +712,9 @@ def subplot_all_curves_LoS(
                 plotted_columns.append(
                     {
                         "col": "E_ref_hlsapt_atz",
-                        "label": r"SAPT2+3(CCD)$\delta$MP2/aTZ",
-                        "color": "black",
+                        # "label": r"SAPT2+3(CCD)$\delta$MP2/aTZ",
+                        "label": r"SAPT2+3(CCD)/aTZ",
+                        "color": "orange",
                         "marker": "o",
                     }
                 )
@@ -778,11 +788,14 @@ def subplot_all_curves_LoS(
                     fontweight="bold",
                 )
                 subplot_label_code += 1
-                ax_main.set_ylabel("Disp. Energy (kcal/mol)")
+                basis_ylabel = basis_set_ylabel_map.get(
+                    basis_set, rf"\textbf{{{basis_set_label}}}"
+                )
+                ax_main.set_ylabel(basis_ylabel + "\n" + r"Disp. Energy (kcal/mol)")
                 ax_main.grid(True, linestyle="--", alpha=0.7)
                 ax_main.minorticks_on()
                 ax_main.tick_params(which="both", width=1)
-                ax_main.legend(fontsize=8)
+                ax_main.legend(fontsize=10)
                 ax_main.xaxis.set_major_formatter(ScalarFormatter())
                 ax_main.yaxis.set_major_formatter(ScalarFormatter())
 
@@ -799,7 +812,7 @@ def subplot_all_curves_LoS(
                         min_distance,
                         color="grey",
                         linestyle="--",
-                        label="Equilibrium Distance",
+                        # label="Equilibrium Distance",
                         zorder=0,
                     )
                 for functional in functionals:
@@ -916,9 +929,10 @@ def subplot_all_curves_LoS(
                     ax_sub.plot(
                         df_sys["distance (A)"],
                         reference_energy,
-                        color="black",
+                        color="orange",
                         marker="o",
-                        label=r"SAPT2+3(CCD)$\delta$MP2/aTZ",
+                        # label=r"SAPT2+3(CCD)$\delta$MP2/aTZ",
+                        label=r"SAPT2+3(CCD)/aTZ",
                     )
                     plotted_subterms = True
 
@@ -950,7 +964,7 @@ def subplot_all_curves_LoS(
                 ax_sub.xaxis.set_major_formatter(ScalarFormatter())
                 ax_sub.yaxis.set_major_formatter(ScalarFormatter())
                 if plotted_subterms:
-                    ax_sub.legend(loc="lower right", fontsize=8)
+                    ax_sub.legend(loc="lower right", fontsize=10)
 
                 combined_values = main_values + subterm_values
                 if combined_values:
@@ -1224,7 +1238,8 @@ def subplot_all_curves_LoS_basis_set(
                         if n >= (n_basis_sets - 1) * 2 - 1:
                             axs[n].set_xlabel(r"Distance (\AA)", fontsize=16)
                         axs[n].set_ylabel(
-                            f"Disp. Energy (kcal$\cdot$mol$^{-1}$)", fontsize=20
+                            r"Disp. Energy (kcal$\cdot$mol$^{-1}$)",
+                            fontsize=20,
                         )
                         axs[n].tick_params(axis="both", which="major", labelsize=18)
                         axs[n].legend(loc="lower right", fontsize=18)
@@ -1412,7 +1427,7 @@ def subplot_all_curves_LoS_basis_set_D4_versions(
                                 min_distance,
                                 color="grey",
                                 linestyle="--",
-                                label="Equilibrium",
+                                # label="Equilibrium",
                             )
 
                         # Plot each D4 method
@@ -2043,7 +2058,7 @@ def subplot_all_curves_water_benzene_functional_form(
                         if n >= (n_basis_sets - 1) * 2 - 1:
                             axs[n].set_xlabel(r"Distance (\AA)", fontsize=16)
                         axs[n].set_ylabel(
-                            f"Disp. Energy (kcal$\cdot$mol$^{-1}$)", fontsize=20
+                            r"Disp. Energy (kcal$\cdot$mol$^{-1}$)", fontsize=20
                         )
                         axs[n].tick_params(axis="both", which="major", labelsize=18)
                         axs[n].legend(loc="lower right", fontsize=14)
