@@ -4353,8 +4353,8 @@ def _total_sapt_methods():
         "MP2 IE",
         "PBE0 IE",
         "B3LYP IE",
-        "B2PLYP IE",
-        "WB97X IE",
+        # "B2PLYP IE",
+        # "WB97X IE",
         "SAPT0 TOTAL ENERGY",
         "SSAPT0 TOTAL ENERGY",
         "SAPT2 TOTAL ENERGY",
@@ -4392,10 +4392,10 @@ def _total_local_method_map(basis):
         f"SAPT_DFT_pbe0_{basis}_total": "SAPT(DFT) [PBE0] TOTAL ENERGY",
         f"SAPT_DFT_D4_b3lyp_{basis}_total": "B3LYP-D4 TOTAL ENERGY",
         f"SAPT_DFT_b3lyp_{basis}_total": "SAPT(DFT) [B3LYP] TOTAL ENERGY",
-        f"SAPT_DFT_D4_b2plyp_{basis}_total": "B2PLYP-D4 TOTAL ENERGY",
-        f"SAPT_DFT_b2plyp_{basis}_total": "SAPT(DFT) [B2PLYP] TOTAL ENERGY",
-        f"SAPT_DFT_D4_wb97x_{basis}_total": "WB97X-D4 TOTAL ENERGY",
-        f"SAPT_DFT_wb97x_{basis}_total": "SAPT(DFT) [WB97X] TOTAL ENERGY",
+        # f"SAPT_DFT_D4_b2plyp_{basis}_total": "B2PLYP-D4 TOTAL ENERGY",
+        # f"SAPT_DFT_b2plyp_{basis}_total": "SAPT(DFT) [B2PLYP] TOTAL ENERGY",
+        # f"SAPT_DFT_D4_wb97x_{basis}_total": "WB97X-D4 TOTAL ENERGY",
+        # f"SAPT_DFT_wb97x_{basis}_total": "SAPT(DFT) [WB97X] TOTAL ENERGY",
     }
 
 
@@ -4521,6 +4521,120 @@ def _limit_df_to_non_nan_columns(df, limit_to_column_not_nan=None):
         df = df[df[col].notna()].copy()
         print(f"Limiting to {col} not NaN: {size_prior} -> {len(df)}")
     return df
+
+
+def _merge_basis_bundles_into_master(
+    master_df,
+    bundle_dfs,
+    keep_columns,
+    key_columns=("DB", "system_id", "R"),
+):
+    merge_keys = [c for c in key_columns if c in master_df.columns]
+    keep_set = set(keep_columns)
+
+    for bundle in bundle_dfs:
+        basis = bundle["name"]
+        df_basis = bundle["df"].copy()
+        df_basis = df_basis.drop(
+            columns=[
+                c
+                for c in df_basis.columns
+                if c in keep_set and c not in merge_keys
+            ],
+            errors="ignore",
+        )
+        df_basis = df_basis.drop_duplicates(subset=merge_keys, keep="first")
+        rename_map = {c: f"{c} {basis}" for c in df_basis.columns if c not in merge_keys}
+        df_basis.rename(columns=rename_map, inplace=True)
+        df_basis = df_basis[
+            merge_keys + [c for c in df_basis.columns if c not in merge_keys and c not in master_df.columns]
+        ]
+        master_df = master_df.merge(df_basis, on=merge_keys, how="left")
+    return master_df
+
+
+def build_los_main_paper_master_dataframe(
+    df,
+    keep_columns,
+    limit_to_column_not_nan=None,
+):
+    df_main = _limit_df_to_non_nan_columns(df.copy(), limit_to_column_not_nan)
+    keep_cols = [c for c in keep_columns if c in df_main.columns]
+    merge_keys = [c for c in ("DB", "system_id", "R") if c in df_main.columns]
+    master_cols = keep_cols + [c for c in merge_keys if c not in keep_cols]
+    master_df = df_main[master_cols].copy()
+    if "subset" in master_df.columns:
+        master_df["subset"] = master_df["subset"].astype(int)
+
+    total_full_dfs = _prepare_total_violin_dfs(
+        df.copy(),
+        bases=("adz", "atz"),
+        limit_to_column_not_nan=limit_to_column_not_nan,
+    )
+    total_subset_dfs = _prepare_total_violin_dfs(
+        df.copy(),
+        bases=("adz", "atz", "aqz"),
+        limit_to_column_not_nan=limit_to_column_not_nan,
+        subset_only=True,
+    )
+    components_full_dfs = _prepare_component_violin_dfs(
+        df.copy(),
+        bases=("adz", "atz"),
+        limit_to_column_not_nan=limit_to_column_not_nan,
+        subset_only=False,
+    )
+    components_subset_dfs = _prepare_component_violin_dfs(
+        df.copy(),
+        bases=("adz", "atz", "aqz"),
+        limit_to_column_not_nan=limit_to_column_not_nan,
+        subset_only=True,
+    )
+
+    master_df = _merge_basis_bundles_into_master(
+        master_df,
+        total_full_dfs,
+        keep_columns,
+    )
+    master_df = _merge_basis_bundles_into_master(
+        master_df,
+        total_subset_dfs,
+        keep_columns,
+    )
+    master_df = _merge_basis_bundles_into_master(
+        master_df,
+        components_full_dfs,
+        keep_columns,
+    )
+    master_df = _merge_basis_bundles_into_master(
+        master_df,
+        components_subset_dfs,
+        keep_columns,
+    )
+    ordered_keep_cols = [c for c in keep_columns if c in master_df.columns]
+    blocked_patterns = ("b2plyp", "b97")
+    basis_suffix_order = {"adz": 0, "atz": 1, "aqz": 2}
+
+    def _column_sort_key(col):
+        for basis, order in basis_suffix_order.items():
+            suffix = f" {basis}"
+            if col.endswith(suffix):
+                return (col[: -len(suffix)], order, col)
+        return (col, len(basis_suffix_order), col)
+
+    data_cols = [
+        c
+        for c in master_df.columns
+        if c not in ordered_keep_cols
+        and not any(pattern in c.lower() for pattern in blocked_patterns)
+    ]
+    ordered_data_cols = sorted(data_cols, key=_column_sort_key)
+    master_df = master_df[ordered_keep_cols + ordered_data_cols]
+
+    # Convert units of all columns that have 'Error' to hartrees from kcal/mol. Also 'benchmark ref energy' to hartrees.
+    for col in master_df.columns:
+        if "Error" in col or "benchmark ref energy" in col or "Ref_" in col:
+            master_df[col] = pd.to_numeric(master_df[col], errors="coerce") / h2kcalmol
+    return master_df
 
 
 def _prepare_total_violin_dfs(
@@ -8553,9 +8667,39 @@ def plot_LoS_saptdft(
     limit_col = "B3LYP-D3 TOTAL ENERGY adz"
     limit_col_si = "D3-ML"
     limit_cols_si = [limit_col_si, limit_col]
+    keep_columns = [
+        "id",
+        "benchmark ref energy",
+        "DB",
+        "system_id",
+        "Geometry",
+        "monAs",
+        "monBs",
+        "coordinates",
+        "atomic_numbers",
+        "dimer_charge",
+        "dimer_multiplicity",
+        "monA_charge",
+        "monA_multiplicity",
+        "monB_charge",
+        "monB_multiplicity",
+        "Benchmark",
+        "subset",
+        "System Label",
+        "R",
+    ]
 
     if True:
         # Main Paper
+        master_df_path = f"./dfs/LoS_II_dDFT_si_{len(df)}.pkl"
+        _load_or_build(
+            master_df_path,
+            lambda: build_los_main_paper_master_dataframe(
+                df,
+                keep_columns=keep_columns,
+                limit_to_column_not_nan=limit_col,
+            ),
+        )
         total_full_dfs = _load_or_build(
             "./dfs/LoS_total_full_dfs.pkl",
             lambda: _prepare_total_violin_dfs(
